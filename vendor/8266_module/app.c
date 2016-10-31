@@ -167,7 +167,7 @@ void ble_flyco_set_sleep_wakeup(u8 e, u8 *p){
 	bls_pm_setWakeupSource(PM_WAKEUP_CORE|PM_WAKEUP_PAD);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////spp process ///////////////////////////////////////////////////
 #define		UART_WB_NUM			8
 u8		uart_wb[UART_WB_NUM][64];
 u8		uart_wb_wptr = 0;
@@ -384,7 +384,8 @@ void user_init()
 		CLK16M_UART9600;
 
 	uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
-	blc_register_hci_handler (flyco_blc_rx_from_uart, flyco_blc_tx_to_uart);
+	blc_register_hci_handler (flyco_blc_rx_from_uart, flyco_blc_tx_to_uart);//flyco_spp
+	//blc_register_hci_handler(blc_rx_from_uart,blc_hci_tx_to_uart);//telink_spp
 
 	/** smp test **/
 	smpRegisterCbInit();

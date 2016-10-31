@@ -699,7 +699,6 @@ void flyco_spp_received_master_rsp2cmd(u8 cmdid, u8 *payload, u8 len){
  * @return  None
  */
 void flyco_spp_dataReceivedMasterHandler(u8 *data, u32 len) {
-	extern u8 uart_wb_rptr;
 	extern uart_data_t T_txdata_buf;
 
 	memcpy(&T_txdata_buf.data, data, len);
