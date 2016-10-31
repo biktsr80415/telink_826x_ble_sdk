@@ -96,7 +96,14 @@ void module_onReceiveMasterData(rf_packet_att_write_t *p)
 	u8 len = p->l2capLen - 3;
 	if(len > 0)
 	{
+#if TELINK_SPP_MODULE
+		u32 header;
+		header = 0x0730;		//data received event
+		header |= (3 << 16) | (1<<24);
+		blc_hci_send_data(header, &p->value, len);		//HCI_FLAG_EVENT_TLK_MODULE
+#else if FLYCO_SPP_MODULE
 		flyco_uart_push_fifo(HC_DATA, len, &p->value);
+#endif
 	}
 }
 #endif

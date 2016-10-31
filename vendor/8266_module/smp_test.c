@@ -76,7 +76,7 @@ void smpRegisterCbInit()
 
 	//smp parameter flash clean
 	blt_smp_paramFlashClean ();  // clean flash if flash full
-#if BLE_SECURITY_ENABLE
+#if BLT_SECURITY_ENABLE
 	//smp parameter config
 	blt_smp_setMaxKeySize 	(BLT_SMP_MAX_KEY_SIZE);
 	blt_smp_setDistributeKey (BLT_SMP_DISTRIBUTE_LTK, BLT_SMP_DISTRIBUTE_IRK, BLT_SMP_DISTRIBUTE_CSRK);

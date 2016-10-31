@@ -384,8 +384,13 @@ void user_init()
 		CLK16M_UART9600;
 
 	uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
+
+#if TELINK_SPP_MODULE
+	blc_register_hci_handler(blc_rx_from_uart,blc_hci_tx_to_uart);//telink_spp
+	//
+#else if FLYCO_SPP_MODULE
 	blc_register_hci_handler (flyco_blc_rx_from_uart, flyco_blc_tx_to_uart);//flyco_spp
-	//blc_register_hci_handler(blc_rx_from_uart,blc_hci_tx_to_uart);//telink_spp
+#endif
 
 	/** smp test **/
 	smpRegisterCbInit();

@@ -39,6 +39,9 @@ extern "C" {
 #define BLE_EVK                   0
 #define BLE_FLYCO                 1//FLYCO project add
 
+#define TELINK_SPP_MODULE         1//TELINK SPP TEST DEMO
+#define FLYCO_SPP_MODULE          0//FLYCO SPP TEST DEMO
+
 #if BLE_EVK
 // LED
 #define LED1                  GPIO_PA1 //First LED in Demo EVK
