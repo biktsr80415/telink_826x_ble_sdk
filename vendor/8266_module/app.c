@@ -14,9 +14,7 @@
 #include "../../proj/drivers/adc.h"
 
 
-#if (HCI_ACCESS==HCI_USE_UART)
 #include "../../proj/drivers/uart.h"
-#endif
 
 #define				CFG_ADR_MAC				0x76000
 #define 			CUST_CAP_INFO_ADDR		0x77000
@@ -106,34 +104,6 @@ u8  user_task_ongoing_flg;
 u32 stuckKey_keyPressTime;
 #endif
 
-void	task_audio (void)
-{
-	static u32 audioProcTick = 0;
-	if(clock_time_exceed(audioProcTick, 5000)){
-		audioProcTick = clock_time();
-	}
-	else{
-		return;
-	}
-
-
-	extern  u8 blt_busy;
-	///////////////////////////////////////////////////////////////
-	log_event(TR_T_audioTask);
-	proc_mic_encoder ();		//about 1.2 ms @16Mhz clock
-
-	//////////////////////////////////////////////////////////////////
-	if (blt_fifo_num() < 8)
-	{
-		int *p = mic_encoder_data_buffer ();
-		if (p)					//around 3.2 ms @16MHz clock
-		{
-			log_event (TR_T_audioData);
-			bls_att_pushNotifyData (AUDIO_HANDLE_MIC, (u8*)p, ADPCM_PACKET_LEN);
-		}
-	}
-}
-
 
 void	conn_para_update_req_proc (u8 e, u8 *p)
 {
@@ -177,58 +147,10 @@ void	task_connect (u8 e, u8 *p)
 }
 
 
-/////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////
-
-
-//This function process ...
-void deep_wakeup_proc(void)
-{
-#if(DEEPBACK_FAST_KEYSCAN_ENABLE)
-	//if deepsleep wakeup is wakeup by GPIO(key press), we must quickly scan this
-	//press, hold this data to the cache, when connection established OK, send to master
-	//deepsleep_wakeup_fast_keyscan
-	if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG){
-		if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON,1) && kb_event.cnt){
-			deepback_key_state = DEEPBACK_KEY_CACHE;
-			key_not_released = 1;
-			memcpy(&kb_event_cache,&kb_event,sizeof(kb_event));
-		}
-	}
-#endif
-}
-
-
-signed char mouse_data_add[4]={0,20,20,0};
-signed char mouse_data_minus[4]={0,-20,-20,0};
-
-
 static u8 key_voice_press = 0;
 static u8 ota_is_working = 0;
 static u32 key_voice_pressTick = 0;
 
-
-void deepback_pre_proc(int *det_key)
-{
-#if 0
-	// to handle deepback key cache
-	extern u32 blt_conn_start_tick; //ble connect establish time
-	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blt_state == BLT_LINK_STATE_CONN \
-			&& clock_time_exceed(blt_conn_start_tick,25000)){
-
-		memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
-		*det_key = 1;
-
-		if(key_not_released || kb_event_cache.keycode[0] == VK_M){  //no need manual release
-			deepback_key_state = DEEPBACK_KEY_IDLE;
-		}
-		else{  //need manual release
-			deepback_key_tick = clock_time();
-			deepback_key_state = DEEPBACK_KEY_WAIT_RELEASE;
-		}
-	}
-#endif
-}
 
 void deepback_post_proc(void)
 {
@@ -343,22 +265,6 @@ void blt_system_power_optimize(void)  //to lower system power
 }
 
 
-//shut down some io before entry suspend,in case of io leakage
-//restore them after suspend wakeup
-//PC3:bias,if not shut down,150 uA leakage at suspend state
-
-void io_isolate_before_suspend(void)
-{
-
-}
-
-void restore_io_after_suspend(void)
-{
-
-}
-
-
-
 void rf_customized_param_load(void)
 {
 	  //flash 0x77000 customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
@@ -396,47 +302,6 @@ void user_init()
 	reg_irq_src = FLD_IRQ_GPIO_EN;
 #endif
 
-#if (BLE_AUDIO_ENABLE)
-	//buffer_mic set must before audio_init !!!
-	config_mic_buffer ((u32)buffer_mic, TL_MIC_BUFFER_SIZE);
-
-	#if (BLE_DMIC_ENABLE)  //Dmic config
-		/////////////// DMIC: PA0-data, PA1-clk, PA3-power ctl
-		gpio_set_func(GPIO_PA0, AS_DMIC);
-		*(volatile unsigned char  *)0x8005b0 |= 0x01;  //PA0 as DMIC_DI
-		gpio_set_func(GPIO_PA1, AS_DMIC);
-
-		gpio_set_func(GPIO_PA3, AS_GPIO);
-		gpio_set_input_en(GPIO_PA3, 1);
-		gpio_set_output_en(GPIO_PA3, 1);
-		gpio_write(GPIO_PA3, 0);
-
-		Audio_Init(1, 0, DMIC, 26, 4, R64|0x10);  //16K
-		Audio_InputSet(1);
-	#else  //Amic config
-		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
-		#if TL_MIC_32K_FIR_16K
-			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				Audio_Init( 1, 0, AMIC, 47, 4, R2|0x10);
-			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				Audio_Init( 1,0, AMIC,30,16,R2|0x10);
-			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				Audio_Init( 1, 0, AMIC, 65, 15, R3|0x10);
-			#endif
-		#else
-			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				Audio_Init( 1,0, AMIC,18,8,R5|0x10);
-			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				Audio_Init( 1,0, AMIC,65,15,R3|0x10);
-			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				Audio_Init( 1,0, AMIC,65,15,R6|0x10);
-			#endif
-		#endif
-	#endif
-
-	Audio_FineTuneSampleRate(3);//reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
-	Audio_InputSet(1);//audio input set, ignore the input parameter
-#endif
 
 //	adc_BatteryCheckInit(2);///add by Q.W
 
@@ -495,23 +360,16 @@ void user_init()
 	device_led_init(GPIO_LED, 1);
 
 	advertise_begin_tick = clock_time();
-#if (HCI_ACCESS==HCI_USE_USB)
-	//usb_bulk_drv_init (0);
-	//blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
-#else	//uart
 	//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
-	//todo:uart init here
 	rx_uart_r_index = 0;
 	rx_uart_w_index = 0;
 	gpio_set_func(GPIO_UTX, AS_UART);
 	gpio_set_func(GPIO_URX, AS_UART);
 	gpio_set_input_en(GPIO_UTX, 1);
 	gpio_set_input_en(GPIO_URX, 1);
-//	uart_io_init(UART_GPIO_8267_PB2_PB3);
 	CLK16M_UART115200;
 	uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
 	blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);
-#endif
 
 	/** smp test **/
 	smpRegisterCbInit();
@@ -532,11 +390,6 @@ void main_loop ()
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////
-#if (BLE_AUDIO_ENABLE)
-	task_audio();
-#endif
-
-
 	proc_keyboard (0,0);
 
 

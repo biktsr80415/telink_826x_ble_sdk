@@ -7,25 +7,10 @@
 #include "../../proj_lib/ble/blt_config.h"
 
 extern void user_init();
-extern void deep_wakeup_proc(void);
 
 _attribute_ram_code_ void irq_handler(void)
 {
-#if (BLE_IR_ENABLE)
-	u32 src = reg_irq_src;
-	if(src & FLD_IRQ_TMR1_EN){
-		ir_irq_send();
-		reg_tmr_sta = FLD_TMR_STA_TMR1;
-	}
-
-	if(src & FLD_IRQ_TMR2_EN){
-		ir_repeat_handle();
-		reg_tmr_sta = FLD_TMR_STA_TMR2;
-	}
-#endif
-
 	irq_blt_slave_handler ();
-#if (HCI_ACCESS==HCI_USE_UART)
     unsigned char irqS = uart_IRQSourceGet();
     if(irqS & BIT(0))	//rx
     {
@@ -37,7 +22,6 @@ _attribute_ram_code_ void irq_handler(void)
     {
         uart_clr_tx_busy_flag();
     }
-#endif
 }
 
 int main (void) {
@@ -47,8 +31,6 @@ int main (void) {
 	set_tick_per_us(CLOCK_SYS_CLOCK_HZ/1000000);
 
 	gpio_init();
-
-	deep_wakeup_proc();
 
 	rf_drv_init(CRYSTAL_TYPE);
 
