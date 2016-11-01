@@ -32,34 +32,7 @@ extern "C" {
 
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			0
-#define BLE_REMOTE_SECURITY_ENABLE      1
-#define BLE_IR_ENABLE					0
-#define HID_MOUSE_ATT_ENABLE			0
-#define BLE_AUDIO_ENABLE				1
-#define TELIK_SPP_SERVICE_ENABLE		0
-
-
-////////////////////////// AUDIO CONFIG /////////////////////////////
-#if (BLE_AUDIO_ENABLE)
-#define BLE_DMIC_ENABLE					0  //0: Amic   1: Dmic
-#define	ADPCM_PACKET_LEN				128
-#define TL_MIC_ADPCM_UNIT_SIZE			248
-
-#if BLE_DMIC_ENABLE
-	#define	TL_MIC_32K_FIR_16K			0
-#else
-	#define	TL_MIC_32K_FIR_16K			1
-#endif
-
-
-#if TL_MIC_32K_FIR_16K
-	#define	TL_MIC_BUFFER_SIZE				1984
-#else
-	#define	TL_MIC_BUFFER_SIZE				992
-#endif
-
-#endif  //end of BLE_AUDIO_ENABLE
-
+#define TELIK_SPP_SERVICE_ENABLE		1
 
 
 //////////////////////////// KEYSCAN/MIC  GPIO //////////////////////////////////

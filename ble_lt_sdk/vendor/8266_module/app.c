@@ -23,19 +23,10 @@
 //
 ////////////////////////////////////////////////////////////////////
 //		handle 0x0e: consumper report
-#if HID_MOUSE_ATT_ENABLE	//initial the define is closed
 
-#define 		HID_HANDLE_MOUSE_REPORT				24
-#define			HID_HANDLE_CONSUME_REPORT			28
-#define			HID_HANDLE_KEYBOARD_REPORT			32
-#define			AUDIO_HANDLE_MIC					50
-
-
-#else 
 #define			HID_HANDLE_CONSUME_REPORT			21
 #define			HID_HANDLE_KEYBOARD_REPORT			25
 #define			AUDIO_HANDLE_MIC					43
-#endif 
 
 u16 BattValue[10] = {0};
 

@@ -32,7 +32,6 @@ extern "C" {
 
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			0
-#define HID_MOUSE_ATT_ENABLE			0
 #define TELIK_SPP_SERVICE_ENABLE		1
 
 

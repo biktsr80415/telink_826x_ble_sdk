@@ -15,7 +15,7 @@
 /**********************************************************************
  * GLOBAL DEFINITION
  */
-#define		BLT_SECURITY_ENABLE				1
+#define		BLT_SECURITY_ENABLE				0
 
 #if (BLT_SECURITY_ENABLE)
 
@@ -66,6 +66,7 @@
  * */
 void smpRegisterCbInit()
 {
+#if (BLT_SECURITY_ENABLE)
 	//smp function enable.
 	blt_set_secReq_enable(BLT_SECURITY_ENABLE);
 
@@ -84,4 +85,5 @@ void smpRegisterCbInit()
 	blt_smp_setIoCapability (BLT_SMP_IO_CAPABILTY);
 	blt_smp_enableAuthMITM (BLT_SMP_MITM_EN, BLT_SMP_KEY);
 	blt_smp_enableBonding (BLT_SMP_BOND_FLAG);
+#endif
 }

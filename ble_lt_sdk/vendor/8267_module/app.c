@@ -5,7 +5,7 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ll_whitelist.h"
 #include "../../proj/drivers/keyboard.h"
-#include "../common/tl_audio.h"
+//#include "../common/tl_audio.h"
 #include "../common/blt_led.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj/mcu/pwm.h"
@@ -22,19 +22,9 @@
 //
 ////////////////////////////////////////////////////////////////////
 //		handle 0x0e: consumper report
-#if HID_MOUSE_ATT_ENABLE	//initial the define is closed
-
-#define 		HID_HANDLE_MOUSE_REPORT				24
-#define			HID_HANDLE_CONSUME_REPORT			28
-#define			HID_HANDLE_KEYBOARD_REPORT			32
-#define			AUDIO_HANDLE_MIC					50
-
-
-#else 
 #define			HID_HANDLE_CONSUME_REPORT			21
 #define			HID_HANDLE_KEYBOARD_REPORT			25
 #define			AUDIO_HANDLE_MIC					43
-#endif 
 
 u16 BattValue[10] = {0};
 
@@ -75,29 +65,6 @@ const led_cfg_t led_cfg[] = {
 
 
 u32	advertise_begin_tick;
-u8	ui_mic_enable = 0;
-
-
-int lowBattDet_enable = 0;
-void		ui_enable_mic (u8 en)
-{
-	ui_mic_enable = en;
-
-	gpio_set_output_en (GPIO_PC3, en);		//AMIC Bias output
-	gpio_write (GPIO_PC3, en);
-
-	device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
-
-
-	if(en){  //audio on
-		lowBattDet_enable = 1;
-		battery2audio();////switch auto mode
-	}
-	else{  //audio off
-		audio2battery();////switch manual mode
-		lowBattDet_enable = 0;
-	}
-}
 
 
 extern kb_data_t	kb_event;
@@ -121,40 +88,6 @@ u8  user_task_ongoing_flg;
 #if (STUCK_KEY_PROCESS_ENABLE)
 u32 stuckKey_keyPressTime;
 #endif
-
-void	task_audio (void)
-{
-	static u32 audioProcTick = 0;
-	if(clock_time_exceed(audioProcTick, 5000)){
-		audioProcTick = clock_time();
-	}
-	else{
-		return;
-	}
-
-
-	extern  u8 blt_busy;
-	//if (!ui_mic_enable || blt_busy)
-	if (!ui_mic_enable)
-	{
-		return;
-	}
-
-	///////////////////////////////////////////////////////////////
-	log_event(TR_T_audioTask);
-	proc_mic_encoder ();		//about 1.2 ms @16Mhz clock
-
-	//////////////////////////////////////////////////////////////////
-	if (bls_ll_getTxFifoNumber() < 8)
-	{
-		int *p = mic_encoder_data_buffer ();
-		if (p)					//around 3.2 ms @16MHz clock
-		{
-			log_event (TR_T_audioData);
-			bls_att_pushNotifyData (AUDIO_HANDLE_MIC, (u8*)p, ADPCM_PACKET_LEN);
-		}
-	}
-}
 
 
 void	conn_para_update_req_proc (u8 e, u8 *p)
@@ -182,10 +115,6 @@ void 	ble_remote_terminate(u8 e,u8 *p) //*p is terminate reason
 	 //user has push terminate pkt to ble TX buffer before deepsleep
 	if(sendTerminate_before_enterDeep == 1){
 		sendTerminate_before_enterDeep = 2;
-	}
-
-	if(ui_mic_enable){
-		ui_enable_mic (0);
 	}
 
 	advertise_begin_tick = clock_time();
@@ -221,36 +150,10 @@ void deep_wakeup_proc(void)
 }
 
 
-signed char mouse_data_add[4]={0,20,20,0};
-signed char mouse_data_minus[4]={0,-20,-20,0};
-
-
 static u8 key_voice_press = 0;
 static u8 ota_is_working = 0;
 static u32 key_voice_pressTick = 0;
 
-
-void deepback_pre_proc(int *det_key)
-{
-#if 0
-	// to handle deepback key cache
-	extern u32 blt_conn_start_tick; //ble connect establish time
-	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blt_state == BLT_LINK_STATE_CONN \
-			&& clock_time_exceed(blt_conn_start_tick,25000)){
-
-		memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
-		*det_key = 1;
-
-		if(key_not_released || kb_event_cache.keycode[0] == VK_M){  //no need manual release
-			deepback_key_state = DEEPBACK_KEY_IDLE;
-		}
-		else{  //need manual release
-			deepback_key_tick = clock_time();
-			deepback_key_state = DEEPBACK_KEY_WAIT_RELEASE;
-		}
-	}
-#endif
-}
 
 void deepback_post_proc(void)
 {
@@ -290,11 +193,7 @@ void key_change_proc(void)
 		key_not_released = 1;
 		if (key == VK_M)
 		{
-			if(ui_mic_enable){
-				//adc_clk_powerdown();
-				ui_enable_mic (0);
-			}
-			else{ //if voice not on, mark voice key press tick
+			{ //if voice not on, mark voice key press tick
 				key_voice_press = 1;
 				key_voice_pressTick = clock_time();
 			}
@@ -341,18 +240,11 @@ void proc_keyboard (u8 e, u8 *p)
 	
 
 	 //long press voice 1 second
-	if(key_voice_press && !ui_mic_enable && clock_time_exceed(key_voice_pressTick,1000000)){
+	if(key_voice_press && clock_time_exceed(key_voice_pressTick,1000000)){
 		key_voice_press = 0;
-		ui_enable_mic (1);
 	}
 }
 
-void blt_pm_proc(void)
-{
-#if(BLE_REMOTE_PM_ENABLE)
-
-#endif  //END of  BLE_REMOTE_PM_ENABLE
-}
 
 void blt_system_power_optimize(void)  //to lower system power
 {
@@ -368,22 +260,6 @@ void blt_system_power_optimize(void)  //to lower system power
 #endif
 
 }
-
-
-//shut down some io before entry suspend,in case of io leakage
-//restore them after suspend wakeup
-//PC3:bias,if not shut down,150 uA leakage at suspend state
-
-void io_isolate_before_suspend(void)
-{
-
-}
-
-void restore_io_after_suspend(void)
-{
-
-}
-
 
 
 void rf_customized_param_load(void)
@@ -423,50 +299,8 @@ void user_init()
 	reg_irq_src = FLD_IRQ_GPIO_EN;
 #endif
 
-#if (BLE_AUDIO_ENABLE)
-	//buffer_mic set must before audio_init !!!
-	config_mic_buffer ((u32)buffer_mic, TL_MIC_BUFFER_SIZE);
 
-	#if (BLE_DMIC_ENABLE)  //Dmic config
-		/////////////// DMIC: PA0-data, PA1-clk, PA3-power ctl
-		gpio_set_func(GPIO_PA0, AS_DMIC);
-		*(volatile unsigned char  *)0x8005b0 |= 0x01;  //PA0 as DMIC_DI
-		gpio_set_func(GPIO_PA1, AS_DMIC);
-
-		gpio_set_func(GPIO_PA3, AS_GPIO);
-		gpio_set_input_en(GPIO_PA3, 1);
-		gpio_set_output_en(GPIO_PA3, 1);
-		gpio_write(GPIO_PA3, 0);
-
-		Audio_Init(1, 0, DMIC, 26, 4, R64|0x10);  //16K
-		Audio_InputSet(1);
-	#else  //Amic config
-		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
-		#if TL_MIC_32K_FIR_16K
-			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				Audio_Init( 1, 0, AMIC, 47, 4, R2|0x10);
-			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				Audio_Init( 1,0, AMIC,30,16,R2|0x10);
-			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				Audio_Init( 1, 0, AMIC, 65, 15, R3|0x10);
-			#endif
-		#else
-			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				Audio_Init( 1,0, AMIC,18,8,R5|0x10);
-			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				Audio_Init( 1,0, AMIC,65,15,R3|0x10);
-			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				Audio_Init( 1,0, AMIC,65,15,R6|0x10);
-			#endif
-		#endif
-	#endif
-
-	Audio_FineTuneSampleRate(3);//reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
-	Audio_InputSet(1);//audio input set, ignore the input parameter
-#endif
-
-	adc_BatteryCheckInit(2);///add by Q.W
-
+//	adc_BatteryCheckInit(2);///add by Q.W
 
 
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
@@ -554,14 +388,8 @@ void main_loop ()
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////
-#if (BLE_AUDIO_ENABLE)
-	task_audio();
-#endif
-
-
 	proc_keyboard (0,0);
 
 
 	device_led_process();
-	blt_pm_proc();
 }
