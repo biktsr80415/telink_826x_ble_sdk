@@ -3,7 +3,7 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 
-#if(1)
+#if(__PROJECT_8266_MODULE__)
 
 typedef struct
 {
