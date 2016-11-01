@@ -71,9 +71,9 @@ const u16 my_SppDataServer2ClientUUID		= TELINK_SPP_DATA_SERVER2CLIENT;
 const u16 my_SppDataClient2ServiceUUID		= TELINK_SPP_DATA_CLIENT2SERVER;
 const u16 my_SppNameUUID		= GATT_UUID_CHAR_USER_DESC;
 const u8  my_SppName[] = {'m', 'y', 'S', 'P', 'P'};
-const u16 TelinkSppServiceUUID       = TELINK_SPP_UUID_SERVICE;
-const u16 TelinkSppDataServer2ClientUUID     = TELINK_SPP_DATA_SERVER2CLIENT;
-const u16 TelinkSppDataClient2ServiceUUID     = TELINK_SPP_DATA_CLIENT2SERVER;
+u8 TelinkSppServiceUUID[16]	      = TELINK_SPP_UUID_SERVICE;
+u8 TelinkSppDataServer2ClientUUID[16]    = TELINK_SPP_DATA_SERVER2CLIENT;
+u8 TelinkSppDataClient2ServerUUID[16]    = TELINK_SPP_DATA_CLIENT2SERVER;
 
 // Spp data from Server to Client characteristic variables
 static u8 SppDataServer2ClientProp = CHAR_PROP_READ | CHAR_PROP_NOTIFY;
@@ -133,7 +133,7 @@ const attribute_t my_Attributes[] = {
 
 ////////////////////////////////////// SPP Service /////////////////////////////////////////////////////
 #if (TELIK_SPP_SERVICE_ENABLE)
-	{8,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&TelinkSppServiceUUID), 0},
+	{8,ATT_PERMISSIONS_READ,16,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&TelinkSppServiceUUID), 0},
 
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataServer2ClientProp), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,16,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataServer2ClientUUID), (u8*)(SppDataServer2ClientData), 0},	//value
@@ -141,7 +141,7 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPS2CDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPS2CDescriptor)},
 
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataClient2ServerProp), 0},				//prop
-	{0,ATT_PERMISSIONS_RDWR,16,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataClient2ServiceUUID), (u8*)(SppDataClient2ServerData), &module_onReceiveData},	//value
+	{0,ATT_PERMISSIONS_RDWR,16,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataClient2ServerUUID), (u8*)(SppDataClient2ServerData), &module_onReceiveData},	//value
 	{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPC2SDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPC2SDescriptor)},
 #endif
 };
