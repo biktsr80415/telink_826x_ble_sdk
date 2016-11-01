@@ -1,9 +1,10 @@
+#if(__PROJECT_FLYCO_8266_MODULE__)
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/ble/ble_ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
+#include "flyco_spp.h"
 
-#if(__PROJECT_8266_MODULE__)
 
 typedef struct
 {
@@ -50,30 +51,27 @@ gap_periConnectParams_t my_periConnParameters = {20, 40, 0, 1000};
 
 extern u8  ble_devName[MAX_DEV_NAME_LEN];
 
-// Device Name Characteristic Properties
-static u8 my_PnPCharacter = CHAR_PROP_READ;
+//////////////////////////Ota ///////////////////////////////
+const u16 my_OtaServiceUUID = 0x1912;
+const u16 my_OtaUUID		= 0x2B12;
 
-
-const u8	my_PnPtrs [] = {0x02, 0x8a, 0x24, 0x66, 0x82, 0x01, 0x00};
-
-//////////////////////// Battery /////////////////////////////////////////////////
-const u16 my_batServiceUUID       			= SERVICE_UUID_BATTERY;
-static u8 my_batProp 						= CHAR_PROP_READ | CHAR_PROP_NOTIFY;
-const u16 my_batCharUUID       				= CHARACTERISTIC_UUID_BATTERY_LEVEL;
-u8 		  my_batVal[1] 						= {99};
-
-/////////////////////////////////////////////////////////
 const u16 userdesc_UUID		= GATT_UUID_CHAR_USER_DESC;
+
+static u8 my_OtaProp		= CHAR_PROP_READ | CHAR_PROP_NOTIFY | CHAR_PROP_WRITE_WITHOUT_RSP;
+
+u8	 	my_OtaData 		= 0x00;
+
+const u8  my_OtaName[] = {'O', 'T', 'A'};
+
+u8 ota_hdl = 18;//ATT TABLE OTA index:18,Handle value
 
 /////////////////////////////////////////spp/////////////////////////////////////
 #if (TELIK_SPP_SERVICE_ENABLE)
-const u16 my_SppDataServer2ClientUUID		= TELINK_SPP_DATA_SERVER2CLIENT;
-const u16 my_SppDataClient2ServiceUUID		= TELINK_SPP_DATA_CLIENT2SERVER;
-const u16 my_SppNameUUID		= GATT_UUID_CHAR_USER_DESC;
-const u8  my_SppName[] = {'m', 'y', 'S', 'P', 'P'};
-const u16 TelinkSppServiceUUID       = TELINK_SPP_UUID_SERVICE;
-const u16 TelinkSppDataServer2ClientUUID     = TELINK_SPP_DATA_SERVER2CLIENT;
-const u16 TelinkSppDataClient2ServiceUUID     = TELINK_SPP_DATA_CLIENT2SERVER;
+const u16 my_SppNameUUID		              = GATT_UUID_CHAR_USER_DESC;
+const u8  my_SppName[] = {'F', 'L', 'Y', 'C', 'O', ' ', 'F', 'H', '7', '0', '0', '5', '/', '6', '/', '8', 0x20, 0x00};
+const u16 TelinkSppServiceUUID                = 0xff00;
+const u16 TelinkSppDataServer2ClientUUID      = 0xff02;
+const u16 TelinkSppDataClient2ServiceUUID     = 0xff01;
 
 // Spp data from Server to Client characteristic variables
 static u8 SppDataServer2ClientProp = CHAR_PROP_READ | CHAR_PROP_NOTIFY;
@@ -86,28 +84,34 @@ static u8 SppDataClient2ServerProp = CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RS
 u8  SppDataClient2ServerData[ATT_MTU_SIZE - 3];
 
 //SPP data descriptor
-const u8 TelinkSPPS2CDescriptor[] = "Telink SPP: Module->Phone";
-const u8 TelinkSPPC2SDescriptor[] = "Telink SPP: Phone->Module";
+const u8 TelinkSPPS2CDescriptor[] = "FLYCO: S2C";
+const u8 TelinkSPPC2SDescriptor[] = "FLYCO: C2S";
 
-void module_onReceiveData(rf_packet_att_write_t *p)
+u8 spp_s2c_hdl = 10;//ATT TABLE OTA index:12,Handle value
+u8 spp_c2s_hdl = 14;//ATT TABLE OTA index:14,Handle value
+
+#define				HC_DATA					0xff0b
+//Master write callback function
+void module_onReceiveMasterData(rf_packet_att_write_t *p)
 {
 	u8 len = p->l2capLen - 3;
 	if(len > 0)
 	{
+#if TELINK_SPP_MODULE
 		u32 header;
 		header = 0x0730;		//data received event
 		header |= (3 << 16) | (1<<24);
 		blc_hci_send_data(header, &p->value, len);		//HCI_FLAG_EVENT_TLK_MODULE
+#else if FLYCO_SPP_MODULE
+		flyco_uart_push_fifo(HC_DATA, len, &p->value);
+#endif
 	}
 }
 #endif
-// Include attribute (Battery service)
-static u16 include[3] = {0x0026, 0x0028, SERVICE_UUID_BATTERY};
-
 
 // TM : to modify
 const attribute_t my_Attributes[] = {
-	{22,0,0,0,0,0},	// total num of attribute
+	{19,0,0,0,0,0},	// total num of attribute
 
 	// 0001 - 0007  gap
 	{7,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
@@ -118,32 +122,24 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_periConnParamChar), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_periConnParameters),(u8*)(&my_periConnParamUUID), 	(u8*)(&my_periConnParameters), 0},
 
-
-	// 0008 - 000a  device Information Service
-	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_devServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_PnPCharacter), 0},
-	{0,ATT_PERMISSIONS_READ,2,sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},
-
-
-	////////////////////////////////////// 31. Battery Service /////////////////////////////////////////////////////
-	// 000b - 000d
-	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_batServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_batProp), 0},				//prop
-	{0,ATT_PERMISSIONS_READ,2,sizeof(my_batVal),(u8*)(&my_batCharUUID), 	(u8*)(my_batVal), 0},	//value
-
-////////////////////////////////////// SPP Service /////////////////////////////////////////////////////
-#if (TELIK_SPP_SERVICE_ENABLE)
+    // 0008 - 000F  spp Service
 	{8,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&TelinkSppServiceUUID), 0},
-
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataServer2ClientProp), 0},				//prop
-	{0,ATT_PERMISSIONS_READ,16,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataServer2ClientUUID), (u8*)(SppDataServer2ClientData), 0},	//value
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataServer2ClientProp), 0},//prop
+	// serice to client
+	{0,ATT_PERMISSIONS_READ,2,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataServer2ClientUUID), (u8*)(SppDataServer2ClientData), 0},	//value
 	{0,ATT_PERMISSIONS_RDWR,2,2,(u8*)&clientCharacterCfgUUID,(u8*)(&SppDataServer2ClientDataCCC)},
 	{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPS2CDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPS2CDescriptor)},
-
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataClient2ServerProp), 0},				//prop
-	{0,ATT_PERMISSIONS_RDWR,16,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataClient2ServiceUUID), (u8*)(SppDataClient2ServerData), &module_onReceiveData},	//value
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataClient2ServerProp), 0},//prop
+	//client to service
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof(SppDataClient2ServerData),(u8*)(&TelinkSppDataClient2ServiceUUID), (u8*)(SppDataClient2ServerData), &module_onReceiveMasterData},	//value
 	{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPC2SDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPC2SDescriptor)},
-#endif
+
+	// 0010 - 0013  ota Service
+	{4,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_OtaServiceUUID), 0},
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				 //prop
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},//value
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
+
 };
 
 void	my_att_init ()
