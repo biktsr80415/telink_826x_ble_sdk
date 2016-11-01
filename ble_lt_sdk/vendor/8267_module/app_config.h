@@ -28,7 +28,7 @@ extern "C" {
 /////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
 #define HCI_USE_UART	1
 #define HCI_USE_USB		0
-#define HCI_ACCESS		HCI_USE_USB
+#define HCI_ACCESS		HCI_USE_UART
 
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			0
