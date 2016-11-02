@@ -27,12 +27,19 @@
 //////////////////////////////////////////////////////////////////////////////
 u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 
+#if 0 //(TELIK_SPP_SERVICE_ENABLE)
+u8	tbl_advData[] = {
+	 0x05, 0x09, 't', 'M', 'o', 'd',
+	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
+};
+#else
 u8	tbl_advData[] = {
 	 0x05, 0x09, 't', 'M', 'o', 'd',
 	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
 	 0x03, 0x19, 0x80, 0x01, 					// 384, Generic Remote Control, Generic category
 	 0x05, 0x02, 0x12, 0x18, 0x0F, 0x18,		// incomplete list of service class UUIDs (0x1812, 0x180F)
 };
+#endif
 
 u8	tbl_scanRsp [] = {
 		 0x07, 0x09, 't', 'M', 'o', 'd', 'u', 'l',	//scan name " tmodul"
@@ -129,7 +136,6 @@ void proc_keyboard (u8 e, u8 *p)
 		return;
 	}
 
-	DBG_CHN3_TOGGLE;
 
 
 	kb_event.keycode[0] = 0;
@@ -191,7 +197,7 @@ void remote_control_pm_proc(void)
 		ui_task_flg = scan_pin_need || key_not_released || DEVICE_LED_BUSY;
 
 		if(ui_task_flg){
-#if 0
+#if 1
 			extern int key_matrix_same_as_last_cnt;
 			if(key_matrix_same_as_last_cnt > 5){  //key matrix stable can optize
 				bls_pm_setManualLatency( 4 );
@@ -305,7 +311,8 @@ void user_init()
 		gpio_set_input_en(GPIO_URX, 1);
 		CLK16M_UART115200;
 		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
-		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);
+		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler,set your own
+															//in spp.c like rx_from_uart_cb & tx_to_uart_cb
 	#endif
 //	extern void event_handler(u32 h, u8 *para, int n);
 //	bls_event_cb_register(event_handler);		//register event callback

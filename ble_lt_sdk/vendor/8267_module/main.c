@@ -7,7 +7,6 @@
 #include "../../proj_lib/ble/blt_config.h"
 
 extern void user_init();
-extern void deep_wakeup_proc(void);
 
 _attribute_ram_code_ void irq_handler(void)
 {
@@ -34,8 +33,6 @@ int main (void) {
 	set_tick_per_us(CLOCK_SYS_CLOCK_HZ/1000000);
 
 	gpio_init();
-
-	deep_wakeup_proc();
 
 	rf_drv_init(CRYSTAL_TYPE);
 

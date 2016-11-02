@@ -67,10 +67,6 @@ const u16 userdesc_UUID		= GATT_UUID_CHAR_USER_DESC;
 
 /////////////////////////////////////////spp/////////////////////////////////////
 #if (TELIK_SPP_SERVICE_ENABLE)
-const u16 my_SppDataServer2ClientUUID		= TELINK_SPP_DATA_SERVER2CLIENT;
-const u16 my_SppDataClient2ServiceUUID		= TELINK_SPP_DATA_CLIENT2SERVER;
-const u16 my_SppNameUUID		= GATT_UUID_CHAR_USER_DESC;
-const u8  my_SppName[] = {'m', 'y', 'S', 'P', 'P'};
 u8 TelinkSppServiceUUID[16]	      = TELINK_SPP_UUID_SERVICE;
 u8 TelinkSppDataServer2ClientUUID[16]    = TELINK_SPP_DATA_SERVER2CLIENT;
 u8 TelinkSppDataClient2ServerUUID[16]    = TELINK_SPP_DATA_CLIENT2SERVER;
@@ -107,7 +103,11 @@ static u16 include[3] = {0x0026, 0x0028, SERVICE_UUID_BATTERY};
 
 // TM : to modify
 const attribute_t my_Attributes[] = {
-	{22,0,0,0,0,0},	// total num of attribute
+#if (TELIK_SPP_SERVICE_ENABLE)
+	{21,0,0,0,0,0},	// total num of attribute
+#else
+	{13,0,0,0,0,0},	// total num of attribute
+#endif
 
 	// 0001 - 0007  gap
 	{7,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
@@ -133,7 +133,7 @@ const attribute_t my_Attributes[] = {
 
 ////////////////////////////////////// SPP Service /////////////////////////////////////////////////////
 #if (TELIK_SPP_SERVICE_ENABLE)
-	{8,ATT_PERMISSIONS_READ,16,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&TelinkSppServiceUUID), 0},
+	{8,ATT_PERMISSIONS_READ,2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&TelinkSppServiceUUID), 0},
 
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataServer2ClientProp), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,16,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataServer2ClientUUID), (u8*)(SppDataServer2ClientData), 0},	//value
