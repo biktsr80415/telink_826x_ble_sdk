@@ -48,6 +48,11 @@ void uart_clr_tx_busy_flag(){
 
 unsigned char uart_tx_is_busy(){
 #if(UART_CONTINUE_DELAY_EN)
+   if (uart_continue_delay_time && clock_time_exceed(uart_continue_delay_time, (baudrate_set > 100000 ? 800 : 9000)))
+   {
+    	uart_continue_delay_time = 0;
+    	uart_tx_busy_flag = 0;
+   }
     return uart_tx_busy_flag;
 #else
     return (!TXDONE);
@@ -127,12 +132,12 @@ unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc,unsigned c
 	if(en_rx_irq){
 		*(volatile unsigned char  *)0x800521 |= 0x01;//open dma1 interrupt mask
 		*(volatile unsigned char  *)0x800640 |= 0x10;//open dma interrupt mask
-		write_reg8(0x800643,0x01);//enable intterupt
+		//write_reg8(0x800643,0x01);//enable intterupt
 	}
 	if(en_tx_irq){
 		*(volatile unsigned char  *)0x800521 |= 0x02;//open dma1 interrupt mask
 		*(volatile unsigned char  *)0x800640 |= 0x10;//open dma interrupt mask
-		write_reg8(0x800643,0x01);//enable intterupt
+		//write_reg8(0x800643,0x01);//enable intterupt
 	}
 	return 1;
 
@@ -171,23 +176,14 @@ unsigned char uart_Send_kma(unsigned char* addr){
         return 0;
     }
 
-    unsigned long t_timeout = clock_time();
-    while(uart_tx_is_busy() && (!clock_time_exceed(t_timeout, 400*1000))){
-        #if(MODULE_WATCHDOG_ENABLE)
-		wd_clear();
-        #endif
-
-        #if(UART_CONTINUE_DELAY_EN)
-        if(uart_continue_delay_time && clock_time_exceed(uart_continue_delay_time, (baudrate_set > 100000 ? 800 : 9000))){
-            uart_continue_delay_time = 0;    // minimum delay :  115200 delay 600us;  9600 delay 7200us
-            uart_tx_busy_flag = 0;
-        }
-        #endif
+    if (uart_tx_is_busy ())
+    {
+    	return 0;
     }
 
     uart_set_tx_busy_flag();
-    memcpy(tx_buff, addr, len+4);
-	write_reg16(0x800504,(unsigned short)((unsigned int)tx_buff));//packet data, start address is sendBuff+1
+
+    write_reg16(0x800504, (u16)(u32)addr);//packet data, start address is sendBuff+1
 
 	STARTTX;
 

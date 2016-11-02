@@ -3,6 +3,8 @@
 
 #if (__PROJECT_8266_MASTER_KMA_DONGLE__)
 	#include "../8267_master_kma_dongle/app_config.h"
+#elif (__PROJECT_8266_HOST_DONGLE__)
+	#include "../8266_host_dongle/app_config.h"
 #elif (__PROJECT_8267_MASTER_KMA_DONGLE__)
 	#include "../8267_master_kma_dongle/app_config.h"
 #elif (__PROJECT_8267_MASTER__)
