@@ -21,12 +21,32 @@
 #include "../../proj/drivers/uart.h"
 #endif
 
+//void att_req_write_cmd (u8 *p, u16 h, u8 *pd, int n)
 
 #define				ATT_DB_UUID16_NUM		20
 #define				ATT_DB_UUID128_NUM		8
 ////////////////////////////////////////////////////////////////////
+u16	conn_handle;					//	handle of  connection
+u8 	conn_char_handler[8][8] = {{0}};
+u8	peer_type;
+u8	peer_mac[12];
+
 u8		dev_mac[12] = {0x00, 0xff, 0xff, 0xff, 0xff, 0xff,  0xc4,0xe1,0xe2,0x63, 0xe4,0xc7};
 s8		dev_rssi_th = 0x7f;
+
+u32		spp_num = 0;
+u16		spp_conn = 0;
+u16		spp_handle = 0;
+u32		spp_err = 0;
+
+void app_send_spp_status ()
+{
+	u8 dat[16];
+	dat[0] = 0;
+	memcpy (dat + 1, &spp_num, 4);
+	memcpy (dat + 5, &spp_err, 4);
+	blc_hci_send_data (0x7e2 | HCI_FLAG_EVENT_TLK_MODULE, dat, 9);
+}
 
 int app_hci_cmd_from_usb (void)
 {
@@ -39,6 +59,18 @@ int app_hci_cmd_from_usb (void)
 		{
 			dev_rssi_th = buff[4];
 			memcpy (dev_mac, buff + 5, 12);
+		}
+		else if (buff[0] == 0xe1 && buff[1] == 0xff)		//spp test data from host to slave: write_cmd
+		{
+			memcpy (&spp_conn, buff + 4, 2);
+			spp_handle = conn_char_handler[spp_conn & 7][7];
+			memcpy (&spp_num, buff + 6, 4);
+			spp_err = 0;
+
+		}
+		else if (buff[0] == 0xe2 && buff[1] == 0xff)		//spp test status: spp_num & spp_err
+		{
+			app_send_spp_status ();
 		}
 		else
 		{
@@ -98,6 +130,30 @@ void	att_mic (u16 conn, u8 *p)
 	memcpy (buff_mic_adpcm, p, MIC_ADPCM_FRAME_SIZE);
 	abuf_mic_add ((u32 *)buff_mic_adpcm);
 }
+
+void	att_spp_read (u16 conn, u8 *p, int n)
+{
+	static u32 spp_read = 0;
+	u32 seq;
+	memcpy (&seq, p, 4);
+	if (spp_read != seq)
+	{
+		spp_err++;
+	}
+	else
+	{
+		for (int i=4; i<n; i++)
+		{
+			if ((u8)(p[0] + i) != p[i])
+			{
+				spp_err++;
+				break;
+			}
+		}
+	}
+	spp_read = seq - 1;
+}
+
 //////////////////////// mouse handle ////////////////////////////////////////
 
 #define KEY_MASK_PRESS		0x10
@@ -326,14 +382,12 @@ typedef void (*main_service_t) (void);
 
 main_service_t		main_service = 0;
 
-u16	conn_handle;					//	handle of  connection
-u8 	conn_char_handler[8][8] = {{0}};
-u8	peer_type;
-u8	peer_mac[12];
-
 static const u8 my_MicUUID[16]		= TELINK_MIC_DATA;
 static const u8 my_SpeakerUUID[16]	= TELINK_SPEAKER_DATA;
 static const u8 my_OtaUUID[16]		= TELINK_SPP_DATA_OTA;
+static const u8 my_SppS2CUUID[16]		= TELINK_SPP_DATA_SERVER2CLIENT;
+static const u8 my_SppC2SUUID[16]		= TELINK_SPP_DATA_CLIENT2SERVER;
+
 void app_service_discovery ()
 {
 	att_db_uuid16_t 	db16[ATT_DB_UUID16_NUM];
@@ -348,6 +402,7 @@ void app_service_discovery ()
 		conn_char_handler[h][1] = blm_att_findHandleOfUuid128 (db128, my_SpeakerUUID);		//Speaker
 		conn_char_handler[h][2] = blm_att_findHandleOfUuid128 (db128, my_OtaUUID);			//OTA
 
+
 		conn_char_handler[h][3] = blm_att_findHandleOfUuid16 (db16, CHARACTERISTIC_UUID_HID_REPORT,
 					HID_REPORT_ID_CONSUME_CONTROL_INPUT | (HID_REPORT_TYPE_INPUT<<8));		//consume report
 
@@ -357,6 +412,8 @@ void app_service_discovery ()
 		conn_char_handler[h][5] = blm_att_findHandleOfUuid16 (db16, CHARACTERISTIC_UUID_HID_REPORT,
 					HID_REPORT_ID_MOUSE_INPUT | (HID_REPORT_TYPE_INPUT<<8));				//mouse report
 
+		conn_char_handler[h][6] = blm_att_findHandleOfUuid128 (db128, my_SppS2CUUID);			//notify
+		conn_char_handler[h][7] = blm_att_findHandleOfUuid128 (db128, my_SppC2SUUID);			//write_cmd
 		//-----	save to whitelist table & flash -------------------------
 
 		st_ll_conn_master_t *pm = blm_ll_getConnection (conn_handle);
@@ -367,7 +424,7 @@ void app_service_discovery ()
 			save_param.rsvd = conn_char_handler[h][0] ? 8 : 32;
 			save_param.peer_addr_type = pm->peer_adr_type;
 			memcpy (save_param.peer_addr, pm->peer_adr, 6 );
-			memcpy (&save_param.peer_random, conn_char_handler[h], 6);
+			memcpy (&save_param.peer_random, conn_char_handler[h], 8);
 			smp_param_nv (&save_param, TYPE_WHITELIST);
 			blm_ll_disconnect (conn_handle | BLM_CONN_HANDLE, HCI_ERR_REMOTE_USER_TERM_CONN);
 		}
@@ -438,6 +495,16 @@ int app_l2cap_handler (u16 conn, u8 *raw_pkt)
 		app_ota++;
 		att_keyboard_media (conn, pn->value);
 	}
+
+	//---------------	OTA ----------------------------------
+	else if (conn_char_handler[conn][6] == pn->handle)		//SPP data
+	{
+		static u32 app_spp;
+		app_spp++;
+		att_spp_read (conn, pn->value, pn->l2capLen - 3);
+	}
+
+
 	return 0;
 }
 
@@ -506,7 +573,7 @@ void app_event_callback (u32 h, u8 *p, int n)
 					smp_param_save_t param;
 					smp_param_loadByAddr (pc->peer_adr_type, pc->mac, &param);
 					// load UUID handle from flash
-					memcpy (conn_char_handler[conn_handle & 3], param.peer_random, 6);
+					memcpy (conn_char_handler[conn_handle & 3], param.peer_random, 8);
 				}
 			}
 		}
@@ -609,6 +676,27 @@ int main_idle_loop ()
 		smp_param_reset ();
 	}
 	gpio2 = gpio;
+
+	//////////////////////////////////// SPP test code ///////////////////////////////
+	if (spp_num && spp_handle && blm_fifo_num (spp_conn))
+	{
+		u8		dat[20], tx[32];
+		memcpy (dat, &spp_num, 4);
+		for (int i=4; i<20; i++)
+		{
+			dat[i] = dat[0] + i;
+		}
+		att_req_write_cmd (tx, spp_handle, dat, 20);
+		if (blm_push_fifo (spp_conn, tx))
+		{
+			spp_num--;
+
+			if ((spp_num & 0xff) == 0)
+			{
+				app_send_spp_status ();
+			}
+		}
+	}
 	return 0;
 }
 
@@ -630,9 +718,10 @@ void user_init()
 
 	//set UAB ID
 	usb_log_init ();
-	//REG_ADDR8(0x74) = 0x53;
-	//REG_ADDR16(0x7e) = 0x08ee;
-	//REG_ADDR8(0x74) = 0x00;
+	REG_ADDR8(0x74) = 0x53;
+	REG_ADDR16(0x7e) = 0x08d0;
+	REG_ADDR8(0x74) = 0x00;
+
 	//////////////// config USB ISO IN/OUT interrupt /////////////////
 	reg_usb_mask = BIT(7);			//audio in interrupt enable
 	reg_irq_mask |= FLD_IRQ_IRQ4_EN;
