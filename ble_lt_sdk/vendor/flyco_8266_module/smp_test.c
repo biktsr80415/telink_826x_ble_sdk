@@ -15,7 +15,7 @@
 /**********************************************************************
  * GLOBAL DEFINITION
  */
-#define		BLT_SECURITY_ENABLE				1
+#define		BLT_SECURITY_ENABLE				0
 
 #if (BLT_SECURITY_ENABLE)
 
@@ -76,7 +76,7 @@ void smpRegisterCbInit()
 
 	//smp parameter flash clean
 	blt_smp_paramFlashClean ();  // clean flash if flash full
-
+#if BLT_SECURITY_ENABLE
 	//smp parameter config
 	blt_smp_setMaxKeySize 	(BLT_SMP_MAX_KEY_SIZE);
 	blt_smp_setDistributeKey (BLT_SMP_DISTRIBUTE_LTK, BLT_SMP_DISTRIBUTE_IRK, BLT_SMP_DISTRIBUTE_CSRK);
@@ -84,4 +84,5 @@ void smpRegisterCbInit()
 	blt_smp_setIoCapability (BLT_SMP_IO_CAPABILTY);
 	blt_smp_enableAuthMITM (BLT_SMP_MITM_EN, BLT_SMP_KEY);
 	blt_smp_enableBonding (BLT_SMP_BOND_FLAG);
+#endif
 }

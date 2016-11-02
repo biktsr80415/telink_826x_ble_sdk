@@ -72,6 +72,7 @@ extern "C" {
 #define PULL_WAKEUP_SRC_PD5   PM_PIN_PULLUP_10K
 
 #elif BLE_FLYCO    //FLYCO project add
+
 //////////// flyco module  version number.  //////////////////////////
 	/*    The version number of this module is?¨ºoV1.0.00.1
 			BYTE0:0x00--0x09-Version number highest
@@ -106,22 +107,20 @@ extern "C" {
 //ADD for FLYCO to set the defult adv param
 #define YES                                       1
 #define NO                                        0
+
+#define DEV_NAME                                 "FLYCO FH7005/6/8 "
+
 #define DEFLUT_DEV_NAME1                         'F', 'L', 'Y', 'C', 'O', ' ', 'F', 'H', '7', '0', '0', '5'
 #define DEFLUT_DEV_NAME2                         '/', '6', '/', '8', 0x20, 0x00
 #define DEFLUT_DEV_NAME1_LEN                     ( 12 )   //the length of DEFLUT_DEV_NAME1
 #define DEFLUT_DEV_NAME2_LEN                     ( 6 )    //the length of DEFLUT_DEV_NAME2
 
-#define DEFLUT_ADV_INTERVAL_MIN                  ( 0x30 ) //defalut adv interval 30ms
-#define DEFLUT_ADV_INTERVAL_MAX                  ( 0x30 ) //defalut adv interval 30ms
+#define DEFLUT_ADV_INTERVAL                      (0x30) //defalut adv interval 30ms
 #define DEFLUT_RF_PWR_LEVEL                      ( 2 )    //defalut RF pwr level Power level: 2 (PHY_TX_POWER_0DB)The transmit power level is 1~8
 #define DEFLUT_ADV_TIMEOUT                       ( 0 )    //defalut adv timeout:0s (enable ADV forever) //(30*1000) 30s
 //Set the ble module is entered into the deep sleep mode or just close the broadcast after adv timeout occurs. When adv_timeout = 0, close adv timeout function, ble module will always adv!
 #define ADV_TIMEOUT_ENTER_DEEP                    YES     //defalut YES:if adv timeout Not 0,once timeout ocur BLE MODULE enter DEEP sleep;if adv timeout is equal to 0,BLE MODULE adv forever!
 //#define ADV_TIMEOUT_ENTER_DEEP                    NO    // if NO, once timeout occur BLE MODULE disable adv;if adv timeout is equal to 0,BLE MODULE adv forever!
-
-// power mangerment Add by tuyf 16-09-28
-#define ADV_NEED_SUSPEND_FLG                     ( 1 )    //Defalut:The ble module can be on suspend state during broadcast!
-#define CONN_NEED_SUSPEND_FLG                    ( 0 )    //Defalut:The ble module do NOT into suspend state during connection!
 
 /*********************** ble4.0 vol3,partC,section12.5***********
  * Apple product preferred Connection Parameters characteristic:
@@ -154,7 +153,7 @@ extern "C" {
 #endif
 #endif
 /////////////////////// Debug printf /////////////////////////////////////////
-#define PRINT_DEBUG_INFO              1
+#define PRINT_DEBUG_INFO              0
 //Debug pin defination
 #if PRINT_DEBUG_INFO
 #define DEBUG_INFO_TX_PIN             GPIO_PD2   //EVK GPIO_GP8
@@ -188,69 +187,6 @@ extern "C" {
 
 /////////////open SWS digital pullup to prevent MCU err, this is must ////////////
 #define PB0_DATA_OUT					1
-
-
-
-#if(SIHUI_DEBUG_BLE_SLAVE)
-#define	LOG_IN_RAM							1
-
-#undef	__LOG_RT_ENABLE__
-#define __LOG_RT_ENABLE__					1
-
-#define PA2_INPUT_ENABLE					0
-#define PA3_INPUT_ENABLE					0
-#define PA5_INPUT_ENABLE					0
-#define PC0_INPUT_ENABLE					0
-#define PC1_INPUT_ENABLE					0
-#define PC6_INPUT_ENABLE					0
-#define PA2_OUTPUT_ENABLE					1
-#define PA3_OUTPUT_ENABLE					1
-#define PA5_OUTPUT_ENABLE					1
-#define PC0_OUTPUT_ENABLE					1
-#define PC1_OUTPUT_ENABLE					1
-#define PC6_OUTPUT_ENABLE					1
-
-#define DBG_CHN0_LOW		( *(unsigned char *)0x800583 &= (~0x04) )
-#define DBG_CHN0_HIGH		( *(unsigned char *)0x800583 |= 0x04 )
-#define DBG_CHN0_TOGGLE		( *(unsigned char *)0x800583 ^= 0x04 )
-#define DBG_CHN1_LOW		( *(unsigned char *)0x800583 &= (~0x08) )
-#define DBG_CHN1_HIGH		( *(unsigned char *)0x800583 |= 0x08 )
-#define DBG_CHN1_TOGGLE		( *(unsigned char *)0x800583 ^= 0x08 )
-#define DBG_CHN2_LOW		( *(unsigned char *)0x800583 &= (~0x20) )
-#define DBG_CHN2_HIGH		( *(unsigned char *)0x800583 |= 0x20 )
-#define DBG_CHN2_TOGGLE		( *(unsigned char *)0x800583 ^= 0x20 )
-#define DBG_CHN3_LOW		( *(unsigned char *)0x800593 &= (~0x01) )
-#define DBG_CHN3_HIGH		( *(unsigned char *)0x800593 |= 0x01 )
-#define DBG_CHN3_TOGGLE		( *(unsigned char *)0x800593 ^= 0x01 )
-#define DBG_CHN4_LOW		( *(unsigned char *)0x800593 &= (~0x02) )
-#define DBG_CHN4_HIGH		( *(unsigned char *)0x800593 |= 0x02 )
-#define DBG_CHN4_TOGGLE		( *(unsigned char *)0x800593 ^= 0x02 )
-#define DBG_CHN5_LOW		( *(unsigned char *)0x800593 &= (~0x40) )
-#define DBG_CHN5_HIGH		( *(unsigned char *)0x800593 |= 0x40 )
-#define DBG_CHN5_TOGGLE		( *(unsigned char *)0x800593 ^= 0x40 )
-
-#else
-#define DBG_CHN0_LOW
-#define DBG_CHN0_HIGH
-#define DBG_CHN0_TOGGLE
-#define DBG_CHN1_LOW
-#define DBG_CHN1_HIGH
-#define DBG_CHN1_TOGGLE
-#define DBG_CHN2_LOW
-#define DBG_CHN2_HIGH
-#define DBG_CHN2_TOGGLE
-#define DBG_CHN3_LOW
-#define DBG_CHN3_HIGH
-#define DBG_CHN3_TOGGLE
-#define DBG_CHN4_LOW
-#define DBG_CHN4_HIGH
-#define DBG_CHN4_TOGGLE
-#define DBG_CHN5_LOW
-#define DBG_CHN5_HIGH
-#define DBG_CHN5_TOGGLE
-
-#endif  //end of SIHUI_DEBUG_GPIO
-
 
 
 /////////////////// set default   ////////////////
