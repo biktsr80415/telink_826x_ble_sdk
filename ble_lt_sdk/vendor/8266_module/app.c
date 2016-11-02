@@ -303,7 +303,7 @@ void user_init()
 		gpio_set_func(GPIO_URX, AS_UART);
 		gpio_set_input_en(GPIO_UTX, 1);
 		gpio_set_input_en(GPIO_URX, 1);
-		CLK16M_UART9600;
+		CLK16M_UART115200;
 		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
 		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);
 	#endif
