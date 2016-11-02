@@ -14,6 +14,7 @@
 #define IS_FLYCO_SPP_CMD(p)           ((p[0] == 0x46) && (p[1] == 0x4c) && (p[2] == 0x59) && (p[3] == 0x43) && (p[4] == 0x4F))
 #define IS_FLYCO_SPP_DATA(p)          (!((p[0] == 0x46) && (p[1] == 0x4c) && (p[2] == 0x59) && (p[3] == 0x43) && (p[4] == 0x4F)))
 
+#define IS_D2_DATA_FROM_MCU(p)        ((p[0] == 0xA5) && (p[1] == 0xD2) && (p[2] == 0x00) && (p[3] == 0x00) && (p[4] == 0x00) && (p[5] == 0x00))
 // Definition for FLYCO SPP command header
 #define FLYCO_SPP_CMD_FIELD		\
 	u8 signature[5];            \
@@ -144,33 +145,16 @@ typedef struct {
 #define				ADV_DATA_ADDR         0x47000
 #define				ADV_INTERVAL_ADDR     0x48000
 
-//used to indicate para address index
-typedef struct{
-	u8 curNum;
-	u8 tmp;
-	u8  data[30];
-}nv_manage_t;
-
-nv_manage_t baudrate_manage;
-nv_manage_t rf_power_manage;
-nv_manage_t identified_manage;
-nv_manage_t adv_timeout_manage;
-nv_manage_t dev_name1_manage;
-nv_manage_t dev_name2_manage;
-nv_manage_t dev_name_manage;
-nv_manage_t adv_data_manage;
-nv_manage_t adv_interval_manage;
-
 typedef enum {
-	NV_FLYCO_ITEM_BAUD_RATE,   //0 0x40000
-	NV_FLYCO_ITEM_RF_POWER,    //1 0x41000
-	NV_FLYCO_ITEM_IDENTIFIED,  //2 0x42000
-	NV_FLYCO_ITEM_ADV_TIMEOUT, //3 0x43000
-	NV_FLYCO_ITEM_DEV_NAME1,   //4 0x44000
-	NV_FLYCO_ITEM_DEV_NAME2,   //5 0x45000
-	NV_FLYCO_ITEM_DEV_NAME,    //6 0x46000
-	NV_FLYCO_ITEM_ADV_DATA,    //7 0x47000
-	NV_FLYCO_ITEM_ADV_INTERVAL,//8 0x48000
+	NV_FLYCO_ITEM_BAUD_RATE,
+	NV_FLYCO_ITEM_RF_POWER,
+	NV_FLYCO_ITEM_IDENTIFIED,
+	NV_FLYCO_ITEM_ADV_TIMEOUT,
+	NV_FLYCO_ITEM_DEV_NAME1,
+	NV_FLYCO_ITEM_DEV_NAME2,
+	NV_FLYCO_ITEM_DEV_NAME,
+	NV_FLYCO_ITEM_ADV_DATA,
+	NV_FLYCO_ITEM_ADV_INTERVAL,
 } nv_flycoItemId_t;
 
 /*********************************************************************

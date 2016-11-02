@@ -14,6 +14,7 @@
 #include "flyco_spp.h"
 #include "../../proj_lib/ble/blt_config.h"
 
+#if BLE_FLYCO
 /**********************************************************************
  * GLOBAL VARIABLES
  */
@@ -37,19 +38,6 @@ u8 set_devname1_flg = 0;//Set devname1 flag
 /**********************************************************************
  * LOCAL VARIABLES
  */
-//Notice:flash_erase_sector should place at user_init(), Do Not user this function in main_loop()!!!
- int adv_interval_index;
- int rf_power_index;
- int adv_timeout_index;
- int adv_data_index;
- int devname_index;
- int devname1_index;
- int devname2_index;
- int identified_index;
- int baudrate_index;
-
-extern void flyco_load_para_addr(u32 addr, int index, u8* p, u8 len);
-
 u8 nv_read(u8 id, u8 *buf, u16 len){
 	u32 *p = NULL;
 	switch(id){
@@ -100,46 +88,43 @@ u8 nv_read(u8 id, u8 *buf, u16 len){
 	}
 }
 
-void save_para(u32 addr, int* index, u8* buf, u16 len){
-	if(*index-32 >= 0){
-		u8 clr[2] = {0};
-		flash_write_page(addr + *index - 32, 2, clr);
-	}
-	nv_manage_t p;
-	p.curNum = 0x01;
-	p.tmp    = 0xFF;
-	memcpy(p.data, buf, len);
-	flash_write_page((addr + *index), len + 2, (u8*)&p);
-	*index += 32;
-}
 u8 nv_write(u8 id, u8 *buf, u16 len){
 	switch(id){
 	case NV_FLYCO_ITEM_BAUD_RATE:
-		save_para(BAUD_RATE_ADDR, &baudrate_index, buf, len);
+		flash_erase_sector(BAUD_RATE_ADDR);
+		flash_write_page(BAUD_RATE_ADDR, len, buf);
 	break;
 	case NV_FLYCO_ITEM_RF_POWER:
-		save_para(RF_POWER_ADDR, &rf_power_index, buf, len);
+		flash_erase_sector(RF_POWER_ADDR);
+		flash_write_page(RF_POWER_ADDR, len, buf);
 	break;
 	case NV_FLYCO_ITEM_IDENTIFIED:
-		save_para(IDENTIFIED_ADDR, &identified_index, buf, len);
+		flash_erase_sector(IDENTIFIED_ADDR);
+		flash_write_page(IDENTIFIED_ADDR, len, buf);
 	break;
 	case NV_FLYCO_ITEM_ADV_TIMEOUT:
-		save_para(ADV_TIMEOUT_ADDR, &adv_timeout_index, buf, len);
+		flash_erase_sector(ADV_TIMEOUT_ADDR);
+		flash_write_page(ADV_TIMEOUT_ADDR, len, buf);
 	break;
 	case NV_FLYCO_ITEM_DEV_NAME1:
-		save_para(DEV_NAME1_ADDR, &devname1_index, buf, len);
+		flash_erase_sector(DEV_NAME1_ADDR);
+		flash_write_page(DEV_NAME1_ADDR, len, buf);
 	break;
 	case NV_FLYCO_ITEM_DEV_NAME2:
-		save_para(DEV_NAME2_ADDR, &devname2_index, buf, len);
+		flash_erase_sector(DEV_NAME2_ADDR);
+		flash_write_page(DEV_NAME2_ADDR, len, buf);
 	break;
 	case NV_FLYCO_ITEM_DEV_NAME:
-		save_para(DEV_NAME_ADDR, &devname_index, buf, len);
+		flash_erase_sector(DEV_NAME_ADDR);
+		flash_write_page(DEV_NAME_ADDR, len, buf);
 	break;
 	case NV_FLYCO_ITEM_ADV_DATA:
-		save_para(ADV_DATA_ADDR, &adv_data_index, buf, len);
+		flash_erase_sector(ADV_DATA_ADDR);
+		flash_write_page(ADV_DATA_ADDR, len, buf);
 	break;
 	case NV_FLYCO_ITEM_ADV_INTERVAL:
-		save_para(ADV_INTERVAL_ADDR, &adv_interval_index, buf, len);
+		flash_erase_sector(ADV_INTERVAL_ADDR);
+		flash_write_page(ADV_INTERVAL_ADDR, len, buf);
 	break;
    }
    return 0;
@@ -222,7 +207,6 @@ u32 spp_cmd_deep_sleep_tick;
 u8 spp_cmd_restart_flg;
 u8 spp_cmd_disconnect_flg;
 u8 spp_cmd_deep_sleep_flg;
-
 void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 	ble_sts_t status = BLE_SUCCESS;
 
@@ -301,7 +285,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				u8 devName1[20] = {DEFLUT_DEV_NAME1_LEN, DEFLUT_DEV_NAME1};
-				flyco_load_para_addr(DEV_NAME1_ADDR, &devname1_index, devName1, 20);
+				nv_read(NV_FLYCO_ITEM_DEV_NAME1, devName1, 20);
 
 				flyco_spp_module_rsp2cmd(pp->cmdID, devName1 + 1, devName1[0]);
 			}
@@ -311,7 +295,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_GET_DEVNAME2:{
 			if(pp->len == 0){
 				u8 devName2[20] = {DEFLUT_DEV_NAME2_LEN, DEFLUT_DEV_NAME2};
-				flyco_load_para_addr(DEV_NAME2_ADDR, &devname2_index, devName2, 20);
+				nv_read(NV_FLYCO_ITEM_DEV_NAME2, devName2, 20);
 
 				flyco_spp_module_rsp2cmd(pp->cmdID, devName2 + 1, devName2[0]);
 			}
@@ -374,7 +358,8 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				u8 param[3] = {0x25, 0x80, 0xef};//Default bode rate:9600
-				flyco_load_para_addr(BAUD_RATE_ADDR, &baudrate_index, param, 3);
+				nv_read(NV_FLYCO_ITEM_BAUD_RATE, param, 3);
+
 				flyco_spp_module_rsp2cmd(pp->cmdID, param, ((param[2]!=0xef)?3:2));
 			}
 		}
@@ -424,7 +409,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 			flyco_spp_moduleCmd_advEnable_t *p = (flyco_spp_moduleCmd_advEnable_t *)pp;
 			if(pp->len == 1){
 				(p->enable) &= 0x01;//parameter checkout; Minimum byte valid 0 or 1
-				bls_ll_setAdvEnable(p->enable);
+				bls_ll_setAdvEnable(p->enable);//same as : bls_adv_enable = p->enable
 				flyco_spp_module_rsp2cmd(pp->cmdID, NULL, 0);
 			}
 
@@ -435,8 +420,9 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				u8 identified[6];
-				flyco_load_para_addr(IDENTIFIED_ADDR, &identified_index, identified, 6);
-				flyco_spp_module_rsp2cmd(pp->cmdID, identified, 6);
+				if(!nv_read(NV_FLYCO_ITEM_IDENTIFIED, identified, 6)) {
+					flyco_spp_module_rsp2cmd(pp->cmdID, identified, 6);
+				}
 			}
 		}
 		break;
@@ -457,7 +443,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 			if(pp->len == 0){
 				//The first value of the broadcast array is the total length of the broadcast data!
 				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data£ºFLYCO
-				flyco_load_para_addr(ADV_DATA_ADDR, &adv_data_index, advData, 20);
+				nv_read(NV_FLYCO_ITEM_ADV_DATA, advData, 20);
 
 				flyco_spp_module_rsp2cmd(pp->cmdID, advData + 1, advData[0]);
 			}
@@ -485,12 +471,19 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_GET_ADV_INTV:{
 
 			if(pp->len == 0){
-				u32 advInterval =((u32)DEFLUT_ADV_INTERVAL *5) >>3;
+				u32 advInterval;
 				u8 rp[2];
-				flyco_load_para_addr(ADV_INTERVAL_ADDR, &adv_interval_index, (u8 *)&advInterval, 4);
-				advInterval = (advInterval *5) >>3;//unit:0.625ms
-				reverse_data((u8*)&advInterval,2,rp);
-				flyco_spp_module_rsp2cmd(pp->cmdID, rp, 2);
+				u32 param = ((u32)DEFLUT_ADV_INTERVAL_MIN *5) >>3;
+				if(!nv_read(NV_FLYCO_ITEM_ADV_INTERVAL, (u8*)&advInterval, 2)) {
+					advInterval = (advInterval *5) >>3;//unit:0.625ms
+					reverse_data((u8*)&advInterval,2,rp);
+					flyco_spp_module_rsp2cmd(pp->cmdID, rp, 2);
+				}
+				else{
+					reverse_data((u8*)&param,2,rp);
+					flyco_spp_module_rsp2cmd(pp->cmdID, rp, 2);
+				}
+
 			}
 		}
 		break;
@@ -506,7 +499,6 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 				para = (para <<3) / 5;//unit:0.625ms! 160 corresponding to 100ms
 
 				blt_set_advinterval(para);
-
 				nv_write(NV_FLYCO_ITEM_ADV_INTERVAL, (u8 *)&para, 2);
 
 				flyco_spp_module_rsp2cmd(pp->cmdID, NULL, 0);
@@ -517,9 +509,8 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_GET_RF_PWR:{
 
 			if(pp->len == 0){
-				u8 rf_power = rfpower;
-				flyco_load_para_addr(RF_POWER_ADDR, &rf_power_index, (u8 *)&rf_power, 1);
-				flyco_spp_module_rsp2cmd(pp->cmdID, &rf_power, 1);
+				nv_read(NV_FLYCO_ITEM_RF_POWER, (u8*)&rfpower, 1);
+				flyco_spp_module_rsp2cmd(pp->cmdID, &rfpower, 1);
 			}
 		}
 		break;
@@ -551,7 +542,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 
 			u32 timeout = DEFLUT_ADV_TIMEOUT;
 			if(pp->len == 0){
-				flyco_load_para_addr(ADV_TIMEOUT_ADDR, &adv_timeout_index, (u8 *)&timeout, 4);
+				nv_read(NV_FLYCO_ITEM_ADV_TIMEOUT, (u8 *)&timeout, 4);
 
 				timeout /=1000;
 				flyco_spp_module_rsp2cmd(pp->cmdID, (u8*)&timeout, 1);
@@ -812,7 +803,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				u8 devName1[20] = {DEFLUT_DEV_NAME1_LEN, DEFLUT_DEV_NAME1};
-				flyco_load_para_addr(DEV_NAME1_ADDR, &devname1_index, devName1, 20);
+				status = !nv_read(NV_FLYCO_ITEM_DEV_NAME1, devName1, 20);
 
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, devName1 + 1, devName1[0]);
 			}
@@ -822,7 +813,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_GET_DEVNAME2:{
 			if(pp->len == 0){
 				u8 devName2[20] = {DEFLUT_DEV_NAME2_LEN, DEFLUT_DEV_NAME2};
-				flyco_load_para_addr(DEV_NAME2_ADDR, &devname2_index, devName2, 20);
+				status = !nv_read(NV_FLYCO_ITEM_DEV_NAME2, devName2, 20);
 
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, devName2 + 1, devName2[0]);
 			}
@@ -885,7 +876,8 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				u8 param[3] = {0x25, 0x80, 0xef};//Default bode rate:9600
-				flyco_load_para_addr(BAUD_RATE_ADDR, &baudrate_index, param, 3);
+				nv_read(NV_FLYCO_ITEM_BAUD_RATE, param, 3);
+
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, param, ((param[2]!=0xef)?3:2));
 			}
 		}
@@ -947,8 +939,9 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				u8 identified[6];
-				flyco_load_para_addr(IDENTIFIED_ADDR, &identified_index, identified, 6);
-				flyco_spp_received_master_rsp2cmd(pp->cmdID, identified, 6);
+				if(!nv_read(NV_FLYCO_ITEM_IDENTIFIED, identified, 6)) {
+					flyco_spp_received_master_rsp2cmd(pp->cmdID, identified, 6);
+				}
 			}
 		}
 		break;
@@ -969,7 +962,8 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 			if(pp->len == 0){
 				//The first value of the broadcast array is the total length of the broadcast data!
 				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data£ºFLYCO
-				flyco_load_para_addr(ADV_DATA_ADDR, &adv_data_index, advData, 20);
+				nv_read(NV_FLYCO_ITEM_ADV_DATA, advData, 20);
+
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, advData + 1, advData[0]);
 			}
 		}
@@ -996,12 +990,19 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_GET_ADV_INTV:{
 
 			if(pp->len == 0){
-				u32 advInterval =((u32)DEFLUT_ADV_INTERVAL *5) >>3;
+				u32 advInterval;
 				u8 rp[2];
-				flyco_load_para_addr(ADV_INTERVAL_ADDR, &adv_interval_index, (u8 *)&advInterval, 4);
-				advInterval = (advInterval *5) >>3;//unit:0.625ms
-				reverse_data((u8*)&advInterval,2,rp);
-				flyco_spp_received_master_rsp2cmd(pp->cmdID, rp, 2);
+				u32 param = ((u32)DEFLUT_ADV_INTERVAL_MIN *5) >>3;
+				if(!nv_read(NV_FLYCO_ITEM_ADV_INTERVAL, (u8*)&advInterval, 2)) {
+					advInterval = (advInterval *5) >>3;//unit:0.625ms
+					reverse_data((u8*)&advInterval,2,rp);
+					flyco_spp_received_master_rsp2cmd(pp->cmdID, rp, 2);
+				}
+				else{
+					reverse_data((u8*)&param,2,rp);
+					flyco_spp_received_master_rsp2cmd(pp->cmdID, rp, 2);
+				}
+
 			}
 		}
 		break;
@@ -1017,7 +1018,6 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 				para = (para <<3) / 5;//unit:0.625ms! 160 corresponding to 100ms
 
 				blt_set_advinterval(para);
-
 				nv_write(NV_FLYCO_ITEM_ADV_INTERVAL, (u8 *)&para, 2);
 
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, NULL, 0);
@@ -1028,9 +1028,8 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_GET_RF_PWR:{
 
 			if(pp->len == 0){
-				u8 rf_power = rfpower;
-				flyco_load_para_addr(RF_POWER_ADDR, &rf_power_index, (u8 *)&rf_power, 1);
-				flyco_spp_received_master_rsp2cmd(pp->cmdID, &rf_power, 1);
+				nv_read(NV_FLYCO_ITEM_RF_POWER, (u8*)&rfpower, 1);
+				flyco_spp_received_master_rsp2cmd(pp->cmdID, &rfpower, 1);
 			}
 		}
 		break;
@@ -1062,7 +1061,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 
 			u32 timeout = DEFLUT_ADV_TIMEOUT;
 			if(pp->len == 0){
-				flyco_load_para_addr(ADV_TIMEOUT_ADDR, &adv_timeout_index, (u8 *)&timeout, 4);
+				nv_read(NV_FLYCO_ITEM_ADV_TIMEOUT, (u8 *)&timeout, 4);
 
 				timeout /=1000;
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, (u8*)&timeout, 1);
@@ -1116,4 +1115,5 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 	}
 
 }
+#endif
 

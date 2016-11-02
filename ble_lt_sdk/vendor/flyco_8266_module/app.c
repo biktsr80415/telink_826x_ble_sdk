@@ -20,24 +20,18 @@
 #define 			CUST_TP_INFO_ADDR		0x77040
 
 //FLYCO project add
-u32 adv_timeout    = 0;//advertise timeout
-u16 advinterval    = 0;//advertise interval
-u8  rfpower        = 0;
-u8  advTem[20]     = {0};
-u8  scanRspTem[20] = {0};
-u8  identified[6]  = {0};
-u8  devName[20]    = {0};
-u8  baudratetmp[3] = {0};
-
-extern u32 spp_cmd_restart_tick;
-extern u32 spp_cmd_disconnect_tick;
-extern u32 spp_cmd_deep_sleep_tick;
-extern u8 spp_cmd_restart_flg;
-extern u8 spp_cmd_disconnect_flg;
-extern u8 spp_cmd_deep_sleep_flg;
+u32 adv_timeout = 0;//advertise timeout
+u16 advinterval_min = 0;//advertise interval
+u16 advinterval_max = 0;//advertise interval
+u32 advinterval_times = 0;
+u8 rfpower;
 
 extern u8  ble_devName[MAX_DEV_NAME_LEN];
+u32 adv_times_cnt = 0;//advertisement counts,used to store the total number of times the timing of the timer
 extern u8 adv_enable_flag;//Broadcast enable status flag, decide whether module ble broadcast enable
+u8 service_dsy_finished_flg = 0;//seivice discovery finished flag
+u8 suspend_on_adv_flag = ADV_NEED_SUSPEND_FLG;//Defalut:The ble module can be on suspend state during broadcast!
+u8 suspend_on_conn_flag = CONN_NEED_SUSPEND_FLG;//Add by tuyf 16-09-28
 
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
@@ -52,8 +46,10 @@ u8 sendTerminate_before_enterDeep = 0;
 void	conn_para_update_req_proc (u8 e, u8 *p)
 {
 	//p[1]p[0]:offset; p[3]p[2]:interval; p[5]p[4]:latency; p[7]p[6]:timeout; p[9]p[8]:inst;
+
 	u16 *ps = (u16 *)p;
 	int interval = ps[1];
+
 }
 
 
@@ -80,7 +76,7 @@ void 	ble_remote_terminate(u8 e,u8 *p) //*p is terminate reason
 
 void	task_connect (u8 e, u8 *p)
 {
-	gpio_write (BLE_STA_OUT, 1);//0);//Set 0
+	gpio_write (BLE_STA_OUT, 0);//Set 0
 #if (SIHUI_DEBUG_BLE_SLAVE)
 	bls_l2cap_requestConnParamUpdate (6, 6, 99, 400);   //7.5 ms
 #else
@@ -90,6 +86,13 @@ void	task_connect (u8 e, u8 *p)
 
 //user Timer callback proc for spp cmd ack
 void blt_user_timerCb_proc(void){
+	extern u32 spp_cmd_restart_tick;
+	extern u32 spp_cmd_disconnect_tick;
+	extern u32 spp_cmd_deep_sleep_tick;
+	extern u8 spp_cmd_restart_flg;
+	extern u8 spp_cmd_disconnect_flg;
+	extern u8 spp_cmd_deep_sleep_flg;
+
 	if(spp_cmd_restart_flg && clock_time_exceed(spp_cmd_restart_tick , 20000)){  //spp cmd ack restart timeout
 		spp_cmd_restart_flg =0;
 		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 5000 * sys_tick_per_us);
@@ -112,6 +115,7 @@ void blt_pm_proc(void)
 	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 #endif  //END of  BLE_REMOTE_PM_ENABLE
 }
+
 
 void blt_system_power_optimize(void)  //to lower system power
 {
@@ -144,8 +148,8 @@ void rf_customized_param_load(void)
 }
 
 void task_adv (u8 e, u8 *p){
-	//static u32 adv_no;
-	gpio_write (BLE_STA_OUT, 0);//adv_no++ & BIT(2));
+	static u32 adv_no;
+	gpio_write (BLE_STA_OUT, adv_no++ & BIT(2));
 }
 
 void ble_flyco_set_sleep_wakeup(u8 e, u8 *p){
@@ -180,15 +184,9 @@ u8	flyco_uart_push_fifo (u16 st, int n, u8 *p)
 }
 
 u32 rx_len;
-u8 tst;
-u32 spp_cmd_rx_from_uart_tick;
+uart_data_t T_rxdata_for_flyco;
 int flyco_blc_rx_from_uart (void)//UART data send to Master,we will handler the data as CMD or DATA
 {
-//	if(!clock_time_exceed(spp_cmd_rx_from_uart_tick , 20000)){//Avoid uart send data so fast!!!
-//		return 0;
-//	}
-//	spp_cmd_rx_from_uart_tick = clock_time();
-
 	if(rx_uart_w_index==rx_uart_r_index)  //rx buff empty
 	{
         return 0;
@@ -200,7 +198,6 @@ int flyco_blc_rx_from_uart (void)//UART data send to Master,we will handler the 
 
 	if (rx_len)
 	{
-		//gpio_write(BLE_STA_OUT, ++tst%2);
 		flyco_module_uartCmdHandler(T_rxdata_for_flyco.data, rx_len - 4);//handler SPP CMD/DATA
 	}
 	rx_uart_w_index = (rx_uart_w_index + 1)&0x01;
@@ -208,14 +205,8 @@ int flyco_blc_rx_from_uart (void)//UART data send to Master,we will handler the 
 	return 0;
 }
 
-u32 spp_cmd_tx_to_uart_tick;
 int flyco_blc_tx_to_uart ()//Master data send to UART,we will handler the data as CMD or DATA
 {
-//	if(!clock_time_exceed(spp_cmd_tx_to_uart_tick , 20000)){//Avoid Master send data so fast!!!
-//		return 0;
-//	}
-//	spp_cmd_tx_to_uart_tick = clock_time();
-
 	if (uart_wb_rptr != uart_wb_wptr)
 	{
 		u8 *p = uart_wb[uart_wb_rptr & (UART_WB_NUM-1)];
@@ -227,57 +218,11 @@ int flyco_blc_tx_to_uart ()//Master data send to UART,we will handler the data a
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////////
-extern int adv_interval_index;
-extern int rf_power_index;
-extern int adv_timeout_index;
-extern int adv_data_index;
-extern int devname_index;
-extern int devname1_index;
-extern int devname2_index;
-extern int identified_index;
-extern int baudrate_index;
 
-// FLASH struct : index | 00 | data[30]
-void flyco_load_para_addr(u32 addr, int* index, u8* p, u8 len){
-	int idx=0;
-	for (idx=0; idx<256; idx+=32)
-	{
-		if (*(u16 *)(addr+idx) == U16_MAX)	//end
-		{
-			break;
-		}
-	}
-
-	idx -= 32;
-
-	if(idx < 0 || idx == 224){
-		return;
-	}
-
-	*index = idx;
-	memcpy (p, (u32 *)(addr+idx+2), len);
-}
-
-void flyco_erase_para(u32 addr, u16* index){
-	if(*index>= 224){
-		nv_manage_t p;
-		p.curNum = 0x01;
-		memcpy (p.data, (u32*)(addr+ *index + 2), 30);
-		*index = 0;
-		flash_erase_sector(addr);
-		extern void save_para(u32 addr, int* index, u8* buf, u16 len);
-		save_para(addr, index, (u8*)&p, 32);
-	}
-}
 
 void user_init()
 {
 	rf_customized_param_load();  //load customized freq_offset cap value and tp value
-
-	//flyco ble state indicate.
-	gpio_set_func(BLE_STA_OUT, AS_GPIO);
-	gpio_set_output_en(BLE_STA_OUT, 1);
-	gpio_write(BLE_STA_OUT,0);//LOW
 
 	////////////////// BLE slave initialization ////////////////////////////////////
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
@@ -285,11 +230,9 @@ void user_init()
 		memcpy (tbl_mac, pmac, 6);
 	}
 	else{
-#if 0
-		//TODO : should write mac to flash after pair OK
-		tbl_mac[0] = (u8)rand();
-		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
-#endif
+//		//TODO : should write mac to flash after pair OK
+//		tbl_mac[0] = (u8)rand();
+//		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
 	}
 
 	u8 tbl_advData[ ] = {
@@ -309,40 +252,30 @@ void user_init()
 		0x13, 0x09, 'F', 'L', 'Y', 'C', 'O', ' ', 'F', 'H', '7', '0', '0', '5', '/', '6', '/', '8', 0x20, 0x00
 	};
 
-	////////////////////default parameter settings ////////////////////////////////////////////////////////
-	advinterval       = DEFLUT_ADV_INTERVAL;//30ms
+	////////////////////NV ////////////////////////////////////////////////////////
+	advinterval_min   = DEFLUT_ADV_INTERVAL_MIN;//30ms
+	advinterval_max   = DEFLUT_ADV_INTERVAL_MAX;//30ms
 	rfpower           = DEFLUT_RF_PWR_LEVEL;//0dB
 	adv_timeout       = DEFLUT_ADV_TIMEOUT;//0s
-	reverse_data(tbl_mac, BLE_ADDR_LEN, identified);// The default product identification code equale ble MAC address!
+	u8 advTem[20]     = {0};
+	u8 scanRspTem[20] = {0};
+
 	//device name init
-	memcpy(ble_devName, &DEV_NAME, 18);
-	flyco_load_para_addr(DEV_NAME_ADDR, &devname_index, devName, 20);
-	if((devName[0]) !=0){
+	u8 devName[20] = {0};
+	if(!nv_read(NV_FLYCO_ITEM_DEV_NAME, devName, 20)) {
 		memset(ble_devName, 0, 18); //clear device name
 		memcpy(ble_devName, devName + 2, devName[0] - 1);
 	}
-	//adv para init
-	flyco_load_para_addr(ADV_INTERVAL_ADDR, &adv_interval_index, (u8 *)&advinterval, 2);
-	flyco_load_para_addr(RF_POWER_ADDR, &rf_power_index, (u8 *)&rfpower, 1);
-	flyco_load_para_addr(ADV_TIMEOUT_ADDR, &adv_timeout_index, (u8 *)&adv_timeout, 4);
-	flyco_load_para_addr(ADV_DATA_ADDR, &adv_data_index, advTem, 20);
-	flyco_load_para_addr(DEV_NAME_ADDR, &devname_index, scanRspTem, 20);
-	flyco_load_para_addr(IDENTIFIED_ADDR, &identified_index, identified, 6);
-	flyco_load_para_addr(BAUD_RATE_ADDR, &baudrate_index, baudratetmp, 3);
-
-	//if should erase flash para
-	flyco_erase_para(ADV_INTERVAL_ADDR,&adv_interval_index);
-	flyco_erase_para(RF_POWER_ADDR, &rf_power_index);
-	flyco_erase_para(ADV_TIMEOUT_ADDR, &adv_timeout_index);
-	flyco_erase_para(ADV_DATA_ADDR, &adv_data_index);
-	flyco_erase_para(DEV_NAME_ADDR, &devname_index);
-	flyco_erase_para(IDENTIFIED_ADDR, &identified_index);
-	flyco_erase_para(BAUD_RATE_ADDR, &baudrate_index);
-	flyco_erase_para(DEV_NAME1_ADDR, &devname1_index);
-	flyco_erase_para(DEV_NAME2_ADDR, &devname2_index);
+	//adv para
+	nv_read(NV_FLYCO_ITEM_ADV_INTERVAL, (u8 *)&advinterval_min, 2);
+	nv_read(NV_FLYCO_ITEM_RF_POWER, (u8*)&rfpower, 1);
+	nv_read(NV_FLYCO_ITEM_ADV_TIMEOUT, (u8 *)&adv_timeout, 4);
+	nv_read(NV_FLYCO_ITEM_ADV_DATA, advTem, 20);
+	nv_read(NV_FLYCO_ITEM_DEV_NAME, scanRspTem, 20);
 
 	//rf power index
 	rf_set_power_level_index (rfpower);
+
 	//adv timeout
 	if(adv_timeout == 0){
 		bls_ll_setAdvDuration(adv_timeout, 0);//close adv timeout
@@ -350,7 +283,10 @@ void user_init()
 	else{
 		bls_ll_setAdvDuration(adv_timeout, 1);
 	}
-	//adv /rsp parameter init
+
+	bls_ll_init (tbl_mac);
+
+	//adv init
 	if(advTem[0]){
 		bls_ll_setAdvData( advTem+1, advTem[0]);
 	}
@@ -364,35 +300,12 @@ void user_init()
 	else{
 		bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 	}
-	//uart initialization
-#if (HCI_ACCESS==HCI_USE_USB)
-	//usb_bulk_drv_init (0);
-	//blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
-#else	//uart
-	//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
-	//todo:uart init here
-	rx_uart_r_index = -1;//should set as -1,otherwise we should send data to Uart twice, the second time,spp function will work
-	rx_uart_w_index = 0;
-	gpio_set_func(GPIO_UTX, AS_UART);
-	gpio_set_func(GPIO_URX, AS_UART);
-	gpio_set_input_en(GPIO_UTX, 1);
-	gpio_set_input_en(GPIO_URX, 1);
-	//uart baud rate init
-	u32 baudrate = 0;
-	if(baudratetmp[2] != 0xef)
-		baudrate = (baudratetmp[0]<<16) + (baudratetmp[1]<<8) + baudratetmp[2];
-	else
-		baudrate = (baudratetmp[0]<<8) + baudratetmp[1];
-	if(baudrate == 9600)
-		CLK16M_UART9600;
-	else if(baudrate == 115200)
-		CLK16M_UART115200;
-	else//default baud rate
-		CLK16M_UART9600;
-	uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
-#endif
 
-	bls_ll_init (tbl_mac);
+	//identified code init
+	u8 identified[6];//Need to use the nvflash to save module identification code. The default product identification code equales the ble module MAC address!
+	reverse_data(tbl_mac, BLE_ADDR_LEN, identified);
+	nv_read(NV_FLYCO_ITEM_IDENTIFIED, identified, 6);
+	nv_write(NV_FLYCO_ITEM_IDENTIFIED, identified, 6);
 
 	//ble event callback register
 	bls_app_registerEventCallback (BLT_EV_FLAG_ADV_PRE, &task_adv);
@@ -406,14 +319,14 @@ void user_init()
 	extern void my_att_init ();
 	my_att_init ();
 
-	u8 status = bls_ll_setAdvParam( advinterval, advinterval, \
+	u8 status = bls_ll_setAdvParam( advinterval_min, advinterval_max, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
 	if(status != BLE_SUCCESS){
 		while(1);
 	}
 
-#if FLYCO_OTA_ENABLE
+#if 0
 	//OTA register callback function
 	extern void flyco_ble_setOtaResIndicateCb(ota_resIndicateCb_t cb);
 	extern void flyco_send_ota_result(int errorcode);
@@ -433,10 +346,47 @@ void user_init()
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 #endif
 
+
 	/////////////////////////////////////////////////////////////////
 	ll_whiteList_reset();
 
+	// BLE STATE OUT
+	gpio_set_func(BLE_STA_OUT, AS_GPIO);
+	gpio_set_output_en(BLE_STA_OUT, 1);
+	gpio_write(BLE_STA_OUT,0);//LOW
+
 	advertise_begin_tick = clock_time();
+#if (HCI_ACCESS==HCI_USE_USB)
+	//usb_bulk_drv_init (0);
+	//blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
+#else	//uart
+	//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
+	//todo:uart init here
+	rx_uart_r_index = -1;//should set as -1,otherwise we should send data to Uart twice, the second time,spp function will work
+	rx_uart_w_index = 0;
+	gpio_set_func(GPIO_UTX, AS_UART);
+	gpio_set_func(GPIO_URX, AS_UART);
+	gpio_set_input_en(GPIO_UTX, 1);
+	gpio_set_input_en(GPIO_URX, 1);
+
+	//uart bode rate init
+	u32 baudrate;
+	u8 param[3]={0};
+	nv_read(NV_FLYCO_ITEM_BAUD_RATE, param, 3);
+	if(param[2] != 0xef)//3¡Á??¨²
+		baudrate = (param[0]<<16) + (param[1]<<8) + param[2];
+	else
+		baudrate = (param[0]<<8) + param[1];
+
+	if(baudrate == 9600)
+		CLK16M_UART9600;
+	else if(baudrate == 115200)
+		CLK16M_UART115200;
+	else
+		CLK16M_UART9600;
+
+	uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
+#endif
 
 #if TELINK_SPP_MODULE
 	blc_register_hci_handler(blc_rx_from_uart,blc_hci_tx_to_uart);//telink_spp
@@ -446,7 +396,7 @@ void user_init()
 #endif
 
 	/** smp test **/
-	smpRegisterCbInit();
+//	smpRegisterCbInit();
 
 }
 
