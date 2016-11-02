@@ -103,14 +103,12 @@ void app_send_spp_status ()
 	u8 dat[16];
 
 	dat[0] = 0xff;
-	dat[1] = 11;
-	dat[2] = 0;
-	dat[3] = 0xe2;
-	dat[4] = 0x07;
-	dat[5] = 0;
-	memcpy (dat + 6, &spp_num, 4);
-	memcpy (dat + 10, &spp_err, 4);
-	my_fifo_push (&usb_fifo, dat, 14);
+	dat[1] = 10;
+	dat[2] = 0xe2;
+	dat[3] = 0x07;
+	memcpy (dat + 4, &spp_num, 4);
+	memcpy (dat + 8, &spp_err, 4);
+	my_fifo_push (&usb_fifo, dat, 12);
 }
 
 //////////////////////////////////// SPP test code ///////////////////////////////
