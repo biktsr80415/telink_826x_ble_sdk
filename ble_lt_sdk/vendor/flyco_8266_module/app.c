@@ -29,6 +29,7 @@ u8  scanRspTem[20] = {0};
 u8  identified[6]  = {0};
 u8  devName[20]    = {0};
 u8  baudratetmp[3] = {0};
+u8 	ui_ota_is_working = 0;
 
 extern u32 spp_cmd_restart_tick;
 extern u32 spp_cmd_disconnect_tick;
@@ -109,9 +110,14 @@ void blt_user_timerCb_proc(void){
 /////////////////////////////////////////////////////////////////////
 void blt_pm_proc(void)
 {
+	if(ui_ota_is_working){
+		bls_pm_setSuspendMask (SUSPEND_DISABLE);
+	}
+	else{
 #if(BLE_REMOTE_PM_ENABLE)
-	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 #endif  //END of  BLE_REMOTE_PM_ENABLE
+	}
 }
 
 void blt_system_power_optimize(void)  //to lower system power
@@ -182,15 +188,8 @@ u8	flyco_uart_push_fifo (u16 st, int n, u8 *p)
 
 u32 rx_len;
 u8 tst;
-u32 spp_cmd_rx_from_uart_tick;
 int flyco_blc_rx_from_uart (void)//UART data send to Master,we will handler the data as CMD or DATA
 {
-	if(!clock_time_exceed(spp_cmd_rx_from_uart_tick , 20000)){//Avoid uart send data so fast!!!
-		spp_cmd_rx_from_uart_tick = clock_time();
-		return 0;
-	}
- 	spp_cmd_rx_from_uart_tick = clock_time();
-
 	if(rx_uart_w_index==rx_uart_r_index)  //rx buff empty
 	{
         return 0;
@@ -202,7 +201,6 @@ int flyco_blc_rx_from_uart (void)//UART data send to Master,we will handler the 
 
 	if (rx_len)
 	{
-		//gpio_write(BLE_STA_OUT, ++tst%2);
 		flyco_module_uartCmdHandler(T_rxdata_for_flyco.data, rx_len - 4);//handler SPP CMD/DATA
 	}
 	rx_uart_w_index = (rx_uart_w_index + 1)&0x01;
@@ -264,6 +262,15 @@ void flyco_erase_para(u32 addr, int* index){
 		extern void save_para(u32 addr, int* index, u8* buf, u16 len);
 		save_para(addr, index, (u8*)&p, 32);
 	}
+}
+
+void entry_ota_mode(void)
+{
+	ui_ota_is_working = 1;
+
+	bls_ota_setTimeout(30 * 1000000); //set OTA timeout  30 S
+
+//	gpio_write(GPIO_LED, 1);  //LED on for indicate OTA mode
 }
 
 void user_init()
@@ -424,6 +431,7 @@ void user_init()
 	extern void flyco_ble_setOtaResIndicateCb(ota_resIndicateCb_t cb);
 	extern void flyco_send_ota_result(int errorcode);
 	flyco_ble_setOtaResIndicateCb(&flyco_send_ota_result);
+	flyco_ble_setOtaStartCb(entry_ota_mode);
 #endif
 
 	bls_ll_setAdvEnable(1);  //adv enable
