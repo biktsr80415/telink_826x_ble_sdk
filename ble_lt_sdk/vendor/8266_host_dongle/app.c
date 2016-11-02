@@ -378,9 +378,9 @@ void user_init()
 
 	//set UAB ID
 	usb_log_init ();
-	//REG_ADDR8(0x74) = 0x53;
-	//REG_ADDR16(0x7e) = 0x08ee;
-	//REG_ADDR8(0x74) = 0x00;
+	REG_ADDR8(0x74) = 0x53;
+	REG_ADDR16(0x7e) = 0x08d1;
+	REG_ADDR8(0x74) = 0x00;
 	//////////////// config USB ISO IN/OUT interrupt /////////////////
 	//reg_usb_mask = BIT(7);			//audio in interrupt enable
 	//reg_irq_mask |= FLD_IRQ_IRQ4_EN;
