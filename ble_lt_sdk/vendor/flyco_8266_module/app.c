@@ -396,7 +396,7 @@ void user_init()
 #endif
 
 	/** smp test **/
-	smpRegisterCbInit();
+//	smpRegisterCbInit();
 
 }
 
