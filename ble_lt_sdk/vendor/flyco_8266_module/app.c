@@ -207,7 +207,7 @@ int flyco_blc_rx_from_uart (void)//UART data send to Master,we will handler the 
 
 int flyco_blc_tx_to_uart ()//Master data send to UART,we will handler the data as CMD or DATA
 {
-	if (uart_wb_rptr != uart_wb_wptr)
+	if (uart_wb_rptr != uart_wb_wptr && !uart_tx_is_busy ())
 	{
 		u8 *p = uart_wb[uart_wb_rptr & (UART_WB_NUM-1)];
 
