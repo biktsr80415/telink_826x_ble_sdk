@@ -87,7 +87,7 @@ u8  SppDataClient2ServerData[ATT_MTU_SIZE - 3];
 const u8 TelinkSPPS2CDescriptor[] = "FLYCO: S2C";
 const u8 TelinkSPPC2SDescriptor[] = "FLYCO: C2S";
 
-u8 spp_s2c_hdl = 10;//ATT TABLE OTA index:12,Handle value
+u8 spp_s2c_hdl = 10;//ATT TABLE OTA index:10,Handle value
 u8 spp_c2s_hdl = 14;//ATT TABLE OTA index:14,Handle value
 
 #define				HC_DATA					0xff0b
@@ -137,7 +137,7 @@ const attribute_t my_Attributes[] = {
 	// 0010 - 0013  ota Service
 	{4,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_OtaServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				 //prop
-	{0,ATT_PERMISSIONS_RDWR,2,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},//value
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &flyco_otaWrite, &flyco_otaRead},//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
 
 };
