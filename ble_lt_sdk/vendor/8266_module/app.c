@@ -5,30 +5,22 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ll_whitelist.h"
 #include "../../proj/drivers/keyboard.h"
-//#include "../common/tl_audio.h"
 #include "../common/blt_led.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj/mcu/pwm.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
-#include "../../proj/drivers/audio.h"
 #include "../../proj/drivers/adc.h"
 #include "../../proj_lib/ble/blt_config.h"
-
+#include "../../proj_lib/ble/ble_smp.h"
 
 #if (HCI_ACCESS==HCI_USE_UART)
 #include "../../proj/drivers/uart.h"
 #endif
 
-////////////////////////////////////////////////////////////////////
-//
-////////////////////////////////////////////////////////////////////
-//		handle 0x0e: consumper report
 
 #define			HID_HANDLE_CONSUME_REPORT			21
 #define			HID_HANDLE_KEYBOARD_REPORT			25
-#define			AUDIO_HANDLE_MIC					43
 
-u16 BattValue[10] = {0};
 
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
@@ -46,61 +38,56 @@ u8	tbl_scanRsp [] = {
 		 0x07, 0x09, 't', 'M', 'o', 'd', 'u', 'l',	//scan name " tmodul"
 	};
 
-/////////////////////////// led management /////////////////////
-enum{
-	LED_POWER_ON = 0,
-	LED_AUDIO_ON,	//1
-	LED_AUDIO_OFF,	//2
-	LED_SHINE_SLOW, //3
-	LED_SHINE_FAST, //4
-	LED_SHINE_OTA, //5
-};
-
-const led_cfg_t led_cfg[] = {
-	    {1000,    0,      1,      0x00,	 },    //power-on, 1s on
-	    {100,	  0 ,	  0xff,	  0x02,  },    //audio on, long on
-	    {0,	      100 ,   0xff,	  0x02,  },    //audio off, long off
-	    {500,	  500 ,   3,	  0x04,	 },    //1Hz for 3 seconds
-	    {250,	  250 ,   6,	  0x04,  },    //2Hz for 3 seconds
-	    {125,	  125 ,   200,	  0x08,  },    //4Hz for 50 seconds
-};
-
-
-u32	advertise_begin_tick;
 
 
 extern kb_data_t	kb_event;
 
-
 u8 key_buf[8] = {0};
 u8 key_type;
-u8 pm_mask_temp;
 #define CONSUMER_KEY   0
 #define KEYBOARD_KEY   1
 
-
-u8 sendTerminate_before_enterDeep = 0;
-
 int key_not_released;
-int ir_not_released;
+u8 	ui_ota_is_working = 0;
+u8  ui_task_flg;
+u32	ui_advertise_begin_tick;
 
-u32 latest_user_event_tick;
-u8  user_task_ongoing_flg;
-
-#if (STUCK_KEY_PROCESS_ENABLE)
-u32 stuckKey_keyPressTime;
-#endif
-
-
-
-void	conn_para_update_req_proc (u8 e, u8 *p)
+void entry_ota_mode(void)
 {
-	//p[1]p[0]:offset; p[3]p[2]:interval; p[5]p[4]:latency; p[7]p[6]:timeout; p[9]p[8]:inst;
+	ui_ota_is_working = 1;
 
-	u16 *ps = (u16 *)p;
-	int interval = ps[1];
+	bls_ota_setTimeout(30 * 1000000); //set OTA timeout  30 S
 
+	gpio_write(GPIO_LED, 1);  //LED on for indicate OTA mode
 }
+
+void show_ota_result(int result)
+{
+#if 0
+	if(result == OTA_SUCCESS){
+		for(int i=0; i< 8;i++){  //4Hz shine for  4 second
+			gpio_write(GPIO_LED, 0);
+			sleep_us(125000);
+			gpio_write(GPIO_LED, 1);
+			sleep_us(125000);
+		}
+	}
+	else{
+		for(int i=0; i< 8;i++){  //1Hz shine for  4 second
+			gpio_write(GPIO_LED, 0);
+			sleep_us(500000);
+			gpio_write(GPIO_LED, 1);
+			sleep_us(500000);
+		}
+
+		//write_reg8(0x8000,result); ;while(1);  //debug which err lead to OTA fail
+	}
+
+
+	gpio_write(GPIO_LED, 0);
+#endif
+}
+
 
 
 void 	ble_remote_terminate(u8 e,u8 *p) //*p is terminate reason
@@ -115,153 +102,110 @@ void 	ble_remote_terminate(u8 e,u8 *p) //*p is terminate reason
 
 	}
 
-	 //user has push terminate pkt to ble TX buffer before deepsleep
-	if(sendTerminate_before_enterDeep == 1){
-		sendTerminate_before_enterDeep = 2;
-	}
 
-	advertise_begin_tick = clock_time();
+	ui_advertise_begin_tick = clock_time();
 
 }
 
 void	task_connect (u8 e, u8 *p)
 {
+#if (TELIK_SPP_SERVICE_ENABLE)
 	bls_l2cap_requestConnParamUpdate (12, 32, 99, 400);  //interval=10ms latency=99 timeout=4s
-	//latest_user_event_tick = clock_time();
-}
-
-
-/////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////
-
-
-//This function process ...
-void deep_wakeup_proc(void)
-{
-#if(DEEPBACK_FAST_KEYSCAN_ENABLE)
-	//if deepsleep wakeup is wakeup by GPIO(key press), we must quickly scan this
-	//press, hold this data to the cache, when connection established OK, send to master
-	//deepsleep_wakeup_fast_keyscan
-	if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG){
-		if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON,1) && kb_event.cnt){
-			deepback_key_state = DEEPBACK_KEY_CACHE;
-			key_not_released = 1;
-			memcpy(&kb_event_cache,&kb_event,sizeof(kb_event));
-		}
-	}
-#endif
-}
-
-
-static u8 key_voice_press = 0;
-static u8 ota_is_working = 0;
-static u32 key_voice_pressTick = 0;
-
-
-void deepback_post_proc(void)
-{
-	//manual key release
-	if(deepback_key_state == DEEPBACK_KEY_WAIT_RELEASE && clock_time_exceed(deepback_key_tick,150000)){
-		key_not_released = 0;
-
-		key_buf[2] = 0;
-		bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
-		deepback_key_state = DEEPBACK_KEY_IDLE;
-	}
-}
-
-
-u32		dbg_key;
-void key_change_proc(void)
-{
-
-	latest_user_event_tick = clock_time();  //record latest key change time
-
-	if(key_voice_press){  //clear voice key press flg
-		key_voice_press = 0;
-	}
-
-	u8 key = kb_event.keycode[0];
-
-	if ( (key & 0xf0) == 0xf0)			//key in consumer report
-	{
-		dbg_key++;
-		key_not_released = 1;
-		key_type = CONSUMER_KEY;
-		u16 media_key = 1 << (key & 0xf);
-		bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, (u8 *)&media_key, 2);
-	}
-	else if (key)			// key in standard reprot
-	{
-		key_not_released = 1;
-		if (key == VK_M)
-		{
-			{ //if voice not on, mark voice key press tick
-				key_voice_press = 1;
-				key_voice_pressTick = clock_time();
-			}
-		}
-		else{
-			key_type = KEYBOARD_KEY;
-			key_buf[2] = key;
-			bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8);
-		}
-	}
-	else {
-		key_not_released = 0;
-		if(key_type == CONSUMER_KEY){
-			u16 media_key = 0;
-			bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, (u8 *)&media_key, 2);  //release
-		}
-		else{
-			key_buf[2] = 0;
-			bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
-		}
-	}
+#else
+	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);
+#endif  //remote control
 }
 
 
 
 void proc_keyboard (u8 e, u8 *p)
 {
-	static u32 keyDetectTick = 0;
-	if(clock_time_exceed(keyDetectTick, 15000)){
-		keyDetectTick = clock_time();
+
+	static u32 keyScanTick = 0;
+	if(e == BLT_EV_FLAG_GPIO_EARLY_WAKEUP || clock_time_exceed(keyScanTick, 8000)){
+		keyScanTick = clock_time();
 	}
 	else{
 		return;
 	}
 
+	DBG_CHN3_TOGGLE;
+
 
 	kb_event.keycode[0] = 0;
 	int det_key = kb_scan_key (0, 1);
 
-
 	if (det_key){
-		key_change_proc();
-	}
-	
 
-	 //long press voice 1 second
-	if(key_voice_press && clock_time_exceed(key_voice_pressTick,1000000)){
-		key_voice_press = 0;
+		u8 key = kb_event.keycode[0];
+
+		if ( (key & 0xf0) == 0xf0)			//key in consumer report
+		{
+			key_not_released = 1;
+			key_type = CONSUMER_KEY;
+			u16 media_key = 1 << (key & 0xf);
+			bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, (u8 *)&media_key, 2);
+		}
+		else if (key)			// key in standard reprot
+		{
+			key_not_released = 1;
+
+			key_type = KEYBOARD_KEY;
+			key_buf[2] = key;
+			bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8);
+
+		}
+		else {
+			key_not_released = 0;
+			if(key_type == CONSUMER_KEY){
+				u16 media_key = 0;
+				bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, (u8 *)&media_key, 2);  //release
+			}
+			else{
+				key_buf[2] = 0;
+				bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
+			}
+		}
 	}
 }
 
 
-void blt_system_power_optimize(void)  //to lower system power
+_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p)
 {
-	//disable_unnecessary_module_clock
-	reg_rst_clk0 &= ~FLD_RST_SPI;  //spi not use
-	reg_rst_clk0 &= ~FLD_RST_I2C;  //iic not use
-#if(!MODULE_USB_ENABLE) //if usb not use
-	reg_rst_clk0 &= ~(FLD_RST_USB | FLD_RST_USB_PHY);
-#endif
+	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
+	}
+}
 
-#if(!BLE_REMOTE_UART_ENABLE) //if uart not use
-	reg_clk_en1 &= ~(FLD_CLK_UART_EN);
-#endif
 
+extern u32	scan_pin_need;
+void remote_control_pm_proc(void)
+{
+#if 1 //(BLE_REMOTE_PM_ENABLE)
+	if(ui_ota_is_working){
+		bls_pm_setSuspendMask (SUSPEND_DISABLE);
+	}
+	else{
+		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+
+		ui_task_flg = scan_pin_need || key_not_released || DEVICE_LED_BUSY;
+
+		if(ui_task_flg){
+#if 0
+			extern int key_matrix_same_as_last_cnt;
+			if(key_matrix_same_as_last_cnt > 5){  //key matrix stable can optize
+				bls_pm_setManualLatency( 4 );
+			}
+			else{
+				bls_pm_setManualLatency(0);  //latency off: 0
+			}
+#else
+			bls_pm_setManualLatency(0);
+#endif
+		}
+
+	}
+#endif  //END of  BLE_REMOTE_PM_ENABLE
 }
 
 
@@ -287,32 +231,10 @@ void user_init()
 	usb_log_init ();
 	usb_dp_pullup_en (1);  //open USB enum
 
-	/////////////////// keyboard drive/scan line configuration /////////
-	u32 pin[] = KB_DRIVE_PINS;
-	for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
-	{
-		gpio_set_wakeup(pin[i],1,1);  	   //drive pin core(gpio) high wakeup suspend
-		cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
-	}
-	gpio_core_wakeup_enable_all(1);
 
 
-#if(KEYSCAN_IRQ_TRIGGER_MODE)
-	gpio_core_irq_enable_all(1);
-	reg_irq_src = FLD_IRQ_GPIO_EN;
-#endif
 
-
-//	adc_BatteryCheckInit(2);///add by Q.W
-
-
-	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
-	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
-	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_keyboard);
-
-	blc_l2cap_register_handler (blc_l2cap_packet_receive);
-
-	////////////////// BLE slave initialization ////////////////////////////////////
+	////////////////// BLE stack initialization ////////////////////////////////////
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff)
 	{
@@ -325,25 +247,38 @@ void user_init()
         flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
     }
 
-	rf_set_power_level_index (RF_POWER_8dBm);
-
+	//link layer initialization
 	bls_ll_init (tbl_mac);
-	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
-	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
+	//gatt initialization
     //NOTE: my_att_init  must after bls_ll_init, and before bls_ll_setAdvParam
 	extern void my_att_init ();
 	my_att_init ();
+
+	//l2cap initialization
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);
+
+	//smp initialization
+	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
+
+
+
+	///////////////////// USER application initialization ///////////////////
+
+	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
+	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
 
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
-	if(status != BLE_SUCCESS){
-		while(1);
-	}
 
 	bls_ll_setAdvEnable(1);  //adv enable
+
+	rf_set_power_level_index (RF_POWER_8dBm);
+
+	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
+	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
 
 
 #if(BLE_REMOTE_PM_ENABLE)
@@ -354,30 +289,48 @@ void user_init()
 
 
 	/////////////////////////////////////////////////////////////////
-	ll_whiteList_reset();
+#if (TELIK_SPP_SERVICE_ENABLE)
+	////////////////// SPP initialization ///////////////////////////////////
+	#if (HCI_ACCESS==HCI_USE_USB)
+		//usb_bulk_drv_init (0);
+		//blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
+	#else	//uart
+		//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
+		//todo:uart init here
+		rx_uart_r_index = 0;
+		rx_uart_w_index = 0;
+		gpio_set_func(GPIO_UTX, AS_UART);
+		gpio_set_func(GPIO_URX, AS_UART);
+		gpio_set_input_en(GPIO_UTX, 1);
+		gpio_set_input_en(GPIO_URX, 1);
+		CLK16M_UART115200;
+		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
+		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);
+	#endif
+//	extern void event_handler(u32 h, u8 *para, int n);
+//	bls_event_cb_register(event_handler);		//register event callback
+#else  //remote control
+	/////////////////// keyboard drive/scan line configuration /////////
+	u32 pin[] = KB_DRIVE_PINS;
+	for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
+	{
+		gpio_set_wakeup(pin[i],1,1);  	   //drive pin core(gpio) high wakeup suspend
+		cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
+	}
+	gpio_core_wakeup_enable_all(1);
 
-	device_led_init(GPIO_LED, 1);
+	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_keyboard);
+	bls_app_registerEventCallback (BLT_EV_FLAG_SET_WAKEUP_SOURCE, &ble_remote_set_sleep_wakeup);
 
-	advertise_begin_tick = clock_time();
-#if (HCI_ACCESS==HCI_USE_USB)
-	//usb_bulk_drv_init (0);
-	//blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
-#else	//uart
-	//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
-	//todo:uart init here
-	rx_uart_r_index = 0;
-	rx_uart_w_index = 0;
-	gpio_set_func(GPIO_UTX, AS_UART);
-	gpio_set_func(GPIO_URX, AS_UART);
-	gpio_set_input_en(GPIO_UTX, 1);
-	gpio_set_input_en(GPIO_URX, 1);
-	CLK16M_UART115200;			//todo:change to certain configuration according to lib
-	uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
-	blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);
 #endif
 
-	/** smp test **/
-	smpRegisterCbInit();
+
+	// OTA init
+	bls_ota_registerStartCmdCb(entry_ota_mode);
+	bls_ota_registerResultIndicateCb(show_ota_result);
+
+
+	ui_advertise_begin_tick = clock_time();
 }
 
 
@@ -395,8 +348,12 @@ void main_loop ()
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////
+#if(TELIK_SPP_SERVICE_ENABLE)
+
+	//  add spp UI task
+
+#else
 	proc_keyboard (0,0);
-
-
-	device_led_process();
+	remote_control_pm_proc();
+#endif
 }

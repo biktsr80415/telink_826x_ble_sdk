@@ -25,6 +25,8 @@
 	#include "../8267_ble_remote/app_config.h"
 #elif (__PROJECT_8267_BLE_RC_DEMO__)
 	#include "../8267_ble_rc_demo/app_config.h"
+#elif (__PROJECT_8266_OTA_BOOT__)
+	#include "../8266_ota_boot/app_config.h"
 #else
 	#include "../common/default_config.h"
 #endif

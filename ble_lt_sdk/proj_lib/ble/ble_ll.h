@@ -127,7 +127,7 @@ typedef struct {
 	ble_cyrpt_nonce_t	nonce;
 	u8					st;
 	u8					enable;			//1: slave enable; 2: master enable
-	u8					rsvd;
+	u8					mic_fail;
 } ble_crypt_para_t;
 
 typedef struct {
@@ -366,6 +366,7 @@ u16 blm_att_findHandleOfUuid128 (att_db_uuid128_t *p, const u8 * uuid);
 u16 blm_att_discoveryHandleOfUUID (u8 *l2cap_data, u8 *uuid128);
 
 //------------	master function -----------------------------------
+u8 blm_fifo_num (u16 h);
 u8 blm_push_fifo (int h, u8 *p);
 
 ble_sts_t blm_ll_connectWhiteList (int en);

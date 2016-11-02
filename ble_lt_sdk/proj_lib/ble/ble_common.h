@@ -999,14 +999,6 @@ void	blt_brx_sleep (u32 app_wakeup_tick);
 void	blt_brx_sleep ();
 #endif
 
-
-//enable/disable security_req(0x0b) send when connect with master
-//default enable
-void blt_set_secReq_enable(u8 en);
-
-
-
-
 /////////////////////////////////// master  config  ///////////////////////////////////////
 #define FAST_PARING_ENCRYPTION_ENABLE			0
 
@@ -1111,6 +1103,17 @@ typedef struct {
 	u16	latency;
 	u16	timeout;
 } event_connection_update_t;			//20-byte
+
+typedef struct {
+	u8	status;
+	u16	handle;
+	u8  enc_enable;
+} event_enc_change_t;
+
+typedef struct {
+	u8	status;
+	u16	handle;
+} event_enc_refresh_t;
 
 #include "att.h"
 #include "gap.h"
