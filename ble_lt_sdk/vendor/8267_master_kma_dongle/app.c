@@ -42,10 +42,9 @@ u32		spp_err = 0;
 void app_send_spp_status ()
 {
 	u8 dat[16];
-	dat[0] = 0;
-	memcpy (dat + 1, &spp_num, 4);
-	memcpy (dat + 5, &spp_err, 4);
-	blc_hci_send_data (0x7e2 | HCI_FLAG_EVENT_TLK_MODULE, dat, 9);
+	memcpy (dat + 0, &spp_num, 4);
+	memcpy (dat + 4, &spp_err, 4);
+	blc_hci_send_data (0x7e2 | HCI_FLAG_EVENT_TLK_MODULE, dat, 8);
 }
 
 int app_hci_cmd_from_usb (void)
