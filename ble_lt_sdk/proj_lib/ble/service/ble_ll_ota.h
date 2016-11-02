@@ -21,6 +21,10 @@
 #define			OTA_FLG_ADR			0x3f000
 #endif
 
+#ifndef			OTA_8261_FLG_ADR
+#define			OTA_8261_FLG_ADR	0x1c000
+#endif
+
 #define CMD_OTA_FW_VERSION					0xff00
 #define CMD_OTA_START						0xff01
 #define CMD_OTA_END							0xff02
@@ -35,6 +39,7 @@ typedef void (*ota_startCb_t)(void);
 typedef void (*ota_versionCb_t)(void);
 
 typedef void (*ota_resIndicateCb_t)(int result);
+
 extern ota_resIndicateCb_t otaResIndicateCb;
 
 
@@ -47,12 +52,14 @@ enum{
  	OTA_TIMEOUT, 		  //
 };
 
-void ble_setOtaStartCb(ota_startCb_t cb);
-void ble_setOtaVersionCb(ota_versionCb_t cb);
-void ble_setOtaResIndicateCb(ota_resIndicateCb_t cb);
+void bls_ota_procTimeout(void);
 
+//user interface
+void bls_ota_registerStartCmdCb(ota_startCb_t cb);
+void bls_ota_registerVersionReqCb(ota_versionCb_t cb);
+void bls_ota_registerResultIndicateCb(ota_resIndicateCb_t cb);
 
-void ble_setOtaTimeout(u32 timeout_us);
+void bls_ota_setTimeout(u32 timeout_us);
 
 extern int otaWrite(void * p);
 extern int otaRead(void * p);

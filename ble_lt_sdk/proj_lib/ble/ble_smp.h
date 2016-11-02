@@ -113,7 +113,7 @@ typedef struct{
 typedef struct{
 	u8		conn_handle;
 	u8		role;
-	u8		initior_sec_disable;
+	u8		paring_enable;
 	u8 		rsvd;
 //	u16 	rsvd2;
 	u8		peer_addr[6];
@@ -254,7 +254,11 @@ static const stk_generationMethod_t stk_generation_method[5][5] = {
 #define	ENCRYPRION_KEY_SIZE_MAXINUM				16
 #define	ENCRYPRION_KEY_SIZE_MINIMUN				7
 
-
+typedef enum{
+	SMP_PARING_DISABLE_TRRIGER = 0,
+	SMP_PARING_CONN_TRRIGER ,
+	SMP_PARING_PEER_TRRIGER,
+}smp_paringTrriger_t;
 
 
 #if 1
@@ -263,6 +267,11 @@ static const stk_generationMethod_t stk_generation_method[5][5] = {
 #define Tl_printf
 #define Tl_printf_u8buf
 #endif
+
+/*
+ * Return STK generate method.
+ * */
+int blt_smp_getGenMethod ();
 
 /**************************************************
  * 	used for handle link layer callback (ltk event callback), packet LL_ENC_request .
@@ -277,7 +286,7 @@ void blt_smp_paramInitDefault ( );
 /**************************************************
  * 	used for save parameter in paring buffer
  */
-void bls_smp_setAddress (u8 *p);
+int bls_smp_setAddress (u8 *p);
 
 /*************************************************
  * 	@brief 		used for enable authentication MITM
@@ -334,13 +343,48 @@ int blt_smp_paramInit ();
 void blm_smp_setNewConnInfo(u8 role, u8 ownAddrType, u8* ownAddr, u8 peerAddrType, u8* peerAddr);
 
 /**************************************************
- * Used for disable master paring function
- */
-void blm_smp_disableParing (u8 disable);
-
-/**************************************************
  * Used for handle connection complete event
  */
 void blm_smp_connComplete(u16 connhandle, u8* bd_addr, u8 link_type, u8 encrypt_en);
+
+
+
+/**************************************************
+ *  API used for slave start encryption.
+ */
+int bls_smp_startEncryption ();
+
+/**************************************************
+ * API used for slave enable the device paring.
+ * encrypt_en	SMP_PARING_DISABLE_TRRIGER   -  not allow encryption
+ * 				SMP_PARING_CONN_TRRIGER      -  paring process start once connect.
+ * 				SMP_PARING_PEER_TRRIGER      -  paring process start once peer device start.
+ */
+int bls_smp_enableParing (smp_paringTrriger_t encrypt_en);
+
+/**************************************************
+ * API used for slave setting paring parameter. only valid when paring allowed.
+ */
+int bls_smp_initParingParam (u8 OOB_en, u8 OOB_data[16], u8 MITM_en, u32 pin_code, u8 bonding_en, u8 IO_Cap);
+//						u8 m_LTK, u8 m_IRK, u8 m_CSRK, u8 s_LTK, u8 s_IRK, u8 s_CSRK );
+
+/**************************************************
+ * API used for master enable the device paring within connhandle.
+ * encrypt_en	SMP_PARING_DISABLE_TRRIGER   -  not allow encryption
+ * 				SMP_PARING_CONN_TRRIGER      -  paring process start once connect.
+ * 				SMP_PARING_PEER_TRRIGER      -  paring process start once peer device start.
+ */
+int blm_smp_enableParing (u16 connhandle, smp_paringTrriger_t encrypt_en);
+
+/**************************************************
+ * API used for master start encryption within the connhandle.
+ */
+int blm_smp_startEncryption (u16 connhandle);
+
+/**************************************************
+ * API used for master setting paring parameter within the connhandle. only valid when paring allowed.
+ */
+int blm_smp_initParingParam (u16 connhandle, u8 OOB_en, u8 OOB_data[16], u8 MITM_en, u32 pin_code, u8 bonding_en, u8 IO_Cap);
+//		u8 m_LTK, u8 m_IRK, u8 m_CSRK, u8 s_LTK, u8 s_IRK, u8 s_CSRK );
 
 #endif /* BLE_SMP_H_ */
