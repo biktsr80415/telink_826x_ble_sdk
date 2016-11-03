@@ -1,17 +1,6 @@
 #include "../../proj_lib/ble/ble_ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 
-////////////////////////////////////event callback////////////////////////////////
-extern hci_event_callback_t	bls_event_callback;
-u8 bls_event_cb_register(int* cb)
-{
-	if(cb!=0)
-	{
-		bls_event_callback = (hci_event_callback_t)(cb);
-		return 0;
-	}
-	else return 1;
-}
 
 ///////////the code below is just for demonstration of the event callback only////////////
 void event_handler(u32 h, u8 *para, int n)
@@ -35,15 +24,15 @@ int rx_from_uart_cb (void)//UART data send to Master,we will handler the data as
         return 0;
 	}
 
-	u32 rx_len = T_rxdata_buf[rx_uart_w_index].len + 4 > sizeof(T_rxdata_user) ? sizeof(T_rxdata_user) : T_rxdata_buf[rx_uart_w_index].len + 4;
-	memcpy(&T_rxdata_user, &T_rxdata_buf[rx_uart_w_index], rx_len);
-	memset(&T_rxdata_buf[rx_uart_w_index],0,sizeof(uart_data_t));
+	u32 rx_len = T_rxdata_buf[rx_uart_r_index].len + 4 > sizeof(T_rxdata_user) ? sizeof(T_rxdata_user) : T_rxdata_buf[rx_uart_r_index].len + 4;
+	memcpy(&T_rxdata_user, &T_rxdata_buf[rx_uart_r_index], rx_len);
+	memset(&T_rxdata_buf[rx_uart_r_index],0,sizeof(uart_data_t));
 
 	if (rx_len)
 	{
 		bls_uart_handler(T_rxdata_user.data, rx_len - 4);//todo:define your own handler for SPP CMD/DATA
 	}
-	rx_uart_w_index = (rx_uart_w_index + 1)&0x01;
+	rx_uart_r_index = (rx_uart_r_index + 1)&0x01;
 
 	return 0;
 }

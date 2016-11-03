@@ -84,9 +84,8 @@
 #define					MASTER_LL_ENC_PAUSE_RSP_T		7
 #define					MASTER_LL_ENC_PAUSE_RSP			8
 #define					MASTER_LL_REJECT_IND_T			9
-
-#define					MASTER_LL_ENC_SMP_INFO_S		(1<<5) //0x0a
-#define					MASTER_LL_ENC_SMP_INFO_E		(1<<6) //0x0b
+#define					MASTER_LL_ENC_SMP_INFO_S		10
+#define					MASTER_LL_ENC_SMP_INFO_E		11
 
 #define					LL_ENC_REQ					0x03
 #define					LL_ENC_RSP					0x04
@@ -302,7 +301,7 @@ void 		bls_pm_setUserTimerWakeup(u32 tick, u8 enable); //user set timer wakeup
 
 // application
 void		bls_app_registerEventCallback (u8 e, blt_event_callback_t p);
-
+void 		bls_register_event_data_callback (hci_event_callback_t  *event);
 
 
 
@@ -328,19 +327,6 @@ ble_sts_t 		bls_hci_le_readBufferSize_cmd(u8 *pData);
 
 ble_sts_t		bls_hci_receiveACLData(u16 connHandle, u8 PB_Flag, u8 BC_Flag, u8 *pData );
 ble_sts_t		bls_hci_sendACLData();
-
-
-// smp
-u8 blt_set_smp_busy(u8 paring_busy);
-u8 blt_smp_pair_busy();
-u8 blt_paring_pkt_recved( u8 pkt_recvd);
-bond_initA_t* blt_get_bond_ptr();
-typedef int (*blt_LTK_req_callback_t)(u8* rand, u16 ediv);
-void blt_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
-
-ble_sts_t  ll_setLtk (u16 connHandle,  u8*ltk);
-ble_sts_t  ll_getLtkVsConnHandleFail (u16 connHandle);
-
 
 void blc_l2cap_register_handler (void *p);
 int blc_l2cap_packet_receive (u8 * p);
@@ -391,6 +377,18 @@ ble_sts_t blm_ll_updateConnection (u16 handle,
 							  u16 ce_min, u16 ce_max );
 
 st_ll_conn_master_t * blm_ll_getConnection (u16 h);
+
+//------------	master security function -------------------
+int  blm_ll_startEncryption (u8 connhandle ,u16 ediv, u8* random, u8* ltk);
+void blm_ll_startDistributeKey (u8 connhandle );
+
+//------------	slave security function -------------------
+ble_sts_t bls_ll_getLtkVsConnHandleFail (u16 connHandle);
+ble_sts_t  bls_ll_setLtk (u16 connHandle,  u8*ltk);
+u8 blt_set_smp_busy(u8 paring_busy);
+u8 blt_smp_pair_busy();
+typedef int (*blt_LTK_req_callback_t)(u8* rand, u16 ediv);
+void blt_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
 
 int blm_l2cap_packet_receive (u16 conn, u8 * raw_pkt);
 u8 * blm_l2cap_packet_pack (u16 conn, u8 * raw_pkt);
