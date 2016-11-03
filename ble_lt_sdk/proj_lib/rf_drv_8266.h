@@ -56,8 +56,14 @@ enum {
 };
 
 
-
 extern u8 		sar_adc_pwdn_en;
+extern int		xtalType_rfMode;
+
+
+#define POWER_DOWN_64MHZ_CLK			analog_write(0x82, IS_XTAL_12M(xtalType_rfMode) ? 0x00 : 0x14)
+#define POWER_ON_64MHZ_CLK				analog_write(0x82, IS_XTAL_12M(xtalType_rfMode) ? 0x20 : 0x34)
+
+
 static inline void adc_clk_powerdown(void)
 {
 	sar_adc_pwdn_en = 1;
@@ -260,6 +266,18 @@ static inline void emi_cd_recovery( void ){
     write_reg8(0x80050e, emi_var[5]);
     write_reg8(0x800400, emi_var[6]);
 }
+
+
+static inline void rf_start_brx  (void* addr, u32 tick)
+{
+//	write_reg32 (0x800f04, 0x56);						// tx_wait = 0; tx_settle = 86 us
+	write_reg32 (0x800f28, 0x0fffffff);					// first timeout
+	write_reg32(0x800f18, tick);						// Setting schedule trigger time
+    write_reg8(0x800f16, read_reg8(0x800f16) | 0x04);	// Enable cmd_schedule mode
+	write_reg8 (0x800f00, 0x82);						// ble rx
+	write_reg16 (0x80050c, (u16)((u32)addr));
+}
+
 
 void 	rf_drv_init (int xtal_type);
 void	rf_power_down ();
