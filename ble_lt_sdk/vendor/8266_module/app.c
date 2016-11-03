@@ -97,7 +97,7 @@ void show_ota_result(int result)
 
 
 
-void 	ble_remote_terminate(u8 e,u8 *p) //*p is terminate reason
+void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 {
 	if(*p == HCI_ERR_CONN_TIMEOUT){
 
@@ -114,7 +114,7 @@ void 	ble_remote_terminate(u8 e,u8 *p) //*p is terminate reason
 
 }
 
-void	task_connect (u8 e, u8 *p)
+void	task_connect (u8 e, u8 *p, int n)
 {
 #if (TELIK_SPP_SERVICE_ENABLE)
 	bls_l2cap_requestConnParamUpdate (12, 32, 99, 400);  //interval=10ms latency=99 timeout=4s
@@ -125,7 +125,7 @@ void	task_connect (u8 e, u8 *p)
 
 
 
-void proc_keyboard (u8 e, u8 *p)
+void proc_keyboard (u8 e, u8 *p, int n)
 {
 
 	static u32 keyScanTick = 0;
@@ -176,7 +176,7 @@ void proc_keyboard (u8 e, u8 *p)
 }
 
 
-_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p)
+_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
 	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
@@ -362,7 +362,7 @@ void main_loop ()
 	//  add spp UI task
 
 #else
-	proc_keyboard (0,0);
+	proc_keyboard (0,0, 0);
 	remote_control_pm_proc();
 #endif
 }

@@ -184,7 +184,7 @@ void key_change_proc(void)
 
 
 
-void proc_keyboard (u8 e, u8 *p)
+void proc_keyboard (u8 e, u8 *p, int n)
 {
 	static u32 keyDetectTick = 0;
 	if(clock_time_exceed(keyDetectTick, 15000)){
@@ -369,7 +369,7 @@ void main_loop ()
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////
-	proc_keyboard (0,0);
+	proc_keyboard (0,0, 0);
 
 
 	device_led_process();
