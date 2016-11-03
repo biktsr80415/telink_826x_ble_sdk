@@ -395,6 +395,8 @@ void user_init()
 	gpio_set_func(GPIO_URX, AS_UART);
 	gpio_set_input_en(GPIO_UTX, 1);
 	gpio_set_input_en(GPIO_URX, 1);
+	gpio_write (GPIO_UTX, 1);			//pull-high RX to avoid mis-trig by floating signal
+	gpio_write (GPIO_URX, 1);			//pull-high RX to avoid mis-trig by floating signal
 	CLK32M_UART115200;			//todo:change to certain configuration according to lib
 	uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
 	REG_ADDR8(0x526) = BIT(0) | BIT(1);//CLR irq source
