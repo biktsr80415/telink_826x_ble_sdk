@@ -28,7 +28,7 @@ volatile unsigned char uart_tx_busy_flag = 0;                   // must "volatil
 static unsigned char *tx_buff = NULL;
 #if(UART_CONTINUE_DELAY_EN)
 static volatile unsigned int uart_continue_delay_time = 0;      // must "volatile"
-static unsigned int baudrate_set = 0;
+static unsigned int uart_tx_done_delay_us = 900;
 #endif
 
 void uart_set_tx_busy_flag(){
@@ -46,9 +46,14 @@ void uart_clr_tx_busy_flag(){
     #endif
 }
 
+void uart_set_tx_done_delay (u32 t)
+{
+	uart_tx_done_delay_us = t;
+}
+
 unsigned char uart_tx_is_busy(){
 #if(UART_CONTINUE_DELAY_EN)
-   if (uart_continue_delay_time && clock_time_exceed(uart_continue_delay_time, (baudrate_set > 100000 ? 800 : 9000)))
+   if (uart_continue_delay_time && clock_time_exceed(uart_continue_delay_time, uart_tx_done_delay_us))
    {
     	uart_continue_delay_time = 0;
     	uart_tx_busy_flag = 0;

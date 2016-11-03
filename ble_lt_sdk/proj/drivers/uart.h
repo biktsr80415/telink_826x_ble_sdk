@@ -38,12 +38,6 @@ enum{
 #define	CLK16M_UART115200		uart_Init(9,13,1,1,NOCONTROL)
 #define	CLK16M_UART9600			uart_Init(103,15,1,1,NOCONTROL)
 
-#if( TL_LIB_8266 || MCU_CORE_TYPE == MCU_CORE_8266)
-	#define	UART_SEND  			     uart_Send_kma
-#else
-    #define	UART_SEND				 uart_Send
-#endif
-
 //UART_TX/UART_RX gpio pin config
 #define	   UART_GPIO_CFG_PA6_PA7()  do{\
 										*(volatile unsigned char  *)0x800586 &= 0x3f;\
@@ -158,5 +152,7 @@ extern void uart_RecBuffInit(unsigned char *recAddr, unsigned short recBuffLen);
 extern void uart_BuffInit(unsigned char *recAddr, unsigned short recBuffLen, unsigned char *txAddr);
 
 void uart_clr_tx_busy_flag();
+
+void uart_set_tx_done_delay (u32 t);		//for 8266 only
 
 #endif

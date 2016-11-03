@@ -192,7 +192,7 @@ int app_packet_from_uart (void)
 		u8 *p = T_rxdata_user.data;
 		if (spp_test_en)
 		{
-			if (p[0] == 0xff && p[2] == 0x30 && p[3] == 0x07)
+			if (p[0] == 0xff && p[2] == 0x31 && p[3] == 0x07)
 			{
 				spp_test_read (p + 4, p[1] - 2);
 			}
