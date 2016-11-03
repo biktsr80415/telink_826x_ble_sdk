@@ -15,8 +15,8 @@ _attribute_ram_code_ void irq_handler(void)
     unsigned char irqS = uart_IRQSourceGet();
     if(irqS & BIT(0))	//rx
     {
-		rx_uart_r_index = (rx_uart_r_index + 1)&0x01;
-		write_reg16(0x800500,(unsigned short)((unsigned int)(&T_rxdata_buf[rx_uart_r_index])));//set receive buffer address
+		rx_uart_w_index = (rx_uart_w_index + 1)&0x01;
+		write_reg16(0x800500,(unsigned short)((unsigned int)(&T_rxdata_buf[rx_uart_w_index])));//set receive buffer address
     }
 
     if(irqS & BIT(1))	//tx

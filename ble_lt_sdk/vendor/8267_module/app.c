@@ -336,7 +336,7 @@ void user_init()
 															//in spp.c like rx_from_uart_cb & tx_to_uart_cb
 	#endif
 //	extern void event_handler(u32 h, u8 *para, int n);
-//	bls_event_cb_register(event_handler);		//register event callback
+//	bls_register_event_data_callback(event_handler);		//register event callback
 #else  //remote control
 	/////////////////// keyboard drive/scan line configuration /////////
 	u32 pin[] = KB_DRIVE_PINS;
