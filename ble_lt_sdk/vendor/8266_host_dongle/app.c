@@ -17,6 +17,8 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj/drivers/uart.h"
 
+MYFIFO_INIT(hci_tx_fifo, 72, 4);
+
 int		dongle_pairing_enable;
 u8		spp_test_en = 0;
 u32		spp_num = 0;

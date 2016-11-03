@@ -25,6 +25,8 @@
 
 #define				ATT_DB_UUID16_NUM		20
 #define				ATT_DB_UUID128_NUM		8
+
+MYFIFO_INIT(hci_tx_fifo, 72, 4);
 ////////////////////////////////////////////////////////////////////
 u16	conn_handle;					//	handle of  connection
 u8 	conn_char_handler[8][8] = {{0}};
