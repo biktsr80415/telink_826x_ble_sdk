@@ -30,7 +30,7 @@ u32		spp_err = 0;
 // TX FIFO
 ///////////////////////////////////////////
 #define			HCI_BUFFER_TX_SIZE		72
-#define			HCI_BUFFER_NUM			8
+#define			HCI_BUFFER_NUM			4
 
 MYFIFO_INIT(uart_fifo, HCI_BUFFER_TX_SIZE, HCI_BUFFER_NUM);
 MYFIFO_INIT(usb_fifo, HCI_BUFFER_TX_SIZE, HCI_BUFFER_NUM);
@@ -105,7 +105,7 @@ void	spp_test_read (u8 *p, int n)
 	{
 		app_send_spp_status ();
 	}
-	if (spp_err > 1)
+	if (0 && spp_err > 1)
 	{
 		gpio_set_input_en(GPIO_URX, 0);
 		irq_disable ();
@@ -192,7 +192,7 @@ int app_packet_from_uart (void)
 		u8 *p = T_rxdata_user.data;
 		if (spp_test_en)
 		{
-			if (p[0] == 0xff && p[2] == 0x31 && p[3] == 0x07)
+			if (p[0] == 0xff && p[2] == 0x30 && p[3] == 0x07)
 			{
 				spp_test_read (p + 4, p[1] - 2);
 			}
