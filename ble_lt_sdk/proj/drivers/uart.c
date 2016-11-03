@@ -48,7 +48,9 @@ void uart_clr_tx_busy_flag(){
 
 void uart_set_tx_done_delay (u32 t)
 {
+#if(UART_CONTINUE_DELAY_EN)
 	uart_tx_done_delay_us = t;
+#endif
 }
 
 unsigned char uart_tx_is_busy(){
