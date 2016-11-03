@@ -29,73 +29,9 @@ u32		spp_err = 0;
 ///////////////////////////////////////////
 #define			HCI_BUFFER_TX_SIZE		72
 #define			HCI_BUFFER_NUM			8
-u8				app_hci_buff[HCI_BUFFER_NUM][HCI_BUFFER_TX_SIZE] = {{0,},};
-u8				app_hci_buff_wptr = 0;
-u8				app_hci_buff_rptr = 0;
 
-typedef	struct {
-	u8		size;
-	u8		num;
-	u8		wptr;
-	u8		rptr;
-	u8*		p;
-}	my_fifo_t;
-
-u8			uart_buff[HCI_BUFFER_NUM][HCI_BUFFER_TX_SIZE] = {{0},};
-u8			usb_buff[HCI_BUFFER_NUM][HCI_BUFFER_TX_SIZE] = {{0},};
-my_fifo_t	uart_fifo = {HCI_BUFFER_TX_SIZE, HCI_BUFFER_NUM, 0, 0, uart_buff[0]};
-my_fifo_t	usb_fifo  = {HCI_BUFFER_TX_SIZE, HCI_BUFFER_NUM, 0, 0, usb_buff[0]};
-
-void my_fifo_init (my_fifo_t *f, u8 s, u8 n, u8 w, u8 r, u8 *p)
-{
-	f->size = s;
-	f->num = n;
-	f->wptr = w;
-	f->rptr = r;
-	f->p = p;
-}
-
-u8* my_fifo_wptr (my_fifo_t *f)
-{
-	if (((f->wptr - f->rptr) & 255) < f->num)
-	{
-		return f->p + (f->wptr & (f->num-1)) * f->size;
-	}
-	return 0;
-}
-
-int my_fifo_push (my_fifo_t *f, u8 *p, u8 n)
-{
-	if (((f->wptr - f->rptr) & 255) >= f->num)
-	{
-		return -1;
-	}
-
-	if (n >= f->size)
-	{
-		return -1;
-	}
-	u8 *pd = f->p + (f->wptr++ & (f->num-1)) * f->size;
-	*pd++ = n;
-	*pd++ = n >> 8;
-	memcpy (pd, p, n);
-	return 0;
-}
-
-void my_fifo_pop (my_fifo_t *f)
-{
-	f->rptr++;
-}
-
-u8 * my_fifo_get (my_fifo_t *f)
-{
-	if (f->rptr != f->wptr)
-	{
-		u8 *p = f->p + (f->rptr & (f->num-1)) * f->size;
-		return p;
-	}
-	return 0;
-}
+MYFIFO_INIT(uart_fifo, HCI_BUFFER_TX_SIZE, HCI_BUFFER_NUM);
+MYFIFO_INIT(usb_fifo, HCI_BUFFER_TX_SIZE, HCI_BUFFER_NUM);
 
 //------------------- spp test ----------------------------------------------
 void app_send_spp_status ()
@@ -142,6 +78,7 @@ void spp_test_write ()
 
 void	spp_test_read (u8 *p, int n)
 {
+	static u32 spp_err_st;
 	static u32 spp_read = 0;
 	u32 seq;
 	memcpy (&seq, p, 4);
@@ -156,6 +93,7 @@ void	spp_test_read (u8 *p, int n)
 			if ((u8)(p[0] + i) != p[i])
 			{
 				spp_err++;
+				spp_err_st += BIT(16);
 				break;
 			}
 		}
@@ -164,6 +102,12 @@ void	spp_test_read (u8 *p, int n)
 	if ((spp_read & 0xff) == 0)
 	{
 		app_send_spp_status ();
+	}
+	if (spp_err > 1)
+	{
+		gpio_set_input_en(GPIO_URX, 0);
+		irq_disable ();
+		while (1);
 	}
 }
 

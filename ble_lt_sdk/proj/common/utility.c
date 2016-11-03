@@ -158,3 +158,60 @@ void store_16(u8 *buffer, u16 pos, u16 value){
     buffer[pos++] = value >> 8;
 }
 
+
+
+void my_fifo_init (my_fifo_t *f, u8 s, u8 n, u8 *p)
+{
+	f->size = s;
+	f->num = n;
+	f->wptr = 0;
+	f->rptr = 0;
+	f->p = p;
+}
+
+u8* my_fifo_wptr (my_fifo_t *f)
+{
+	if (((f->wptr - f->rptr) & 255) < f->num)
+	{
+		return f->p + (f->wptr & (f->num-1)) * f->size;
+	}
+	return 0;
+}
+
+void my_fifo_next (my_fifo_t *f)
+{
+	f->wptr++;
+}
+
+int my_fifo_push (my_fifo_t *f, u8 *p, u8 n)
+{
+	if (((f->wptr - f->rptr) & 255) >= f->num)
+	{
+		return -1;
+	}
+
+	if (n >= f->size)
+	{
+		return -1;
+	}
+	u8 *pd = f->p + (f->wptr++ & (f->num-1)) * f->size;
+	*pd++ = n;
+	*pd++ = n >> 8;
+	memcpy (pd, p, n);
+	return 0;
+}
+
+void my_fifo_pop (my_fifo_t *f)
+{
+	f->rptr++;
+}
+
+u8 * my_fifo_get (my_fifo_t *f)
+{
+	if (f->rptr != f->wptr)
+	{
+		u8 *p = f->p + (f->rptr & (f->num-1)) * f->size;
+		return p;
+	}
+	return 0;
+}
