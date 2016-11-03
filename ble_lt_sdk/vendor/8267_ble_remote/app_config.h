@@ -177,10 +177,6 @@ extern "C" {
 
 
 
-/////////////open SWS digital pullup to prevent MCU err, this is must ////////////
-#define PB0_DATA_OUT					1
-
-
 #define  SIHUI_DEBUG_BLE_SLAVE				1
 
 #if(SIHUI_DEBUG_BLE_SLAVE)

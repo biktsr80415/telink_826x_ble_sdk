@@ -12,6 +12,7 @@
 #include "../../proj/drivers/audio.h"
 #include "../../proj/drivers/adc.h"
 #include "../../proj_lib/ble/blt_config.h"
+#include "../../proj_lib/ble/ble_smp.h"
 
 #if (__PROJECT_8267_BLE_RC_DEMO__)
 
@@ -193,7 +194,7 @@ void	task_audio (void)
 
 
 
-void 	ble_remote_terminate(u8 e,u8 *p) //*p is terminate reason
+void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 {
 	if(*p == HCI_ERR_CONN_TIMEOUT){
 
@@ -218,7 +219,7 @@ void 	ble_remote_terminate(u8 e,u8 *p) //*p is terminate reason
 
 }
 
-void	task_connect (u8 e, u8 *p)
+void	task_connect (u8 e, u8 *p, int n)
 {
 	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);  //interval=10ms latency=99 timeout=4s
 
@@ -373,7 +374,7 @@ void key_change_proc(void)
 
 
 
-void proc_keyboard (u8 e, u8 *p)
+void proc_keyboard (u8 e, u8 *p, int n)
 {
 
 	static u32 keyScanTick = 0;
@@ -483,7 +484,7 @@ void blt_system_power_optimize(void)  //to lower system power
 
 
 //_attribute_ram_code_
-void  ble_remote_set_sleep_wakeup (u8 e, u8 *p)
+void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
 	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
@@ -573,6 +574,7 @@ void user_init()
 	extern void my_att_init ();
 	my_att_init ();
 
+	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER);
 
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
@@ -697,7 +699,7 @@ void main_loop ()
 
 	task_audio();
 
-	proc_keyboard (0,0);
+	proc_keyboard (0,0, 0);
 
 	device_led_process();
 

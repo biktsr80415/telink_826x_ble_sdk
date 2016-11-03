@@ -13,19 +13,19 @@
 #include "../../proj/drivers/adc.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../common/blt_soft_timer.h"
+#include "../../proj_lib/ble/ble_smp.h"
 
 #if (__PROJECT_8267_BLE_REMOTE__)
 
 
 #define  USER_TEST_APP_TIMER_EARLY_WAKEUP		0
 #define  USER_TEST_BLT_SOFT_TIMER				0
-
+MYFIFO_INIT(hci_tx_fifo, 72, 4);
 
 #if (HCI_ACCESS==HCI_USE_UART)
 #include "../../proj/drivers/uart.h"
 #endif
 
-MYFIFO_INIT(hci_tx_fifo, 72, 4);
 ////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////
@@ -389,7 +389,7 @@ void key_change_proc(void)
 
 
 
-void proc_keyboard (u8 e, u8 *p)
+void proc_keyboard (u8 e, u8 *p, int n)
 {
 
 	static u32 keyScanTick = 0;
@@ -482,7 +482,7 @@ void blt_system_power_optimize(void)  //to lower system power
 }
 
 
-_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p)
+_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
 	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
@@ -605,6 +605,7 @@ void user_init()
 	extern void my_att_init ();
 	my_att_init ();
 
+	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER); // SMP_PARING_DISABLE_TRRIGER
 
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
@@ -661,7 +662,7 @@ void main_loop ()
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
 #if (BLT_SOFTWARE_TIMER_ENABLE)
-	blt_soft_timer_process(0, 0);
+	blt_soft_timer_process(0, 0, 0);
 #endif
 
 	blt_slave_main_loop ();
@@ -670,7 +671,7 @@ void main_loop ()
 
 	task_audio();
 
-	proc_keyboard (0,0);
+	proc_keyboard (0,0,0);
 
 	device_led_process();
 
