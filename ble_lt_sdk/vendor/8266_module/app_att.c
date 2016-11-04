@@ -301,6 +301,40 @@ u8  SppDataClient2ServerData[ATT_MTU_SIZE - 3];
 const u8 TelinkSPPS2CDescriptor[] = "Telink SPP: Module->Phone";
 const u8 TelinkSPPC2SDescriptor[] = "Telink SPP: Phone->Module";
 
+u32 	spp_err = 0;
+void	spp_test_read (u8 *p, int n)
+{
+	static u32 spp_err_st;
+	static u32 spp_read = 0;
+	u32 seq;
+	memcpy (&seq, p, 4);
+	if (spp_read != seq)
+	{
+		spp_err++;
+	}
+	else
+	{
+		for (int i=4; i<n; i++)
+		{
+			if ((u8)(p[0] + i) != p[i])
+			{
+				spp_err++;
+				spp_err_st += BIT(16);
+				break;
+			}
+		}
+	}
+	spp_read = seq - 1;
+
+	if (spp_err > 1)
+	{
+		//gpio_set_input_en(GPIO_URX, 0);
+		//irq_disable ();
+		//while (1);
+		gpio_write(GPIO_PA1, 1);
+	}
+}
+
 void module_onReceiveData(rf_packet_att_write_t *p)
 {
 	u8 len = p->l2capLen - 3;
@@ -309,6 +343,7 @@ void module_onReceiveData(rf_packet_att_write_t *p)
 		u32 header;
 		header = 0x0731;		//data received event
 		header |= (3 << 16) | (1<<24);
+		spp_test_read (&p->value, len);
 		blc_hci_send_data(header, &p->value, len);		//HCI_FLAG_EVENT_TLK_MODULE
 	}
 }
