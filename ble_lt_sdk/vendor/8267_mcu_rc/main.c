@@ -36,7 +36,7 @@ _attribute_ram_code_ void irq_handler(void)
     	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
 
     	dbg_tx ++;
-        uart_clr_tx_busy_flag();
+        //uart_clr_tx_busy_flag();
     }
 }
 
