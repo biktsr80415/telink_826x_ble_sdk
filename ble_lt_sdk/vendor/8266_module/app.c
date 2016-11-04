@@ -4,8 +4,6 @@
 #include "../../proj_lib/ble/ble_ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ll_whitelist.h"
-#include "../../proj/drivers/keyboard.h"
-#include "../common/blt_led.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj/mcu/pwm.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
@@ -18,43 +16,22 @@
 #endif
 
 
-#define			HID_HANDLE_CONSUME_REPORT			21
-#define			HID_HANDLE_KEYBOARD_REPORT			25
-
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
 u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 
-#if 0 //(TELIK_SPP_SERVICE_ENABLE)
 u8	tbl_advData[] = {
 	 0x05, 0x09, 't', 'M', 'o', 'd',
 	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
 };
-#else
-u8	tbl_advData[] = {
-	 0x05, 0x09, 't', 'M', 'o', 'd',
-	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
-	 0x03, 0x19, 0x80, 0x01, 					// 384, Generic Remote Control, Generic category
-	 0x05, 0x02, 0x12, 0x18, 0x0F, 0x18,		// incomplete list of service class UUIDs (0x1812, 0x180F)
-};
-#endif
 
 u8	tbl_scanRsp [] = {
 		 0x07, 0x09, 't', 'M', 'o', 'd', 'u', 'l',	//scan name " tmodul"
 	};
 
 
-
-extern kb_data_t	kb_event;
-
-u8 key_buf[8] = {0};
-u8 key_type;
-#define CONSUMER_KEY   0
-#define KEYBOARD_KEY   1
-
-int key_not_released;
 u8 	ui_ota_is_working = 0;
 u8  ui_task_flg;
 u32	ui_advertise_begin_tick;
@@ -65,7 +42,7 @@ void entry_ota_mode(void)
 
 	bls_ota_setTimeout(30 * 1000000); //set OTA timeout  30 S
 
-	gpio_write(GPIO_LED, 1);  //LED on for indicate OTA mode
+	//gpio_write(GPIO_LED, 1);  //LED on for indicate OTA mode
 }
 
 void show_ota_result(int result)
@@ -96,122 +73,9 @@ void show_ota_result(int result)
 }
 
 
-
-void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
-{
-	if(*p == HCI_ERR_CONN_TIMEOUT){
-
-	}
-	else if(*p == HCI_ERR_REMOTE_USER_TERM_CONN){  //0x13
-
-	}
-	else{
-
-	}
-
-
-	ui_advertise_begin_tick = clock_time();
-
-}
-
 void	task_connect (u8 e, u8 *p, int n)
 {
-#if (TELIK_SPP_SERVICE_ENABLE)
 	bls_l2cap_requestConnParamUpdate (12, 32, 99, 400);  //interval=10ms latency=99 timeout=4s
-#else
-	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);
-#endif  //remote control
-}
-
-
-
-void proc_keyboard (u8 e, u8 *p, int n)
-{
-
-	static u32 keyScanTick = 0;
-	if(e == BLT_EV_FLAG_GPIO_EARLY_WAKEUP || clock_time_exceed(keyScanTick, 8000)){
-		keyScanTick = clock_time();
-	}
-	else{
-		return;
-	}
-
-
-
-	kb_event.keycode[0] = 0;
-	int det_key = kb_scan_key (0, 1);
-
-	if (det_key){
-
-		u8 key = kb_event.keycode[0];
-
-		if ( (key & 0xf0) == 0xf0)			//key in consumer report
-		{
-			key_not_released = 1;
-			key_type = CONSUMER_KEY;
-			u16 media_key = 1 << (key & 0xf);
-			bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, (u8 *)&media_key, 2);
-		}
-		else if (key)			// key in standard reprot
-		{
-			key_not_released = 1;
-
-			key_type = KEYBOARD_KEY;
-			key_buf[2] = key;
-			bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8);
-
-		}
-		else {
-			key_not_released = 0;
-			if(key_type == CONSUMER_KEY){
-				u16 media_key = 0;
-				bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, (u8 *)&media_key, 2);  //release
-			}
-			else{
-				key_buf[2] = 0;
-				bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
-			}
-		}
-	}
-}
-
-
-_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
-{
-	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
-	}
-}
-
-
-extern u32	scan_pin_need;
-void remote_control_pm_proc(void)
-{
-#if 1 //(BLE_REMOTE_PM_ENABLE)
-	if(ui_ota_is_working){
-		bls_pm_setSuspendMask (SUSPEND_DISABLE);
-	}
-	else{
-		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
-
-		ui_task_flg = scan_pin_need || key_not_released || DEVICE_LED_BUSY;
-
-		if(ui_task_flg){
-#if 1
-			extern int key_matrix_same_as_last_cnt;
-			if(key_matrix_same_as_last_cnt > 5){  //key matrix stable can optize
-				bls_pm_setManualLatency( 4 );
-			}
-			else{
-				bls_pm_setManualLatency(0);  //latency off: 0
-			}
-#else
-			bls_pm_setManualLatency(0);
-#endif
-		}
-
-	}
-#endif  //END of  BLE_REMOTE_PM_ENABLE
 }
 
 
@@ -236,8 +100,6 @@ void user_init()
 
 	usb_log_init ();
 	usb_dp_pullup_en (1);  //open USB enum
-
-
 
 
 	////////////////// BLE stack initialization ////////////////////////////////////
@@ -268,7 +130,6 @@ void user_init()
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
 
 
-
 	///////////////////// USER application initialization ///////////////////
 
 	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
@@ -283,19 +144,8 @@ void user_init()
 
 	rf_set_power_level_index (RF_POWER_8dBm);
 
-	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
-	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
+	bls_pm_setSuspendMask (SUSPEND_DISABLE);//(SUSPEND_ADV | SUSPEND_CONN)
 
-
-#if(BLE_REMOTE_PM_ENABLE)
-	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
-#else
-	bls_pm_setSuspendMask (SUSPEND_DISABLE);
-#endif
-
-
-	/////////////////////////////////////////////////////////////////
-#if (TELIK_SPP_SERVICE_ENABLE)
 	////////////////// SPP initialization ///////////////////////////////////
 	#if (HCI_ACCESS==HCI_USE_USB)
 		//usb_bulk_drv_init (0);
@@ -313,26 +163,14 @@ void user_init()
 		gpio_write (GPIO_URX, 1);			//pull-high RX to avoid mis-trig by floating signal
 		CLK16M_UART115200;
 		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
-		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler,set your own
-															//in spp.c like rx_from_uart_cb & tx_to_uart_cb
+//		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler
+		extern int rx_from_uart_cb (void);
+		extern int tx_to_uart_cb (void);
+		blc_register_hci_handler(rx_from_uart_cb,tx_to_uart_cb);				//customized uart handler
 	#endif
-//	extern void event_handler(u32 h, u8 *para, int n);
-//	bls_register_event_data_callback(event_handler);		//register event callback
-#else  //remote control
-	/////////////////// keyboard drive/scan line configuration /////////
-	u32 pin[] = KB_DRIVE_PINS;
-	for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
-	{
-		gpio_set_wakeup(pin[i],1,1);  	   //drive pin core(gpio) high wakeup suspend
-		cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
-	}
-	gpio_core_wakeup_enable_all(1);
-
-	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_keyboard);
-	bls_app_registerEventCallback (BLT_EV_FLAG_SET_WAKEUP_SOURCE, &ble_remote_set_sleep_wakeup);
-
-#endif
-
+	extern void event_handler(u32 h, u8 *para, int n);
+	bls_register_event_data_callback(event_handler);		//register event callback
+	bls_hci_mod_setEventMask_cmd(0x7fff);			//enable all 15 events,event list see ble_ll.h
 
 	// OTA init
 	bls_ota_registerStartCmdCb(entry_ota_mode);
@@ -357,12 +195,6 @@ void main_loop ()
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////
-#if(TELIK_SPP_SERVICE_ENABLE)
-
 	//  add spp UI task
 
-#else
-	proc_keyboard (0,0, 0);
-	remote_control_pm_proc();
-#endif
 }

@@ -53,7 +53,7 @@ typedef struct blt_soft_timer_t {
 
 
 void 	blt_soft_timer_init(void);
-void  	blt_soft_timer_process(u8 e, u8 *p);
+void  	blt_soft_timer_process(u8 e, u8 *p, int n);
 
 //return 0 means Fail, others OK
 int 	blt_soft_timer_add(blt_timer_callback_t func, u32 interval_us);
