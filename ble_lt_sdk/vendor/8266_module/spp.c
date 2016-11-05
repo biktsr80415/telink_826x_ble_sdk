@@ -144,8 +144,23 @@ int bls_uart_handler (u8 *p, int n)
 	//			u16 handle = cmdPara[0]|(cmdPara[1]<<8);
 	//			if(bls_att_pushNotifyData(handle,cmdPara+2,(u32)(len)))
 	//				status = BLE_SUCCESS;
-		bls_att_pushNotifyData( cmdPara[0] | (cmdPara[1]<<8), cmdPara + 2,  cmdLen - 2);  //需要改成看返回status
-		status = BLE_SUCCESS;
+		header = 0x030732 | HCI_FLAG_EVENT_TLK_MODULE;
+		if (!bls_ll_isConnectState())
+		{
+			status = 4;			//not in connection mode
+		}
+		else if (cmdLen > 22)
+		{
+			status = 2;			//data too long
+		}
+		else if (bls_att_pushNotifyData( cmdPara[0] | (cmdPara[1]<<8), cmdPara + 2,  cmdLen - 2))
+		{
+			status = BLE_SUCCESS;
+		}
+		else
+		{
+			status = 5;			//busy
+		}
 	}
 	// get module available data buffer: 0c ff 00  00
 	else if (p[0] == 0x0c)
