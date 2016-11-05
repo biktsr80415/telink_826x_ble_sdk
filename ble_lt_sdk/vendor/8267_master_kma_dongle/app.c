@@ -36,15 +36,17 @@ u8	peer_mac[12];
 u8		dev_mac[12] = {0x00, 0xff, 0xff, 0xff, 0xff, 0xff,  0xc4,0xe1,0xe2,0x63, 0xe4,0xc7};
 s8		dev_rssi_th = 0x7f;
 
+u32		spp_st = 0;
 u32		spp_num = 0;
 u16		spp_conn = 0;
 u16		spp_handle = 0;
 u32		spp_err = 0;
+u32		spp_err_seq = 0;
 
 void app_send_spp_status ()
 {
 	u8 dat[16];
-	memcpy (dat + 0, &spp_num, 4);
+	memcpy (dat + 0, &spp_st, 4);
 	memcpy (dat + 4, &spp_err, 4);
 	blc_hci_send_data (0x7e2 | HCI_FLAG_EVENT_TLK_MODULE, dat, 8);
 }
@@ -67,7 +69,7 @@ int app_hci_cmd_from_usb (void)
 			spp_handle = conn_char_handler[spp_conn & 7][7];
 			memcpy (&spp_num, buff + 6, 4);
 			spp_err = 0;
-
+			spp_err_seq = 0;
 		}
 		else if (buff[0] == 0xe2 && buff[1] == 0xff)		//spp test status: spp_num & spp_err
 		{
@@ -132,6 +134,7 @@ void	att_mic (u16 conn, u8 *p)
 	abuf_mic_add ((u32 *)buff_mic_adpcm);
 }
 
+u32		spp_dbg[4];
 void	att_spp_read (u16 conn, u8 *p, int n)
 {
 	static u32 spp_read = 0;
@@ -140,6 +143,12 @@ void	att_spp_read (u16 conn, u8 *p, int n)
 	if (spp_read != seq)
 	{
 		spp_err++;
+		if (spp_err < 3)
+		{
+			spp_err_seq = seq;
+			spp_dbg[spp_err] = (seq & 0xff) | ((spp_read & 0xff) << 8);
+		}
+		//spp_err |= BIT(16);
 	}
 	else
 	{
@@ -148,11 +157,26 @@ void	att_spp_read (u16 conn, u8 *p, int n)
 			if ((u8)(p[0] + i) != p[i])
 			{
 				spp_err++;
+				if (spp_err < 3)
+				{
+					spp_err_seq = i << 16;
+				}
 				break;
 			}
 		}
 	}
 	spp_read = seq - 1;
+	spp_st = seq;
+
+	if ((spp_read & 0xff) == 0)
+	{
+		app_send_spp_status ();
+	}
+
+	if (spp_err >= 2)
+	{
+		REG_ADDR8 (0x60) = 0x80;
+	}
 }
 
 //////////////////////// mouse handle ////////////////////////////////////////
@@ -461,11 +485,17 @@ int app_l2cap_handler (u16 conn, u8 *raw_pkt)
 
 	l2cap_att_client_handler (conn, p);
 
-//-------	user process ------------------------------------------------
-	blc_hci_send_data (conn | BLM_CONN_HANDLE | HCI_FLAG_ACL_BT_STD, p, p[1]);	//can be removed, debug purpose
-
 	conn &= 7;
 	att_notify_t	*pn = (att_notify_t *) p;
+
+//-------	user process ------------------------------------------------
+	int test_spp_read = conn_char_handler[conn][6] == pn->handle && spp_conn;
+	if (!test_spp_read)
+	{
+		blc_hci_send_data (conn | BLM_CONN_HANDLE | HCI_FLAG_ACL_BT_STD, p, p[1]);	//can be removed, debug purpose
+	}
+
+
 	//---------------	consumer key --------------------------
 	if (conn_char_handler[conn][3] == pn->handle)			//consume key
 	{
@@ -497,7 +527,7 @@ int app_l2cap_handler (u16 conn, u8 *raw_pkt)
 		att_keyboard_media (conn, pn->value);
 	}
 
-	//---------------	OTA ----------------------------------
+	//---------------	SPP  ----------------------------------
 	else if (conn_char_handler[conn][6] == pn->handle)		//SPP data
 	{
 		static u32 app_spp;
