@@ -27,9 +27,9 @@ typedef struct {
 	u16 	   cmd;
 	u16		   cmdLen;
 	u8         data[32];
-} module_cmd_t;
+} mcu_cmd_t;
 
-module_cmd_t * module_p;
+mcu_cmd_t * mcu_p;
 
 typedef struct {
 	u16 	   cmd;
@@ -39,6 +39,9 @@ typedef struct {
 } module_notify_t;
 
 
+
+u16 cur_mcu_cmd;
+int  uart_tx_push;
 
 
 #define SET_DBG_FLG(x)  do{ write_reg8(0x8000, x);while(1);}while(0)
@@ -56,6 +59,8 @@ enum{
 	LED_SHINE_SLOW, //3
 	LED_SHINE_FAST, //4
 	LED_SHINE_OTA, //5
+
+	LED_SHINE_0S5,
 };
 
 const led_cfg_t led_cfg[] = {
@@ -65,6 +70,8 @@ const led_cfg_t led_cfg[] = {
 	    {500,	  500 ,   2,	  0x04,	 },    //1Hz for 3 seconds
 	    {250,	  250 ,   4,	  0x04,  },    //2Hz for 3 seconds
 	    {125,	  125 ,   200,	  0x08,  },    //4Hz for 50 seconds
+
+	    {125,	  125 ,   2,	  0x08,  },    //4Hz for 1s
 };
 
 
@@ -198,7 +205,6 @@ void key_change_proc(void)
 			if(key0 == VK_VOL_DN || key0 == VK_VOL_UP){
 				key_type = CONSUMER_KEY;
 				key_buf[0] == VK_VOL_UP ? 0x01 : 0x02;
-				//bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, key_buf, 2);
 			}
 			else if(key0 == RED_KEY){
 				static u8 adv_en;
@@ -206,17 +212,18 @@ void key_change_proc(void)
 
 				//enable/disable advertising: 0a ff 01 00  01
 				u8 adv_en_cmd[5];
-				module_cmd_t *pCmd = (module_cmd_t *)adv_en_cmd;
+				mcu_cmd_t *pCmd = (mcu_cmd_t *)adv_en_cmd;
 
-				pCmd->cmd = SPP_CMD_SET_ADV_ENABLE;
-				pCmd->cmdLen = 2;
+				pCmd->cmd = cur_mcu_cmd = SPP_CMD_SET_ADV_ENABLE;
+				pCmd->cmdLen = 1;
 				pCmd->data[0] = adv_en;
+
 
 				if( my_fifo_push(&uart_tx_fifo, adv_en_cmd, 5) ){ // 0 is OK
 					SET_DBG_FLG(0x11);
 				}
 
-				device_led_setup(led_cfg[LED_SHINE_FAST]);
+				//device_led_setup(led_cfg[LED_SHINE_FAST]);
 			}
 			else
 			{
@@ -224,6 +231,7 @@ void key_change_proc(void)
 					key_type = KEYBOARD_KEY;
 
 					kb_notify_cmd.data[2] = key0;
+					cur_mcu_cmd = SPP_CMD_SEND_NOTIFY_DATA;
 					if( my_fifo_push(&uart_tx_fifo, &kb_notify_cmd, 14) ){ // 0 is OK
 						SET_DBG_FLG(0x11);
 					}
@@ -239,6 +247,7 @@ void key_change_proc(void)
 		}
 		else if(key_type == KEYBOARD_KEY){
 			kb_notify_cmd.data[2] = 0;
+			cur_mcu_cmd = SPP_CMD_SEND_NOTIFY_DATA;
 			if( my_fifo_push(&uart_tx_fifo, &kb_notify_cmd, 14) ){ // 0 is OK
 				SET_DBG_FLG(0x11);
 			}
@@ -250,7 +259,7 @@ void key_change_proc(void)
 
 void proc_keyboard (u8 e, u8 *p, int n)
 {
-
+#if 0
 	static u32 keyScanTick = 0;
 	if(e == BLT_EV_FLAG_GPIO_EARLY_WAKEUP || clock_time_exceed(keyScanTick, 8000)){
 		keyScanTick = clock_time();
@@ -258,6 +267,7 @@ void proc_keyboard (u8 e, u8 *p, int n)
 	else{
 		return;
 	}
+#endif
 
 	kb_event.keycode[0] = 0;
 	int det_key = kb_scan_key (0, 1);
@@ -373,6 +383,20 @@ void user_init()
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
+typedef struct {
+	u8 	   token;
+	u8	   dataLen;  //cmd + dat
+	u16    event;
+	u8 	   dat[32];
+} module_event_t;
+
+
+int module_evt_err = 0;
+
+int module_evt_unmatch = 0;
+
+u16 module_evt_rcv;
+u16 moduel_evt_expect;
 int app_packet_from_uart (void)
 {
 	if(my_rx_uart_w_index == my_rx_uart_r_index)  //rx buff empty
@@ -386,7 +410,22 @@ int app_packet_from_uart (void)
 
 	if (rx_len > 4)
 	{
-		u8 *p = my_rxdata_use.data;
+		module_event_t *pEvt = (module_event_t *)my_rxdata_use.data;
+		if(pEvt->token != 0xff){
+			module_evt_err ++;
+		}
+		else{
+			module_evt_rcv = pEvt->event;
+			moduel_evt_expect = (cur_mcu_cmd & 0x3ff) | 0x400;
+
+			if( module_evt_rcv != moduel_evt_expect){
+				module_evt_unmatch ++;
+			}
+			else{
+				device_led_setup(led_cfg[LED_SHINE_0S5]);
+			}
+
+		}
 
 
 	}
@@ -405,6 +444,7 @@ int app_packet_to_uart ()
 		memcpy(&my_txdata_buf.data, p + 2, p[0]+p[1]*256);
 		my_txdata_buf.len = p[0]+p[1]*256 ;
 
+		uart_tx_push = 1;
 		if (uart_Send((u8 *)(&my_txdata_buf)))
 		{
 			my_fifo_pop (&uart_tx_fifo);
@@ -417,75 +457,29 @@ int app_packet_to_uart ()
 
 void blt_pm_proc(void)
 {
-#if(BLE_REMOTE_PM_ENABLE)
-	if(ota_is_working || ui_mic_enable){
-		//bls_pm_setSuspendMask(SUSPEND_DISABLE);
-		bls_pm_setSuspendMask (LOWPOWER_IDLE);
-	}
-	else{
-
-		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
-
-		user_task_flg = scan_pin_need || key_not_released || DEVICE_LED_BUSY;
-
-		if(user_task_flg){
-			#if (LONG_PRESS_KEY_POWER_OPTIMIZE)
-				extern int key_matrix_same_as_last_cnt;
-				if(key_matrix_same_as_last_cnt > 5){  //key matrix stable can optize
-					bls_pm_setManualLatency(4);
-				}
-				else{
-					bls_pm_setManualLatency(0);  //latency off: 0
-				}
-			#else
-				bls_pm_setManualLatency(0);
-			#endif
-		}
-
-#if 0 //deepsleep
-		if(sendTerminate_before_enterDeep == 1){ //sending Terminate and wait for ack before enter deepsleep
-			if(user_task_flg){  //detect key Press again,  can not enter deep now
-				sendTerminate_before_enterDeep = 0;
-			}
-		}
-		else if(sendTerminate_before_enterDeep == 2){  //Terminate OK
-			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //when terminate, link layer change back to adc state
-			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
-			analog_write(DEEP_ANA_REG0, CONN_DEEP_FLG);
-			analog_write(DEEP_ANA_REG1, user_key_mode);
-		}
-
-		//adv 60s, deepsleep
-		if( bls_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
-			clock_time_exceed(advertise_begin_tick , ADV_IDLE_ENTER_DEEP_TIME * 1000000)){
-
-			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
-			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
-			analog_write(DEEP_ANA_REG0, ADV_DEEP_FLG);
-			analog_write(DEEP_ANA_REG1, user_key_mode);
-		}
-		//conn 60s no event(key/voice/led), enter deepsleep
-		else if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
-				clock_time_exceed(latest_user_event_tick, CONN_IDLE_ENTER_DEEP_TIME * 1000000) ){
-
-			bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
-			sendTerminate_before_enterDeep = 1;
-		}
-#endif
-
-
-	}
-
-#endif  //END of  BLE_REMOTE_PM_ENABLE
 }
 
 
 u32 tick_loop;
 
 extern u8	blt_slave_main_loop (void);
+
+int suspend_mode = 0;
+int suspend_ms;
+u8	wakeup_source;
+u32 loop_cnt = 0;
+u32 loop_begin_tick;
+
+#define UART_TX_BUSY    uart_tx_is_busy()
+#define UART_RX_BUSY	(my_rx_uart_w_index != my_rx_uart_r_index)
+
+int task_busy;
 void main_loop ()
 {
+	uart_tx_push = 0;
 	tick_loop ++;
+
+	loop_begin_tick = clock_time();
 
 	//UART entry
 	app_packet_from_uart ();
@@ -497,9 +491,45 @@ void main_loop ()
 
 	proc_keyboard (0,0, 0);
 
+
+
 	device_led_process();
 
-	blt_pm_proc();
+
+
+
+
+
+	extern u32	scan_pin_need;
+	task_busy = 	scan_pin_need || key_not_released  || ui_mic_enable \
+				 || DEVICE_LED_BUSY || UART_RX_BUSY || UART_TX_BUSY;
+
+
+	if(task_busy){
+		suspend_mode = 0;
+		loop_cnt = 0;
+		suspend_ms = 15;
+		wakeup_source = PM_WAKEUP_TIMER;
+	}
+	else{
+		loop_cnt ++;
+		if(loop_cnt > 10){ //
+			suspend_mode = 1;
+			suspend_ms = 1000;
+			wakeup_source = PM_WAKEUP_TIMER | PM_WAKEUP_CORE;
+		}
+	}
+
+	if(uart_tx_push){
+		loop_cnt = 0;
+		u32 wakeup_tick = loop_begin_tick + 15 * CLOCK_SYS_CLOCK_1MS;
+		while ((u32)(clock_time () -  wakeup_tick) > BIT(30));
+	}
+	else{
+		DBG_CHN0_LOW;
+		cpu_sleep_wakeup(0, wakeup_source, loop_begin_tick + suspend_ms * CLOCK_SYS_CLOCK_1MS);
+		DBG_CHN0_HIGH;
+	}
 }
 
 

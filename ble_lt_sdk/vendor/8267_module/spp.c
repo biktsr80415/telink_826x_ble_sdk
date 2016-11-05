@@ -1,19 +1,86 @@
 #include "../../proj_lib/ble/ble_ll.h"
 #include "../../proj_lib/ble/blt_config.h"
+#include "spp.h"
 
-
+extern my_fifo_t hci_tx_fifo;
 ///////////the code below is just for demonstration of the event callback only////////////
 void event_handler(u32 h, u8 *para, int n)
 {
-	static u8 terminate_flag;
-	static u8 conn_flag;
-	if((u8)(h&0xff) == 0x05)
-		terminate_flag = 1;
-	else if((u8)(h&0xff)== 0x3e)
+	if((h&HCI_FLAG_EVENT_TLK_MODULE)!= 0)			//module event
 	{
-		hci_le_readRemoteFeaturesCompleteEvt_t* evt = (hci_le_readRemoteFeaturesCompleteEvt_t*)(para);
-		if(evt->subEventCode == HCI_SUB_EVT_LE_CONNECTION_COMPLETE)
-			conn_flag = 1;
+		switch((u8)(h&0xff))
+		{
+			case BLT_EV_FLAG_ADV:
+			{
+//				u32 header;
+//				u8 status = BLT_EV_FLAG_ADV;
+//				header = 0x0730;		//state change event
+//				header |= (3 << 16) | HCI_FLAG_EVENT_TLK_MODULE;
+//				blc_hci_send_data(header, &status, 1);		//HCI_FLAG_EVENT_TLK_MODULE
+				//avoid report adv event if it's in a high frequency
+			}
+			break;
+			case BLT_EV_FLAG_SCAN_RSP:
+				break;
+			case BLT_EV_FLAG_CONNECT:
+			{
+				u32 header;
+				u8 status = BLT_EV_FLAG_CONNECT;
+				header = 0x0730;		//state change event
+				header |= (3 << 16) | HCI_FLAG_EVENT_TLK_MODULE;
+				blc_hci_send_data(header, &status, 1);		//HCI_FLAG_EVENT_TLK_MODULE
+//				extern void	task_connect (u8 e, u8 *p, int n);
+//				task_connect();
+			}
+				break;
+			case BLT_EV_FLAG_TERMINATE:
+			{
+				u32 header;
+				u8 status = BLT_EV_FLAG_TERMINATE;
+				header = 0x0730;		//state change event
+				header |= (3 << 16) | HCI_FLAG_EVENT_TLK_MODULE;
+				blc_hci_send_data(header, &status, 1);		//HCI_FLAG_EVENT_TLK_MODULE
+			}
+				break;
+			case BLT_EV_FLAG_PAIRING_BEGIN:
+				break;
+			case BLT_EV_FLAG_PAIRING_FAIL:
+				break;
+			case BLT_EV_FLAG_ENCRYPTION_CONN_DONE:
+				break;
+			case BLT_EV_FLAG_USER_TIMER_WAKEUP:
+				break;
+			case BLT_EV_FLAG_GPIO_EARLY_WAKEUP:
+				break;
+			case BLT_EV_FLAG_CHN_MAP_REQ:
+				break;
+			case BLT_EV_FLAG_CONN_PARA_REQ:
+				break;
+			case BLT_EV_FLAG_CHN_MAP_UPDATE:
+			{
+				u32 header;
+				u8 status = BLT_EV_FLAG_CHN_MAP_UPDATE;
+				header = 0x0730;		//state change event
+				header |= (3 << 16) | HCI_FLAG_EVENT_TLK_MODULE;
+				blc_hci_send_data(header, &status, 1);		//HCI_FLAG_EVENT_TLK_MODULE
+			}
+				break;
+			case BLT_EV_FLAG_CONN_PARA_UPDATE:
+			{
+				u32 header;
+				u8 status = BLT_EV_FLAG_CONN_PARA_UPDATE;
+				header = 0x0730;		//state change event
+				header |= (3 << 16) | HCI_FLAG_EVENT_TLK_MODULE;
+				blc_hci_send_data(header, &status, 1);		//HCI_FLAG_EVENT_TLK_MODULE
+			}
+				break;
+			case BLT_EV_FLAG_SET_WAKEUP_SOURCE:
+				break;
+			case BLT_EV_FLAG_ADV_DURATION_TIMEOUT:
+				break;
+			default:
+				break;
+		}
 	}
 }
 /////////////////////////////////////blc_register_hci_handler for spp////////////////////////////
@@ -174,23 +241,20 @@ int bls_uart_handler (u8 *p, int n)
 
 #define			HCI_BUFFER_TX_SIZE		72
 #define			HCI_BUFFER_NUM			4
+#if 0
 u8				hci_buff[HCI_BUFFER_NUM][HCI_BUFFER_TX_SIZE] = {{0,},};
 u8				hci_buff_wptr = 0;
 u8				hci_buff_rptr = 0;
+#endif
 int hci_send_data (u32 h, u8 *para, int n)
 {
-	if (((hci_buff_wptr - hci_buff_rptr) & 63) >= HCI_BUFFER_NUM)
-	{
-		return -1;
-	}
-
-	if (n >= HCI_BUFFER_TX_SIZE)
+	u8 *p = my_fifo_wptr (&hci_tx_fifo);
+	if (!p || n >= hci_tx_fifo.size)
 	{
 		return -1;
 	}
 
 	int nl = n + 4;
-	u8 *p = hci_buff[hci_buff_wptr++ & (HCI_BUFFER_NUM-1)];
 	if (h & HCI_FLAG_EVENT_TLK_MODULE)
 	{
 		*p++ = nl;
@@ -202,19 +266,20 @@ int hci_send_data (u32 h, u8 *para, int n)
 		memcpy (p, para, n);
 		p += n;
 	}
+	my_fifo_next (&hci_tx_fifo);
 	return 0;
 }
 
-int tx_to_uart_cb ()
+int tx_to_uart_cb (void)
 {
-	if (hci_buff_rptr != hci_buff_wptr && !uart_tx_is_busy ())
+	u8 *p = my_fifo_get (&hci_tx_fifo);
+	if (p && !uart_tx_is_busy ())
 	{
-		u8 *p = hci_buff[hci_buff_rptr & (HCI_BUFFER_NUM-1)];
 		memcpy(&T_txdata_buf.data, p + 2, p[0]+p[1]*256);
 		T_txdata_buf.len = p[0]+p[1]*256 ;
-		if (uart_Send_kma((u8 *)(&T_txdata_buf)))
+		if (uart_Send((u8 *)(&T_txdata_buf)))
 		{
-			hci_buff_rptr++;
+			my_fifo_pop (&hci_tx_fifo);
 		}
 	}
 	return 0;
