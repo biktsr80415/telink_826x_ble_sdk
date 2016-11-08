@@ -280,6 +280,9 @@ typedef enum{
 #define			SMP_OP_ENC_IADR						9
 #define			SMP_OP_ENC_SIGN						0x0a
 #define			SMP_OP_SEC_REQ						0x0b
+#define			SMP_OP_PARING_PUBLIC_KEY			0x0c
+#define			SMP_OP_PARING_DHKEY					0x0d
+#define			SMP_OP_KEYPRESS_NOTIFICATION		0x0e
 #define			SMP_OP_WAIT							0x0f
 
 
