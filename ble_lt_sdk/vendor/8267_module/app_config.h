@@ -31,81 +31,26 @@ extern "C" {
 #define HCI_ACCESS		HCI_USE_UART
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_REMOTE_PM_ENABLE			0
-#define TELIK_SPP_SERVICE_ENABLE		1
+#define BLE_REMOTE_PM_ENABLE				0
+#define TELIK_SPP_SERVICE_ENABLE			1
+#define BLS_SEND_TLK_MODULE_EVENT_ENABLE	1
 
 
 //////////////////////////// KEYSCAN/MIC  GPIO //////////////////////////////////
-#define	MATRIX_ROW_PULL					PM_PIN_PULLDOWN_100K
-#define	MATRIX_COL_PULL					PM_PIN_PULLUP_10K
-
-#define	KB_LINE_HIGH_VALID				0   //dirve pin output 0 when keyscan, scanpin read 0 is valid
-#define DEEPBACK_FAST_KEYSCAN_ENABLE	0   //proc fast scan when deepsleep back trigged by key press, in case key loss
-#define KEYSCAN_IRQ_TRIGGER_MODE		0
-#define LONG_PRESS_KEY_POWER_OPTIMIZE	1   //lower power when pressing key without release
-
-//stuck key
-#define STUCK_KEY_PROCESS_ENABLE		0
-#define STUCK_KEY_ENTERDEEP_TIME		60  //in s
-
-//repeat key
-#define KB_REPEAT_KEY_ENABLE			0
-#define	KB_REPEAT_KEY_INTERVAL_MS		200
-#define KB_REPEAT_KEY_NUM				1
-#define KB_MAP_REPEAT					{VK_1, }
-
-
-#define	PC4_INPUT_ENABLE				0	//amic digital input disable
-#define	PC5_INPUT_ENABLE				0	//amic digital input disable
-
-#define			CR_VOL_UP		0xf0
-#define			CR_VOL_DN		0xf1
-#define			CR_VOL_MUTE		0xf2
-#define			CR_POWER		0xf3
-#define			CR_SEL			0xf4
-#define			CR_UP			0xf5
-#define			CR_DN			0xf6
-#define			CR_LEFT			0xf7
-#define			CR_RIGHT		0xf8
-#define			CR_HOME			0xf9
-#define			CR_REWIND		0xfa
-#define			CR_NEXT			0xfb
-#define			CR_PREV			0xfc
-#define			CR_STOP			0xfd
-
-
-
-#define	GPIO_LED				GPIO_PD5
-#define		KB_MAP_NORMAL	{{CR_VOL_UP}, {CR_VOL_DN}}
-
-#define  KB_DRIVE_PINS  {GPIO_PB1}
-#define  KB_SCAN_PINS   {GPIO_PC5, GPIO_PD2}
-
-#define	PULL_WAKEUP_SRC_PC5		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PD2		MATRIX_COL_PULL
+#define	PULL_WAKEUP_SRC_PC5		PM_PIN_PULLUP_10K
+#define	PULL_WAKEUP_SRC_PD2		PM_PIN_PULLUP_10K
 #define PC5_INPUT_ENABLE		1
 #define PD2_INPUT_ENABLE		1
 
 
-#define	PULL_WAKEUP_SRC_PB1		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PB2		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PB3		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PB6		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PB1		PM_PIN_PULLDOWN_100K
+#define	PULL_WAKEUP_SRC_PB2		PM_PIN_PULLDOWN_100K
+#define	PULL_WAKEUP_SRC_PB3		PM_PIN_PULLDOWN_100K
+#define	PULL_WAKEUP_SRC_PB6		PM_PIN_PULLDOWN_100K
 #define PB1_INPUT_ENABLE		1
 #define PB2_INPUT_ENABLE		1
 #define PB3_INPUT_ENABLE		1
 #define PB6_INPUT_ENABLE		1
-
-
-//#define	PC5_DATA_OUT			1
-
-
-
-#define		KB_MAP_NUM		KB_MAP_NORMAL
-#define		KB_MAP_FN		KB_MAP_NORMAL
-
-
-
 
 
 /////////////////////// POWER OPTIMIZATION  AT SUSPEND ///////////////////////

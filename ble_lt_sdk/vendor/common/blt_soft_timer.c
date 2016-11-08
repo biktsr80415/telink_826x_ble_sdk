@@ -92,7 +92,7 @@ int  blt_soft_timer_delete(u8 index)
 
 
 
-void  	blt_soft_timer_process(u8 e, u8 *p)
+void  	blt_soft_timer_process(u8 e, u8 *p, int n)
 {
 	if(e == BLT_EV_FLAG_USER_TIMER_WAKEUP){  //ealry wakeup
 

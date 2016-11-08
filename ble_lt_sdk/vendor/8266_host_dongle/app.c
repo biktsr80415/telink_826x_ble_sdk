@@ -50,15 +50,18 @@ void app_send_spp_status ()
 }
 
 //////////////////////////////////// SPP test code ///////////////////////////////
+int	 spp_write = 0;
 void spp_test_write ()
 {
-	if (spp_num && spp_handle && my_fifo_wptr (&uart_fifo))
+	if (!spp_write && spp_num && spp_handle && my_fifo_wptr (&uart_fifo))
 	{
 		u8		dat[32];
 		u8 *p = dat;
 		*p++ = 0x0b;
 		*p++ = 0xff;
-		*p++ = 20;
+		*p++ = 22;
+		*p++ = 0;
+		*p++ = spp_handle;
 		*p++ = 0;
 		memcpy (p, &spp_num, 4);
 		for (int i=4; i<20; i++)
@@ -69,7 +72,7 @@ void spp_test_write ()
 		if (my_fifo_push (&uart_fifo, dat, 20 + (p - dat)) == 0)
 		{
 			spp_num--;
-
+			spp_write = 1;
 			if ((spp_num & 0xff) == 0)
 			{
 				app_send_spp_status ();
@@ -201,10 +204,19 @@ int app_packet_from_uart (void)
 			{
 				spp_test_read (p + 4, p[2]);
 			}
+			else if (p[0] == 0xff && p[2] == 0x32 && p[3] == 0x07)
+			{
+				if (p[4])		//data sent fail
+				{
+					spp_num ++;
+				}
+				spp_write = 0;
+			}
 		}
-		else
+
+		if (!spp_test_en || !(p[0] == 0xff && (p[2] == 0x32 || p[2] == 0x31)  && p[3] == 0x07 && spp_num != 1))
 		{
-			my_fifo_push (&usb_fifo, T_rxdata_user.data, rx_len - 4);		//spp test data check
+			my_fifo_push (&usb_fifo, T_rxdata_user.data, rx_len - 4);
 		}
 	}
 	rx_uart_w_index = (rx_uart_w_index + 1)&0x01;

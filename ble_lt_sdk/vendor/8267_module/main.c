@@ -12,16 +12,17 @@ _attribute_ram_code_ void irq_handler(void)
 {
 	irq_blt_slave_handler ();
 #if (HCI_ACCESS==HCI_USE_UART)
-    unsigned char irqS = uart_IRQSourceGet();
+	unsigned char irqS = reg_dma_rx_rdy0;
     if(irqS & BIT(0))	//rx
     {
+    	reg_dma_rx_rdy0 = FLD_DMA_UART_RX;
 		rx_uart_w_index = (rx_uart_w_index + 1)&0x01;
-		write_reg16(0x800500,(unsigned short)((unsigned int)(&T_rxdata_buf[rx_uart_w_index])));//set receive buffer address
+		reg_dma0_addr = (unsigned short)((unsigned int)(&T_rxdata_buf[rx_uart_w_index]));//set receive buffer address
     }
 
     if(irqS & BIT(1))	//tx
     {
-        uart_clr_tx_busy_flag();
+    	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
     }
 #endif
 }

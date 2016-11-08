@@ -9,7 +9,7 @@
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
 
-#define  DBG_LED_IND 		0   //for led DEBUG ota boot bin running statas
+#define  DBG_LED_IND 		1   //for led DEBUG ota boot bin running statas
 
 //now my remote control  PC2 high LED on, PC2 low LED off
 //see <<ble_gpio_lookuptable>> for GPIO register set

@@ -227,24 +227,22 @@ int l2cap_att_client_handler (u16 conn, u8 *p);
 
 ////////////////// Event Callback  ////////////////////////
 typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
-#define			BLT_EV_FLAG_ADV_PRE					0
-#define			BLT_EV_FLAG_ADV_POST				1
+#define			BLT_EV_FLAG_ADV						0
+#define			BLT_EV_FLAG_ADV_DURATION_TIMEOUT	1
 #define			BLT_EV_FLAG_SCAN_RSP				2
 #define			BLT_EV_FLAG_CONNECT					3    //
 #define			BLT_EV_FLAG_TERMINATE				4    //
 #define			BLT_EV_FLAG_PAIRING_BEGIN			5
 #define			BLT_EV_FLAG_PAIRING_FAIL			6
 #define			BLT_EV_FLAG_ENCRYPTION_CONN_DONE    7
-//#define												8
-#define			BLT_EV_FLAG_USER_TIMER_WAKEUP		9
-#define			BLT_EV_FLAG_GPIO_EARLY_WAKEUP		10
-#define			BLT_EV_FLAG_CHN_MAP_REQ				11
-#define			BLT_EV_FLAG_CONN_PARA_REQ			12
-#define			BLT_EV_FLAG_CHN_MAP_UPDATE			13
-#define			BLT_EV_FLAG_CONN_PARA_UPDATE		14
-//#define												15
-#define			BLT_EV_FLAG_SET_WAKEUP_SOURCE		16
-#define			BLT_EV_FLAG_ADV_DURATION_TIMEOUT	17
+#define			BLT_EV_FLAG_USER_TIMER_WAKEUP		8
+#define			BLT_EV_FLAG_GPIO_EARLY_WAKEUP		9
+#define			BLT_EV_FLAG_CHN_MAP_REQ				10
+#define			BLT_EV_FLAG_CONN_PARA_REQ			11
+#define			BLT_EV_FLAG_CHN_MAP_UPDATE			12
+#define			BLT_EV_FLAG_CONN_PARA_UPDATE		13
+#define			BLT_EV_FLAG_SET_WAKEUP_SOURCE		14
+
 
 
 typedef int (*hci_event_callback_t) (u32 h, u8 *para, int n);
@@ -318,6 +316,7 @@ bool			bls_ll_pushTxFifo (u8 *p);
 
 
 // hci
+ble_sts_t 		bls_hci_mod_setEventMask_cmd(u32 evtMask);
 ble_sts_t 		bls_hci_le_setEventMask_cmd(u16 evtMask);
 ble_sts_t 		bls_hci_le_getLocalSupportedFeatures(u8 *features);
 ble_sts_t 		bls_hci_le_getRemoteSupportedFeatures(u16 connHandle);
