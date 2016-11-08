@@ -12,7 +12,7 @@ extern "C" {
 #define ID_VENDOR				0x248a			// for report
 #define ID_PRODUCT_BASE			0x880C
 #define STRING_VENDOR			L"Telink"
-#define STRING_PRODUCT			L"BLE SPP"
+#define STRING_PRODUCT			L"BLE Remote"
 #define STRING_SERIAL			L"TLSR8266"
 
 #define CHIP_TYPE				CHIP_TYPE_8266		// 8866-24, 8566-32
@@ -31,9 +31,9 @@ extern "C" {
 
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_REMOTE_PM_ENABLE			0
-#define BLE_SECURITY_ENABLE             0
-#define TELIK_SPP_SERVICE_ENABLE		1
+#define BLE_REMOTE_PM_ENABLE				0
+#define TELIK_SPP_SERVICE_ENABLE			1
+#define BLS_SEND_TLK_MODULE_EVENT_ENABLE	1
 
 
 
@@ -163,14 +163,6 @@ extern "C" {
 #define PULL_WAKEUP_SRC_PD2           PM_PIN_PULLUP_1M
 #endif
 
-/////////////////////// POWER OPTIMIZATION  AT SUSPEND ///////////////////////
-//notice that: all setting here aims at power optimization ,they depends on
-//the actual hardware design.You should analyze your hardware board and then
-//find out the io leakage
-
-//shut down the input enable of some gpios, to lower io leakage at suspend state
-//for example:  #define PA2_INPUT_ENABLE   0
-
 
 
 /////////////////// Clock  /////////////////////////////////
@@ -185,10 +177,6 @@ extern "C" {
 #define MODULE_WATCHDOG_ENABLE		0
 #define WATCHDOG_INIT_TIMEOUT		500  //ms
 
-
-
-/////////////open SWS digital pullup to prevent MCU err, this is must ////////////
-#define PB0_DATA_OUT					1
 
 
 /////////////////// set default   ////////////////

@@ -1,8 +1,8 @@
 /*
- * flyco_spp.h
+ * spp.h
  *
- *  Created on: 2016-6-15
- *      Author: yafei.tu
+ *  Created on: 2016-11-3
+ *      Author: Administrator
  */
 #pragma once
 /*********************************************************************

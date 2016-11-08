@@ -1,22 +1,12 @@
-/*
- * flyco_spp.c
- *
- *  Created on: 2016-6-15
- *      Author: yafei.tu
- */
-
 #include "../../proj/tl_common.h"
 #include "../../proj/drivers/flash.h"
 #include "../../proj/drivers/uart.h"
 #include "../../proj_lib/ble/ble_common.h"
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/ble_ll.h"
-#include "flyco_spp.h"
 #include "../../proj_lib/ble/blt_config.h"
+#include "spp.h"
 
-/**********************************************************************
- * GLOBAL VARIABLES
- */
 u8 flyco_version[4] = FLYCO_VERSION;
 extern const u16 TelinkSppServiceUUID;
 extern const u16 TelinkSppDataServer2ClientUUID;
@@ -39,9 +29,6 @@ u8 set_devname1_flg = 0;//Set devname1 flag
     #define	UART_SEND				 uart_Send
 #endif
 
-/**********************************************************************
- * LOCAL VARIABLES
- */
 //Notice:flash_erase_sector should place at user_init(), Do Not user this function in main_loop()!!!
  int adv_interval_index;
  int rf_power_index;
@@ -52,7 +39,6 @@ u8 set_devname1_flg = 0;//Set devname1 flag
  int devname2_index;
  int identified_index;
  int baudrate_index;
-
 /////////////////////////////////////FLASH data save and read management////////////////////////////////
 // FLASH struct : index | 00 | data[30]
 //read user data in FLASH
@@ -276,9 +262,6 @@ int flyco_tx_to_uart ()//Master data send to UART,we will handler the data as CM
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**********************************************************************
- * LOCAL FUNCTIONS
- */
 void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp);
 void flyco_spp_cmdHandler(u8 *pCmd);
 void flyco_spp_dataHandler(u8 *pData, u16 len);
@@ -288,10 +271,6 @@ void flyco_spp_dataReceivedMasterHandler(u8 *data, u32 len);
 void flyco_spp_cmdReceivedMasterHandler(u8 *pCmd);
 void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp);
 void flyco_spp_received_master_rsp2cmd(u8 cmdid, u8 *payload, u8 len);
-
-#if HEARTBEAT_FLYCO
-int module_wait_forDisconnectTimer1Cb(void *arg);// for Disconnect ack mobile phone for FLYCO
-#endif
 
 /*********************************************************************
  * @fn      reverse_data
@@ -477,7 +456,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 				flyco_spp_module_rsp2cmd(pp->cmdID, NULL, 0);
 
 				if(set_devname1_flg){//Merge tow device names, configure the Bluetooth device name
-				    set_devname1_flg = 0; 
+				    set_devname1_flg = 0;
 					u8 devName[20];
 					u8 devNameTmp1[20], devNameTmp2[20];
 
@@ -1285,5 +1264,4 @@ void blt_user_timerCb_proc(void){
 //		bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
 //	}
 }
-
 
