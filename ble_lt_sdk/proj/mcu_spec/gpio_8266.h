@@ -355,30 +355,6 @@ static inline void gpio_init(void){
 							(PULL_WAKEUP_SRC_PE7<<2) |
 							(PULL_WAKEUP_SRC_PF0<<4) |
 							(PULL_WAKEUP_SRC_PF1<<6));
-
-#if (__DEBUG_GPIO__)
-        /* Set GPIO function */
-		BM_SET(reg_gpio_gpio_func(DBG_PIN1), DBG_PIN1&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN2), DBG_PIN2&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN3), DBG_PIN3&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN4), DBG_PIN4&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN5), DBG_PIN5&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN6), DBG_PIN6&0xff);
-
-		gpio_set_input_en(DBG_PIN1, 0);
-		gpio_set_input_en(DBG_PIN2, 0);
-		gpio_set_input_en(DBG_PIN3, 0);
-		gpio_set_input_en(DBG_PIN4, 0);
-		gpio_set_input_en(DBG_PIN5, 0);
-		gpio_set_input_en(DBG_PIN6, 0);
-
-		gpio_set_output_en(DBG_PIN1, 1);
-		gpio_set_output_en(DBG_PIN2, 1);
-		gpio_set_output_en(DBG_PIN3, 1);
-		gpio_set_output_en(DBG_PIN4, 1);
-		gpio_set_output_en(DBG_PIN5, 1);
-		gpio_set_output_en(DBG_PIN6, 1);
-#endif
 }
 
 
@@ -483,30 +459,7 @@ static inline void gpio_set_func(u32 pin, u32 func){
 	*/
 }
 
-enum{
-	E_PA0_SWS = 0,
-	E_PA1_PWM3,
-	E_PA2_MSDI,
-	E_PA3_MCLK,
 
-	E_PB2_MSDO,
-	E_PB3_MSCN,
-	E_PB5_DM,
-	E_PB6_DP,
+void gpio_set_wakeup(u32 pin, u32 level, int en);
 
-	E_PC0_PWM0,
-	E_PC1_GP1,
-	E_PC2_PWM1,
-	E_PC4_PWM2,
-	E_PC5_GP3,
-	E_PC6_GP4,
-
-	E_PE0_GP14,
-	E_PE6_CN,
-	E_PE7_DI,
-
-	E_PF0_DO,
-	E_PF1_CK,
-};
-
-extern u32 mouse_gpio_table[];
+void gpio_setup_up_down_resistor(u32 gpio, u32 up_down);

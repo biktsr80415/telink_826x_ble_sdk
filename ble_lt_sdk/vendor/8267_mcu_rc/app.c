@@ -21,7 +21,7 @@
 MYFIFO_INIT(uart_tx_fifo, 72, 4);
 
 #define 	SPP_CMD_SET_ADV_ENABLE					0xFF0A
-#define 	SPP_CMD_SEND_NOTIFY_DATA                0xFF0B
+#define 	SPP_CMD_SEND_NOTIFY_DATA                0xFF1C
 
 typedef struct {
 	u16 	   cmd;
@@ -39,12 +39,25 @@ typedef struct {
 } module_notify_t;
 
 
-
 u16 cur_mcu_cmd;
-int  uart_tx_push;
 
 
 #define SET_DBG_FLG(x)  do{ write_reg8(0x8000, x);while(1);}while(0)
+
+
+#if (REMOTE_PM_ENABLE)
+	int module_wakeup_status;
+	u32 mcu_wakeup_module_tick;
+
+	#define UART_SEND_DATA_PREPARE  do{	module_wakeup_status = gpio_read(GPIO_WAKEUP_MCU); \
+										WAKEUP_MODULE_HIGH; \
+										mcu_wakeup_module_tick = clock_time(); }while(0)
+#else
+	#define UART_SEND_DATA_PREPARE
+#endif
+
+
+
 
 
 
@@ -218,7 +231,7 @@ void key_change_proc(void)
 				pCmd->cmdLen = 1;
 				pCmd->data[0] = adv_en;
 
-
+				UART_SEND_DATA_PREPARE;
 				if( my_fifo_push(&uart_tx_fifo, adv_en_cmd, 5) ){ // 0 is OK
 					SET_DBG_FLG(0x11);
 				}
@@ -232,6 +245,8 @@ void key_change_proc(void)
 
 					kb_notify_cmd.data[2] = key0;
 					cur_mcu_cmd = SPP_CMD_SEND_NOTIFY_DATA;
+
+					UART_SEND_DATA_PREPARE;
 					if( my_fifo_push(&uart_tx_fifo, &kb_notify_cmd, 14) ){ // 0 is OK
 						SET_DBG_FLG(0x11);
 					}
@@ -248,6 +263,8 @@ void key_change_proc(void)
 		else if(key_type == KEYBOARD_KEY){
 			kb_notify_cmd.data[2] = 0;
 			cur_mcu_cmd = SPP_CMD_SEND_NOTIFY_DATA;
+
+			UART_SEND_DATA_PREPARE;
 			if( my_fifo_push(&uart_tx_fifo, &kb_notify_cmd, 14) ){ // 0 is OK
 				SET_DBG_FLG(0x11);
 			}
@@ -377,6 +394,8 @@ void user_init()
 	uart_BuffInit((u8 *)(&my_rxdata_buf), sizeof(my_rxdata_buf), (u8 *)(&my_txdata_buf));
 
 	reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX;//CLR irq source
+
+
 }
 
 
@@ -444,7 +463,17 @@ int app_packet_to_uart ()
 		memcpy(&my_txdata_buf.data, p + 2, p[0]+p[1]*256);
 		my_txdata_buf.len = p[0]+p[1]*256 ;
 
-		uart_tx_push = 1;
+
+#if (REMOTE_PM_ENABLE)
+		if(!module_wakeup_status){  //module is suspend
+			WAKEUP_MODULE_HIGH;
+			while( !clock_time_exceed(mcu_wakeup_module_tick, 2500) );
+			module_wakeup_status = 1;
+			WAKEUP_MODULE_LOW;
+		}
+#endif
+
+
 		if (uart_Send((u8 *)(&my_txdata_buf)))
 		{
 			my_fifo_pop (&uart_tx_fifo);
@@ -470,13 +499,13 @@ u8	wakeup_source;
 u32 loop_cnt = 0;
 u32 loop_begin_tick;
 
-#define UART_TX_BUSY    uart_tx_is_busy()
+#define UART_TX_BUSY    ( (uart_tx_fifo.rptr != uart_tx_fifo.wptr) || uart_tx_is_busy() )
 #define UART_RX_BUSY	(my_rx_uart_w_index != my_rx_uart_r_index)
 
 int task_busy;
+int uart_busy;
 void main_loop ()
 {
-	uart_tx_push = 0;
 	tick_loop ++;
 
 	loop_begin_tick = clock_time();
@@ -491,45 +520,46 @@ void main_loop ()
 
 	proc_keyboard (0,0, 0);
 
-
-
 	device_led_process();
 
 
-
-
-
-
+	// power management
+#if (REMOTE_PM_ENABLE)
 	extern u32	scan_pin_need;
+
+	uart_busy = UART_RX_BUSY || UART_TX_BUSY;
 	task_busy = 	scan_pin_need || key_not_released  || ui_mic_enable \
-				 || DEVICE_LED_BUSY || UART_RX_BUSY || UART_TX_BUSY;
+				 || DEVICE_LED_BUSY || uart_busy;
 
-
-	if(task_busy){
-		suspend_mode = 0;
-		loop_cnt = 0;
-		suspend_ms = 15;
-		wakeup_source = PM_WAKEUP_TIMER;
-	}
-	else{
-		loop_cnt ++;
-		if(loop_cnt > 10){ //
-			suspend_mode = 1;
-			suspend_ms = 1000;
-			wakeup_source = PM_WAKEUP_TIMER | PM_WAKEUP_CORE;
-		}
-	}
-
-	if(uart_tx_push){
+	if(uart_busy){
 		loop_cnt = 0;
 		u32 wakeup_tick = loop_begin_tick + 15 * CLOCK_SYS_CLOCK_1MS;
 		while ((u32)(clock_time () -  wakeup_tick) > BIT(30));
 	}
 	else{
-		DBG_CHN0_LOW;
+
+		WAKEUP_MODULE_LOW;
+
+		if(task_busy){
+			suspend_mode = 0;
+			loop_cnt = 0;
+			suspend_ms = 15;
+			wakeup_source = PM_WAKEUP_TIMER;
+		}
+		else{
+			loop_cnt ++;
+			if(loop_cnt > 10){ //
+				suspend_mode = 1;
+				suspend_ms = 1000;
+				wakeup_source = PM_WAKEUP_TIMER | PM_WAKEUP_CORE;
+			}
+		}
+
+		WAKEUP_MCU_LOW;
 		cpu_sleep_wakeup(0, wakeup_source, loop_begin_tick + suspend_ms * CLOCK_SYS_CLOCK_1MS);
-		DBG_CHN0_HIGH;
+		WAKEUP_MCU_HIGH;
 	}
+#endif
 }
 
 
