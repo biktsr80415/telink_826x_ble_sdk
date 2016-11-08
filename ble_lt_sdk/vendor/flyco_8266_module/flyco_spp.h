@@ -13,6 +13,7 @@
 // FLYCO_spp cmd/data type
 #define IS_FLYCO_SPP_CMD(p)           ((p[0] == 0x46) && (p[1] == 0x4c) && (p[2] == 0x59) && (p[3] == 0x43) && (p[4] == 0x4F))
 #define IS_FLYCO_SPP_DATA(p)          (!((p[0] == 0x46) && (p[1] == 0x4c) && (p[2] == 0x59) && (p[3] == 0x43) && (p[4] == 0x4F)))
+//#define IS_FLYCO_SPP_DATA(p)          (((p[0] == 0xA5) || (p[0] == 0x5A)) && p[15] == 0xAA)
 
 // Definition for FLYCO SPP command header
 #define FLYCO_SPP_CMD_FIELD		\
@@ -134,15 +135,15 @@ typedef struct {
  * GLOBAL VARIABLES
  */
 //////////////////////User data in FLASH//////////////////////
-#define				BAUD_RATE_ADDR        0x40000
-#define				RF_POWER_ADDR         0x41000
-#define				IDENTIFIED_ADDR       0x42000
-#define				ADV_TIMEOUT_ADDR      0x43000
-#define				DEV_NAME1_ADDR        0x44000
-#define				DEV_NAME2_ADDR        0x45000
-#define				DEV_NAME_ADDR         0x46000
-#define				ADV_DATA_ADDR         0x47000
-#define				ADV_INTERVAL_ADDR     0x48000
+#define				BAUD_RATE_ADDR        0x30000
+#define				RF_POWER_ADDR         0x31000
+#define				IDENTIFIED_ADDR       0x32000
+#define				ADV_TIMEOUT_ADDR      0x33000
+#define				DEV_NAME1_ADDR        0x34000
+#define				DEV_NAME2_ADDR        0x35000
+#define				DEV_NAME_ADDR         0x36000
+#define				ADV_DATA_ADDR         0x37000
+#define				ADV_INTERVAL_ADDR     0x38000
 
 //used to indicate para address index
 typedef struct{
@@ -162,15 +163,15 @@ nv_manage_t adv_data_manage;
 nv_manage_t adv_interval_manage;
 
 typedef enum {
-	NV_FLYCO_ITEM_BAUD_RATE,   //0 0x40000
-	NV_FLYCO_ITEM_RF_POWER,    //1 0x41000
-	NV_FLYCO_ITEM_IDENTIFIED,  //2 0x42000
-	NV_FLYCO_ITEM_ADV_TIMEOUT, //3 0x43000
-	NV_FLYCO_ITEM_DEV_NAME1,   //4 0x44000
-	NV_FLYCO_ITEM_DEV_NAME2,   //5 0x45000
-	NV_FLYCO_ITEM_DEV_NAME,    //6 0x46000
-	NV_FLYCO_ITEM_ADV_DATA,    //7 0x47000
-	NV_FLYCO_ITEM_ADV_INTERVAL,//8 0x48000
+	NV_FLYCO_ITEM_BAUD_RATE,   //0 0x30000
+	NV_FLYCO_ITEM_RF_POWER,    //1 0x31000
+	NV_FLYCO_ITEM_IDENTIFIED,  //2 0x32000
+	NV_FLYCO_ITEM_ADV_TIMEOUT, //3 0x33000
+	NV_FLYCO_ITEM_DEV_NAME1,   //4 0x34000
+	NV_FLYCO_ITEM_DEV_NAME2,   //5 0x35000
+	NV_FLYCO_ITEM_DEV_NAME,    //6 0x36000
+	NV_FLYCO_ITEM_ADV_DATA,    //7 0x37000
+	NV_FLYCO_ITEM_ADV_INTERVAL,//8 0x38000
 } nv_flycoItemId_t;
 
 /*********************************************************************
@@ -182,3 +183,11 @@ u8 nv_read(u8 id, u8 *buf, u16 len);
 u8 nv_write(u8 id, u8 *buf, u16 len);
 void flyco_module_uartCmdHandler(unsigned char* p, u32 len);
 void flyco_module_masterCmdHandler(u8 *p, u32 len);
+int flyco_rx_from_uart (void);//UART data send to Master,we will handle the data as CMD or DATA
+int flyco_tx_to_uart ();//Master data send to UART,we will handle the data as CMD or DATA
+
+void blt_user_timerCb_proc(void);//user Timer callback proc for spp cmd ack
+void flyco_load_para_addr(u32 addr, int* index, u8* p, u8 len);
+void flyco_erase_para(u32 addr, int* index);
+int	flyco_uart_push_fifo (u16 st, int n, u8 *p);
+
