@@ -189,10 +189,8 @@ extern "C" {
 #define PA3_INPUT_ENABLE					1
 #define	PA3_OUTPUT_ENABLE					0
 #define	PA3_DATA_OUT						0
-//#define WAKEUP_MCU_HIGH						gpio_write(GPIO_PA3, 1)
-//#define WAKEUP_MCU_LOW						gpio_write(GPIO_PA3, 0)
-#define WAKEUP_MCU_HIGH						gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLUP_10K);
-#define WAKEUP_MCU_LOW						gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLDOWN_100K);
+#define WAKEUP_MCU_HIGH						gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLUP_10K)
+#define WAKEUP_MCU_LOW						gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLDOWN_100K)
 
 
 #define	PA4_FUNC							AS_GPIO

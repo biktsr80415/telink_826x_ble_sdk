@@ -46,12 +46,14 @@ u16 cur_mcu_cmd;
 
 
 #if (REMOTE_PM_ENABLE)
+	int	mcu_cmd_no_ack;
 	int module_wakeup_status;
 	u32 mcu_wakeup_module_tick;
 
 	#define UART_SEND_DATA_PREPARE  do{	module_wakeup_status = gpio_read(GPIO_WAKEUP_MCU); \
 										WAKEUP_MODULE_HIGH; \
-										mcu_wakeup_module_tick = clock_time(); }while(0)
+										mcu_wakeup_module_tick = clock_time(); \
+										mcu_cmd_no_ack = 1; }while(0)
 #else
 	#define UART_SEND_DATA_PREPARE
 #endif
@@ -441,6 +443,9 @@ int app_packet_from_uart (void)
 				module_evt_unmatch ++;
 			}
 			else{
+#if (REMOTE_PM_ENABLE)
+				mcu_cmd_no_ack = 0;  //cmd acked
+#endif
 				device_led_setup(led_cfg[LED_SHINE_0S5]);
 			}
 
@@ -466,10 +471,10 @@ int app_packet_to_uart ()
 
 #if (REMOTE_PM_ENABLE)
 		if(!module_wakeup_status){  //module is suspend
-			WAKEUP_MODULE_HIGH;
+
 			while( !clock_time_exceed(mcu_wakeup_module_tick, 2500) );
 			module_wakeup_status = 1;
-			WAKEUP_MODULE_LOW;
+
 		}
 #endif
 
@@ -527,7 +532,7 @@ void main_loop ()
 #if (REMOTE_PM_ENABLE)
 	extern u32	scan_pin_need;
 
-	uart_busy = UART_RX_BUSY || UART_TX_BUSY;
+	uart_busy = UART_RX_BUSY || UART_TX_BUSY || mcu_cmd_no_ack;
 	task_busy = 	scan_pin_need || key_not_released  || ui_mic_enable \
 				 || DEVICE_LED_BUSY || uart_busy;
 
@@ -548,15 +553,19 @@ void main_loop ()
 		}
 		else{
 			loop_cnt ++;
-			if(loop_cnt > 10){ //
+			if(loop_cnt > 5){ //
 				suspend_mode = 1;
-				suspend_ms = 1000;
+				suspend_ms = 10000;  //10s
 				wakeup_source = PM_WAKEUP_TIMER | PM_WAKEUP_CORE;
 			}
 		}
 
 		WAKEUP_MCU_LOW;
+
+		DEBUG_GPIO_LOW;
 		cpu_sleep_wakeup(0, wakeup_source, loop_begin_tick + suspend_ms * CLOCK_SYS_CLOCK_1MS);
+		DEBUG_GPIO_HIGH;
+
 		WAKEUP_MCU_HIGH;
 	}
 #endif
