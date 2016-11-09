@@ -73,9 +73,17 @@ void show_ota_result(int result)
 }
 
 
-void	task_connect (u8 e, u8 *p, int n)
+void	task_connect (void)
 {
-	bls_l2cap_requestConnParamUpdate (12, 32, 99, 400);  //interval=10ms latency=99 timeout=4s
+	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);  //interval=10ms latency=99 timeout=4s
+}
+
+
+void detect_mcu_wakeup_pin_before_suspend(void)
+{
+	if( gpio_read(GPIO_WAKEUP_MODULE) ){
+		gpio_trigger_noSuspend = 1;
+	}
 }
 
 
@@ -177,6 +185,15 @@ void user_init()
 	bls_ota_registerResultIndicateCb(show_ota_result);
 
 
+
+#if (BLE_MODULE_PM_ENABLE)
+	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
+	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
+	gpio_core_wakeup_enable_all(1);
+
+	bls_pm_registerFuncBeforeSuspend( &detect_mcu_wakeup_pin_before_suspend );
+#endif
+
 	ui_advertise_begin_tick = clock_time();
 }
 
@@ -185,7 +202,19 @@ void user_init()
 // main loop flow
 /////////////////////////////////////////////////////////////////////
 u32 tick_loop;
-unsigned short battValue[20];
+
+int	mcu_uart_working;
+int	module_uart_working;
+int modile_task_busy;
+
+int	module_uart_data_flg;
+
+#define UART_TX_BUSY			( (hci_tx_fifo.rptr != hci_tx_fifo.wptr) || uart_tx_is_busy() )
+#define UART_RX_BUSY			( rx_uart_w_index != rx_uart_r_index )
+
+
+int module_pullup = 0;
+
 void main_loop ()
 {
 	tick_loop ++;
@@ -197,4 +226,32 @@ void main_loop ()
 	////////////////////////////////////// UI entry /////////////////////////////////
 	//  add spp UI task
 
+#if (BLE_MODULE_PM_ENABLE)
+
+	if(module_pullup == 0){
+		WAKEUP_MODULE_HIGH;  //module enter working state
+		module_pullup = 1;
+	}
+
+	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
+
+	if(module_uart_data_flg && !module_uart_working){
+		module_uart_data_flg = 0;
+		WAKEUP_MCU_LOW;
+	}
+
+	modile_task_busy = mcu_uart_working || module_uart_data_flg;
+	if(!modile_task_busy){
+		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);
+
+		WAKEUP_MODULE_LOW;  //module enter low power
+		module_pullup = 0; //pull down
+	}
+	else{
+		bls_pm_setSuspendMask(SUSPEND_DISABLE);
+	}
+
+#endif
 }
