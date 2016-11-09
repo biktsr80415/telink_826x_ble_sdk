@@ -31,8 +31,8 @@ _attribute_ram_code_ void irq_handler(void)
 
     if(irqS & FLD_DMA_UART_TX)	//tx
     {
-    	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;;
-        //uart_clr_tx_busy_flag();
+    	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
+        //uart_clr_tx_busy_flag();   //8266 should manual clear uart busy flag
     }
 }
 

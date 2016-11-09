@@ -21,7 +21,11 @@
 MYFIFO_INIT(uart_tx_fifo, 72, 4);
 
 #define 	SPP_CMD_SET_ADV_ENABLE					0xFF0A
+#define 	SPP_CMD_CONN_PARAM_UPDATE				0xFF15
 #define 	SPP_CMD_SEND_NOTIFY_DATA                0xFF1C
+
+#define 	SPP_EVENT_CONNECT						0x0730
+#define 	SPP_EVENT_DISCONNECT                	0x0731
 
 typedef struct {
 	u16 	   cmd;
@@ -46,6 +50,7 @@ u16 cur_mcu_cmd;
 
 
 #if (REMOTE_PM_ENABLE)
+	int	mcu_uart_data_flg;
 	int	mcu_cmd_no_ack;
 	int module_wakeup_status;
 	u32 mcu_wakeup_module_tick;
@@ -53,6 +58,7 @@ u16 cur_mcu_cmd;
 	#define UART_SEND_DATA_PREPARE  do{	module_wakeup_status = gpio_read(GPIO_WAKEUP_MCU); \
 										WAKEUP_MODULE_HIGH; \
 										mcu_wakeup_module_tick = clock_time(); \
+										mcu_uart_data_flg = 1; \
 										mcu_cmd_no_ack = 1; }while(0)
 #else
 	#define UART_SEND_DATA_PREPARE
@@ -69,24 +75,29 @@ u16 cur_mcu_cmd;
 /////////////////////////// led management /////////////////////
 enum{
 	LED_POWER_ON = 0,
+	LED_SHINE_0S5,
+	LED_SHINE_CONNECT,
+	LED_SHINE_DISCONNECT, //3
+
 	LED_AUDIO_ON,	//1
 	LED_AUDIO_OFF,	//2
 	LED_SHINE_SLOW, //3
 	LED_SHINE_FAST, //4
 	LED_SHINE_OTA, //5
 
-	LED_SHINE_0S5,
 };
 
 const led_cfg_t led_cfg[] = {
 	    {1000,    0,      1,      0x00,	 },    //power-on, 1s on
+	    {125,	  125 ,   2,	  0x08,  },    //4Hz shine
+	    {1500,	  0 ,  	  1,	  0x04,  },    //connect
+	    {500,	  500 ,   2,	  0x04,  },    //disconenct
+
 	    {100,	  0 ,	  0xff,	  0x02,  },    //audio on, long on
 	    {0,	      100 ,   0xff,	  0x02,  },    //audio off, long off
 	    {500,	  500 ,   2,	  0x04,	 },    //1Hz for 3 seconds
 	    {250,	  250 ,   4,	  0x04,  },    //2Hz for 3 seconds
 	    {125,	  125 ,   200,	  0x08,  },    //4Hz for 50 seconds
-
-	    {125,	  125 ,   2,	  0x08,  },    //4Hz for 1s
 };
 
 
@@ -374,6 +385,10 @@ void user_init()
 	gpio_core_wakeup_enable_all(1);
 
 
+	gpio_set_wakeup		(GPIO_WAKEUP_MCU, 1, 1);  // core(gpio) high wakeup suspend
+	cpu_set_gpio_wakeup (GPIO_WAKEUP_MCU, 1, 1);  // pad high wakeup deepsleep
+
+
 	device_led_init(GPIO_LED, 1);
 	device_led_setup( led_cfg[LED_POWER_ON]);
 
@@ -437,21 +452,48 @@ int app_packet_from_uart (void)
 		}
 		else{
 			module_evt_rcv = pEvt->event;
-			moduel_evt_expect = (cur_mcu_cmd & 0x3ff) | 0x400;
 
-			if( module_evt_rcv != moduel_evt_expect){
-				module_evt_unmatch ++;
+#if (REMOTE_PM_ENABLE)
+			if(mcu_cmd_no_ack){
+
+				moduel_evt_expect = (cur_mcu_cmd & 0x3ff) | 0x400;
+				if( module_evt_rcv != moduel_evt_expect){
+					module_evt_unmatch ++;
+				}
+				else{
+					mcu_cmd_no_ack = 0;  //cmd acked
+
+					if(cur_mcu_cmd != SPP_CMD_CONN_PARAM_UPDATE){
+						device_led_setup(led_cfg[LED_SHINE_0S5]);
+					}
+				}
 			}
 			else{
-#if (REMOTE_PM_ENABLE)
-				mcu_cmd_no_ack = 0;  //cmd acked
-#endif
-				device_led_setup(led_cfg[LED_SHINE_0S5]);
+				if(module_evt_rcv == SPP_EVENT_CONNECT){
+					device_led_setup(led_cfg[LED_SHINE_CONNECT]);
+
+					cur_mcu_cmd = SPP_CMD_CONN_PARAM_UPDATE;
+					u16 dat[6];
+					dat[0] = SPP_CMD_CONN_PARAM_UPDATE;
+					dat[1] = 8;  //cmd len
+					dat[2] = 12; //interval min
+					dat[3] = 12; //interval max
+					dat[4] = 66; //latency
+					dat[5] = 400; //timeout
+					UART_SEND_DATA_PREPARE;
+					if( my_fifo_push(&uart_tx_fifo, dat, 12) ){ // 0 is OK
+						SET_DBG_FLG(0x11);
+					}
+				}
+				else if(module_evt_rcv == SPP_EVENT_DISCONNECT){
+					device_led_setup(led_cfg[LED_SHINE_DISCONNECT]);
+				}
+				else{
+
+				}
 			}
-
+#endif
 		}
-
-
 	}
 
 
@@ -507,8 +549,12 @@ u32 loop_begin_tick;
 #define UART_TX_BUSY    ( (uart_tx_fifo.rptr != uart_tx_fifo.wptr) || uart_tx_is_busy() )
 #define UART_RX_BUSY	(my_rx_uart_w_index != my_rx_uart_r_index)
 
-int task_busy;
-int uart_busy;
+
+
+int	mcu_uart_working;
+int	module_uart_working;
+int mcu_task_busy;
+
 void main_loop ()
 {
 	tick_loop ++;
@@ -532,38 +578,54 @@ void main_loop ()
 #if (REMOTE_PM_ENABLE)
 	extern u32	scan_pin_need;
 
-	uart_busy = UART_RX_BUSY || UART_TX_BUSY || mcu_cmd_no_ack;
-	task_busy = 	scan_pin_need || key_not_released  || ui_mic_enable \
-				 || DEVICE_LED_BUSY || uart_busy;
+	module_uart_working = gpio_read(GPIO_WAKEUP_MCU);
+	mcu_uart_working = UART_RX_BUSY || UART_TX_BUSY || mcu_cmd_no_ack;
 
-	if(uart_busy){
+	if(mcu_uart_data_flg && !mcu_uart_working){
+		mcu_uart_data_flg = 0;
+		WAKEUP_MODULE_LOW;
+	}
+
+	mcu_task_busy = scan_pin_need || key_not_released || DEVICE_LED_BUSY;
+
+	if(module_uart_working || mcu_uart_working){
 		loop_cnt = 0;
-		u32 wakeup_tick = loop_begin_tick + 15 * CLOCK_SYS_CLOCK_1MS;
+		u32 wakeup_tick = loop_begin_tick + 8 * CLOCK_SYS_CLOCK_1MS;
 		while ((u32)(clock_time () -  wakeup_tick) > BIT(30));
 	}
 	else{
 
-		WAKEUP_MODULE_LOW;
-
-		if(task_busy){
+		if(mcu_task_busy){
 			suspend_mode = 0;
 			loop_cnt = 0;
 			suspend_ms = 15;
-			wakeup_source = PM_WAKEUP_TIMER;
+			//wakeup_source = PM_WAKEUP_TIMER | PM_WAKEUP_CORE;
+
+			u32 pin[] = KB_DRIVE_PINS;
+			for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
+			{
+				gpio_set_wakeup(pin[i],1,0);
+			}
 		}
 		else{
 			loop_cnt ++;
 			if(loop_cnt > 5){ //
 				suspend_mode = 1;
-				suspend_ms = 10000;  //10s
-				wakeup_source = PM_WAKEUP_TIMER | PM_WAKEUP_CORE;
+				suspend_ms = 1000;  //1 s
+				//wakeup_source = PM_WAKEUP_TIMER | PM_WAKEUP_CORE;
+			}
+
+			u32 pin[] = KB_DRIVE_PINS;
+			for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
+			{
+				gpio_set_wakeup(pin[i],1,1);
 			}
 		}
 
 		WAKEUP_MCU_LOW;
 
 		DEBUG_GPIO_LOW;
-		cpu_sleep_wakeup(0, wakeup_source, loop_begin_tick + suspend_ms * CLOCK_SYS_CLOCK_1MS);
+		cpu_sleep_wakeup(0, PM_WAKEUP_TIMER | PM_WAKEUP_CORE, loop_begin_tick + suspend_ms * CLOCK_SYS_CLOCK_1MS);
 		DEBUG_GPIO_HIGH;
 
 		WAKEUP_MCU_HIGH;
