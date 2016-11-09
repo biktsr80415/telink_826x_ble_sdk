@@ -21,7 +21,11 @@
 MYFIFO_INIT(uart_tx_fifo, 72, 4);
 
 #define 	SPP_CMD_SET_ADV_ENABLE					0xFF0A
-#define 	SPP_CMD_SEND_NOTIFY_DATA                0xFF0B
+#define 	SPP_CMD_CONN_PARAM_UPDATE				0xFF15
+#define 	SPP_CMD_SEND_NOTIFY_DATA                0xFF1C
+
+#define 	SPP_EVENT_CONNECT						0x0730
+#define 	SPP_EVENT_DISCONNECT                	0x0731
 
 typedef struct {
 	u16 	   cmd;
@@ -39,12 +43,64 @@ typedef struct {
 } module_notify_t;
 
 
-
 u16 cur_mcu_cmd;
-int  uart_tx_push;
+
+
+typedef struct {
+	u8 	   token;
+	u8	   dataLen;  //cmd + dat
+	u16    event;
+	u8 	   dat[32];
+} module_event_t;
+
+
+int module_evt_err = 0;
+
+int module_evt_unmatch = 0;
+
+u16 module_evt_rcv;
+u16 moduel_evt_expect;
+
+int	mcu_uart_data_flg;
+int	mcu_cmd_no_ack;
+int module_wakeup_status;
+u32 mcu_wakeup_module_tick;
 
 
 #define SET_DBG_FLG(x)  do{ write_reg8(0x8000, x);while(1);}while(0)
+
+
+void push_uart_data_to_fifo (u8 *p, u8 n)
+{
+
+#if (REMOTE_PM_ENABLE)
+/*
+	mcu 往module发UART数据时，将GPIO_WAKEUP_MODULE管脚拉高，通知module有数据了（同时也可以将module从低功耗唤醒）
+	拉高前，先读取当前module是否正在低功耗状态: module端处于非低功耗状态时，将GPIO_WAKEUP_MODULE上拉电阻开起
+											  处于低功耗状态时，将GPIO_WAKEUP_MODULE下拉电阻开起
+			  若module端处于非低功耗模式,mcu直接发送数据；若module处于低功耗模式，mcu需要等待module端恢复稳定后
+			   才能发数据
+*/
+
+	GPIO_WAKEUP_MODULE_FLOAT;  //先将mcu端的输出电平撤掉，才能读到mcu端在GPIO_WAKEUP_MCU上面用上下拉电阻给出的状态
+	sleep_us(10);
+	module_wakeup_status = gpio_read(GPIO_WAKEUP_MODULE);
+
+	GPIO_WAKEUP_MODULE_HIGH;
+	mcu_wakeup_module_tick = clock_time();
+	mcu_uart_data_flg = 1;
+	mcu_cmd_no_ack = 1;
+#endif
+
+
+	if(my_fifo_push(&uart_tx_fifo, p, n)){
+		SET_DBG_FLG(0x11);
+	}
+}
+
+
+
+
 
 
 
@@ -54,24 +110,29 @@ int  uart_tx_push;
 /////////////////////////// led management /////////////////////
 enum{
 	LED_POWER_ON = 0,
+	LED_SHINE_0S5,
+	LED_SHINE_CONNECT,
+	LED_SHINE_DISCONNECT, //3
+
 	LED_AUDIO_ON,	//1
 	LED_AUDIO_OFF,	//2
 	LED_SHINE_SLOW, //3
 	LED_SHINE_FAST, //4
 	LED_SHINE_OTA, //5
 
-	LED_SHINE_0S5,
 };
 
 const led_cfg_t led_cfg[] = {
 	    {1000,    0,      1,      0x00,	 },    //power-on, 1s on
+	    {125,	  125 ,   2,	  0x08,  },    //4Hz shine
+	    {1500,	  0 ,  	  1,	  0x04,  },    //connect
+	    {500,	  500 ,   2,	  0x04,  },    //disconenct
+
 	    {100,	  0 ,	  0xff,	  0x02,  },    //audio on, long on
 	    {0,	      100 ,   0xff,	  0x02,  },    //audio off, long off
 	    {500,	  500 ,   2,	  0x04,	 },    //1Hz for 3 seconds
 	    {250,	  250 ,   4,	  0x04,  },    //2Hz for 3 seconds
 	    {125,	  125 ,   200,	  0x08,  },    //4Hz for 50 seconds
-
-	    {125,	  125 ,   2,	  0x08,  },    //4Hz for 1s
 };
 
 
@@ -218,12 +279,8 @@ void key_change_proc(void)
 				pCmd->cmdLen = 1;
 				pCmd->data[0] = adv_en;
 
+				push_uart_data_to_fifo(adv_en_cmd, 5);
 
-				if( my_fifo_push(&uart_tx_fifo, adv_en_cmd, 5) ){ // 0 is OK
-					SET_DBG_FLG(0x11);
-				}
-
-				//device_led_setup(led_cfg[LED_SHINE_FAST]);
 			}
 			else
 			{
@@ -232,9 +289,8 @@ void key_change_proc(void)
 
 					kb_notify_cmd.data[2] = key0;
 					cur_mcu_cmd = SPP_CMD_SEND_NOTIFY_DATA;
-					if( my_fifo_push(&uart_tx_fifo, &kb_notify_cmd, 14) ){ // 0 is OK
-						SET_DBG_FLG(0x11);
-					}
+
+					push_uart_data_to_fifo(&kb_notify_cmd, 14);
 				}
 			}
 		}
@@ -248,20 +304,19 @@ void key_change_proc(void)
 		else if(key_type == KEYBOARD_KEY){
 			kb_notify_cmd.data[2] = 0;
 			cur_mcu_cmd = SPP_CMD_SEND_NOTIFY_DATA;
-			if( my_fifo_push(&uart_tx_fifo, &kb_notify_cmd, 14) ){ // 0 is OK
-				SET_DBG_FLG(0x11);
-			}
+
+			push_uart_data_to_fifo(&kb_notify_cmd, 14);
 		}
 	}
 }
 
 
 
-void proc_keyboard (u8 e, u8 *p, int n)
+void proc_keyboard (void)
 {
-#if 0
+#if 1
 	static u32 keyScanTick = 0;
-	if(e == BLT_EV_FLAG_GPIO_EARLY_WAKEUP || clock_time_exceed(keyScanTick, 8000)){
+	if(clock_time_exceed(keyScanTick, 8000)){
 		keyScanTick = clock_time();
 	}
 	else{
@@ -355,6 +410,10 @@ void user_init()
 	gpio_core_wakeup_enable_all(1);
 
 
+	gpio_set_wakeup		(GPIO_WAKEUP_MCU, 1, 1);  // core(gpio) high wakeup suspend
+	cpu_set_gpio_wakeup (GPIO_WAKEUP_MCU, 1, 1);  // pad high wakeup deepsleep
+
+
 	device_led_init(GPIO_LED, 1);
 	device_led_setup( led_cfg[LED_POWER_ON]);
 
@@ -377,26 +436,15 @@ void user_init()
 	uart_BuffInit((u8 *)(&my_rxdata_buf), sizeof(my_rxdata_buf), (u8 *)(&my_txdata_buf));
 
 	reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX;//CLR irq source
+
+
 }
 
 
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
-typedef struct {
-	u8 	   token;
-	u8	   dataLen;  //cmd + dat
-	u16    event;
-	u8 	   dat[32];
-} module_event_t;
 
-
-int module_evt_err = 0;
-
-int module_evt_unmatch = 0;
-
-u16 module_evt_rcv;
-u16 moduel_evt_expect;
 int app_packet_from_uart (void)
 {
 	if(my_rx_uart_w_index == my_rx_uart_r_index)  //rx buff empty
@@ -416,18 +464,46 @@ int app_packet_from_uart (void)
 		}
 		else{
 			module_evt_rcv = pEvt->event;
-			moduel_evt_expect = (cur_mcu_cmd & 0x3ff) | 0x400;
 
-			if( module_evt_rcv != moduel_evt_expect){
-				module_evt_unmatch ++;
+#if (REMOTE_PM_ENABLE)
+			if(mcu_cmd_no_ack){
+
+				moduel_evt_expect = (cur_mcu_cmd & 0x3ff) | 0x400;
+				if( module_evt_rcv != moduel_evt_expect){
+					module_evt_unmatch ++;
+				}
+				else{
+					mcu_cmd_no_ack = 0;  //cmd acked
+
+					if(cur_mcu_cmd != SPP_CMD_CONN_PARAM_UPDATE){
+						device_led_setup(led_cfg[LED_SHINE_0S5]);
+					}
+				}
 			}
 			else{
-				device_led_setup(led_cfg[LED_SHINE_0S5]);
+				if(module_evt_rcv == SPP_EVENT_CONNECT){
+					device_led_setup(led_cfg[LED_SHINE_CONNECT]);
+
+					cur_mcu_cmd = SPP_CMD_CONN_PARAM_UPDATE;
+					u16 dat[6];
+					dat[0] = SPP_CMD_CONN_PARAM_UPDATE;
+					dat[1] = 8;  //cmd len
+					dat[2] = 12; //interval min
+					dat[3] = 12; //interval max
+					dat[4] = 66; //latency
+					dat[5] = 400; //timeout
+
+					push_uart_data_to_fifo((u8 *)dat, 12);
+				}
+				else if(module_evt_rcv == SPP_EVENT_DISCONNECT){
+					device_led_setup(led_cfg[LED_SHINE_DISCONNECT]);
+				}
+				else{
+
+				}
 			}
-
+#endif
 		}
-
-
 	}
 
 
@@ -444,7 +520,22 @@ int app_packet_to_uart ()
 		memcpy(&my_txdata_buf.data, p + 2, p[0]+p[1]*256);
 		my_txdata_buf.len = p[0]+p[1]*256 ;
 
-		uart_tx_push = 1;
+
+#if (REMOTE_PM_ENABLE)
+/*
+	 若mcu通知module有数据时，检测到module是处于低功耗状态的，mcu将 GPIO_WAKEUP_MODULE拉高将module唤醒
+	 mcu发送uart数据要确保距离唤醒的时间点超过一段安全的时间，确保module端已经可以稳定接收uart数据
+	 下面的2500us 是对于telink 8266 module一个比较安全的值
+ */
+		if(!module_wakeup_status){  //module is suspend
+			while( !clock_time_exceed(mcu_wakeup_module_tick, 2500) );
+			module_wakeup_status = 1;
+		}
+#endif
+
+
+		//DEBUG_GPIO_TOGGLE;
+
 		if (uart_Send((u8 *)(&my_txdata_buf)))
 		{
 			my_fifo_pop (&uart_tx_fifo);
@@ -466,17 +557,20 @@ extern u8	blt_slave_main_loop (void);
 
 int suspend_mode = 0;
 int suspend_ms;
-u8	wakeup_source;
 u32 loop_cnt = 0;
 u32 loop_begin_tick;
 
-#define UART_TX_BUSY    uart_tx_is_busy()
+#define UART_TX_BUSY    ( (uart_tx_fifo.rptr != uart_tx_fifo.wptr) || uart_tx_is_busy() )
 #define UART_RX_BUSY	(my_rx_uart_w_index != my_rx_uart_r_index)
 
-int task_busy;
+
+
+int	mcu_uart_working;
+int	module_uart_working;
+int mcu_task_busy;
+
 void main_loop ()
 {
-	uart_tx_push = 0;
 	tick_loop ++;
 
 	loop_begin_tick = clock_time();
@@ -489,47 +583,68 @@ void main_loop ()
 	//UI entry
 	task_audio();
 
-	proc_keyboard (0,0, 0);
-
-
+	proc_keyboard();
 
 	device_led_process();
 
 
-
-
-
-
+	// power management
+#if (REMOTE_PM_ENABLE)
 	extern u32	scan_pin_need;
-	task_busy = 	scan_pin_need || key_not_released  || ui_mic_enable \
-				 || DEVICE_LED_BUSY || UART_RX_BUSY || UART_TX_BUSY;
+
+	module_uart_working = gpio_read(GPIO_WAKEUP_MCU);  //module有uart数据时会在GPIO_WAKEUP_MCU脚上输出高电平
+	mcu_uart_working = UART_RX_BUSY || UART_TX_BUSY || mcu_cmd_no_ack;//mcu自己检查uart rx和tx是否都处理完毕
 
 
-	if(task_busy){
-		suspend_mode = 0;
-		loop_cnt = 0;
-		suspend_ms = 15;
-		wakeup_source = PM_WAKEUP_TIMER;
+	//当mcu的uart数据发送完毕后，将GPIO_WAKEUP_MODULE拉低（输出对电平）
+	if(mcu_uart_data_flg && !mcu_uart_working){
+		mcu_uart_data_flg = 0;
+		GPIO_WAKEUP_MODULE_LOW;
 	}
-	else{
-		loop_cnt ++;
-		if(loop_cnt > 10){ //
-			suspend_mode = 1;
-			suspend_ms = 1000;
-			wakeup_source = PM_WAKEUP_TIMER | PM_WAKEUP_CORE;
+
+	mcu_task_busy = scan_pin_need || key_not_released || DEVICE_LED_BUSY;
+
+	if(module_uart_working || mcu_uart_working){
+		loop_cnt = 0;
+		sleep_us(10);
+	}
+	else{ //can enter suspend
+		if(mcu_task_busy){
+			suspend_mode = 0;
+			loop_cnt = 0;
+			suspend_ms = 15;
+
+			u32 pin[] = KB_DRIVE_PINS;
+			for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
+			{
+				gpio_set_wakeup(pin[i],1,0);
+			}
 		}
-	}
+		else{
+			loop_cnt ++;
+			if(loop_cnt > 5){ //
+				suspend_mode = 1;
+				suspend_ms = 1000;  //1 s
+			}
 
-	if(uart_tx_push){
-		loop_cnt = 0;
-		u32 wakeup_tick = loop_begin_tick + 15 * CLOCK_SYS_CLOCK_1MS;
-		while ((u32)(clock_time () -  wakeup_tick) > BIT(30));
+			u32 pin[] = KB_DRIVE_PINS;
+			for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
+			{
+				gpio_set_wakeup(pin[i],1,1);
+			}
+		}
+
+		//mcu suspend时，将GPIO_WAKEUP_MCU 下拉电阻开起来，确保module可以读到低电平
+		GPIO_WAKEUP_MCU_LOW;
+
+		//DEBUG_GPIO_LOW;
+		cpu_sleep_wakeup(0, PM_WAKEUP_TIMER | PM_WAKEUP_CORE, loop_begin_tick + suspend_ms * CLOCK_SYS_CLOCK_1MS);
+		//DEBUG_GPIO_HIGH;
+
+		//mcu 工作时时，将GPIO_WAKEUP_MCU 上拉电阻开起来，确保module可以读到高电平
+		GPIO_WAKEUP_MCU_HIGH;
 	}
-	else{
-		DBG_CHN0_LOW;
-		cpu_sleep_wakeup(0, wakeup_source, loop_begin_tick + suspend_ms * CLOCK_SYS_CLOCK_1MS);
-		DBG_CHN0_HIGH;
-	}
+#endif
 }
 
 

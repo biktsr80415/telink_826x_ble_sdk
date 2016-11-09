@@ -1,10 +1,10 @@
-#if(__PROJECT_FLYCO_8266_MODULE__)
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/ble/ble_ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
-#include "flyco_spp.h"
+#include "spp.h"
 
+#if(1)
 
 typedef struct
 {
@@ -102,7 +102,7 @@ void module_onReceiveMasterData(rf_packet_att_write_t *p)
 		header = 0x0730;		//data received event
 		header |= (3 << 16) | (1<<24);
 		blc_hci_send_data(header, &p->value, len);		//HCI_FLAG_EVENT_TLK_MODULE
-#else if FLYCO_SPP_MODULE
+#elif FLYCO_SPP_MODULE
 		flyco_uart_push_fifo(HC_DATA, len, &p->value);
 #endif
 	}
@@ -110,6 +110,8 @@ void module_onReceiveMasterData(rf_packet_att_write_t *p)
 #endif
 
 // TM : to modify
+extern int flyco_otaRead(void * p);
+extern int flyco_otaWrite(void * p);
 const attribute_t my_Attributes[] = {
 	{19,0,0,0,0,0},	// total num of attribute
 

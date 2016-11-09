@@ -31,7 +31,7 @@ extern "C" {
 #define HCI_ACCESS		HCI_USE_USB
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_REMOTE_PM_ENABLE			0
+#define REMOTE_PM_ENABLE				1
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_IR_ENABLE					0
 #define HID_MOUSE_ATT_ENABLE			0
@@ -174,12 +174,39 @@ extern "C" {
 
 
 
-/////////////open SWS(PB0)  pullup to prevent MCU err, this is must ////////////
-#define PULL_WAKEUP_SRC_PB0					PM_PIN_PULLUP_1M
+#define	GPIO_WAKEUP_MODULE					GPIO_PA2
+#define	PA2_FUNC							AS_GPIO
+#define PA2_INPUT_ENABLE					1
+#define	PA2_OUTPUT_ENABLE					1
+#define	PA2_DATA_OUT						0
+#define GPIO_WAKEUP_MODULE_HIGH				do{gpio_set_output_en(GPIO_PA2, 1); gpio_write(GPIO_PA2, 1);}while(0)
+#define GPIO_WAKEUP_MODULE_LOW				do{gpio_set_output_en(GPIO_PA2, 1); gpio_write(GPIO_PA2, 0);}while(0)
+#define GPIO_WAKEUP_MODULE_FLOAT			do{gpio_set_output_en(GPIO_PA2, 0); gpio_write(GPIO_PA2, 0);}while(0)
 
 
 
-#define  SIHUI_GPIO_DEBUG					1
+
+#define	GPIO_WAKEUP_MCU						GPIO_PA3
+#define	PA3_FUNC							AS_GPIO
+#define PA3_INPUT_ENABLE					1
+#define	PA3_OUTPUT_ENABLE					0
+#define	PA3_DATA_OUT						0
+#define PULL_WAKEUP_SRC_PA3					PM_PIN_PULLUP_10K
+#define GPIO_WAKEUP_MCU_HIGH				gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLUP_10K)
+#define GPIO_WAKEUP_MCU_LOW					gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLDOWN_100K)
+
+
+#define	PA4_FUNC							AS_GPIO
+#define PA4_INPUT_ENABLE					0
+#define	PA4_OUTPUT_ENABLE					1
+#define	PA4_DATA_OUT						0
+#define DEBUG_GPIO_HIGH						gpio_write(GPIO_PA4, 1)
+#define DEBUG_GPIO_LOW						gpio_write(GPIO_PA4, 0)
+#define DEBUG_GPIO_TOGGLE					BM_FLIP(reg_gpio_out(GPIO_PA4), GPIO_PA4 & 0xff);
+
+
+
+#define  SIHUI_GPIO_DEBUG					0
 #if(SIHUI_GPIO_DEBUG)
 
 #define PA2_FUNC				AS_GPIO //debug gpio chn0 : A2

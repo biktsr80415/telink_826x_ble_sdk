@@ -1,24 +1,13 @@
-/*
- * flyco_spp.c
- *
- *  Created on: 2016-6-15
- *      Author: yafei.tu
- */
-
 #include "../../proj/tl_common.h"
 #include "../../proj/drivers/flash.h"
 #include "../../proj/drivers/uart.h"
 #include "../../proj_lib/ble/ble_common.h"
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/ble_ll.h"
-#include "flyco_spp.h"
 #include "../../proj_lib/ble/blt_config.h"
+#include "spp.h"
 
-/**********************************************************************
- * GLOBAL VARIABLES
- */
 u8 flyco_version[4] = FLYCO_VERSION;
-
 extern const u16 TelinkSppServiceUUID;
 extern const u16 TelinkSppDataServer2ClientUUID;
 extern const u16 TelinkSppDataClient2ServiceUUID;
@@ -34,9 +23,12 @@ flyco_spp_AppCallbacks_t *flyco_spp_cbs;
 u8 devNameT[26] = {0};//Temporary storage device name, data structure:[12£ºDevName1£»6£ºDevName2]
 u8 set_devname1_flg = 0;//Set devname1 flag
 
-/**********************************************************************
- * LOCAL VARIABLES
- */
+#if( TL_LIB_8266 || MCU_CORE_TYPE == MCU_CORE_8266)
+	#define	UART_SEND  			     uart_Send_kma
+#else
+    #define	UART_SEND				 uart_Send
+#endif
+
 //Notice:flash_erase_sector should place at user_init(), Do Not user this function in main_loop()!!!
  int adv_interval_index;
  int rf_power_index;
@@ -47,56 +39,38 @@ u8 set_devname1_flg = 0;//Set devname1 flag
  int devname2_index;
  int identified_index;
  int baudrate_index;
-
-extern void flyco_load_para_addr(u32 addr, int index, u8* p, u8 len);
-
-u8 nv_read(u8 id, u8 *buf, u16 len){
-	u32 *p = NULL;
-	switch(id){
-	    case NV_FLYCO_ITEM_BAUD_RATE:
-	    	p = (u32 *) BAUD_RATE_ADDR;
-	    	//flash_read_page(BAUD_RATE_ADDR, len, buf);
-		break;
-	    case NV_FLYCO_ITEM_RF_POWER:
-	    	p = (u32 *) RF_POWER_ADDR;
-	    	//flash_read_page(RF_POWER_ADDR, len, buf);
-	    break;
-	    case NV_FLYCO_ITEM_IDENTIFIED:
-	    	p = (u32 *) IDENTIFIED_ADDR;
-	    	//flash_read_page(IDENTIFIED_ADDR, len, buf);
-	    break;
-	    case NV_FLYCO_ITEM_ADV_TIMEOUT:
-	    	p = (u32 *) ADV_TIMEOUT_ADDR;
-	    	//flash_read_page(ADV_TIMEOUT_ADDR, len, buf);
-	    break;
-	    case NV_FLYCO_ITEM_DEV_NAME1:
-	    	p = (u32 *) DEV_NAME1_ADDR;
-	    	//flash_read_page(DEV_NAME1_ADDR, len, buf);
-	    break;
-	    case NV_FLYCO_ITEM_DEV_NAME2:
-	    	p = (u32 *) DEV_NAME2_ADDR;
-	    	//flash_read_page(DEV_NAME2_ADDR, len, buf);
-	    break;
-	    case NV_FLYCO_ITEM_DEV_NAME:
-	    	p = (u32 *) DEV_NAME_ADDR;
-	    	//flash_read_page(DEV_NAME_ADDR, len, buf);
-	    break;
-	    case NV_FLYCO_ITEM_ADV_DATA:
-	    	p = (u32 *) ADV_DATA_ADDR;
-	   	    //flash_read_page(ADV_DATA_ADDR, len, buf);
-	   	break;
-	    case NV_FLYCO_ITEM_ADV_INTERVAL:
-	    	p = (u32 *) ADV_INTERVAL_ADDR;
-	   	    //flash_read_page(ADV_INTERVAL_ADDR, len, buf);
-	   	break;
+/////////////////////////////////////FLASH data save and read management////////////////////////////////
+// FLASH struct : index | 00 | data[30]
+//read user data in FLASH
+void flyco_load_para_addr(u32 addr, int* index, u8* p, u8 len){
+	int idx=0;
+	for (idx=0; idx < 4*1024; idx+=32)//4K per sector
+	{
+		if (*(u16 *)(addr+idx) == U16_MAX)	//end
+		{
+			break;
+		}
 	}
 
-	if (*p != 0xffffffff){
-		memcpy (buf, p, len);
-		return 0;
+	idx -= 32;
+
+	if(idx < 0 || idx == 4*1024){
+		return;
 	}
-	else{
-		return 1;
+
+	*index = idx;
+	memcpy (p, (u32 *)(addr+idx+2), len);
+}
+//erase user data in FLASH
+void flyco_erase_para(u32 addr, int* index){
+	if(*index>= 4*1024){
+		nv_manage_t p;
+		p.curNum = 0x01;
+		memcpy (p.data, (u32*)(addr+ *index + 2), 30);
+		*index = 0;
+		flash_erase_sector(addr);
+		extern void save_para(u32 addr, int* index, u8* buf, u16 len);
+		save_para(addr, index, (u8*)&p, 32);
 	}
 }
 
@@ -112,6 +86,7 @@ void save_para(u32 addr, int* index, u8* buf, u16 len){
 	flash_write_page((addr + *index), len + 2, (u8*)&p);
 	*index += 32;
 }
+
 u8 nv_write(u8 id, u8 *buf, u16 len){
 	switch(id){
 	case NV_FLYCO_ITEM_BAUD_RATE:
@@ -144,15 +119,149 @@ u8 nv_write(u8 id, u8 *buf, u16 len){
    }
    return 0;
 }
-////////////////////////////////////////////////////////////////////
-/**
-*  @brief  Flag indicating that data is sending, we can't reload new data until the data sending is finished
-*/
-u8 spp_dataSendProcess = 0;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**********************************************************************
- * LOCAL FUNCTIONS
- */
+///////////the code below is just for demonstration of the event callback only////////////
+void event_handler(u32 h, u8 *para, int n)
+{
+	if((h&HCI_FLAG_EVENT_TLK_MODULE)!= 0)			//module event
+	{
+		switch((u8)(h&0xff))
+		{
+			case BLT_EV_FLAG_ADV:
+			{
+				gpio_write (BLE_STA_OUT, 0);
+			}
+			break;
+			case BLT_EV_FLAG_SCAN_RSP:
+				break;
+			case BLT_EV_FLAG_CONNECT:
+			{
+				gpio_write (BLE_STA_OUT, 1);
+				bls_l2cap_requestConnParamUpdate (16, 40, 0, 400);  //interval=20ms~50ms latency=0 timeout=4s
+			}
+				break;
+			case BLT_EV_FLAG_TERMINATE:
+			{
+				gpio_write(BLE_STA_OUT,0);//LOW
+			}
+				break;
+			case BLT_EV_FLAG_PAIRING_BEGIN:
+				break;
+			case BLT_EV_FLAG_PAIRING_FAIL:
+				break;
+			case BLT_EV_FLAG_ENCRYPTION_CONN_DONE:
+				break;
+			case BLT_EV_FLAG_USER_TIMER_WAKEUP:
+				break;
+			case BLT_EV_FLAG_GPIO_EARLY_WAKEUP:
+				break;
+			case BLT_EV_FLAG_CHN_MAP_REQ:
+				break;
+			case BLT_EV_FLAG_CONN_PARA_REQ:
+				break;
+			case BLT_EV_FLAG_CHN_MAP_UPDATE:
+				break;
+			case BLT_EV_FLAG_CONN_PARA_UPDATE:
+				break;
+			case BLT_EV_FLAG_SET_WAKEUP_SOURCE:
+				bls_pm_setWakeupSource(PM_WAKEUP_CORE|PM_WAKEUP_PAD);
+				break;
+			case BLT_EV_FLAG_ADV_DURATION_TIMEOUT:
+				break;
+			default:
+				break;
+		}
+	}
+}
+
+/////////////////////////////////////spp process ///////////////////////////////////////////////////
+MYFIFO_INIT(hci_tx_fifo, 72, 8);
+//#define		UART_WB_NUM			8
+//u8		uart_wb[UART_WB_NUM][64];
+//u8		uart_wb_wptr = 0;
+//u8		uart_wb_rptr = 0;
+//u8		uart_rb[256];
+
+int	flyco_uart_push_fifo (u16 st, int n, u8 *p)
+{
+	u8 *pw = my_fifo_wptr (&hci_tx_fifo);
+	if (!pw || n >= hci_tx_fifo.size)
+	{
+		return -1;
+	}
+
+	pw[0] = n + 3;
+	pw[1] = st;
+	pw[2] = st >> 8;
+	pw[3] = n;
+	if (n)
+	{
+		memcpy (pw + 4, p, n);
+	}
+	my_fifo_next (&hci_tx_fifo);
+	return 0;
+//	int num = (uart_wb_wptr - uart_wb_rptr) & 31;
+//	if (num >= UART_WB_NUM)
+//	{
+//		return 0;
+//	}
+//	u8 *pw = uart_wb[uart_wb_wptr++ & (UART_WB_NUM - 1)];
+//	pw[0] = n + 3;
+//	pw[1] = st;
+//	pw[2] = st >> 8;
+//	pw[3] = n;
+//	if (n)
+//	{
+//		memcpy (pw + 4, p, n);
+//	}
+//	return 1;
+}
+
+uart_data_t T_rxdata_for_flyco;
+int flyco_rx_from_uart (void)//UART data send to Master,we will handler the data as CMD or DATA
+{
+	if(rx_uart_w_index==rx_uart_r_index)  //rx buff empty
+	{
+        return 0;
+	}
+
+	u32 rx_len = T_rxdata_buf[rx_uart_w_index].len + 4 > sizeof(T_rxdata_for_flyco) ? sizeof(T_rxdata_for_flyco) : T_rxdata_buf[rx_uart_w_index].len + 4;
+	memcpy(&T_rxdata_for_flyco, &T_rxdata_buf[rx_uart_w_index], rx_len);
+	memset(&T_rxdata_buf[rx_uart_w_index],0,sizeof(uart_data_t));
+
+	if (rx_len)
+	{
+		flyco_module_uartCmdHandler(T_rxdata_for_flyco.data, rx_len - 4);//handler SPP CMD/DATA
+	}
+	rx_uart_w_index = (rx_uart_w_index + 1)&0x01;
+
+	return 0;
+}
+
+int flyco_tx_to_uart ()//Master data send to UART,we will handler the data as CMD or DATA
+{
+	u8 *p = my_fifo_get (&hci_tx_fifo);
+
+	extern unsigned char uart_tx_is_busy();
+	if (p && !uart_tx_is_busy ())
+	{
+		flyco_module_masterCmdHandler(p+4, p[3]);
+		my_fifo_pop (&hci_tx_fifo);
+	}
+    return 0;
+//	if (uart_wb_rptr != uart_wb_wptr && !uart_tx_is_busy ())
+//	{
+//		u8 *p = uart_wb[uart_wb_rptr & (UART_WB_NUM-1)];
+//
+//		flyco_module_masterCmdHandler(p+4, p[3]);
+//
+//		uart_wb_rptr++;
+//	}
+//    return 0;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp);
 void flyco_spp_cmdHandler(u8 *pCmd);
 void flyco_spp_dataHandler(u8 *pData, u16 len);
@@ -162,10 +271,6 @@ void flyco_spp_dataReceivedMasterHandler(u8 *data, u32 len);
 void flyco_spp_cmdReceivedMasterHandler(u8 *pCmd);
 void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp);
 void flyco_spp_received_master_rsp2cmd(u8 cmdid, u8 *payload, u8 len);
-
-#if HEARTBEAT_FLYCO
-int module_wait_forDisconnectTimer1Cb(void *arg);// for Disconnect ack mobile phone for FLYCO
-#endif
 
 /*********************************************************************
  * @fn      reverse_data
@@ -183,7 +288,7 @@ void reverse_data(u8 *p,u8 len,u8*rp){
 
 void flyco_module_uartCmdHandler(unsigned char* p, u32 len){
 
-	if(!IS_FLYCO_SPP_CMD(p)) {//DATA
+	if(IS_FLYCO_SPP_DATA(p)){////DATA    !IS_FLYCO_SPP_CMD(p)) {
 		bls_att_pushNotifyData(spp_s2c_hdl, p, len);
 	}
 	else if(IS_FLYCO_SPP_CMD(p)){ //CMD
@@ -196,7 +301,7 @@ void flyco_module_uartCmdHandler(unsigned char* p, u32 len){
 }
 
 void flyco_module_masterCmdHandler(u8 *p, u32 len){
-	if(!IS_FLYCO_SPP_CMD(p)) {//DATA
+	if(IS_FLYCO_SPP_DATA(p)){////DATA    !IS_FLYCO_SPP_CMD(p)) {
 		flyco_spp_dataReceivedMasterHandler(p, len);
 	}
 	else if(IS_FLYCO_SPP_CMD(p)){ //CMD
@@ -219,12 +324,16 @@ void flyco_module_masterCmdHandler(u8 *p, u32 len){
 u32 spp_cmd_restart_tick;
 u32 spp_cmd_disconnect_tick;
 u32 spp_cmd_deep_sleep_tick;
+u32 spp_cmd_get_rssi_tick;
+u32 spp_cmd_set_baudrate_tick;
+
 u8 spp_cmd_restart_flg;
 u8 spp_cmd_disconnect_flg;
 u8 spp_cmd_deep_sleep_flg;
-
+u8 spp_cmd_get_rssi_flg;
+u8 spp_cmd_set_baudrate_flg;
+u32 baud_rate_tmp = 0;
 void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
-	ble_sts_t status = BLE_SUCCESS;
 
 	switch(pp->cmdID) {
 		case FLYCO_SPP_CMD_MODULE_GET_MAC:{
@@ -247,8 +356,13 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 					rssi = 0x80;//If not connected, according to FLYCO cmd provision rssi=0x80;
 				else
 					rssi = -110;//ble_rssi - 110; //The reference range:-85dB¡ÜRSSI¡Ü5dB
-				if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
-					flyco_spp_module_rsp2cmd(pp->cmdID, &rssi, 1);
+
+#if HEARTBEAT_FLYCO
+				spp_cmd_get_rssi_tick = clock_time();
+				spp_cmd_get_rssi_flg = 1;
+#endif
+				//if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
+				flyco_spp_module_rsp2cmd(pp->cmdID, &rssi, 1);
 			}
 		}
 		break;
@@ -342,7 +456,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 				flyco_spp_module_rsp2cmd(pp->cmdID, NULL, 0);
 
 				if(set_devname1_flg){//Merge tow device names, configure the Bluetooth device name
-				    set_devname1_flg = 0; 
+				    set_devname1_flg = 0;
 					u8 devName[20];
 					u8 devNameTmp1[20], devNameTmp2[20];
 
@@ -399,15 +513,10 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 			}
 			if(!chkparam){
 				nv_write(NV_FLYCO_ITEM_BAUD_RATE, p->rate, 3); //store baud rate param
-
 				flyco_spp_module_rsp2cmd(pp->cmdID, NULL, 0);
-				WaitMs(50);//Delay 50ms to reply to the module to receive the characteristic code
-				if(baudrate == 9600){
-					CLK16M_UART9600;
-				}
-				else{
-					CLK16M_UART115200;
-				}
+			    spp_cmd_set_baudrate_tick = clock_time();//Delay 50ms to reply to the module to receive the characteristic code
+			    spp_cmd_set_baudrate_flg = 1;
+			    baud_rate_tmp = baudrate;
 			}
 		}
 		break;
@@ -624,7 +733,7 @@ void flyco_spp_cmdHandler(u8 *pCmd) {
 
 	if((0 <= p->cmdID && p->cmdID < FLYCO_SPP_CMD_MODULE_MAX) //FLYCO CMD ID from 0 to FLYCO_SPP_CMD_MODULE_MAX-1.
 	                  && (check == p->data[p->len])) {
-		flyco_spp_onModuleCmd(pCmd);
+		flyco_spp_onModuleCmd(p);
 	}
 
 }
@@ -731,7 +840,6 @@ void flyco_spp_cmdReceivedMasterHandler(u8 *pCmd){
 }
 
 void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
-	ble_sts_t status = BLE_SUCCESS;
 
 	switch(pp->cmdID) {
 		case FLYCO_SPP_CMD_MODULE_GET_MAC:{
@@ -748,14 +856,19 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_GET_RSSI:{
 
 			if(pp->len == 0){
+
+#if HEARTBEAT_FLYCO
+				spp_cmd_get_rssi_tick = clock_time();
+				spp_cmd_get_rssi_flg = 1;
+#endif
 				//extern u8 blt_state;
 				u8 rssi;
 				if(bls_ll_getCurrentState() != BLS_LINK_STATE_CONN)
 					rssi = 0x80;//If not connected, according to FLYCO cmd provision rssi=0x80;
 				else
-					rssi = -110;//ble_rssi - 110; //The reference range:-85dB¡ÜRSSI¡Ü5dB
-				if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
-					flyco_spp_received_master_rsp2cmd(pp->cmdID, &rssi, 1);
+					rssi = -40;//ble_rssi - 110; //The reference range:-85dB¡ÜRSSI¡Ü5dB
+				//if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
+				flyco_spp_received_master_rsp2cmd(pp->cmdID, &rssi, 1);
 			}
 		}
 		break;
@@ -908,7 +1021,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 				nv_write(NV_FLYCO_ITEM_BAUD_RATE, p->rate, 3); //store baud rate param
 
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, NULL, 0);
-				WaitMs(20);//Delay 50ms to reply to the module to receive the characteristic code
+				WaitMs(30);//Delay 50ms to reply to the module to receive the characteristic code
 				if(baudrate == 9600){
 					CLK16M_UART9600;
 				}
@@ -1110,6 +1223,45 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 		default://Instruction not defined!
 		break;
 	}
+}
 
+//user Timer callback proc for spp cmd ack
+void blt_user_timerCb_proc(void){
+	//restart spp cmd
+	if(spp_cmd_restart_flg && clock_time_exceed(spp_cmd_restart_tick , 10000)){  //spp cmd ack restart timeout
+		spp_cmd_restart_flg =0;
+		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 5000 * sys_tick_per_us);
+	}
+    //disconnect spp cmd
+	if(bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && spp_cmd_disconnect_flg && clock_time_exceed(spp_cmd_disconnect_tick , 1000)){  //spp cmd ack disconnect timeout
+		spp_cmd_disconnect_flg = 0;
+		bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
+	}
+    //deep sleep spp cmd
+	if(spp_cmd_deep_sleep_flg && clock_time_exceed(spp_cmd_deep_sleep_tick , 20000)){  //spp cmd ack deep sleep timeout
+		spp_cmd_deep_sleep_flg = 0;
+		cpu_sleep_wakeup(1, PM_WAKEUP_PAD, 0);
+	}
+    //set baud rate spp cmd
+	if(spp_cmd_set_baudrate_flg && clock_time_exceed(spp_cmd_set_baudrate_tick , 20000)){
+		spp_cmd_set_baudrate_flg = 0;
+//		u8  baudratetmp[3] = {0};
+//		flyco_load_para_addr(BAUD_RATE_ADDR, &baudrate_index, baudratetmp, 3);
+//		u32 baudrate = 0;
+//		if(baudratetmp[2] != 0xef)
+//			baudrate = (baudratetmp[0]<<16) + (baudratetmp[1]<<8) + baudratetmp[2];
+//		else
+//			baudrate = (baudratetmp[0]<<8) + baudratetmp[1];
+		if(baud_rate_tmp == 9600)
+			CLK16M_UART9600;
+		else if(baud_rate_tmp == 115200)
+			CLK16M_UART115200;
+		else//default baud rate
+			CLK16M_UART9600;
+	}
+//	if(bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && spp_cmd_get_rssi_flg && clock_time_exceed(spp_cmd_get_rssi_tick , 300000)){//bigger than 3s,slave will terminate
+//		spp_cmd_get_rssi_flg = 0;
+//		bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
+//	}
 }
 

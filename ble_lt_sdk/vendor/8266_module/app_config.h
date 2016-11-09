@@ -21,6 +21,7 @@ extern "C" {
 
 #define		RF_FAST_MODE_1M		1
 
+#define	BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE		0
 //////////////////////CAN NOT CHANGE CONFIG ABOVE ////////////////////////////
 
 
@@ -31,10 +32,30 @@ extern "C" {
 
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_REMOTE_PM_ENABLE				0
+#define BLE_MODULE_PM_ENABLE				0
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLS_SEND_TLK_MODULE_EVENT_ENABLE	1
 
+
+
+//////////////////////////// MODULE PM GPIO	/////////////////////////////////
+#define GPIO_WAKEUP_MODULE					GPIO_PC5   //mcu wakeup module
+#define	PC5_FUNC							AS_GPIO
+#define PC5_INPUT_ENABLE					1
+#define	PC5_OUTPUT_ENABLE					0
+#define	PC5_DATA_OUT						0
+#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLUP_10K);
+#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLDOWN_100K);
+
+
+#define GPIO_WAKEUP_MCU						GPIO_PC3   //module wakeup mcu
+#define	PC3_FUNC							AS_GPIO
+#define PC3_INPUT_ENABLE					1
+#define	PC3_OUTPUT_ENABLE					1
+#define	PC3_DATA_OUT						0
+#define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 1);}while(0)
+#define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 0);}while(0)
+#define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PC3, 0); gpio_write(GPIO_PC3, 0);}while(0)
 
 
 //////////////////////////// KEYSCAN  GPIO //////////////////////////////////
@@ -64,6 +85,17 @@ extern "C" {
 /////////////////// watchdog  //////////////////////////////
 #define MODULE_WATCHDOG_ENABLE		0
 #define WATCHDOG_INIT_TIMEOUT		500  //ms
+
+
+#if 0
+//debug chn  P2 : C4
+#define PC4_FUNC							AS_GPIO
+#define	PC4_OUTPUT_ENABLE					1
+#define	PC4_DATA_OUT						0
+#define DBG_CHN0_LOW		( *(unsigned char *)0x800593 &= (~0x10) )
+#define DBG_CHN0_HIGH		( *(unsigned char *)0x800593 |= 0x10 )
+#define DBG_CHN0_TOGGLE		( *(unsigned char *)0x800593 ^= 0x10 )
+#endif
 
 
 

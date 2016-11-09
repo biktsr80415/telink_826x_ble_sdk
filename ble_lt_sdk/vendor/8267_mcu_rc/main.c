@@ -17,16 +17,14 @@ extern void deep_wakeup_proc(void);
 extern unsigned char my_rx_uart_r_index;
 extern unsigned char my_rx_uart_w_index;
 extern uart_data_t	my_rxdata_buf[];
+
 _attribute_ram_code_ void irq_handler(void)
 {
-
-	static	u32	dbg_tx, dbg_rx;
-
     unsigned char irqS = reg_dma_rx_rdy0;
     if(irqS & FLD_DMA_UART_RX)	//rx
     {
     	reg_dma_rx_rdy0 = FLD_DMA_UART_RX;
-    	dbg_rx++;
+
 		my_rx_uart_w_index = (my_rx_uart_w_index + 1) & 0x01;
 		reg_dma0_addr =(u16)(u32) (&my_rxdata_buf[my_rx_uart_w_index]);  //change rx dma addr
     }
@@ -34,9 +32,7 @@ _attribute_ram_code_ void irq_handler(void)
     if(irqS & FLD_DMA_UART_TX)	//tx
     {
     	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
-
-    	dbg_tx ++;
-        //uart_clr_tx_busy_flag();
+        //uart_clr_tx_busy_flag();   //8266 should manual clear uart busy flag
     }
 }
 

@@ -424,3 +424,7 @@ typedef struct attribute
   att_readwrite_callback_t w;
   att_readwrite_callback_t r;
 } attribute_t;
+
+
+
+extern u8	blt_indicate_handle;

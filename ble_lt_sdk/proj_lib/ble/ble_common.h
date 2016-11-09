@@ -120,6 +120,11 @@ typedef enum {
     HCI_ERR_CONN_FAILED_TO_ESTABLISH                               = 0x3E,
     HCI_ERR_MAC_CONN_FAILED                                        = 0x3F,
     
+
+    //telink define
+    HCI_ERR_CONTROLLER_TX_FIFO_NOT_ENOUGH						   = HCI_ERR_CONTROLLER_BUSY,  //0x3A
+    HCI_ERR_CONN_NOT_ESTABLISH									   = HCI_ERR_CONN_FAILED_TO_ESTABLISH,  //0x3E
+
     
     LL_ERR_START = 0x40,
 	LL_ERR_WHITE_LIST_PUBLIC_ADDR_TABLE_FULL,                        //!< The white list public addr table full
@@ -168,6 +173,7 @@ typedef enum {
     ATT_ERR_INSUFFICIENT_RESOURCES,                      //!< Insufficient Resources to complete the request
     ATT_ERR_ATTR_NUMBER_INVALID,                         //!< The attr number is 0 or too large to register
     ATT_ERR_ENQUEUE_FAILED,                              //!< register service failed when enqueue
+    ATT_ERR_PREVIOUS_INDICATE_DATA_HAS_NOT_CONFIRMED,
 
     GAP_ERR_START = 0x70,
     GAP_ERR_INVALID_ROLE,
@@ -280,6 +286,9 @@ typedef enum{
 #define			SMP_OP_ENC_IADR						9
 #define			SMP_OP_ENC_SIGN						0x0a
 #define			SMP_OP_SEC_REQ						0x0b
+#define			SMP_OP_PARING_PUBLIC_KEY			0x0c
+#define			SMP_OP_PARING_DHKEY					0x0d
+#define			SMP_OP_KEYPRESS_NOTIFICATION		0x0e
 #define			SMP_OP_WAIT							0x0f
 
 

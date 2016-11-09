@@ -18,8 +18,11 @@
 #define			BLUETOOTH_VER_SUBVER			0x4103
 
 /////////////////////////////////////////////////////////////////////////////
-#define				BLE_LL_BUFF_SIZE		64
-#define				BLE_LL_BUFF_NUM	        8
+#define			BLE_LL_BUFF_SIZE		64
+#define			BLE_LL_BUFF_NUM	        8
+
+#define			BLT_TX_FIFO_NUM				16
+
 
 #define			BLM_TX_FIFO_NUM				4
 #define			BLM_TX_FIFO_SIZE			40
@@ -249,7 +252,7 @@ typedef int (*hci_event_callback_t) (u32 h, u8 *para, int n);
 
 blc_hci_handler_t			blc_master_handler;
 
-my_fifo_t		hci_tx_fifo;
+extern my_fifo_t		hci_tx_fifo;
 /******************************* User Interface  ************************************/
 
 //--------------------  SLAVE ONLY   ---------------------------------------
@@ -274,13 +277,15 @@ u16			bls_ll_getConnectionTimeout(void);	 // if return 0, means not in connectio
 u8			bls_ll_getTxFifoNumber (void);
 void 		bls_ll_adjustScanRspTiming( int t_us );
 
+u8 			bls_ll_getLatestAvgRSSI(void);
+
 //l2cap
 void		bls_l2cap_requestConnParamUpdate (u16 min_interval, u16 max_interval, u16 latency, u16 timeout);
 
 
 // att
-u8			bls_att_pushNotifyData (u16 handle, u8 *p, int len);
-u8			bls_att_pushIndicateData (u16 handle, u8 *p, int len);
+ble_sts_t	bls_att_pushNotifyData (u16 handle, u8 *p, int len);
+ble_sts_t	bls_att_pushIndicateData (u16 handle, u8 *p, int len);
 void		bls_att_setAttributeTable (u8 *p);
 
 
@@ -355,6 +360,7 @@ u16 blm_att_discoveryHandleOfUUID (u8 *l2cap_data, u8 *uuid128);
 u8 blm_fifo_num (u16 h);
 u8 blm_push_fifo (int h, u8 *p);
 
+int		bls_ll_isConnectState ();
 ble_sts_t blm_ll_connectWhiteList (int en);
 ble_sts_t blm_ll_disconnect (u16 handle, u8 reason);
 ble_sts_t blm_ll_readRemoteVersion (u16 handle);
