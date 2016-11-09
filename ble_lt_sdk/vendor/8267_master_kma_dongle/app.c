@@ -721,6 +721,7 @@ int main_idle_loop ()
 		if (blm_push_fifo (spp_conn, tx))
 		{
 			spp_num--;
+			spp_st = spp_num;
 
 			if ((spp_num & 0xff) == 0)
 			{
