@@ -3,11 +3,8 @@
 #include "spp.h"
 
 
-
-#if (BLE_MODULE_PM_ENABLE)
-	int mcu_wakeup_status = 1; //defualt mcu is awake
-	u32 module_wakeup_mcu_tick;
-#endif
+int mcu_wakeup_status = 1; //defualt mcu is awake
+u32 module_wakeup_mcu_tick;
 
 
 
@@ -253,15 +250,19 @@ int hci_send_data (u32 h, u8 *para, int n)
 {
 
 #if (BLE_MODULE_PM_ENABLE)
-	if( (h&0xff) > 0x7f ) {  //module event, detect if mcu is awake
-		mcu_wakeup_status = gpio_read(GPIO_WAKEUP_MODULE);
-		module_wakeup_mcu_tick = clock_time();
-	}
-	else{
-		mcu_wakeup_status = 1;
-	}
+/*
+	module 往MCU发UART时，将GPIO_WAKEUP_MCU管脚拉高，通知MCU有数据了（同时也可以将MCU从低功耗唤醒）
+	拉高前，先读取当前MCU是否正在低功耗状态: MCU端处于非低功耗状态时，将GPIO_WAKEUP_MCU拉高，
+	 									      处于低功耗状态时，将 GPIO_WAKEUP_MCU 拉低
+	 	      若MCU端处于非低功耗模式,module直接发送数据；若MCU处于低功耗模式，module需要等待MCU端恢复稳定后
+	 	   	   才能发数据
+*/
+	GPIO_WAKEUP_MCU_FLOAT;  //先将module端的输出电平撤掉，才能读到module端在GPIO_WAKEUP_MCU上面给出的状态
+	sleep_us(10);
+	mcu_wakeup_status = gpio_read(GPIO_WAKEUP_MCU);
 
-	WAKEUP_MCU_HIGH;  //indicate mcu that module has uart data send
+	GPIO_WAKEUP_MCU_HIGH;  //通知MCU有uart数据/唤醒MCU
+	module_wakeup_mcu_tick = clock_time();
 	extern int	module_uart_data_flg;
 	module_uart_data_flg = 1;
 #endif
@@ -296,7 +297,13 @@ int tx_to_uart_cb (void)
 	{
 		memcpy(&T_txdata_buf.data, p + 2, p[0]+p[1]*256);
 		T_txdata_buf.len = p[0]+p[1]*256 ;
+
 #if (BLE_MODULE_PM_ENABLE)
+/*
+ 	 若module通知mcu有数据时，检测到mcu是处于低功耗状态的，module将 GPIO_WAKEUP_MCU拉高将mcu唤醒
+ 	 module发送uart数据要确保距离唤醒的时间点超过一段安全的时间，确保mcu端已经可以稳定接收uart数据
+ 	 下面的2500us 跟实际mcu端的性能有关，根据不同的mcu这个值会不一样
+ */
 		if(!mcu_wakeup_status){  //mcu is suspend
 			while( !clock_time_exceed(module_wakeup_mcu_tick, 2500) );
 			mcu_wakeup_status = 1;

@@ -176,11 +176,13 @@ extern "C" {
 
 #define	GPIO_WAKEUP_MODULE					GPIO_PA2
 #define	PA2_FUNC							AS_GPIO
-#define PA2_INPUT_ENABLE					0
+#define PA2_INPUT_ENABLE					1
 #define	PA2_OUTPUT_ENABLE					1
 #define	PA2_DATA_OUT						0
-#define WAKEUP_MODULE_HIGH					gpio_write(GPIO_PA2, 1)
-#define WAKEUP_MODULE_LOW					gpio_write(GPIO_PA2, 0)
+#define GPIO_WAKEUP_MODULE_HIGH				do{gpio_set_output_en(GPIO_PA2, 1); gpio_write(GPIO_PA2, 1);}while(0)
+#define GPIO_WAKEUP_MODULE_LOW				do{gpio_set_output_en(GPIO_PA2, 1); gpio_write(GPIO_PA2, 0);}while(0)
+#define GPIO_WAKEUP_MODULE_FLOAT			do{gpio_set_output_en(GPIO_PA2, 0); gpio_write(GPIO_PA2, 0);}while(0)
+
 
 
 
@@ -189,8 +191,9 @@ extern "C" {
 #define PA3_INPUT_ENABLE					1
 #define	PA3_OUTPUT_ENABLE					0
 #define	PA3_DATA_OUT						0
-#define WAKEUP_MCU_HIGH						gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLUP_10K)
-#define WAKEUP_MCU_LOW						gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLDOWN_100K)
+#define PULL_WAKEUP_SRC_PA3					PM_PIN_PULLUP_10K
+#define GPIO_WAKEUP_MCU_HIGH				gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLUP_10K)
+#define GPIO_WAKEUP_MCU_LOW					gpio_setup_up_down_resistor(GPIO_PA3, PM_PIN_PULLDOWN_100K)
 
 
 #define	PA4_FUNC							AS_GPIO
@@ -199,6 +202,7 @@ extern "C" {
 #define	PA4_DATA_OUT						0
 #define DEBUG_GPIO_HIGH						gpio_write(GPIO_PA4, 1)
 #define DEBUG_GPIO_LOW						gpio_write(GPIO_PA4, 0)
+#define DEBUG_GPIO_TOGGLE					BM_FLIP(reg_gpio_out(GPIO_PA4), GPIO_PA4 & 0xff);
 
 
 

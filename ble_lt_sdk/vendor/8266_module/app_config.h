@@ -44,17 +44,18 @@ extern "C" {
 #define PC5_INPUT_ENABLE					1
 #define	PC5_OUTPUT_ENABLE					0
 #define	PC5_DATA_OUT						0
-#define WAKEUP_MODULE_HIGH					gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLUP_10K);
-#define WAKEUP_MODULE_LOW					gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLDOWN_100K);
+#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLUP_10K);
+#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLDOWN_100K);
+
 
 #define GPIO_WAKEUP_MCU						GPIO_PC3   //module wakeup mcu
 #define	PC3_FUNC							AS_GPIO
-#define PC3_INPUT_ENABLE					0
+#define PC3_INPUT_ENABLE					1
 #define	PC3_OUTPUT_ENABLE					1
 #define	PC3_DATA_OUT						0
-#define WAKEUP_MCU_HIGH						gpio_write(GPIO_PC3, 1)
-#define WAKEUP_MCU_LOW						gpio_write(GPIO_PC3, 0)
-
+#define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 1);}while(0)
+#define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 0);}while(0)
+#define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PC3, 0); gpio_write(GPIO_PC3, 0);}while(0)
 
 
 //////////////////////////// KEYSCAN  GPIO //////////////////////////////////

@@ -187,6 +187,7 @@ void user_init()
 
 
 #if (BLE_MODULE_PM_ENABLE)
+	//mcu 可以通过拉高GPIO_WAKEUP_MODULE将 module从低低功耗唤醒
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 	gpio_core_wakeup_enable_all(1);
@@ -205,7 +206,8 @@ u32 tick_loop;
 
 int	mcu_uart_working;
 int	module_uart_working;
-int modile_task_busy;
+
+int module_task_busy;
 
 int	module_uart_data_flg;
 
@@ -228,30 +230,35 @@ void main_loop ()
 
 #if (BLE_MODULE_PM_ENABLE)
 
+	//当module开始工作时，将GPIO_WAKEUP_MODULE上拉电阻拉起来，确保MCU可以读到module处于工作状态
 	if(module_pullup == 0){
-		WAKEUP_MODULE_HIGH;  //module enter working state
+		GPIO_WAKEUP_MODULE_HIGH;  //module enter working state
 		module_pullup = 1;
 	}
 
-	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);
-	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
+	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcu用GPIO_WAKEUP_MODULE指示 是否处于uart数据收发状态
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module自己检查uart rx和tx是否都处理完毕
 
+
+	//当module的uart数据发送完毕后，将GPIO_WAKEUP_MCU拉低（输出对电平）
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
-		WAKEUP_MCU_LOW;
+		GPIO_WAKEUP_MCU_LOW;
 	}
 
-	modile_task_busy = mcu_uart_working || module_uart_data_flg;
-	if(!modile_task_busy){
-		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);
 
-		WAKEUP_MODULE_LOW;  //module enter low power
+	module_task_busy = mcu_uart_working || module_uart_data_flg;
+	if(!module_task_busy){  //所有任务处理完毕，可以进入低功耗
+		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //需要被 GPIO_WAKEUP_MODULE 唤醒
+
+		//module进suspend前将 GPIO_WAKEUP_MODULE下拉电阻开启，mcu可以通过这个脚检测到module是否处于低功耗
+		GPIO_WAKEUP_MODULE_LOW;
 		module_pullup = 0; //pull down
 	}
 	else{
 		bls_pm_setSuspendMask(SUSPEND_DISABLE);
 	}
-
 #endif
+
 }

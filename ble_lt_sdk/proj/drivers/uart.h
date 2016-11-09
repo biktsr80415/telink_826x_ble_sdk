@@ -155,4 +155,6 @@ void uart_clr_tx_busy_flag();
 
 void uart_set_tx_done_delay (u32 t);		//for 8266 only
 
+unsigned char uart_tx_is_busy(void);
+
 #endif
