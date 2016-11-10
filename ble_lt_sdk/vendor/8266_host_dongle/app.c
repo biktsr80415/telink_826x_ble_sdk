@@ -57,7 +57,7 @@ void spp_test_write ()
 	{
 		u8		dat[32];
 		u8 *p = dat;
-		*p++ = 0x0b;
+		*p++ = 0x1c;				//notify
 		*p++ = 0xff;
 		*p++ = 22;
 		*p++ = 0;
@@ -165,11 +165,25 @@ int app_packet_to_usb ()
 //--------------------	UART -------------------------------------------------
 int app_packet_to_uart ()
 {
-	u8 *p = my_fifo_get (&uart_fifo);
-	if (p && !uart_tx_is_busy ())
+	if (!uart_tx_is_busy ())
 	{
+		//GPIO_WAKEUP_MODULE_HIGH;
+		GPIO_WAKEUP_MODULE_RELEASE;	//release module wake-up signal when TX done
+		u8 *p = my_fifo_get (&uart_fifo);
+		if (!p)
+		{
+			return 0;
+		}
 		memcpy(&T_txdata_buf.data, p + 2, p[0]+p[1]*256);
 		T_txdata_buf.len = p[0]+p[1]*256 ;
+
+		int module_st = gpio_read(GPIO_WAKEUP_MODULE);
+		GPIO_WAKEUP_MODULE_HIGH;
+		if (!module_st)
+		{
+			sleep_us (3000);
+		}
+
 #if( __TL_LIB_8266__ || MCU_CORE_TYPE == MCU_CORE_8266)
 		if (uart_Send_kma((u8 *)(&T_txdata_buf)))
 #else
@@ -195,16 +209,16 @@ int app_packet_from_uart (void)
 		u8 *p = T_rxdata_user.data;
 		if (spp_test_en)
 		{
-			if (p[0] == 0xff && p[2] == 0x31 && p[3] == 0x07)
+			if (p[0] == 0xff && p[2] == 0xa0 && p[3] == 0x07)
 			{
-				spp_test_read (p + 4, p[1] - 2);
+				spp_test_read (p + 7, p[1] - 5);
 			}
 			//0b ff 14 00
 			else if (p[0] == 0x0b && p[1] == 0xff)
 			{
 				spp_test_read (p + 4, p[2]);
 			}
-			else if (p[0] == 0xff && p[2] == 0x32 && p[3] == 0x07)
+			else if (p[0] == 0xff && p[2] == 0x1c && p[3] == 0x07)
 			{
 				if (p[4])		//data sent fail
 				{
@@ -214,7 +228,7 @@ int app_packet_from_uart (void)
 			}
 		}
 
-		if (!spp_test_en || !(p[0] == 0xff && (p[2] == 0x32 || p[2] == 0x31)  && p[3] == 0x07 && spp_num != 1))
+		if (!spp_test_en || !(p[0] == 0xff && p[2] == 0x1c && p[3] == 0x07 && spp_num != 1))
 		{
 			my_fifo_push (&usb_fifo, T_rxdata_user.data, rx_len - 4);
 		}

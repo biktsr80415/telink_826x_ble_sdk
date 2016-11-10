@@ -197,6 +197,27 @@ unsigned char uart_rx_true;
 #define PB6_INPUT_ENABLE	1
 #define LED_ON_LEVAL 		1 		//gpio output high voltage to turn on led
 
+//////////////////////////// MODULE PM GPIO	/////////////////////////////////
+#define GPIO_WAKEUP_MODULE					GPIO_PC5   //mcu wakeup module
+#define	PC5_FUNC							AS_GPIO
+#define PC5_INPUT_ENABLE					1
+#define	PC5_OUTPUT_ENABLE					0
+#define	PC5_DATA_OUT						0
+#define GPIO_WAKEUP_MODULE_HIGH				do{gpio_write(GPIO_PC5, 1);gpio_set_output_en(GPIO_PC5, 1);}while(0)
+#define GPIO_WAKEUP_MODULE_RELEASE			do{gpio_set_output_en(GPIO_PC5, 0);gpio_write(GPIO_PC5, 0);}while(0)
+
+
+#define GPIO_WAKEUP_MCU						GPIO_PC3   //module wakeup mcu
+#define	PC3_FUNC							AS_GPIO
+#define PC3_INPUT_ENABLE					1
+#define	PC3_OUTPUT_ENABLE					1
+#define	PC3_DATA_OUT						1
+#define GPIO_WAKEUP_MCU_HIGH				do{gpio_write(GPIO_PC3, 1); gpio_set_output_en(GPIO_PC3, 1);}while(0)
+#define GPIO_WAKEUP_MCU_LOW					do{gpio_write(GPIO_PC3, 0); gpio_set_output_en(GPIO_PC3, 1); }while(0)
+#define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PC3, 0); gpio_write(GPIO_PC3, 0);}while(0)
+
+
+
 /////////////////// Clock  /////////////////////////////////
 #define	USE_SYS_TICK_PER_US
 #define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC

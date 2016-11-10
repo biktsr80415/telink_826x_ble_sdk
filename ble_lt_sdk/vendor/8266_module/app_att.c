@@ -124,10 +124,10 @@ void module_onReceiveData(rf_packet_att_write_t *p)
 	if(len > 0)
 	{
 		u32 header;
-		header = 0x0731;		//data received event
+		header = 0x07a0;		//data received event
 		header |= (3 << 16) | (1<<24);
 		spp_test_read (&p->value, len);
-		blc_hci_send_data(header, &p->value, len);		//HCI_FLAG_EVENT_TLK_MODULE
+		blc_hci_send_data(header, &p->opcode, len + 3);		//HCI_FLAG_EVENT_TLK_MODULE
 	}
 }
 #endif
