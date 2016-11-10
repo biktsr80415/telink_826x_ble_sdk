@@ -247,7 +247,7 @@ void main_loop ()
 	}
 
 
-	module_task_busy = mcu_uart_working || module_uart_data_flg;
+	module_task_busy = mcu_uart_working || module_uart_working;
 	if(!module_task_busy){  //所有任务处理完毕，可以进入低功耗
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //需要被 GPIO_WAKEUP_MODULE 唤醒
