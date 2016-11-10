@@ -32,7 +32,7 @@ extern "C" {
 
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_MODULE_PM_ENABLE				0
+#define BLE_MODULE_PM_ENABLE				1
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLS_SEND_TLK_MODULE_EVENT_ENABLE	1
 
