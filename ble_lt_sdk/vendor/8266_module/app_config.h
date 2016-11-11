@@ -21,7 +21,7 @@ extern "C" {
 
 #define		RF_FAST_MODE_1M		1
 
-#define	BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE		0
+#define	BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE		1
 //////////////////////CAN NOT CHANGE CONFIG ABOVE ////////////////////////////
 
 

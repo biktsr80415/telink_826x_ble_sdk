@@ -46,7 +46,7 @@ enum {
 #define CONN_DEEP_FLG	 0x02
 
 
-typedef void (*suspend_handler_t)(void);
+typedef int (*suspend_handler_t)(void);
 void	bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
 
 extern int gpio_trigger_noSuspend;

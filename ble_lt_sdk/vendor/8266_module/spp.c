@@ -9,6 +9,7 @@ u32 module_wakeup_mcu_tick;
 
 
 extern my_fifo_t hci_tx_fifo;
+extern void app_suspend_exit ();
 ///////////the code below is just for demonstration of the event callback only////////////
 void event_handler(u32 h, u8 *para, int n)
 {
@@ -76,6 +77,9 @@ void event_handler(u32 h, u8 *para, int n)
 			}
 				break;
 			case BLT_EV_FLAG_ADV_DURATION_TIMEOUT:
+				break;
+			case BLT_EV_FLAG_SUSPEND_EXIT:
+				app_suspend_exit ();
 				break;
 			default:
 				break;
@@ -249,7 +253,7 @@ u8				hci_buff_rptr = 0;
 int hci_send_data (u32 h, u8 *para, int n)
 {
 
-#if (BLE_MODULE_PM_ENABLE)
+#if (0 && BLE_MODULE_PM_ENABLE)
 /*
 	module 往MCU发UART时，将GPIO_WAKEUP_MCU管脚拉高，通知MCU有数据了（同时也可以将MCU从低功耗唤醒）
 	拉高前，先读取当前MCU是否正在低功耗状态: MCU端处于非低功耗状态时，将GPIO_WAKEUP_MCU拉高，
@@ -298,7 +302,7 @@ int tx_to_uart_cb (void)
 		memcpy(&T_txdata_buf.data, p + 2, p[0]+p[1]*256);
 		T_txdata_buf.len = p[0]+p[1]*256 ;
 
-#if (BLE_MODULE_PM_ENABLE)
+#if (0 && BLE_MODULE_PM_ENABLE)
 /*
  	 若module通知mcu有数据时，检测到mcu是处于低功耗状态的，module将 GPIO_WAKEUP_MCU拉高将mcu唤醒
  	 module发送uart数据要确保距离唤醒的时间点超过一段安全的时间，确保mcu端已经可以稳定接收uart数据

@@ -78,15 +78,6 @@ void	task_connect (void)
 	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);  //interval=10ms latency=99 timeout=4s
 }
 
-
-void detect_mcu_wakeup_pin_before_suspend(void)
-{
-	if( gpio_read(GPIO_WAKEUP_MODULE) ){
-		gpio_trigger_noSuspend = 1;
-	}
-}
-
-
 void rf_customized_param_load(void)
 {
 	  //flash 0x77000 customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
@@ -101,6 +92,61 @@ void rf_customized_param_load(void)
 	 }
 }
 
+u32 tick_wakeup;
+int	mcu_uart_working;
+int	module_uart_working;
+int module_task_busy;
+int	module_uart_data_flg;
+
+#define UART_TX_BUSY			( (hci_tx_fifo.rptr != hci_tx_fifo.wptr) || uart_tx_is_busy() )
+#define UART_RX_BUSY			( rx_uart_w_index != rx_uart_r_index )
+
+int app_module_busy ()
+{
+	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcu用GPIO_WAKEUP_MODULE指示 是否处于uart数据收发状态
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module自己检查uart rx和tx是否都处理完毕
+	module_task_busy = mcu_uart_working || module_uart_working;
+	return module_task_busy;
+}
+
+void app_suspend_exit ()
+{
+	GPIO_WAKEUP_MODULE_HIGH;  //module enter working state
+	bls_pm_setSuspendMask(SUSPEND_DISABLE);
+	tick_wakeup = clock_time () | 1;
+}
+
+int app_suspend_enter ()
+{
+	if (app_module_busy ())
+	{
+		app_suspend_exit ();
+		return 0;
+	}
+	return 1;
+}
+
+void app_power_management ()
+{
+	// pullup GPIO_WAKEUP_MODULE: exit from suspend
+	// pulldown GPIO_WAKEUP_MODULE: enter suspend
+
+#if (BLE_MODULE_PM_ENABLE)
+
+	if (!app_module_busy() && !tick_wakeup)
+	{
+		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //需要被 GPIO_WAKEUP_MODULE 唤醒
+	}
+
+	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
+	{
+		GPIO_WAKEUP_MODULE_LOW;
+		tick_wakeup = 0;
+	}
+
+#endif
+}
 
 void user_init()
 {
@@ -178,7 +224,7 @@ void user_init()
 	#endif
 	extern void event_handler(u32 h, u8 *para, int n);
 	bls_register_event_data_callback(event_handler);		//register event callback
-	bls_hci_mod_setEventMask_cmd(0x7fff);			//enable all 15 events,event list see ble_ll.h
+	bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 
 	// OTA init
 	bls_ota_registerStartCmdCb(entry_ota_mode);
@@ -192,7 +238,7 @@ void user_init()
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 	gpio_core_wakeup_enable_all(1);
 
-	bls_pm_registerFuncBeforeSuspend( &detect_mcu_wakeup_pin_before_suspend );
+	bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
 #endif
 
 	ui_advertise_begin_tick = clock_time();
@@ -202,23 +248,10 @@ void user_init()
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
-u32 tick_loop;
-
-int	mcu_uart_working;
-int	module_uart_working;
-
-int module_task_busy;
-
-int	module_uart_data_flg;
-
-#define UART_TX_BUSY			( (hci_tx_fifo.rptr != hci_tx_fifo.wptr) || uart_tx_is_busy() )
-#define UART_RX_BUSY			( rx_uart_w_index != rx_uart_r_index )
-
-
-int module_pullup = 0;
-
 void main_loop ()
 {
+	static u32 tick_loop;
+
 	tick_loop ++;
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
@@ -227,38 +260,6 @@ void main_loop ()
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 	//  add spp UI task
-
-#if (BLE_MODULE_PM_ENABLE)
-
-	//当module开始工作时，将GPIO_WAKEUP_MODULE上拉电阻拉起来，确保MCU可以读到module处于工作状态
-	if(module_pullup == 0){
-		GPIO_WAKEUP_MODULE_HIGH;  //module enter working state
-		module_pullup = 1;
-	}
-
-	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcu用GPIO_WAKEUP_MODULE指示 是否处于uart数据收发状态
-	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module自己检查uart rx和tx是否都处理完毕
-
-
-	//当module的uart数据发送完毕后，将GPIO_WAKEUP_MCU拉低（输出对电平）
-	if(module_uart_data_flg && !module_uart_working){
-		module_uart_data_flg = 0;
-		GPIO_WAKEUP_MCU_LOW;
-	}
-
-
-	module_task_busy = mcu_uart_working || module_uart_working;
-	if(!module_task_busy){  //所有任务处理完毕，可以进入低功耗
-		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //需要被 GPIO_WAKEUP_MODULE 唤醒
-
-		//module进suspend前将 GPIO_WAKEUP_MODULE下拉电阻开启，mcu可以通过这个脚检测到module是否处于低功耗
-		GPIO_WAKEUP_MODULE_LOW;
-		module_pullup = 0; //pull down
-	}
-	else{
-		bls_pm_setSuspendMask(SUSPEND_DISABLE);
-	}
-#endif
+	app_power_management ();
 
 }
