@@ -28,7 +28,7 @@ _attribute_ram_code_ void irq_handler(void)
     }
 #endif
 }
-
+//OTA BOOT¡¡£Â£É£Î¡¡.\tcdb.exe wf 1f000 -eb -i "E:\Telink_BLE\Telink_bts_spp_git\ble_lt_sdk\flyco_8266_module\8266_ota_boot.bin"
 int main (void) {
 	cpu_wakeup_init();
 

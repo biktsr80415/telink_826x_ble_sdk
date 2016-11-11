@@ -19,6 +19,7 @@
 
 u32 ui_advertise_begin_tick;
 //FLYCO project add
+u8 bls_adv_enable  = 1;
 u32 adv_timeout    = 0;//advertise timeout
 u16 advinterval    = 0;//advertise interval
 u32 baudrate       = 0;
@@ -28,6 +29,9 @@ u8  scanRspTem[20] = {0};
 u8  identified[6]  = {0};
 u8  devName[20]    = {0};
 u8  baudratetmp[3] = {0};
+u8  devName1[20]   = {DEFLUT_DEV_NAME1_LEN, DEFLUT_DEV_NAME1};
+u8  devName2[20]   = {DEFLUT_DEV_NAME2_LEN, DEFLUT_DEV_NAME2};
+
 u8 	ui_ota_is_working = 0;
 //user data save in flash,used in initialization
 extern int adv_interval_index;
@@ -56,14 +60,14 @@ void send_ota_fw_num(void){
 }
 void blt_pm_proc(void)
 {
-	if(ui_ota_is_working){
+#if(BLE_PM_ENABLE)
+	if(ui_ota_is_working || gpio_read(BRTS_WAKEUP_MODULE)){
 		bls_pm_setSuspendMask (SUSPEND_DISABLE);
 	}
 	else{
-#if(BLE_PM_ENABLE)
-		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
-#endif  //END of  BLE_PM_ENABLE
+		bls_pm_setSuspendMask (SUSPEND_ADV);
 	}
+#endif //END of  BLE_PM_ENABLE
 }
 
 #endif
@@ -71,7 +75,7 @@ void blt_pm_proc(void)
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
-u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
+u8  tbl_mac [6] = {0x16 , 0xfd, 0x62, 0x38, 0xc1,0xa4 };
 
 void rf_customized_param_load(void)
 {
@@ -102,12 +106,6 @@ void user_init()
 //	usb_log_init ();
 //	usb_dp_pullup_en (1);  //open USB enum
 
-	//flyco ble state indicate.
-	gpio_set_func(BLE_STA_OUT, AS_GPIO);
-	gpio_set_output_en(BLE_STA_OUT, 1);
-	gpio_write(BLE_STA_OUT,0);//LOW
-
-
 	////////////////// BLE stack initialization ////////////////////////////////////
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff)
@@ -117,8 +115,8 @@ void user_init()
     else
     {
         //TODO : should write mac to flash after pair OK
-        tbl_mac[0] = (u8)rand();
-        flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
+        //tbl_mac[0] = (u8)rand();
+        //flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
     }
 
 	u8 tbl_advData[ ] = {
@@ -169,12 +167,7 @@ void user_init()
 	flyco_erase_para(DEV_NAME1_ADDR, &devname1_index);
 	flyco_erase_para(DEV_NAME2_ADDR, &devname2_index);
 	//adv timeout
-	if(adv_timeout == 0){
-		bls_ll_setAdvDuration(adv_timeout, 0);//close adv timeout
-	}
-	else{
-		bls_ll_setAdvDuration(adv_timeout, 1);
-	}
+	bls_ll_setAdvDuration(adv_timeout, adv_timeout == 0 ? 0 : 1);//close adv timeout
 	//adv /rsp parameter init
 	if(advTem[0]){
 		bls_ll_setAdvData( advTem+1, advTem[0]);
@@ -211,11 +204,15 @@ void user_init()
 
 	rf_set_power_level_index (rfpower);
 
+	//flyco ble state indicate.
+	gpio_set_func(BLE_STA_OUT, AS_GPIO);
+	gpio_set_output_en(BLE_STA_OUT, 1);
+	gpio_write(BLE_STA_OUT,0);//LOW
+
 	//Wakeup source configuration
 	gpio_set_wakeup(BRTS_WAKEUP_MODULE, 1, 1);  	   //drive pin core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (BRTS_WAKEUP_MODULE, BRTS_WAKEUP_LEVEL, 1);  //drive pin pad high wakeup deepsleep
 	gpio_core_wakeup_enable_all(1);
-	bls_pm_setSuspendMask (SUSPEND_DISABLE);//(SUSPEND_ADV | SUSPEND_CONN)
 
 	////////////////// SPP initialization ///////////////////////////////////
 	#if (HCI_ACCESS==HCI_USE_USB)
@@ -240,14 +237,16 @@ void user_init()
 			CLK16M_UART9600;
 		else if(baudrate == 115200)
 			CLK16M_UART115200;
-		else//default baud rate
+		else{//default baud rate
+			baudrate = 9600;
 			CLK16M_UART9600;
+		}
 		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
 //		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler
 		blc_register_hci_handler (flyco_rx_from_uart, flyco_tx_to_uart);//customized uart handler
 	#endif
-	extern void event_handler(u32 h, u8 *para, int n);
-	bls_register_event_data_callback(event_handler);		//register event callback
+	extern int ble_event_handler(u32 h, u8 *para, int n);
+	bls_register_event_data_callback(ble_event_handler);		//register event callback
 	bls_hci_mod_setEventMask_cmd(0x7fff);			//enable all 15 events,event list see ble_ll.h
 
 	// OTA init
