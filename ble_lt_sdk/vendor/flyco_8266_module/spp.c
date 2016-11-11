@@ -217,7 +217,7 @@ int ble_event_handler(u32 h, u8 *para, int n)
 				break;
 			case BLT_EV_FLAG_CONN_PARA_UPDATE:
 				break;
-			case BLT_EV_FLAG_SET_WAKEUP_SOURCE:
+			case BLT_EV_FLAG_SUSPEND_ENTER:
 				bls_pm_setWakeupSource(PM_WAKEUP_CORE|PM_WAKEUP_PAD);
 				break;
 			case BLT_EV_FLAG_ADV_DURATION_TIMEOUT:

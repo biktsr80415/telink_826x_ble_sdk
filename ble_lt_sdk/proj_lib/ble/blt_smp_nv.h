@@ -8,9 +8,12 @@
 #ifndef BLT_CMP_NV_H_
 #define BLT_CMP_NV_H_
 
+
+extern 			int				SMP_PARAM_NV_ADDR_START;
+
 #define 		SMP_PARAM_NV_UNIT						128
 #define			SMP_PARAM_NV_MAX_LEN					4096
-#define			SMP_PARAM_NV_ADDR_START					0x10000
+
 #define			SMP_PARAM_NV_ADDR_END					(SMP_PARAM_NV_ADDR_START + SMP_PARAM_NV_MAX_LEN - 1)
 
 #define			SMP_PARAM_NV_SEC_ADDR_START				(SMP_PARAM_NV_ADDR_START + SMP_PARAM_NV_MAX_LEN)
@@ -18,6 +21,11 @@
 
 #define			SMP_NV_SUCCESS							0
 #define			SMP_NV_FAIL								1
+
+
+
+void bls_smp_configParingSecurityInfoStorageAddr (int addr);
+
 
 /*
  * Find the addr with the addr and type.

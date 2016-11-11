@@ -6,7 +6,6 @@
  */
 
 #include "../tl_common.h"
-#include "../drivers/bsp.h"
 
 #if (MCU_CORE_TYPE == MCU_CORE_8267)
 #include "pwm_8267.h"

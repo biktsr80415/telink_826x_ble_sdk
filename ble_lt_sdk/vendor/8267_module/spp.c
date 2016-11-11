@@ -74,7 +74,7 @@ void event_handler(u32 h, u8 *para, int n)
 				blc_hci_send_data(header, &status, 1);		//HCI_FLAG_EVENT_TLK_MODULE
 			}
 				break;
-			case BLT_EV_FLAG_SET_WAKEUP_SOURCE:
+			case BLT_EV_FLAG_SUSPEND_ENTER:
 				break;
 			case BLT_EV_FLAG_ADV_DURATION_TIMEOUT:
 				break;
