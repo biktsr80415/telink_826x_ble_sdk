@@ -619,7 +619,7 @@ void user_init()
 
 #if(BLE_REMOTE_PM_ENABLE)
 	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
-	bls_app_registerEventCallback (BLT_EV_FLAG_SET_WAKEUP_SOURCE, &ble_remote_set_sleep_wakeup);
+	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &ble_remote_set_sleep_wakeup);
 #else
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 #endif

@@ -31,7 +31,7 @@ extern "C" {
 
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_REMOTE_PM_ENABLE				0
+#define BLE_PM_ENABLE				        0
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLS_SEND_TLK_MODULE_EVENT_ENABLE	1
 
@@ -87,9 +87,9 @@ extern "C" {
     //OTA
     #define FLYCO_OTA_ENABLE          1
 //////////// flyco module  status pin setting.  //////////////////////////
-	//#define BLE_STA_OUT             GPIO_PD4 //FLYCO BLE_STA_OUT
+	#define BLE_STA_OUT             GPIO_PD4 //FLYCO BLE_STA_OUT
 	//#define BLE_STA_OUT               GPIO_PA1 //Green EVK for test,Actually should use PD4 pin.
-	#define BLE_STA_OUT               GPIO_PA6 //Blue EVK for test,Actually should use PD4 pin.
+	//#define BLE_STA_OUT               GPIO_PA6 //Blue EVK for test,Actually should use PD4 pin.
     //#define BLE_STA_OUT             GPIO_PC2 //Dongle for test,Actually should use PD4 pin.
 
 /////////////////heartbeat for FLYCO app/////////////////////////////////

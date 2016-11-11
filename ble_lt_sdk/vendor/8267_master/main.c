@@ -30,6 +30,8 @@ _attribute_ram_code_ void irq_handler(void)
 }
 
 int main (void) {
+
+	blt_set_masetr_role();  //as master
 	cpu_wakeup_init();
 
 	clock_init();

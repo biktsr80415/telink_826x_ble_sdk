@@ -13,10 +13,6 @@
 #endif
 
 
-#ifndef			NEW_FW_ADR
-#define			NEW_FW_ADR			0x20000
-#endif
-
 #ifndef			OTA_FLG_ADR
 #define			OTA_FLG_ADR			0x3f000
 #endif
@@ -33,6 +29,9 @@
 extern int blt_ota_start_flag;
 extern u32 blt_ota_start_tick;
 extern u32 blt_ota_timeout_us;
+
+extern u32	ota_program_offset;
+extern int 	ota_firmware_size_k;
 
 
 typedef void (*ota_startCb_t)(void);
@@ -65,5 +64,8 @@ extern int otaWrite(void * p);
 extern int otaRead(void * p);
 
 extern void start_reboot(void);
+
+//firmware_size_k  must be 4k aligned, ota_offset will be ignored in 8267(valid in 8261/8266)
+void bls_ota_setFirmwareSizeAndOffset(int firmware_size_k, u32 ota_offset);
 
 #endif /* BLE_LL_OTA_H_ */

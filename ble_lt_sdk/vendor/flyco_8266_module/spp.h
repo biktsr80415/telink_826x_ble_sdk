@@ -12,8 +12,8 @@
 
 // FLYCO_spp cmd/data type
 #define IS_FLYCO_SPP_CMD(p)           ((p[0] == 0x46) && (p[1] == 0x4c) && (p[2] == 0x59) && (p[3] == 0x43) && (p[4] == 0x4F))
-#define IS_FLYCO_SPP_DATA(p)          (!((p[0] == 0x46) && (p[1] == 0x4c) && (p[2] == 0x59) && (p[3] == 0x43) && (p[4] == 0x4F)))
-//#define IS_FLYCO_SPP_DATA(p)          (((p[0] == 0xA5) || (p[0] == 0x5A)) && p[15] == 0xAA)
+//#define IS_FLYCO_SPP_DATA(p)          (!((p[0] == 0x46) && (p[1] == 0x4c) && (p[2] == 0x59) && (p[3] == 0x43) && (p[4] == 0x4F)))
+#define IS_FLYCO_SPP_DATA(p)          (((p[0] == 0xA5) || (p[0] == 0x5A)) && p[15] == 0xAA)
 
 // Definition for FLYCO SPP command header
 #define FLYCO_SPP_CMD_FIELD		\
