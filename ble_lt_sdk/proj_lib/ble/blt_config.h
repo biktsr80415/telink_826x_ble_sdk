@@ -10,18 +10,47 @@
 #define DEV_NAME                        "tModule"
 #endif
 
-#ifndef		CFG_ADR_MAC
-#define		CFG_ADR_MAC						0x76000
+
+//slave
+
+#if( __TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) )
+	#ifndef		CFG_ADR_MAC
+	#define		CFG_ADR_MAC						0x1F000
+	#endif
+
+	#ifndef		CUST_CAP_INFO_ADDR
+	#define		CUST_CAP_INFO_ADDR				0x1E000
+	#endif
+
+	#ifndef		CUST_TP_INFO_ADDR
+	#define		CUST_TP_INFO_ADDR				0x1E040
+	#endif
+
+	#ifndef		CUST_RC32K_CAP_INFO_ADDR
+	#define		CUST_RC32K_CAP_INFO_ADDR		0x1E080
+	#endif
+#else  //8266 8267
+	#ifndef		CFG_ADR_MAC
+	#define		CFG_ADR_MAC						0x76000
+	#endif
+
+	#ifndef		CUST_CAP_INFO_ADDR
+	#define		CUST_CAP_INFO_ADDR				0x77000
+	#endif
+
+	#ifndef		CUST_TP_INFO_ADDR
+	#define		CUST_TP_INFO_ADDR				0x77040
+	#endif
+
+	#ifndef		CUST_RC32K_CAP_INFO_ADDR
+	#define		CUST_RC32K_CAP_INFO_ADDR		0x77080
+	#endif
 #endif
 
-#ifndef		CUST_CAP_INFO_ADDR
-#define		CUST_CAP_INFO_ADDR				0x77000
-#endif
 
-#ifndef		CUST_TP_INFO_ADDR
-#define		CUST_TP_INFO_ADDR				0x77040
-#endif
 
+
+//master
 #ifndef		CFG_ADR_PEER
 #define		CFG_ADR_PEER					0x78000
 #endif

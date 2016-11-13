@@ -13,6 +13,8 @@
 	#include "../8267_btusb/app_config.h"
 #elif (__PROJECT_8267_SMP_TEST__)
 	#include "../8267_smp_test/app_config.h"
+#elif (__PROJECT_8267_HCI__)
+	#include "../826x_hci/8267_app_config.h"
 #elif (__PROJECT_8267_MODULE__)
 	#include "../8267_module/app_config.h"
 #elif (__PROJECT_8266_MODULE__)

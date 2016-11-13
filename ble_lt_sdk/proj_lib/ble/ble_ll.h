@@ -279,6 +279,7 @@ ble_sts_t   bls_ll_setAdvDuration (u32 duration_us, u8 duration_en);
 ble_sts_t  	bls_ll_terminateConnection (u8 reason);
 
 u8			bls_ll_getCurrentState(void);  //return  BLS_LINK_STATE_ADV/BLS_LINK_STATE_CONN
+bool		bls_ll_isConnectState (void);
 
 u16			bls_ll_getConnectionInterval(void);  // if return 0, means not in connection state
 u16			bls_ll_getConnectionLatency(void);	 // if return 0, means not in connection state
@@ -310,7 +311,7 @@ bool 		bls_pm_isRxTimingAligned(void);
 
 void 		bls_pm_setManualLatency(u16 latency); //manual set latency to save power
 void 		bls_pm_setUserTimerWakeup(u32 tick, u8 enable); //user set timer wakeup
-
+void 		bls_pm_enableAdvMcuStall(u8 en);
 
 
 
@@ -347,8 +348,7 @@ ble_sts_t		bls_hci_sendACLData();
 void blc_l2cap_register_handler (void *p);
 int blc_l2cap_packet_receive (u8 * p);
 int blc_l2cap_send_data (u16 cid, u8 *p, int n);
-int blc_send_acl_to_uart (u8 *p);
-int blc_send_acl_to_usb (u8 *p);
+int blc_send_acl (u8 *p);
 int blm_send_acl_to_btusb (u16 conn, u8 *p);
 int blc_acl_from_btusb ();
 
@@ -371,7 +371,6 @@ u16 blm_att_discoveryHandleOfUUID (u8 *l2cap_data, u8 *uuid128);
 u8 blm_fifo_num (u16 h);
 u8 blm_push_fifo (int h, u8 *p);
 
-int		bls_ll_isConnectState ();
 ble_sts_t blm_ll_connectWhiteList (int en);
 ble_sts_t blm_ll_disconnect (u16 handle, u8 reason);
 ble_sts_t blm_ll_readRemoteVersion (u16 handle);
