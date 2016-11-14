@@ -29,7 +29,7 @@
 	#ifndef		CUST_RC32K_CAP_INFO_ADDR
 	#define		CUST_RC32K_CAP_INFO_ADDR		0x1E080
 	#endif
-#else  //8266 8267
+#else  //8266 8267 8269
 	#ifndef		CFG_ADR_MAC
 	#define		CFG_ADR_MAC						0x76000
 	#endif

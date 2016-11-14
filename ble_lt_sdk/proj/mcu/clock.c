@@ -42,7 +42,7 @@ void clock_init(){
 	#endif
 	
 #elif(CLOCK_SYS_TYPE == CLOCK_TYPE_OSC)
-	#if(MCU_CORE_TYPE == MCU_CORE_8267)
+	#if(MCU_CORE_TYPE == MCU_CORE_8267 || MCU_CORE_TYPE == MCU_CORE_8261 || MCU_CORE_TYPE == MCU_CORE_8269)
 		#if(CLOCK_SYS_CLOCK_HZ == 32000000)
 			reg_fhs_sel = 0;
 			reg_clk_sel = 0x80;	// bit[7] must be "1"

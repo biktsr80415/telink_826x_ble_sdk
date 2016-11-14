@@ -1,7 +1,7 @@
 
 #include "../../proj/tl_common.h"
 
-#if(__PROJECT_8266_OTA_BOOT__)
+#if(__PROJECT_8266_OTA_BOOT__ || __PROJECT_8261_OTA_BOOT__)
 
 
 #include "../../proj/mcu/watchdog_i.h"
@@ -9,26 +9,57 @@
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
 
-#define  DBG_LED_IND 		1   //for led DEBUG ota boot bin running statas
-
-//now my remote control  PC2 high LED on, PC2 low LED off
-//see <<ble_gpio_lookuptable>> for GPIO register set
-//notice that: 8266 output setting: OEN = 0 means output enable
-//PC2 default is GPIO
-
-#define LED_INIT_OUTPUT		do{REG_ADDR8(0x591) &= ~BIT(2); REG_ADDR8(0x592) &= ~BIT(2); }while(0)
-
-#define LED_HIGH			( REG_ADDR8(0x593) |= BIT(2) )
-#define LED_LOW				( REG_ADDR8(0x593) &= ~BIT(2) )
-#define LED_TOGGLE			( REG_ADDR8(0x593) ^= BIT(2) )
+#define  DBG_LED_IND 		0   //for led DEBUG ota boot bin running statas
 
 
-#ifndef			NEW_FW_ADR
-#define			NEW_FW_ADR			0x20000
-#endif
+#if(__PROJECT_8266_OTA_BOOT__)   //8266
+	#ifndef			NEW_FW_SIZE
+	#define			NEW_FW_SIZE			128    //128k
+	#endif
 
-#ifndef			OTA_FLG_ADR
-#define			OTA_FLG_ADR			0x3f000
+	#ifndef			NEW_FW_ADR
+	#define			NEW_FW_ADR			0x20000
+	#endif
+
+	#ifndef			OTA_FLG_ADR
+	#define			OTA_FLG_ADR			0x3f000
+	#endif
+
+	//now my remote control  PC2 high LED on, PC2 low LED off
+	//see <<ble_gpio_lookuptable>> for GPIO register set
+	//notice that: 8266 output setting: OEN = 0 means output enable
+	//PC2 default is GPIO
+
+	#define LED_INIT_OUTPUT		do{REG_ADDR8(0x591) &= ~BIT(2); REG_ADDR8(0x592) &= ~BIT(2); }while(0)
+
+	#define LED_HIGH			( REG_ADDR8(0x593) |= BIT(2) )
+	#define LED_LOW				( REG_ADDR8(0x593) &= ~BIT(2) )
+	#define LED_TOGGLE			( REG_ADDR8(0x593) ^= BIT(2) )
+
+#else // 8261
+	#ifndef			NEW_FW_SIZE
+	#define			NEW_FW_SIZE			40    //40k
+	#endif
+
+	#ifndef			NEW_FW_ADR
+	#define			NEW_FW_ADR			0x10000
+	#endif
+
+	#ifndef			OTA_FLG_ADR
+	#define			OTA_FLG_ADR			0x1B000
+	#endif
+
+	//now my remote control  PA4 high LED on, PA4 low LED off
+	//see <<gpio_lookuptable>> for GPIO register set
+	//notice that: 8261 output setting: OEN = 0 means output enable
+	//PA4 default is GPIO
+
+	#define LED_INIT_OUTPUT		do{REG_ADDR8(0x581) &= ~BIT(4); REG_ADDR8(0x582) &= ~BIT(4); }while(0)
+
+	#define LED_HIGH			( REG_ADDR8(0x583) |= BIT(4) )
+	#define LED_LOW				( REG_ADDR8(0x583) &= ~BIT(4) )
+	#define LED_TOGGLE			( REG_ADDR8(0x583) ^= BIT(4) )
+
 #endif
 
 u8		buff[256];
@@ -65,7 +96,7 @@ _attribute_ram_code_ int main (void) {
 	flash_read_page (NEW_FW_ADR, 256, buff);
 	int	n_firmware = *(u32 *)(buff + 0x18);
 
-	if(n_firmware > (64<<10)){  //firmware bigger than 64K, ERR
+	if(n_firmware > (NEW_FW_SIZE<<10)){  //firmware too big, err
 		#if(DBG_LED_IND)  //for debug : indicate that firmware size ERR
 			LED_HIGH;
 		#endif

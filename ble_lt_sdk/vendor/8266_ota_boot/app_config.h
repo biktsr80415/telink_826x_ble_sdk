@@ -15,17 +15,16 @@ extern "C" {
 #define STRING_PRODUCT			L"BLE Remote"
 #define STRING_SERIAL			L"TLSR8266"
 
-#define CHIP_TYPE				CHIP_TYPE_8266		// 8866-24, 8566-32
+#if(__PROJECT_8266_OTA_BOOT__)
+	#define CHIP_TYPE				CHIP_TYPE_8266
+#else
+	#define CHIP_TYPE				CHIP_TYPE_8261
+#endif
+
 #define APPLICATION_DONGLE		0					// or else APPLICATION_DEVICE
 #define	FLOW_NO_OS				1
 
 #define		RF_FAST_MODE_1M		1
-
-//////////////////////////// GPIO //////////////////////////////////
-#define	PC4_INPUT_ENABLE				0				//amic digital input disable
-#define	PC5_INPUT_ENABLE				0				//amic digital input disable
-
-#define	GPIO_LED				GPIO_PA4
 
 
 ///////////////////  Hardware  //////////////////////////////
@@ -36,17 +35,6 @@ extern "C" {
 
 /////////////////// watchdog  //////////////////////////////
 #define MODULE_WATCHDOG_ENABLE	0
-
-///////////////////  battery  /////////////////////////////////
-
-#define BATT_ADC_CHANNEL		0
-#define BATT_FULL_VOLT			(4100)	//  mV
-#define BATT_LOW_VOLT			(3700)	//  mV
-#define BATT_NO_PWR_VOLT		(3400)	//  mV
-#define	ADC_CHN0_ANA_INPUT		ADC_CHN_INP_ANA_7
-#define ADC_CHN0_REF_SRC		ADC_REF_SRC_INTERNAL
-
-///////////////////  POWER MANAGEMENT  //////////////////
 
 
 /////////////////// set default   ////////////////

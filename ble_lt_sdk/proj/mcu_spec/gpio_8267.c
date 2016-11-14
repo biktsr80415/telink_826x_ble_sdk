@@ -4,7 +4,10 @@
 #include "../mcu/config.h"
 
 //#if (1)
-#if(__TL_LIB_8267__ || (MCU_CORE_TYPE && MCU_CORE_TYPE == MCU_CORE_8267))
+
+#if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
+	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
+	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269)	)
 
 #include "../common/types.h"
 #include "../common/compatibility.h"

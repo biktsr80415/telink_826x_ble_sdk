@@ -46,6 +46,11 @@ enum {
 #define CONN_DEEP_FLG	 0x02
 
 
+void cpu_stall_wakeup_by_timer0(u32 tick_stall);
+void cpu_stall_wakeup_by_timer1(u32 tick_stall);
+void cpu_stall_wakeup_by_timer2(u32 tick_stall);
+
+
 typedef int (*suspend_handler_t)(void);
 void	bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
 

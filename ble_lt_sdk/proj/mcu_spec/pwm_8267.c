@@ -7,7 +7,10 @@
 
 #include "../tl_common.h"
 
-#if (MCU_CORE_TYPE == MCU_CORE_8267)
+
+#if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
+	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
+	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269)	)
 #include "pwm_8267.h"
 
 

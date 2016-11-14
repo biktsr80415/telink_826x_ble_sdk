@@ -59,7 +59,7 @@ extern int otaRead(void * p);
 
 extern void start_reboot(void);
 
-//firmware_size_k  must be 4k aligned, ota_offset will be ignored in 8267(valid in 8261/8266)
+//firmware_size_k  must be 4k aligned, ota_offset will be ignored in 8267/8269, valid in 8261/8266
 void bls_ota_setFirmwareSizeAndOffset(int firmware_size_k, u32 ota_offset);
 
 
