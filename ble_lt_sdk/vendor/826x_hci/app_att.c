@@ -115,7 +115,7 @@ void	spp_test_read (u8 *p, int n)
 #if __PROJECT_8266_HCI__
 		gpio_set_input_en(GPIO_URX, 0);
 #else
-		gpio_set_input_en(GPIO_URXB3, 0);
+		gpio_set_input_en(GPIO_PB3, 0);
 #endif
 		irq_disable ();
 		while (1);

@@ -16,9 +16,11 @@
 #elif (__PROJECT_8267_HCI__)
 	#include "../826x_hci/8267_app_config.h"
 #elif (__PROJECT_8267_MODULE__)
-	#include "../8267_module/app_config.h"
+	#include "../826x_module/8267_app_config.h"
 #elif (__PROJECT_8266_MODULE__)
-	#include "../8266_module/app_config.h"
+	#include "../826x_module/8266_app_config.h"
+#elif (__PROJECT_8261_MODULE__)
+	#include "../826x_module/8261_app_config.h"
 #elif (__PROJECT_FLYCO_8266_MODULE__)
     #include "../flyco_8266_module/app_config.h"
 #elif (__PROJECT_DRIVER_TEST__)
