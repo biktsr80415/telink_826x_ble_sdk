@@ -325,8 +325,9 @@ void 		bls_register_event_data_callback (hci_event_callback_t  *event);
 
 
 /******************************* Stack Interface  ************************************/
-
 //link layer
+void 			irq_blt_slave_handler(void);
+
 void			bls_ll_init (u8 *public_adr);
 ble_sts_t 		bls_ll_readBDAddr(u8 *addr);
 bool			bls_ll_pushTxFifo (u8 *p);

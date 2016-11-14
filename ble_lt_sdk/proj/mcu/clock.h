@@ -45,11 +45,12 @@ enum{
 
 
 #ifdef	USE_SYS_TICK_PER_US  //for 55nm chip
-	void 	set_tick_per_us (u32 t);
 	extern	u32 sys_tick_per_us;
 #else
 	#define 	sys_tick_per_us		CLOCK_SYS_CLOCK_1US
 #endif
+
+void 	set_tick_per_us (u32 t);
 
 enum{
 	CLOCK_MODE_SCLK = 0,

@@ -416,6 +416,18 @@ typedef struct{
 	u8	hop;				//sca(3)_hop(5)
 }rf_packet_ll_init_t;
 
+typedef struct {
+	u8	type;
+	u8  rf_len;
+	u8 	opcode;
+	u8 	winSize;
+	u16 winOffset;
+	u16 interval;
+	u16 latency;
+	u16 timeout;
+	u16 instant;
+} rf_packet_ll_updateConnPara_t;
+
 typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
 	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4): connect request PDU
