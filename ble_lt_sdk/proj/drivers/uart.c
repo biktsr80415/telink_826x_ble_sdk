@@ -130,6 +130,8 @@ unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc,unsigned c
 	write_reg8(0x80009a,(bwpc+1)*12);//one byte includes 12 bits at most
 	write_reg8(0x80009b,1);//For save
 
+	write_reg8(0x800097,0x00);//No clts and rts
+
 	//receive DMA and buffer details
 
 	write_reg8(0x800503,0x01);//set DMA 0 mode to 0x01 for receive
