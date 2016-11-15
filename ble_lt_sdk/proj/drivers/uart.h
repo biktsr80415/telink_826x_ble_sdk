@@ -14,14 +14,6 @@
 #include "../common/compatibility.h"
 #include "../common/utility.h"
 
-enum HARDWARECONTROL{
-	CTSWODDPARITY = 0x0e,
-	CTSWEVENPARITY = 0x06,
-	CTSONLY = 0x02,
-	ODDPARITY = 0x0C,
-	EVENPARITY = 0x04,
-	NOCONTROL = 0x00,
-};
 enum UARTIRQSOURCE{
 	UARTRXIRQ,
 	UARTTXIRQ,
@@ -33,10 +25,18 @@ enum{
 	UARTIRQ_MASK    = UARTRXIRQ_MASK | UARTTXIRQ_MASK,
 };
 
-#define CLK32M_UART9600			uart_Init(237,13,1,1,NOCONTROL)
-#define	CLK32M_UART115200		uart_Init(19,13,1,1,NOCONTROL)
-#define	CLK16M_UART115200		uart_Init(9,13,1,1,NOCONTROL)
-#define	CLK16M_UART9600			uart_Init(103,15,1,1,NOCONTROL)
+/**
+ *  @brief  Define UART RTS mode
+ */
+enum {
+    UART_RTS_MODE_AUTO = 0,
+    UART_RTS_MODE_MANUAL,
+};
+
+#define CLK32M_UART9600			uart_Init(237,13,1,1)
+#define	CLK32M_UART115200		uart_Init(19,13,1,1)
+#define	CLK16M_UART115200		uart_Init(9,13,1,1)
+#define	CLK16M_UART9600			uart_Init(103,15,1,1)
 
 //UART_TX/UART_RX gpio pin config
 #define	   UART_GPIO_CFG_PA6_PA7()  do{\
@@ -88,7 +88,6 @@ unsigned char uart_ErrorCLR(void);
 *			bwpc - bitwidth, should be set to larger than 2
 *			en_rx_irq - '1' enable rx irq; '0' disable.
 *			en_tx_irq - enable tx irq; '0' disable.
-*			hdwC - enum variable of hardware control functions
 *
 *	@return	'1' set success; '0' set error probably bwpc smaller than 3.
 *
@@ -101,7 +100,7 @@ unsigned char uart_ErrorCLR(void);
 *		115200		19			13
 		9600		237			13
 */
-extern unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc,unsigned char en_rx_irq,unsigned char en_tx_irq,enum HARDWARECONTROL hdwC);
+extern unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc,unsigned char en_rx_irq,unsigned char en_tx_irq);
 
 
 

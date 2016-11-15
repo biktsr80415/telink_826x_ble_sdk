@@ -188,6 +188,11 @@ void user_init()
 
 		CLK16M_UART115200;
 		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
+#if 0
+		uart_RTSCfg(1, UART_RTS_MODE_MANUAL, 5, 0);
+		uart_RTSLvlSet(1);
+		uart_CTSCfg(1, 0);
+#endif
 		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler
 	#endif
 

@@ -120,7 +120,8 @@ unsigned char uart_ErrorCLR(void){
 		9600		237			13
 */
 
-unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc,unsigned char en_rx_irq,unsigned char en_tx_irq,enum HARDWARECONTROL hdwC){
+unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc,unsigned char en_rx_irq,unsigned char en_tx_irq)
+{
 
 	if(bwpc<3)
 		return 0;
@@ -128,9 +129,6 @@ unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc,unsigned c
 	write_reg8(0x800096,(0x30|bwpc));//set bit width and enable rx/tx DMA
 	write_reg8(0x80009a,(bwpc+1)*12);//one byte includes 12 bits at most
 	write_reg8(0x80009b,1);//For save
-
-	//write_reg8(0x800097,0x00);//No clts and rts
-	write_reg8(0x800097,(unsigned char)hdwC);//set hardware control function
 
 	//receive DMA and buffer details
 
@@ -290,4 +288,88 @@ void uart_io_init(unsigned char uart_io_sel){
         UART_GPIO_CFG_PB2_PB3();
     }
 #endif
+}
+
+
+/**
+ * @brief UART hardware flow control configuration. Configure RTS pin.
+ * @param[in]   enable: enable or disable RTS function.
+ * @param[in]   mode: set the mode of RTS(auto or manual).
+ * @param[in]   thrsh: threshold of trig RTS pin's level toggle(only for auto mode),
+ *                     it means the number of bytes that has arrived in Rx buf.
+ * @param[in]   invert: whether invert the output of RTS pin(only for auto mode)
+ * @return none
+ */
+void uart_RTSCfg(unsigned char enable, unsigned char mode, unsigned char thrsh, unsigned char invert)
+{
+    if (enable) {
+        write_reg8(0x800596, read_reg8(0x800596) & (~BIT(4))); //disable GPIOC_GP4 Pin's GPIO function
+        write_reg8(0x8005b2, read_reg8(0x8005b2) | BIT(4)); //enable GPIOC_GP4 Pin as RTS Pin
+        write_reg8(0x800098, read_reg8(0x800098) | BIT(7)); //enable RTS function
+    }
+    else {
+        write_reg8(0x800596, read_reg8(0x800596) | BIT(4)); //enable GPIOC_GP4 Pin's GPIO function
+        write_reg8(0x8005b2, read_reg8(0x8005b2) & (~BIT(4))); //disable GPIOC_GP4 Pin as RTS Pin
+        write_reg8(0x800098, read_reg8(0x800098) & (~BIT(7))); //disable RTS function
+    }
+
+    if (mode) {
+        write_reg8(0x800098, read_reg8(0x800098) | BIT(6));
+    }
+    else {
+        write_reg8(0x800098, read_reg8(0x800098) & (~BIT(6)));
+    }
+
+    if (invert) {
+        write_reg8(0x800098, read_reg8(0x800098) | BIT(4));
+    }
+    else {
+        write_reg8(0x800098, read_reg8(0x800098) & (~BIT(4)));
+    }
+
+    //set threshold
+    write_reg8(0x800098, read_reg8(0x800098) & 0xf0);
+    write_reg8(0x800098, read_reg8(0x800098) | (thrsh & 0x0f));
+}
+
+/**
+ * @brief This function sets the RTS pin's level manually
+ * @param[in]   polarity: set the output of RTS pin(only for manual mode)
+ * @return none
+ */
+void uart_RTSLvlSet(unsigned char polarity)
+{
+    if (polarity) {
+        write_reg8(0x800098, read_reg8(0x800098) | BIT(5));
+    }
+    else {
+        write_reg8(0x800098, read_reg8(0x800098) & (~BIT(5)));
+    }
+}
+
+/**
+ * @brief UART hardware flow control configuration. Configure CTS pin.
+ * @param[in]   enable: enable or disable CTS function.
+ * @param[in]   select: when CTS's input equals to select, tx will be stopped
+ * @return none
+ */
+void uart_CTSCfg(unsigned char enable, unsigned char select)
+{
+    if (enable) {
+        write_reg8(0x800596, read_reg8(0x800596) & (~BIT(5))); //disable GPIOC_GP5 Pin's GPIO function
+        write_reg8(0x8005b2, read_reg8(0x8005b2) | BIT(5)); //enable GPIOC_GP5 Pin as CTS Pin
+        write_reg8(0x800097, read_reg8(0x800097) | BIT(1)); //enable CTS function
+    }
+    else {
+        write_reg8(0x800596, read_reg8(0x800596) | BIT(5)); //enable GPIOC_GP5 Pin's GPIO function
+        write_reg8(0x8005b2, read_reg8(0x8005b2) & (~BIT(5))); //disable GPIOC_GP5 Pin as CTS Pin
+        write_reg8(0x800097, read_reg8(0x800097) & (~BIT(1))); //disable CTS function
+    }
+
+    if (select) {
+        write_reg8(0x800097, read_reg8(0x800097) | BIT(0));
+    }
+    else {
+        write_reg8(0x800097, read_reg8(0x800097) & (~BIT(0)));
+    }
 }
