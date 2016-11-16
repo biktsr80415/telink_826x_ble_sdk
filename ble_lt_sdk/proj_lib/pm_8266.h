@@ -54,7 +54,6 @@ void cpu_stall_wakeup_by_timer2(u32 tick_stall);
 typedef int (*suspend_handler_t)(void);
 void	bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
 
-extern int gpio_trigger_noSuspend;
 
 enum{
 	// WAKEUP_SRC_ANA 0 -- 2  not supported

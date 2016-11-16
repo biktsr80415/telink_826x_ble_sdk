@@ -6,6 +6,8 @@
  */
 
 #include "../tl_common.h"
+
+#include "adc_8267.h"
 #define batt_1per3_vol 0
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
