@@ -11,15 +11,6 @@ void event_handler(u32 h, u8 *para, int n)
 	{
 		switch((u8)(h&0xff))
 		{
-			case BLT_EV_FLAG_ADV:
-			{
-//				u32 header;
-//				header = 0x0780;		//state change event
-//				header |= (3 << 16) | HCI_FLAG_EVENT_TLK_MODULE;
-//				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
-				//avoid report adv event if it's in a high frequency
-			}
-			break;
 			case BLT_EV_FLAG_SCAN_RSP:
 				break;
 			case BLT_EV_FLAG_CONNECT:
