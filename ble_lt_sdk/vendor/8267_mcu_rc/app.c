@@ -63,7 +63,6 @@ u16 moduel_evt_expect;
 
 int	mcu_uart_data_flg;
 int	mcu_cmd_no_ack;
-int module_wakeup_status;
 u32 mcu_wakeup_module_tick;
 
 
@@ -76,25 +75,24 @@ void push_uart_data_to_fifo (u8 *p, u8 n)
 #if (REMOTE_PM_ENABLE)
 /*
 	mcu 往module发UART数据时，将GPIO_WAKEUP_MODULE管脚拉高，通知module有数据了（同时也可以将module从低功耗唤醒）
-	拉高前，先读取当前module是否正在低功耗状态: module端处于非低功耗状态时，将GPIO_WAKEUP_MODULE上拉电阻开起
-											  处于低功耗状态时，将GPIO_WAKEUP_MODULE下拉电阻开起
-			  若module端处于非低功耗模式,mcu直接发送数据；若module处于低功耗模式，mcu需要等待module端恢复稳定后
-			   才能发数据
+	并且记录当前时间点mcu_wakeup_module_tick，硬件uart发数据时，要在此时间点之后2500us，因为有可能拉高时module正好
+	处于suspend，唤醒后扔需要2500us时间来回复稳定，保证硬件uart接收到正确数据
 */
 
-	GPIO_WAKEUP_MODULE_FLOAT;  //先将mcu端的输出电平撤掉，才能读到mcu端在GPIO_WAKEUP_MCU上面用上下拉电阻给出的状态
-	sleep_us(10);
-	module_wakeup_status = gpio_read(GPIO_WAKEUP_MODULE);
-
-	GPIO_WAKEUP_MODULE_HIGH;
-	mcu_wakeup_module_tick = clock_time();
-	mcu_uart_data_flg = 1;
+	if(!mcu_uart_data_flg){ //UART上空闲，新的数据发送
+		GPIO_WAKEUP_MODULE_HIGH;
+		mcu_wakeup_module_tick = clock_time() | 1; //保证非0
+		mcu_uart_data_flg = 1;
+	}
+	else{ //UART上 之前的数据收发还在进行
+		mcu_wakeup_module_tick = 0;
+	}
 	mcu_cmd_no_ack = 1;
 #endif
 
 
 	if(my_fifo_push(&uart_tx_fifo, p, n)){
-		SET_DBG_FLG(0x11);
+		SET_DBG_FLG(0x11);  //debug
 	}
 }
 
@@ -234,6 +232,13 @@ module_notify_t kb_notify_cmd = {
 		0,
 };
 
+module_notify_t consumer_notify_cmd = {
+		SPP_CMD_SEND_NOTIFY_DATA,
+		4,
+		HID_HANDLE_CONSUME_REPORT,
+		0,
+};
+
 void key_change_proc(void)
 {
 
@@ -265,7 +270,11 @@ void key_change_proc(void)
 		else{
 			if(key0 == VK_VOL_DN || key0 == VK_VOL_UP){
 				key_type = CONSUMER_KEY;
-				key_buf[0] == VK_VOL_UP ? 0x01 : 0x02;
+				consumer_notify_cmd.data[0] = (key0 == VK_VOL_UP ? 0x01 : 0x02);
+				cur_mcu_cmd = SPP_CMD_SEND_NOTIFY_DATA;
+
+				push_uart_data_to_fifo(&consumer_notify_cmd, 8);
+
 			}
 			else if(key0 == RED_KEY){
 				static u8 adv_en;
@@ -298,8 +307,10 @@ void key_change_proc(void)
 	else{  //kb_event.cnt == 0,  key release
 		key_not_released = 0;
 		if(key_type == CONSUMER_KEY){
-			key_buf[0] = 0;
-			//bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, key_buf, 2);  //release
+			consumer_notify_cmd.data[0] = 0;
+			cur_mcu_cmd = SPP_CMD_SEND_NOTIFY_DATA;
+
+			push_uart_data_to_fifo(&consumer_notify_cmd, 8);
 		}
 		else if(key_type == KEYBOARD_KEY){
 			kb_notify_cmd.data[2] = 0;
@@ -307,6 +318,8 @@ void key_change_proc(void)
 
 			push_uart_data_to_fifo(&kb_notify_cmd, 14);
 		}
+
+		key_type = IDLE_KEY;
 	}
 }
 
@@ -347,6 +360,21 @@ unsigned char my_rx_uart_w_index = 0;
 uart_data_t my_txdata_buf = {0,};
 uart_data_t my_rxdata_use = {0,};
 uart_data_t my_rxdata_buf[2] = {{0,}};   // data max 252, user must copy rxdata to other Ram,but not use directly
+
+int	module_uart_working;
+
+int remote_suspend_enter ()
+{
+	 //module有uart数据时会在GPIO_WAKEUP_MCU脚上输出高电平
+	module_uart_working = gpio_read(GPIO_WAKEUP_MCU);
+
+	if (module_uart_working)
+	{
+		return 0;
+	}
+	return 1;
+}
+
 
 
 void user_init()
@@ -438,6 +466,10 @@ void user_init()
 	reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX;//CLR irq source
 
 
+#if (REMOTE_PM_ENABLE)
+	bls_pm_registerFuncBeforeSuspend( &remote_suspend_enter );
+#endif
+
 }
 
 
@@ -522,14 +554,8 @@ int app_packet_to_uart ()
 
 
 #if (REMOTE_PM_ENABLE)
-/*
-	 若mcu通知module有数据时，检测到module是处于低功耗状态的，mcu将 GPIO_WAKEUP_MODULE拉高将module唤醒
-	 mcu发送uart数据要确保距离唤醒的时间点超过一段安全的时间，确保module端已经可以稳定接收uart数据
-	 下面的2500us 是对于telink 8266 module一个比较安全的值
- */
-		if(!module_wakeup_status){  //module is suspend
+		if(mcu_wakeup_module_tick){
 			while( !clock_time_exceed(mcu_wakeup_module_tick, 2500) );
-			module_wakeup_status = 1;
 		}
 #endif
 
@@ -566,7 +592,6 @@ u32 loop_begin_tick;
 
 
 int	mcu_uart_working;
-int	module_uart_working;
 int mcu_task_busy;
 
 void main_loop ()
@@ -592,23 +617,26 @@ void main_loop ()
 #if (REMOTE_PM_ENABLE)
 	extern u32	scan_pin_need;
 
-	module_uart_working = gpio_read(GPIO_WAKEUP_MCU);  //module有uart数据时会在GPIO_WAKEUP_MCU脚上输出高电平
 	mcu_uart_working = UART_RX_BUSY || UART_TX_BUSY || mcu_cmd_no_ack;//mcu自己检查uart rx和tx是否都处理完毕
 
 
 	//当mcu的uart数据发送完毕后，将GPIO_WAKEUP_MODULE拉低（输出对电平）
 	if(mcu_uart_data_flg && !mcu_uart_working){
 		mcu_uart_data_flg = 0;
+		mcu_wakeup_module_tick = 0;
 		GPIO_WAKEUP_MODULE_LOW;
 	}
 
 	mcu_task_busy = scan_pin_need || key_not_released || DEVICE_LED_BUSY;
 
-	if(module_uart_working || mcu_uart_working){
+	if(mcu_uart_working){
 		loop_cnt = 0;
 		sleep_us(10);
 	}
 	else{ //can enter suspend
+
+		GPIO_WAKEUP_MCU_LOW;
+
 		if(mcu_task_busy){
 			suspend_mode = 0;
 			loop_cnt = 0;
@@ -634,13 +662,11 @@ void main_loop ()
 			}
 		}
 
-		//mcu suspend时，将GPIO_WAKEUP_MCU 下拉电阻开起来，确保module可以读到低电平
-		GPIO_WAKEUP_MCU_LOW;
+
 
 		//DEBUG_GPIO_LOW;
 		cpu_sleep_wakeup(0, PM_WAKEUP_TIMER | PM_WAKEUP_CORE, loop_begin_tick + suspend_ms * CLOCK_SYS_CLOCK_1MS);
 		//DEBUG_GPIO_HIGH;
-
 		//mcu 工作时时，将GPIO_WAKEUP_MCU 上拉电阻开起来，确保module可以读到高电平
 		GPIO_WAKEUP_MCU_HIGH;
 	}
