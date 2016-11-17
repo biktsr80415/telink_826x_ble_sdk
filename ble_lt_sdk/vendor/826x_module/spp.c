@@ -132,7 +132,10 @@ int bls_uart_handler (u8 *p, int n)
 	// get module available data buffer: 0c ff 00  00
 	else if (cmd == SPP_CMD_GET_BUF_SIZE)
 	{
-
+		u8 r[4];
+		para[0] = (u8)bls_hci_le_readBufferSize_cmd( (u8 *)(r) );
+		para[1] = r[2];
+		para_len = 2;
 	}
 	// set advertising type: 0d ff 01 00  00
 	else if (cmd == SPP_CMD_SET_ADV_TYPE)

@@ -573,8 +573,8 @@ void app_event_callback (u32 h, u8 *p, int n)
 					((dev_rssi_th == 0x7f) && mac_match)
 					)
 			{
-				//blm_ll_connectDevice (0, pa->mac, 30, 50, 0, 100);
-				blm_ll_connectDevice (0, pa->mac, 8, 8 + 4, 0, 100);
+				blm_ll_connectDevice (0, pa->mac, 30, 50, 0, 100);
+				//blm_ll_connectDevice (0, pa->mac, 8, 8 + 4, 0, 100);
 			}
 			else
 			{
@@ -797,6 +797,7 @@ void user_init()
 	rf_set_power_level_index (RF_POWER_8dBm);
 
 	ble_master_init (pmac);
+	//ble_set_debug_adv_channel (37);
 
 	static u32 aasize;
 	aasize = sizeof (st_ll_conn_master_t);

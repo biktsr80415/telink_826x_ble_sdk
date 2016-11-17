@@ -15,6 +15,7 @@
 #include "../../proj/drivers/uart.h"
 #endif
 
+#define		BLE_MODULE_PM_ENABLE		0
 
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 //////////////////////////////////////////////////////////////////////////////
@@ -181,7 +182,7 @@ void user_init()
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);
 
 	//smp initialization
-	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
+	//bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
 
 
 	///////////////////// USER application initialization ///////////////////
