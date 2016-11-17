@@ -176,11 +176,11 @@ int bls_uart_handler (u8 *p, int n)
 	{
 		status = ble_set_dev_name(cmdPara,p[2]);
 	}
-	// get connection parameter: 14 ff 00 00
+	// get connection parameter: 14 ff 00 00		,returrn interval(4) latency(2) timeout(4)
 	else if (cmd == SPP_CMD_GET_CONN_PARA)
 	{
-		blt_get_conn_para(cmdPara+1);
-		para_len = 7;
+		blt_get_conn_para(para+1);
+		para_len = 11;
 	}
 	// set connection parameter: 15 ff 08 00 a0 00 a2 00 00 00 2c 01 (min, max, latency, timeout)
 	else if (cmd == SPP_CMD_SET_CONN_PARA)
@@ -190,7 +190,8 @@ int bls_uart_handler (u8 *p, int n)
 	// get module current work state: 16 ff 00 00
 	else if (cmd == SPP_CMD_GET_CUR_STATE)
 	{
-		cmdPara[0] = bls_ll_getCurrentState();
+		para[1] = bls_ll_getCurrentState();
+		para_len = 2;
 	}
 	// terminate connection: 17 ff 00 00
 	else if (cmd == SPP_CMD_TERMINATE)
