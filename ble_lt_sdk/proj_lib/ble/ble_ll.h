@@ -206,6 +206,30 @@ typedef struct {
 	ble_crypt_para_t	crypt;
 } st_ll_conn_master_t;
 
+typedef struct {
+	u8		adv_en;
+	u8		adv_chn_mask;
+	u8		adv_duraton_en;
+	u8		adv_type;
+
+	u8 		adv_filterPolicy;
+	u8		rsvd1;
+	u8		rsvd2;
+	u8		rsvd3;
+
+	u8		macAddress_public[6];
+	u8		macAddress_random[6];   //host may set this
+
+	u16		advInt_rand;
+	u16		advInt_min;
+
+	u32		adv_interval;     // system tick
+	u32		adv_duration_us;
+	u32		adv_begin_tick;
+}st_ll_adv_t;
+
+st_ll_adv_t  blta;
+
 //////////////////////////////////////
 
 typedef void (*irq_st_func) (void);
@@ -327,7 +351,7 @@ void 		bls_register_event_data_callback (hci_event_callback_t  *event);
 /******************************* Stack Interface  ************************************/
 //link layer
 void 			irq_blt_slave_handler(void);
-
+void 			blt_set_bd_addr (u8 *mac);
 void			bls_ll_init (u8 *public_adr);
 ble_sts_t 		bls_ll_readBDAddr(u8 *addr);
 bool			bls_ll_pushTxFifo (u8 *p);
