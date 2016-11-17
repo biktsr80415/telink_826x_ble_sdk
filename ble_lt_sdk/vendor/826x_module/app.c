@@ -75,7 +75,7 @@ void show_ota_result(int result)
 
 void	task_connect (void)
 {
-	bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
+	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
 }
 
 
