@@ -15,7 +15,6 @@
 #include "../../proj/drivers/uart.h"
 #endif
 
-#define		BLE_MODULE_PM_ENABLE		0
 
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 //////////////////////////////////////////////////////////////////////////////
@@ -76,21 +75,28 @@ void show_ota_result(int result)
 
 void	task_connect (void)
 {
-	bls_l2cap_requestConnParamUpdate (12, 32, 99, 400);  //interval=10ms latency=99 timeout=4s
+	bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
 }
 
 
 void rf_customized_param_load(void)
 {
-	  //flash 0x77000 customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
+	  // customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
 	 if( (*(unsigned char*) CUST_CAP_INFO_ADDR) != 0xff ){
 		 //ana_81<4:0> is cap value(0x00 - 0x1f)
 		 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) CUST_CAP_INFO_ADDR)&0x1f) );
 	 }
 
-	 //flash 0x77040 customize TP0, flash 0x77041 customize TP1
+	 //customize TP0, flash 0x77041 customize TP1
 	 if( ((*(unsigned char*) (CUST_TP_INFO_ADDR)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+1)) != 0xff) ){
 		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
+	 }
+
+
+	 // customize 32k RC cap value, if not customized, default ana_32 is 0x80
+	 if( (*(unsigned char*) CUST_RC32K_CAP_INFO_ADDR) != 0xff ){
+		 //ana_81<4:0> is cap value(0x00 - 0x1f)
+		 analog_write(0x32, *(unsigned char*) CUST_RC32K_CAP_INFO_ADDR );
 	 }
 }
 
@@ -98,7 +104,10 @@ u32 tick_wakeup;
 int	mcu_uart_working;
 int	module_uart_working;
 int module_task_busy;
+
+
 int	module_uart_data_flg;
+u32 module_wakeup_module_tick;
 
 #define UART_TX_BUSY			( (hci_tx_fifo.rptr != hci_tx_fifo.wptr) || uart_tx_is_busy() )
 #define UART_RX_BUSY			( rx_uart_w_index != rx_uart_r_index )
@@ -130,6 +139,21 @@ int app_suspend_enter ()
 
 void app_power_management ()
 {
+
+
+#if (BLE_MODULE_INDICATE_DATA_TO_MCU)
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
+
+
+	//当module的uart数据发送完毕后，将GPIO_WAKEUP_MCU拉低或悬浮(取决于user怎么设计)
+	if(module_uart_data_flg && !module_uart_working){
+		module_uart_data_flg = 0;
+		module_wakeup_module_tick = 0;
+		GPIO_WAKEUP_MCU_LOW;
+	}
+#endif
+
+
 	// pullup GPIO_WAKEUP_MODULE: exit from suspend
 	// pulldown GPIO_WAKEUP_MODULE: enter suspend
 
@@ -182,7 +206,7 @@ void user_init()
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);
 
 	//smp initialization
-	//bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
+	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
 
 
 	///////////////////// USER application initialization ///////////////////
@@ -194,6 +218,11 @@ void user_init()
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
+
+	if(status != BLE_SUCCESS){  //adv setting err
+		write_reg8(0x8000, 0x11);  //debug
+		while(1);
+	}
 
 	bls_ll_setAdvEnable(1);  //adv enable
 
@@ -219,8 +248,13 @@ void user_init()
 		gpio_write (GPIO_UTX, 1);			//pull-high RX to avoid mis-trig by floating signal
 		gpio_write (GPIO_URX, 1);			//pull-high RX to avoid mis-trig by floating signal
 #else
+		gpio_set_input_en(GPIO_PB2, 1);
+		gpio_set_input_en(GPIO_PB3, 1);
+		gpio_setup_up_down_resistor(GPIO_PB2, PM_PIN_PULLUP_1M);
+		gpio_setup_up_down_resistor(GPIO_PB3, PM_PIN_PULLUP_1M);
 		uart_io_init(UART_GPIO_8267_PB2_PB3);
 #endif
+		reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX; //clear uart rx/tx status
 		CLK16M_UART115200;
 		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
 //		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler

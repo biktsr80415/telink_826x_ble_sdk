@@ -2,6 +2,10 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "spp.h"
 
+
+extern int	module_uart_data_flg;
+extern u32 module_wakeup_module_tick;
+
 extern my_fifo_t hci_tx_fifo;
 extern void app_suspend_exit ();
 ///////////the code below is just for demonstration of the event callback only////////////
@@ -239,11 +243,20 @@ u8				hci_buff_rptr = 0;
 #endif
 int hci_send_data (u32 h, u8 *para, int n)
 {
+
 	u8 *p = my_fifo_wptr (&hci_tx_fifo);
 	if (!p || n >= hci_tx_fifo.size)
 	{
 		return -1;
 	}
+
+#if (BLE_MODULE_INDICATE_DATA_TO_MCU)
+	if(!module_uart_data_flg){ //UART上空闲，新的数据发送
+		GPIO_WAKEUP_MCU_HIGH;  //通知MCU有数据了
+		module_wakeup_module_tick = clock_time() | 1;
+		module_uart_data_flg = 1;
+	}
+#endif
 
 	int nl = n + 4;
 	if (h & HCI_FLAG_EVENT_TLK_MODULE)
@@ -268,6 +281,18 @@ int tx_to_uart_cb (void)
 	{
 		memcpy(&T_txdata_buf.data, p + 2, p[0]+p[1]*256);
 		T_txdata_buf.len = p[0]+p[1]*256 ;
+
+
+#if (BLE_MODULE_INDICATE_DATA_TO_MCU)
+		//如果MCU端设计的有低功耗，而module有数据拉高GPIO_WAKEUP_MCU时只是将mcu唤醒，那么需要考虑
+		//mcu从唤醒到能够稳定的接收uart数据是否需要一个回复时间T。如果需要回复时间T的话，这里
+		//将下面的100us改为user实际需要的时间。
+		if(module_wakeup_module_tick){
+			while( !clock_time_exceed(module_wakeup_module_tick, 100) );
+		}
+#endif
+
+
 #if __PROJECT_8266_MODULE__
 		if (uart_Send_kma((u8 *)(&T_txdata_buf)))
 #else

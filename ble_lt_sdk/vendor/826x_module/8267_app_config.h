@@ -30,45 +30,30 @@ extern "C" {
 #define HCI_ACCESS		HCI_USE_UART
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_MODULE_PM_ENABLE				0
+#define BLE_MODULE_PM_ENABLE				1
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 
 
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
-#define GPIO_WAKEUP_MODULE					GPIO_PC6   //mcu wakeup module
-#define	PC5_FUNC							AS_GPIO
-#define PC5_INPUT_ENABLE					1
-#define	PC5_OUTPUT_ENABLE					0
-#define	PC5_DATA_OUT						0
-#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLUP_10K);
-#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLDOWN_100K);
+#define GPIO_WAKEUP_MODULE					GPIO_PA6   //mcu wakeup module
+#define	PA6_FUNC							AS_GPIO
+#define PA6_INPUT_ENABLE					1
+#define	PA6_OUTPUT_ENABLE					0
+#define	PA6_DATA_OUT						0
+#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PA6, PM_PIN_PULLUP_10K);
+#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PA6, PM_PIN_PULLDOWN_100K);
 
 
-#define GPIO_WAKEUP_MCU						GPIO_PC7   //module wakeup mcu
-#define	PC3_FUNC							AS_GPIO
-#define PC3_INPUT_ENABLE					1
-#define	PC3_OUTPUT_ENABLE					1
-#define	PC3_DATA_OUT						0
-#define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 1);}while(0)
-#define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 0);}while(0)
-#define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PC3, 0); gpio_write(GPIO_PC3, 0);}while(0)
+#define GPIO_WAKEUP_MCU						GPIO_PB1   //module wakeup mcu
+#define	PB1_FUNC							AS_GPIO
+#define PB1_INPUT_ENABLE					1
+#define	PB1_OUTPUT_ENABLE					1
+#define	PB1_DATA_OUT						0
+#define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_PB1, 1); gpio_write(GPIO_PB1, 1);}while(0)
+#define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PB1, 1); gpio_write(GPIO_PB1, 0);}while(0)
+#define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PB1, 0); gpio_write(GPIO_PB1, 0);}while(0)
 
-//////////////////////////// KEYSCAN/MIC  GPIO //////////////////////////////////
-#define	PULL_WAKEUP_SRC_PC5		PM_PIN_PULLUP_10K
-#define	PULL_WAKEUP_SRC_PD2		PM_PIN_PULLUP_10K
-#define PC5_INPUT_ENABLE		1
-#define PD2_INPUT_ENABLE		1
-
-
-#define	PULL_WAKEUP_SRC_PB1		PM_PIN_PULLDOWN_100K
-#define	PULL_WAKEUP_SRC_PB2		PM_PIN_PULLDOWN_100K
-#define	PULL_WAKEUP_SRC_PB3		PM_PIN_PULLDOWN_100K
-#define	PULL_WAKEUP_SRC_PB6		PM_PIN_PULLDOWN_100K
-#define PB1_INPUT_ENABLE		1
-#define PB2_INPUT_ENABLE		1
-#define PB3_INPUT_ENABLE		1
-#define PB6_INPUT_ENABLE		1
 
 
 /////////////////////// POWER OPTIMIZATION  AT SUSPEND ///////////////////////
@@ -100,6 +85,8 @@ extern "C" {
 
 #endif
 /////////////////// set default   ////////////////
+
+
 
 #include "../common/default_config.h"
 

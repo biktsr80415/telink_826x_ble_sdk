@@ -142,9 +142,9 @@ static u16 include[3] = {0x0026, 0x0028, SERVICE_UUID_BATTERY};
 // TM : to modify
 const attribute_t my_Attributes[] = {
 #if (TELIK_SPP_SERVICE_ENABLE)
-	{21,0,0,0,0,0},	// total num of attribute
+	{18,0,0,0,0,0},	// total num of attribute
 #else
-	{13,0,0,0,0,0},	// total num of attribute
+	{10,0,0,0,0,0},	// total num of attribute
 #endif
 
 	// 0001 - 0007  gap
@@ -161,13 +161,6 @@ const attribute_t my_Attributes[] = {
 	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_devServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_PnPCharacter), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},
-
-
-	////////////////////////////////////// 31. Battery Service /////////////////////////////////////////////////////
-	// 000b - 000d
-	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_batServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_batProp), 0},				//prop
-	{0,ATT_PERMISSIONS_READ,2,sizeof(my_batVal),(u8*)(&my_batCharUUID), 	(u8*)(my_batVal), 0},	//value
 
 ////////////////////////////////////// SPP Service /////////////////////////////////////////////////////
 #if (TELIK_SPP_SERVICE_ENABLE)
