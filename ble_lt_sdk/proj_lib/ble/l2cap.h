@@ -47,9 +47,6 @@
 
 #define NEXT_SIG_ID()                    ( ++l2capId == 0 ? l2capId = 1 : l2capId )
 
-#define L2CAP_HCI2L2CAP_REQ(req)         l2cap_postTask(&l2cap_hci2l2capQ, req)
-#define L2CAP_UPPER2L2CAP_REQ(req)       l2cap_postTask(&l2cap_upper2l2capQ, req)
-
 
 #define L2CAP_PKT_HANDLER_SIZE           6
  
@@ -64,17 +61,20 @@
 #define L2CAP_FIRST_PKT_C2H              0x02
 
 
+
 #define L2CAP_CONNECTION_PARAMETER_ACCEPTED        0x0000
 #define L2CAP_CONNECTION_PARAMETER_REJECTED        0x0001
 
-// private structs
-typedef enum {
-    L2CAP_STATE_CLOSED = 1,           // no baseband
-    L2CAP_STATE_SEND_DISCONNECTION_REQUEST,
-    L2CAP_STATE_WAIT_DISCONNECTION_RESPONSE,
-    L2CAP_STATE_SEND_CONNECTION_UPDATE_REQUEST,
-    L2CAP_STATE_WAIT_CONNECTION_UPDATE_RESPONSE,   
-    L2CAP_STATE_SEND_CONNECTION_REQUEST,
-    L2CAP_STATE_WAIT_CONNECTION_RESPONSE,
-} L2CAP_STATE;
 
+
+/******************************* User Interface  ************************************/
+//Slave
+void		bls_l2cap_requestConnParamUpdate (u16 min_interval, u16 max_interval, u16 latency, u16 timeout);
+
+void		blc_l2cap_register_handler (void *p);
+int 		blc_l2cap_packet_receive (u8 * p);
+int 		blc_l2cap_send_data (u16 cid, u8 *p, int n);
+int 		blc_send_acl (u8 *p);
+
+
+//Master

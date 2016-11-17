@@ -27,6 +27,7 @@
 #define				ATT_DB_UUID128_NUM		8
 
 MYFIFO_INIT(hci_tx_fifo, 72, 4);
+MYFIFO_INIT(blt_rxfifo, 64, 8);
 ////////////////////////////////////////////////////////////////////
 u16	conn_handle;					//	handle of  connection
 u8 	conn_char_handler[8][8] = {{0}};

@@ -22,6 +22,10 @@
 #define  USER_TEST_BLT_SOFT_TIMER				0
 MYFIFO_INIT(hci_tx_fifo, 72, 4);
 
+MYFIFO_INIT(blt_rxfifo, 64, 8);
+
+MYFIFO_INIT(blt_txfifo, 40, 16);
+
 #if (HCI_ACCESS==HCI_USE_UART)
 #include "../../proj/drivers/uart.h"
 #endif

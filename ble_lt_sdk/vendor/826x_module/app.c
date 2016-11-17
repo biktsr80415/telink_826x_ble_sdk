@@ -17,6 +17,11 @@
 
 
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
+
+MYFIFO_INIT(blt_rxfifo, 64, 8);
+
+MYFIFO_INIT(blt_txfifo, 40, 16);
+
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
@@ -277,6 +282,8 @@ void user_init()
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 	gpio_core_wakeup_enable_all(1);
+
+	GPIO_WAKEUP_MODULE_LOW;
 
 	bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
 #endif

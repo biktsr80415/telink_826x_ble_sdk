@@ -247,9 +247,9 @@ int l2cap_att_client_handler (u16 conn, u8 *p);
 #define			SUSPEND_DISABLE			BIT(7)
 
 
-#define 		LOWPOWER_ADV			0x05   // ( SUSPEND_ADV  | DEEPSLEEP_ADV  )
-#define 		LOWPOWER_CONN			0x0A   // ( SUSPEND_CONN | DEEPSLEEP_CONN )
-#define			DEEPSLEEP_ENTER			0x0C   // ( DEEPSLEEP_ADV | DEEPSLEEP_CONN )
+#define 		LOWPOWER_ADV			( SUSPEND_ADV  | DEEPSLEEP_ADV  )
+#define 		LOWPOWER_CONN			( SUSPEND_CONN | DEEPSLEEP_CONN )
+#define			DEEPSLEEP_ENTER			( DEEPSLEEP_ADV | DEEPSLEEP_CONN )
 
 
 ////////////////// Event Callback  ////////////////////////
@@ -285,13 +285,14 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 
 typedef int (*hci_event_callback_t) (u32 h, u8 *para, int n);
 
+typedef int (*blt_LTK_req_callback_t)(u8* rand, u16 ediv);
+
 blc_hci_handler_t			blc_master_handler;
 
 extern my_fifo_t		hci_tx_fifo;
-/******************************* User Interface  ************************************/
 
-//--------------------  SLAVE ONLY   ---------------------------------------
-// link layer
+
+/******************************* User Interface  ************************************/
 ble_sts_t 	bls_ll_setRandomAddr(u8 *randomAddr);
 ble_sts_t	bls_ll_setAdvData(u8 *data, u8 len);
 ble_sts_t 	bls_ll_setScanRspData(u8 *data, u8 len);
@@ -312,17 +313,7 @@ u16			bls_ll_getConnectionTimeout(void);	 // if return 0, means not in connectio
 
 u8			bls_ll_getTxFifoNumber (void);
 void 		bls_ll_adjustScanRspTiming( int t_us );
-
 u8 			bls_ll_getLatestAvgRSSI(void);
-
-//l2cap
-void		bls_l2cap_requestConnParamUpdate (u16 min_interval, u16 max_interval, u16 latency, u16 timeout);
-
-
-// att
-ble_sts_t	bls_att_pushNotifyData (u16 handle, u8 *p, int len);
-ble_sts_t	bls_att_pushIndicateData (u16 handle, u8 *p, int len);
-void		bls_att_setAttributeTable (u8 *p);
 
 
 
@@ -338,7 +329,6 @@ void 		bls_pm_setUserTimerWakeup(u32 tick, u8 enable); //user set timer wakeup
 void 		bls_pm_enableAdvMcuStall(u8 en);
 
 
-
 // application
 void		bls_app_registerEventCallback (u8 e, blt_event_callback_t p);
 void 		bls_register_event_data_callback (hci_event_callback_t  *event);
@@ -346,15 +336,20 @@ void 		bls_register_event_data_callback (hci_event_callback_t  *event);
 
 
 
-
-
 /******************************* Stack Interface  ************************************/
-//link layer
 void 			irq_blt_slave_handler(void);
-void 			blt_set_bd_addr (u8 *mac);
 void			bls_ll_init (u8 *public_adr);
 ble_sts_t 		bls_ll_readBDAddr(u8 *addr);
 bool			bls_ll_pushTxFifo (u8 *p);
+
+
+//encryption
+ble_sts_t 		bls_ll_getLtkVsConnHandleFail (u16 connHandle);
+ble_sts_t  		bls_ll_setLtk (u16 connHandle,  u8*ltk);
+
+void 			blt_ll_setEncryptionBusy(u8 enc_busy);
+bool 			blt_ll_isEncryptionBusy(void);
+void 			blt_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
 
 
 // hci
@@ -370,10 +365,18 @@ ble_sts_t 		bls_hci_le_readBufferSize_cmd(u8 *pData);
 ble_sts_t		bls_hci_receiveACLData(u16 connHandle, u8 PB_Flag, u8 BC_Flag, u8 *pData );
 ble_sts_t		bls_hci_sendACLData();
 
-void blc_l2cap_register_handler (void *p);
-int blc_l2cap_packet_receive (u8 * p);
-int blc_l2cap_send_data (u16 cid, u8 *p, int n);
-int blc_send_acl (u8 *p);
+
+
+
+
+
+
+
+
+
+
+
+
 int blm_send_acl_to_btusb (u16 conn, u8 *p);
 int blc_acl_from_btusb ();
 
@@ -423,13 +426,6 @@ st_ll_conn_master_t * blm_ll_getConnection (u16 h);
 int  blm_ll_startEncryption (u8 connhandle ,u16 ediv, u8* random, u8* ltk);
 void blm_ll_startDistributeKey (u8 connhandle );
 
-//------------	slave security function -------------------
-ble_sts_t bls_ll_getLtkVsConnHandleFail (u16 connHandle);
-ble_sts_t  bls_ll_setLtk (u16 connHandle,  u8*ltk);
-u8 blt_set_smp_busy(u8 paring_busy);
-u8 blt_smp_pair_busy();
-typedef int (*blt_LTK_req_callback_t)(u8* rand, u16 ediv);
-void blt_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
 
 int blm_l2cap_packet_receive (u16 conn, u8 * raw_pkt);
 u8 * blm_l2cap_packet_pack (u16 conn, u8 * raw_pkt);

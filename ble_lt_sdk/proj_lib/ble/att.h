@@ -428,3 +428,9 @@ typedef struct attribute
 
 
 extern u8	blt_indicate_handle;
+
+// att
+ble_sts_t	bls_att_pushNotifyData (u16 handle, u8 *p, int len);
+ble_sts_t	bls_att_pushIndicateData (u16 handle, u8 *p, int len);
+void		bls_att_setAttributeTable (u8 *p);
+

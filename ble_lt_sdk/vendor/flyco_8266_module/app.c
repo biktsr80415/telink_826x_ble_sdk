@@ -17,6 +17,10 @@
 #define 			CUST_CAP_INFO_ADDR		0x77000
 #define 			CUST_TP_INFO_ADDR		0x77040
 
+MYFIFO_INIT(blt_rxfifo, 64, 8);
+
+MYFIFO_INIT(blt_txfifo, 40, 16);
+
 u32 ui_advertise_begin_tick;
 //FLYCO project add
 u8 bls_adv_enable  = 1;
