@@ -22,7 +22,7 @@
 	#endif
 
 	#ifndef			OTA_FLG_ADR
-	#define			OTA_FLG_ADR			0x3f000
+	#define			OTA_FLG_ADR			0x73000
 	#endif
 
 	//now my remote control  PC2 high LED on, PC2 low LED off

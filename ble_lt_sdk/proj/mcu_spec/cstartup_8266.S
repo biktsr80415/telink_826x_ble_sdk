@@ -126,20 +126,20 @@ SETIC:
 	@tstorerb	r0, [r1, #2]
 
 COPY_CODE_INIT:
-     tmov		r3, #63			@ OTA FW ready flag at 0x3f000; (0x3f000 = #63 << 12)
-     tshftl		r3, r3, #12		@ 0x3f<<12
+     tmov		r3, #115			@ OTA FW ready flag at 0x73000; (0x73000 = #115 << 12)
+     tshftl		r3, r3, #12		@ 0x73<<12
      tloadr		r3, [r3, #0]
 #ifdef MCU_CORE_8266_OTA_BOOT
 	 tcmp		r3, #0			@ 0x0
 #else
-     tcmp		r3, #165		@ *(u32 *)0x1f000 == 0xa5
+     tcmp		r3, #165		@ *(u32 *)0x73000 == 0xa5
 #endif
      tjne		COPY_DATA_INIT
 
-     tmov		r2, #31		@ OTA boot code at: 0x1f000 (OTA128K: 0x1f000 = 31 << 12)
+     tmov		r2, #114		@ OTA boot code at: 0x72000 (OTA128K: 0x72000 = 114 << 12)
      tloadr		r3, COPY_CODE_DAT
      tloadr		r0, COPY_CODE_DAT + 4
-     tshftl		r2, r2, #12		@ 0x1f<<12
+     tshftl		r2, r2, #12		@ 0x72<<12
 COPY_CODE_START:
      tloadm		r2!, {r1}
      tstorem	r3!, {r1}

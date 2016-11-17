@@ -3,7 +3,7 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 
-#if(1)
+#if(__PROJECT_8261_MODULE__ || __PROJECT_8266_MODULE__ || __PROJECT_8267_MODULE__)
 
 typedef struct
 {
@@ -139,12 +139,20 @@ void module_onReceiveData(rf_packet_att_write_t *p)
 static u16 include[3] = {0x0026, 0x0028, SERVICE_UUID_BATTERY};
 
 
+const u8 my_OtaServiceUUID[16]		= TELINK_OTA_UUID_SERVICE;
+const u8 my_OtaUUID[16]		= TELINK_SPP_DATA_OTA;
+
+static u8 my_OtaProp		= CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP;
+const u8  my_OtaName[] = {'O', 'T', 'A'};
+u8	 	my_OtaData 		= 0x00;
+
+
 // TM : to modify
 const attribute_t my_Attributes[] = {
 #if (TELIK_SPP_SERVICE_ENABLE)
-	{18,0,0,0,0,0},	// total num of attribute
+	{22,0,0,0,0,0},	// total num of attribute
 #else
-	{10,0,0,0,0,0},	// total num of attribute
+	{14,0,0,0,0,0},	// total num of attribute
 #endif
 
 	// 0001 - 0007  gap
@@ -175,6 +183,13 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_RDWR,16,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataClient2ServerUUID), (u8*)(SppDataClient2ServerData), &module_onReceiveData},	//value
 	{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPC2SDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPC2SDescriptor)},
 #endif
+
+	// OTA
+	{4,ATT_PERMISSIONS_READ, 2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_OtaServiceUUID), 0},
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				//prop
+	{0,ATT_PERMISSIONS_WRITE,16,1,(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
+	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
+
 };
 
 void	my_att_init ()
