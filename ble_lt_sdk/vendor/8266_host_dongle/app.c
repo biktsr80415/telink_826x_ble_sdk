@@ -153,8 +153,8 @@ int app_packet_from_usb (void)
 int app_packet_to_usb ()
 {
 	u8 *p = my_fifo_get (&usb_fifo);
-	extern int usb_bulk_in_72byte (u8 *p, int n);
-	if (p && usb_bulk_in_72byte (p + 2, p[0] + p[1] * 256) == 0)
+	extern int usb_bulk_in_packet (u8 *p, int n);
+	if (p && usb_bulk_in_packet (p + 2, p[0] + p[1] * 256) == 0)
 	{
 		my_fifo_pop (&usb_fifo);
 	}
