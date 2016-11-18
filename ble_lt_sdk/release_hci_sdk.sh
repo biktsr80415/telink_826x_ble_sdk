@@ -6,8 +6,9 @@ dir_release=ble_hci_sdk
 
 rm -rf ../$dir_release
 mkdir ../$dir_release
-cp -rf proj proj_lib ble vendor ../$dir_release
-cp * .project .cproject ../$dir_release
+cp -rf proj proj_lib vendor ../$dir_release
+cp * .project  ../$dir_release
+cp hci.cproject ../$dir_release/.cproject
 rm -rf ../$dir_release/release_sdk.sh
 rm -rf ../$dir_release/readme.git.txt
 rm -rf ../$dir_release/readme.txt
