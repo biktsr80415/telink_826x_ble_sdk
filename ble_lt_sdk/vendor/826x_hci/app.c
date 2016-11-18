@@ -42,7 +42,7 @@ u32	ui_advertise_begin_tick;
 
 void	task_connect (void)
 {
-	bls_l2cap_requestConnParamUpdate (24, 32, 0, 400);  //interval=10ms latency=99 timeout=4s
+//	bls_l2cap_requestConnParamUpdate (24, 32, 0, 400);  //interval=10ms latency=99 timeout=4s
 }
 
 
@@ -189,7 +189,7 @@ void user_init()
 		uart_io_init(UART_GPIO_8267_PB2_PB3);
 #endif
 
-		CLK16M_UART115200;
+		CLK16M_UART115200;				//high baudrate could also be achieved by changing settings
 		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
 ///////flow control//////////////
 #if 0
