@@ -1,8 +1,9 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 
-#if (__PROJECT_8267_BLE_REMOTE__)
+#if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__)
 
 typedef struct
 {
@@ -47,7 +48,9 @@ static u8 my_periConnParamChar = CHAR_PROP_READ;
 u16 my_appearance = GAP_APPEARE_UNKNOWN;
 gap_periConnectParams_t my_periConnParameters = {20, 40, 0, 1000};
 
-extern u8  ble_devName[MAX_DEV_NAME_LEN];
+
+
+const u8	my_devName[] = {'t','R','e','m','o','t','e'};
 
 // Device Name Characteristic Properties
 static u8 my_PnPCharacter = CHAR_PROP_READ;
@@ -178,30 +181,31 @@ static const u8 reportMap[] =
     0xC0,        // End Collection
 
     #if 1
-    // Report ID 3
+    // Report ID 3 consumer report,  media key
+
     0x05, 0x0C,   // Usage Page (Consumer)
     0x09, 0x01,   // Usage (Consumer Control)
     0xA1, 0x01,   // Collection (Application)
     0x85, 0x02,   //     Report Id (3)
 
-    0x09, 0xE9,   //   Usage (Volume Up)
-    0x09, 0xEA,   //   Usage (Volume Down)
+    0x09, 0xE9,   //   Usage (Volume Up)            //0x0001
+    0x09, 0xEA,   //   Usage (Volume Down)			//0x0002
     0x15, 0x00,   //   Logical Min (0)
     0x75, 0x01,   //   Report Size (1)
     0x95, 0x02,   //   Report Count (2)
     0x81, 0x02,   //   Input (Data, Var, Abs)
-    0x09, 0xE2,   //   Usage (Mute)
-    0x09, 0x30,   //   Usage (Power)
-    0x09, 0x41,   //   Usage (Menu Pick)
-    0x09, 0x42,   //   Usage (Menu Up)
-    0x09, 0x43,   //   Usage (Menu Down)
-    0x09, 0x44,   //   Usage (Menu Left)
-    0x09, 0x45,   //   Usage (Menu Right)
-    0x0a, 0x23, 0x02,   //   Usage (HOME)
-    0x09, 0xB4,   //   Usage (Rewind)
-    0x09, 0xB5,   //   Usage (Scan Next)
-    0x09, 0xB6,   //   Usage (Scan Prev)
-    0x09, 0xB7,   //   Usage (Stop)
+    0x09, 0xE2,   //   Usage (Mute)					//0x0004, 1<<2
+    0x09, 0x30,   //   Usage (Power)				//0x0008, 2<<2
+    0x09, 0x41,   //   Usage (Menu Pick)			//0x000c, 3<<2
+    0x09, 0x42,   //   Usage (Menu Up)				//0x0010, 4<<2
+    0x09, 0x43,   //   Usage (Menu Down)			//0x0014, 5<<2
+    0x09, 0x44,   //   Usage (Menu Left)			//0x0018, 6<<2
+    0x09, 0x45,   //   Usage (Menu Right)			//0x001c, 7<<2
+    0x0a, 0x23, 0x02,   //   Usage (HOME)			//0x0020, 8<<2
+    0x09, 0xB4,   //   Usage (Rewind)				//0x0024, 9<<2
+    0x09, 0xB5,   //   Usage (Scan Next)			//0x0028, a<<2
+    0x09, 0xB6,   //   Usage (Scan Prev)			//0x002c, b<<2
+    0x09, 0xB7,   //   Usage (Stop)					//0x0030, c<<2
     0x15, 0x01,   //   Logical Min (1)
     0x25, 0x0C,   //   Logical Max (12)
     0x75, 0x04,   //   Report Size (4)
@@ -278,6 +282,7 @@ const u8 my_AudioUUID[16]   = TELINK_AUDIO_UUID_SERVICE;
 const u8 my_MicUUID[16]		= TELINK_MIC_DATA;
 const u8 my_SpeakerUUID[16]	= TELINK_SPEAKER_DATA;
 const u8 my_OtaUUID[16]		= TELINK_SPP_DATA_OTA;
+const u8 my_OtaServiceUUID[16]		= TELINK_OTA_UUID_SERVICE;
 const u16 userdesc_UUID		= GATT_UUID_CHAR_USER_DESC;
 
 
@@ -307,7 +312,7 @@ const attribute_t my_Attributes[] = {
 	// 0001 - 0007  gap
 	{7,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_devNameCharacter), 0},
-	{0,ATT_PERMISSIONS_READ,2,MAX_DEV_NAME_LEN, (u8*)(&my_devNameUUID), (u8*)(&ble_devName), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof(my_devName), (u8*)(&my_devNameUUID), (u8*)(my_devName), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_appearanceCharacter), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_appearance), (u8*)(&my_appearanceUIID), 	(u8*)(&my_appearance), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_periConnParamChar), 0},
@@ -377,6 +382,8 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_batProp), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,2,sizeof(my_batVal),(u8*)(&my_batCharUUID), 	(u8*)(my_batVal), 0},	//value
 
+
+#if (__PROJECT_8267_BLE_REMOTE__)
 	// 0029 Audio
 	{10,ATT_PERMISSIONS_READ,2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_AudioUUID), 0},
 
@@ -394,6 +401,13 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				//prop
 	{0,ATT_PERMISSIONS_RDWR,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
+#else
+	// OTA
+	{4,ATT_PERMISSIONS_READ, 2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_OtaServiceUUID), 0},
+	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				//prop
+	{0,ATT_PERMISSIONS_WRITE,16,1,(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
+	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
+#endif
 };
 
 void	my_att_init ()

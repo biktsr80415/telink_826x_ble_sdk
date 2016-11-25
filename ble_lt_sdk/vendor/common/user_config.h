@@ -25,8 +25,8 @@
     #include "../flyco_8266_module/app_config.h"
 #elif (__PROJECT_DRIVER_TEST__)
 	#include "../8267_driver_test/app_config.h"
-#elif (__PROJECT_8267_BLE_REMOTE__)
-	#include "../8267_ble_remote/app_config.h"
+#elif (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__)
+	#include "../826x_ble_remote/app_config.h"
 #elif (__PROJECT_8267_BLE_RC_DEMO__)
 	#include "../8267_ble_rc_demo/app_config.h"
 #elif (__PROJECT_8266_OTA_BOOT__ || __PROJECT_8261_OTA_BOOT__)

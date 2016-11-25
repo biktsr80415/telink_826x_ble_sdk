@@ -5,62 +5,47 @@
 extern "C" {
 #endif
 
-#define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
-#define	__LOG_RT_ENABLE__		0
-//#define	__DEBUG_PRINT__			0
-//////////// product  Information  //////////////////////////////
-#define ID_VENDOR				0x248a			// for report
-#define ID_PRODUCT_BASE			0x880C
-#define STRING_VENDOR			L"Telink"
-#define STRING_PRODUCT			L"BLE Remote"
-#define STRING_SERIAL			L"TLSR8267"
 
-#define CHIP_TYPE				CHIP_TYPE_8267		// 8866-24, 8566-32
-#define APPLICATION_DONGLE		0					// or else APPLICATION_DEVICE
-#define	FLOW_NO_OS				1
-
-#define		RF_FAST_MODE_1M		1
-
-#define MAX_DEV_NAME_LEN		18
-//////////////////////CAN NOT CHANGE CONFIG ABOVE ////////////////////////////
+#if (__PROJECT_8267_BLE_REMOTE__)
+	#define CHIP_TYPE				CHIP_TYPE_8267
+#else
+	#define CHIP_TYPE				CHIP_TYPE_8261
+#endif
 
 
-/////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
-#define HCI_USE_UART	1
-#define HCI_USE_USB		0
-#define HCI_ACCESS		HCI_USE_USB
+
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_REMOTE_PM_ENABLE			1
-#define BLE_REMOTE_SECURITY_ENABLE      1
-#define BLE_IR_ENABLE					0
-#define HID_MOUSE_ATT_ENABLE			0
-#define BLE_AUDIO_ENABLE				1
-#define	BLS_HCI_PROCESS_ENABLE			0
+#define BLE_REMOTE_PM_ENABLE				1
+#define BLE_REMOTE_SECURITY_ENABLE      	1
+
+#if (__PROJECT_8267_BLE_REMOTE__)
+	#define BLE_AUDIO_ENABLE				1
+#else
+	#define BLE_AUDIO_ENABLE				0
+#endif
 
 
-#define DEV_NAME                        "tRemote"
 
 ////////////////////////// AUDIO CONFIG /////////////////////////////
 #if (BLE_AUDIO_ENABLE)
-#define BLE_DMIC_ENABLE					0  //0: Amic   1: Dmic
-#define	ADPCM_PACKET_LEN				128
-#define TL_MIC_ADPCM_UNIT_SIZE			248
+	#define BLE_DMIC_ENABLE					0  //0: Amic   1: Dmic
+	#define	ADPCM_PACKET_LEN				128
+	#define TL_MIC_ADPCM_UNIT_SIZE			248
 
-#if BLE_DMIC_ENABLE
-	#define	TL_MIC_32K_FIR_16K			0
-#else
-	#define	TL_MIC_32K_FIR_16K			1
+	#if BLE_DMIC_ENABLE
+		#define	TL_MIC_32K_FIR_16K			0
+	#else
+		#define	TL_MIC_32K_FIR_16K			1
+	#endif
+
+
+	#if TL_MIC_32K_FIR_16K
+		#define	TL_MIC_BUFFER_SIZE				1984
+	#else
+		#define	TL_MIC_BUFFER_SIZE				992
+	#endif
 #endif
-
-
-#if TL_MIC_32K_FIR_16K
-	#define	TL_MIC_BUFFER_SIZE				1984
-#else
-	#define	TL_MIC_BUFFER_SIZE				992
-#endif
-
-#endif  //end of BLE_AUDIO_ENABLE
 
 
 
@@ -88,21 +73,22 @@ extern "C" {
 #define	PC4_INPUT_ENABLE				0	//amic digital input disable
 #define	PC5_INPUT_ENABLE				0	//amic digital input disable
 
-#define			CR_VOL_UP		0xf0
-#define			CR_VOL_DN		0xf1
-#define			CR_VOL_MUTE		0xf2
-#define			CR_POWER		0xf3
-#define			CR_SEL			0xf4
-#define			CR_UP			0xf5
-#define			CR_DN			0xf6
-#define			CR_LEFT			0xf7
-#define			CR_RIGHT		0xf8
-#define			CR_HOME			0xf9
-#define			CR_REWIND		0xfa
-#define			CR_NEXT			0xfb
-#define			CR_PREV			0xfc
-#define			CR_STOP			0xfd
+//CR: consumer report,  media key
+#define			CR_VOL_UP		0xfd	//0x0001
+#define			CR_VOL_DN		0xfe    //0x0002
 
+#define			CR_VOL_MUTE		0xf1  	//0x0004, 1<<2
+#define			CR_POWER		0xf2  	//0x0008, 2<<2
+#define			CR_SEL			0xf3  	//0x000c, 3<<2
+#define			CR_UP			0xf4  	//0x0010, 4<<2
+#define			CR_DN			0xf5  	//0x0014, 5<<2
+#define			CR_LEFT			0xf6  	//0x0018, 6<<2
+#define			CR_RIGHT		0xf7  	//0x001c, 7<<2
+#define			CR_HOME			0xf8  	//0x0020, 8<<2
+#define			CR_REWIND		0xf9  	//0x0024, 9<<2
+#define			CR_NEXT			0xfa  	//0x0028, a<<2
+#define			CR_PREV			0xfb  	//0x002c, b<<2
+#define			CR_STOP			0xfc  	//0x0030, c<<2
 
 
 #define	GPIO_LED				GPIO_PA4
@@ -142,24 +128,10 @@ extern "C" {
 #define PB6_INPUT_ENABLE		1
 
 
-//#define	PC5_DATA_OUT			1
-
-
 
 #define		KB_MAP_NUM		KB_MAP_NORMAL
 #define		KB_MAP_FN		KB_MAP_NORMAL
 
-
-
-
-
-/////////////////////// POWER OPTIMIZATION  AT SUSPEND ///////////////////////
-//notice that: all setting here aims at power optimization ,they depends on
-//the actual hardware design.You should analyze your hardware board and then
-//find out the io leakage
-
-//shut down the input enable of some gpios, to lower io leakage at suspend state
-//for example:  #define PA2_INPUT_ENABLE   0
 
 
 
@@ -177,7 +149,7 @@ extern "C" {
 
 
 
-#define  SIHUI_DEBUG_BLE_SLAVE				1
+#define  SIHUI_DEBUG_BLE_SLAVE				0
 
 #if(SIHUI_DEBUG_BLE_SLAVE)
 #define	LOG_IN_RAM							0
