@@ -340,6 +340,7 @@ void key_change_proc(void)
 	else if (key)			// key in standard reprot
 	{
 		key_not_released = 1;
+#if (BLE_AUDIO_ENABLE)
 		if (key == VK_M)
 		{
 			if(ui_mic_enable){
@@ -351,7 +352,9 @@ void key_change_proc(void)
 				key_voice_pressTick = clock_time();
 			}
 		}
-		else{
+		else
+#endif
+		{
 			key_type = KEYBOARD_KEY;
 			key_buf[2] = key;
 			bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8);
@@ -393,11 +396,14 @@ void proc_keyboard (u8 e, u8 *p, int n)
 	}
 	
 
+
+#if (BLE_AUDIO_ENABLE)
 	 //long press voice 1 second
 	if(key_voice_press && !ui_mic_enable && clock_time_exceed(key_voice_pressTick,1000000)){
 		key_voice_press = 0;
 		ui_enable_mic (1);
 	}
+#endif
 }
 
 
@@ -679,10 +685,6 @@ void main_loop ()
 
 	device_led_process();  //led management
 
-
-	#if (USER_TEST_APP_TIMER_EARLY_WAKEUP)
-		gpio_test_app_timer_wakeup(0, 0);
-	#endif
 
 	blt_pm_proc();  //power management
 }

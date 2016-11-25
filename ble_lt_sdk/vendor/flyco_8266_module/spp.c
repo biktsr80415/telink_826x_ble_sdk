@@ -677,7 +677,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 					para += ((u32)p->intv[i])<<(8*(p->len-1-i));
 				para = (para <<3) / 5;//unit:0.625ms! 160 corresponding to 100ms
 
-				blt_set_advinterval(para);
+				bls_ll_setAdvInterval(para, para);
 
 				nv_write(NV_FLYCO_ITEM_ADV_INTERVAL, (u8 *)&para, 2);
                 advinterval = para;
@@ -1184,7 +1184,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 					para += ((u32)p->intv[i])<<(8*(p->len-1-i));
 				para = (para <<3) / 5;//unit:0.625ms! 160 corresponding to 100ms
 
-				blt_set_advinterval(para);
+				bls_ll_setAdvInterval(para, para);
 
 				nv_write(NV_FLYCO_ITEM_ADV_INTERVAL, (u8 *)&para, 2);
 				advinterval = para;
