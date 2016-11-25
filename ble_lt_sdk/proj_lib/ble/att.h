@@ -415,10 +415,10 @@ typedef int (*att_readwrite_callback_t)(void* p);
 
 typedef struct attribute
 {
-  u8  attNum;
-  u8  perm;
-  u8  uuidLen;
-  u8  attrLen;
+  u16  attNum;
+  u8   perm;
+  u8   uuidLen;
+  u32  attrLen;    //4 bytes aligned
   u8* uuid;
   u8* pAttrValue;
   att_readwrite_callback_t w;
