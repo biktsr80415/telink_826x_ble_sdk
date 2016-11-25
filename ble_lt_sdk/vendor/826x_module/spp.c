@@ -114,7 +114,7 @@ int bls_uart_handler (u8 *p, int n)
 	if (cmd == SPP_CMD_SET_ADV_INTV)
 	{
 		u8 interval = cmdPara[0] ;
-		status = blt_set_advinterval(interval, interval);
+		status = bls_ll_setAdvInterval(interval, interval);
 	}
 	// set advertising data: 02 ff 06 00 01 02 03 04 05 06
 	else if (cmd == SPP_CMD_SET_ADV_DATA)
@@ -144,7 +144,7 @@ int bls_uart_handler (u8 *p, int n)
 	// set advertising type: 0d ff 01 00  00
 	else if (cmd == SPP_CMD_SET_ADV_TYPE)
 	{
-		status = blt_set_advtype(cmdPara[0]);
+		status = bls_ll_setAdvType(cmdPara[0]);
 	}
 	// set advertising direct address: 0e ff 07 00  00(public; 1 for random) 01 02 03 04 05 06
 	else if (cmd == SPP_CMD_SET_ADV_DIRECT_ADDR)
@@ -169,14 +169,14 @@ int bls_uart_handler (u8 *p, int n)
 	// set filter policy: 12 ff 10 00 00(bit0: scan WL enable; bit1: connect WL enable)
 	else if (cmd == SPP_CMD_SET_FLT_POLICY)
 	{
-		status = ble_set_adv_filterpolicy(cmdPara[0]);
+		status = bls_ll_setAdvFilterPolicy(cmdPara[0]);
 	}
 	// set device name: 13 ff 0a 00  01 02 03 04 05 06 07 08 09 0a
 	else if (cmd == SPP_CMD_SET_DEV_NAME)
 	{
-		status = ble_set_dev_name(cmdPara,p[2]);
+		status = bls_att_setDeviceName(cmdPara,p[2]);
 	}
-	// get connection parameter: 14 ff 00 00		,returrn interval(4) latency(2) timeout(4)
+	// get connection parameter: 14 ff 00 00
 	else if (cmd == SPP_CMD_GET_CONN_PARA)
 	{
 		blt_get_conn_para(para+1);

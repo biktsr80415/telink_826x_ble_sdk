@@ -16,6 +16,8 @@
 #define			BLUETOOTH_VER_4_2				8
 #define			BLUETOOTH_VER					BLUETOOTH_VER_4_0
 #define			BLUETOOTH_VER_SUBVER			0x4103
+u8		blt_bluetooth_version;
+void blt_set_bluetooth_version (u8 v);
 
 /////////////////////////////////////////////////////////////////////////////
 #define			BLE_LL_BUFF_SIZE		64
@@ -64,7 +66,8 @@
 
 #define 				LL_PING_REQ					0x12
 #define					LL_PING_RSP					0x13
-
+#define 				LL_LENGTH_REQ				0x14
+#define					LL_LENGTH_RSP				0x15
 
 #define					SLAVE_LL_ENC_OFF			0
 #define					SLAVE_LL_ENC_REQ			1
@@ -109,11 +112,17 @@
 #define 		ADV_MAX_DATA_LEN                    31
 
 //bls link layer state
-#define			BLS_LINK_STATE_ADV			0
-#define			BLS_LINK_STATE_CONN			1
+#define			BLS_LINK_STATE_IDLE			0
+#define			BLS_LINK_STATE_ADV			1
+#define			BLS_LINK_STATE_CONN			2
 
+#define			LL_PACKET_OCTET_TIME(n)				((n) * 8 + 112)
 
+my_fifo_t			blt_rxfifo;
+u8					blt_rxfifo_b[];
 
+my_fifo_t			blt_txfifo;
+u8					blt_txfifo_b[];
 //////////////////////////////////////
 typedef struct {
 	u32		pkt;
@@ -185,7 +194,7 @@ typedef struct {
 	u8		conn_chn_hop;
 	u8		conn_chn_map[5];
 	u8		conn_chn_map_next[5];
-	u8		connParaUpReq_sent;
+	u8		connParaUpReq_pending;
 
 	u32		conn_Req_noAck_timeout;
 	u8		conn_Req_waitAck_enable;
@@ -206,6 +215,81 @@ typedef struct {
 	ble_crypt_para_t	crypt;
 } st_ll_conn_master_t;
 
+
+
+typedef struct {
+	u8		time_update_st;
+	u8 		ll_localFeature;  //only 8 faeture in core_4.2,  1 byte is enough
+	u8 		ll_remoteFeature; //not only one for BLE master, use connHandle to identify
+	u8		remoteFeatureReq;
+
+	u8 		brx_rx_num;  //rx number in a new interval  brx state machine
+	u8		interval_level;
+	u16		connHandle;
+
+
+	u8		ll_recentAvgRSSI;
+	u8		conn_sn_master;
+	u8		conn_chn;
+	u8		conn_update;
+
+
+
+	u32		connExpectTime;
+	int		conn_interval_adjust;
+	u32		conn_timeout;
+	u32		conn_tick;
+	u32		conn_interval;
+	u16		conn_inst;
+	u16		conn_latency;
+	u32		conn_duration;
+
+	u32		conn_winsize_next;
+	u32		conn_timeout_next;
+	u32		conn_offset_next;
+	u32		conn_interval_next;
+	u16		conn_inst_next;
+	u16		conn_latency_next;
+	u16		conn_std_timeout_next;  //standard value,  not *10ms
+	u16		conn_std_interval_next; //standard value,  not * 1.25ms
+
+	u8		conn_chn_hop;
+	u8		conn_chn_map[5];
+	u8		conn_chn_map_next[5];
+	u8		connParaUpReq_pending;
+
+	u16 	connParaUpReq_minInterval;
+	u16 	connParaUpReq_maxInterval;
+	u16 	connParaUpReq_latency;
+	u16 	connParaUpReq_timeout;
+
+
+
+	u32		conn_start_tick;
+	u32		rcvd_connReq_tick;
+
+	int		conn_tolerance_time;
+
+	u32		tick_1st_rx;
+	u32		conn_brx_tick;
+
+	u8 		conn_master_terminate;
+	u8		conn_terminate_reason;
+	u8 		conn_slave_terminate;
+	u8		conn_terminate_pending;   // terminate_pending = master_terminate || slave_terminate
+	u32 	conn_slaveTerminate_time;
+
+	u32		conn_pkt_rcvd;
+	u32		conn_pkt_rcvd_no;
+	u8 *	conn_pkt_dec_pending;
+	int		conn_enc_dec_busy;
+	int		conn_stop_brx;
+
+} st_ll_conn_slave_t;
+
+st_ll_conn_slave_t		bltc;
+
+
 typedef struct {
 	u8		adv_en;
 	u8		adv_chn_mask;
@@ -213,7 +297,7 @@ typedef struct {
 	u8		adv_type;
 
 	u8 		adv_filterPolicy;
-	u8		rsvd1;
+	u8		adv_rcvdReq;  //scanReq & connReq
 	u8		rsvd2;
 	u8		rsvd3;
 
@@ -243,7 +327,7 @@ int l2cap_att_client_handler (u16 conn, u8 *p);
 #define			SUSPEND_CONN			BIT(1)
 #define			DEEPSLEEP_ADV			BIT(2)
 #define			DEEPSLEEP_CONN			BIT(3)
-#define			LOWPOWER_IDLE			BIT(6)
+#define			MCU_STALL				BIT(6)
 #define			SUSPEND_DISABLE			BIT(7)
 
 
@@ -297,13 +381,23 @@ ble_sts_t 	bls_ll_setRandomAddr(u8 *randomAddr);
 ble_sts_t	bls_ll_setAdvData(u8 *data, u8 len);
 ble_sts_t 	bls_ll_setScanRspData(u8 *data, u8 len);
 ble_sts_t   bls_ll_setAdvEnable(u8 en);
+
 ble_sts_t   bls_ll_setAdvParam( u16 intervalMin, u16 intervalMax, u8 advType, 	   u8 ownAddrType,  \
 							     u8 peerAddrType, u8 *peerAddr,   u8 adv_channelMap, u8 advFilterPolicy);
+
+
+ble_sts_t 	bls_ll_setAdvInterval(u16 intervalMin, u16 intervalMax);
+ble_sts_t 	bls_ll_setAdvChannelMap(u8 adv_channelMap);
+ble_sts_t 	bls_ll_setAdvFilterPolicy(u8 advFilterPolicy);
+
 
 ble_sts_t   bls_ll_setAdvDuration (u32 duration_us, u8 duration_en);
 ble_sts_t  	bls_ll_terminateConnection (u8 reason);
 
-u8			bls_ll_getCurrentState(void);  //return  BLS_LINK_STATE_ADV/BLS_LINK_STATE_CONN
+
+//return  BLS_LINK_STATE_IDLE/BLS_LINK_STATE_ADV/BLS_LINK_STATE_CONN
+u8			bls_ll_getCurrentState(void);
+
 bool		bls_ll_isConnectState (void);
 
 u16			bls_ll_getConnectionInterval(void);  // if return 0, means not in connection state
@@ -322,7 +416,6 @@ void		bls_pm_setSuspendMask (u8 mask);
 u8 			bls_pm_getSuspendMask (void);
 void 		bls_pm_setWakeupSource(u8 source);
 u32 		bls_pm_getSystemWakeupTick(void);
-bool 		bls_pm_isRxTimingAligned(void);
 
 void 		bls_pm_setManualLatency(u16 latency); //manual set latency to save power
 void 		bls_pm_setUserTimerWakeup(u32 tick, u8 enable); //user set timer wakeup
@@ -334,14 +427,16 @@ void		bls_app_registerEventCallback (u8 e, blt_event_callback_t p);
 void 		bls_register_event_data_callback (hci_event_callback_t  *event);
 
 
+// ble irq & ble loop
+void 		irq_blt_slave_handler(void);
+u8			blt_slave_main_loop (void);
 
 
 /******************************* Stack Interface  ************************************/
-void 			irq_blt_slave_handler(void);
+
 void			bls_ll_init (u8 *public_adr);
 ble_sts_t 		bls_ll_readBDAddr(u8 *addr);
 bool			bls_ll_pushTxFifo (u8 *p);
-
 
 //encryption
 ble_sts_t 		bls_ll_getLtkVsConnHandleFail (u16 connHandle);
@@ -353,6 +448,7 @@ void 			blt_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
 
 
 // hci
+ble_sts_t 		blt_data_length_request (u16 tx, u16 txtime);
 ble_sts_t 		bls_hci_mod_setEventMask_cmd(u32 evtMask);
 ble_sts_t 		bls_hci_le_setEventMask_cmd(u16 evtMask);
 ble_sts_t 		bls_hci_le_getLocalSupportedFeatures(u8 *features);

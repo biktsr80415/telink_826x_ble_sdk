@@ -48,7 +48,9 @@ static u8 my_periConnParamChar = CHAR_PROP_READ;
 u16 my_appearance = GAP_APPEARE_UNKNOWN;
 gap_periConnectParams_t my_periConnParameters = {20, 40, 0, 1000};
 
-extern u8  ble_devName[MAX_DEV_NAME_LEN];
+
+#define 	DEV_NAME                        "tModule"
+extern u8  ble_devName[];
 
 // Device Name Characteristic Properties
 static u8 my_PnPCharacter = CHAR_PROP_READ;
@@ -187,6 +189,9 @@ const attribute_t my_Attributes[] = {
 void	my_att_init ()
 {
 	bls_att_setAttributeTable ((u8 *)my_Attributes);
+
+	u8 device_name[] = DEV_NAME;
+	bls_att_setDeviceName(device_name, sizeof(DEV_NAME));
 }
 
 #endif

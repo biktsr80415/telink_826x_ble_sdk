@@ -25,11 +25,9 @@ extern "C" {
 #define	USB_PRINTER				1
 #define	FLOW_NO_OS				1
 
-#define		RF_FAST_MODE_1M		1
 //////////////////////CAN NOT CHANGE CONFIG ABOVE ////////////////////////////
 
-#define DEV_NAME                        "tModule"
-#define MAX_DEV_NAME_LEN		18
+
 
 #if(APPLICATION_DONGLE)
 #define	USB_PRINTER_ENABLE 		USB_PRINTER	//
@@ -77,7 +75,6 @@ unsigned char uart_rx_true;
 #define BLE_REMOTE_PM_ENABLE			0
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_IR_ENABLE					0
-#define HID_MOUSE_ATT_ENABLE			0
 
 
 ////////////////////////// MIC BUFFER /////////////////////////////

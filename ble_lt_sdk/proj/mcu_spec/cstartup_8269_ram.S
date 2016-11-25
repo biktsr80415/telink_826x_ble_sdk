@@ -122,7 +122,7 @@ DAT0:
 	.word	0x12			    @IRQ    @0
 	.word	0x13			    @SVC    @4
 	.word	(irq_stk + IRQ_STK_SIZE)
-	.word	(0x810000)		    @12  stack end
+	.word	(0x80ff80)		    @12  stack end
 	.word	(_start_bss_)               @16
 	.word	(_end_bss_)                 @20
 	.word	(0x80060c)                  @24

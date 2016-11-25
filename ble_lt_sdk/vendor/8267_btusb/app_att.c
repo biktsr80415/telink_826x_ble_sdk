@@ -306,11 +306,7 @@ int		speakerWrite(void *p)
 
 // TM : to modify
 const attribute_t my_Attributes[] = {
-	#if HID_MOUSE_ATT_ENABLE
-	{57,0,0,0,0,0},	//
-	#else
 	{50,0,0,0,0,0},	//
-	#endif 
 
 	// gatt
 	{7,2,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
@@ -328,11 +324,7 @@ const attribute_t my_Attributes[] = {
 	{0,2,sizeof (my_PnPtrs), sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), 			(u8*)(my_PnPtrs), 0},
 
 	/////////////////////////////////// 4. HID Service /////////////////////////////////////////////////////////
-	#if HID_MOUSE_ATT_ENABLE
-	{34,2,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_hidServiceUUID), 0},
-	#else 
 	{27,2,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_hidServiceUUID), 0},
-	#endif 
 
 	//include battery service
 	{0,2,sizeof(include),sizeof(include),(u8*)(&hidIncludeUUID), 	(u8*)(include), 0},
@@ -349,18 +341,7 @@ const attribute_t my_Attributes[] = {
 	//11. boot keyboard output report (char-val)
 	{0,2,1,1,(u8*)(&my_characterUUID), 		(u8*)(&bootKeyOutReportProp), 0},				//prop
 	{0,2, sizeof(bootKeyOutReport), sizeof(bootKeyOutReport),(u8*)(&hidbootKeyOutReportUUID), 	(u8*)(&bootKeyOutReport), 0},	//value
-	#if HID_MOUSE_ATT_ENABLE
-	//    boot mouse input report 
-	{0,2,1,1,(u8*)(&my_characterUUID), 		(u8*)(&bootMouseInReportProp), 0},				
-	{0,2, sizeof(bootMouseInReport), sizeof(bootMouseInReport),(u8*)(&hidbootMouseInReportUUID), 	(u8*)(&bootMouseInReport), 0},	
-	{0,2, sizeof(bootMouseInReportCCC), sizeof(bootMouseInReportCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)(bootMouseInReportCCC), 0},		
 
-	//  Characteristic declaration: Report (Mouse In)
-	{0,2,1,1,(u8*)(&my_characterUUID), 		(u8*)(&reportMouseInProp), 0},				
-	{0,2, sizeof(reportMouseIn), sizeof(reportMouseIn),(u8*)(&hidReportUUID), 	(u8*)(&reportMouseIn), 0},	
-	{0,2, sizeof(reportMouseInCCC), sizeof(reportMouseInCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)(reportMouseInCCC), 0},
-	{0,2, sizeof(reportRefMouseIn), sizeof(reportRefMouseIn),(u8*)(&reportRefUUID), 	(u8*)(reportRefMouseIn), 0},
-	#endif
 	//13. consume report in: 4 (char-val-client-ref)
 	{0,2,1,1,(u8*)(&my_characterUUID), 		(u8*)(&reportConsumerControlInProp), 0},				//prop
 	{0,2, sizeof(reportConsumerControlIn), sizeof(reportConsumerControlIn),(u8*)(&hidReportUUID), 	(u8*)(reportConsumerControlIn), 0},	//value

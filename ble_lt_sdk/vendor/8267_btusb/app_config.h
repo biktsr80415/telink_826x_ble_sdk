@@ -5,9 +5,7 @@
 extern "C" {
 #endif
 
-#define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
-#define	__LOG_RT_ENABLE__		0
-//#define	__DEBUG_PRINT__			0
+
 //////////// product  Information  //////////////////////////////
 #define ID_VENDOR				0x248a			// for report
 #define ID_PRODUCT_BASE			0x880C
@@ -16,14 +14,8 @@ extern "C" {
 #define STRING_SERIAL			L"TLSR8267"
 
 #define CHIP_TYPE				CHIP_TYPE_8267		// 8866-24, 856M6-32
-#define APPLICATION_DONGLE		0					// or else APPLICATION_DEVICE
-#define	FLOW_NO_OS				1
-
-#define		RF_FAST_MODE_1M		1
 //////////////////////CAN NOT CHANGE CONFIG ABOVE ////////////////////////////
 
-#define DEV_NAME                        "tModule"
-#define MAX_DEV_NAME_LEN		18
 /////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
 #define HCI_USE_UART	1
 #define HCI_USE_USB		0
@@ -47,7 +39,6 @@ unsigned char uart_rx_true;
 #define BLE_REMOTE_PM_ENABLE			0
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_IR_ENABLE					0
-#define HID_MOUSE_ATT_ENABLE			0
 
 
 ////////////////////////// MIC BUFFER /////////////////////////////
@@ -175,6 +166,68 @@ unsigned char uart_rx_true;
 
 
 
+#if __PROJECT_8266_BTUSB_DONGLE__
+
+
+#define PD4_INPUT_ENABLE		1
+#define PD5_INPUT_ENABLE		1
+#define	SW1_GPIO				GPIO_PD5
+#define	SW2_GPIO				GPIO_PD4
+#define PULL_WAKEUP_SRC_PD4		PM_PIN_PULLUP_1M	//btn
+#define PULL_WAKEUP_SRC_PD5		PM_PIN_PULLUP_1M	//btn
+
+#define	 GPIO_LED_GREEN			GPIO_PC0
+#define	 GPIO_LED_RED			GPIO_PC4
+#define	 GPIO_LED_BLUE			GPIO_PC2
+#define	 GPIO_LED_WHITE			GPIO_PA1
+
+#define  PC0_INPUT_ENABLE		0
+#define	 PC0_OUTPUT_ENABLE		1
+#define  PC4_INPUT_ENABLE		0
+#define	 PC4_OUTPUT_ENABLE		1
+#define  PC2_INPUT_ENABLE		0
+#define  PC2_OUTPUT_ENABLE		1
+#define  PA1_INPUT_ENABLE		0
+#define	 PA1_OUTPUT_ENABLE		1
+
+#else
+//----------------------- GPIO for UI --------------------------------
+//---------------  Button ----------------------------------
+#define PD2_INPUT_ENABLE		1
+#define PC5_INPUT_ENABLE		1
+#define	SW2_GPIO				GPIO_PC5
+#define	SW1_GPIO				GPIO_PD2
+//PC5 1m pullup not very stable, so we use 10k pullup
+//#define PULL_WAKEUP_SRC_PC5     PM_PIN_PULLUP_1M	//btn
+#define PULL_WAKEUP_SRC_PC5     PM_PIN_PULLUP_10K	//btn
+#define PULL_WAKEUP_SRC_PD2     PM_PIN_PULLUP_1M  	//btn
+
+// 8267
+#define	 GPIO_LED_WHITE			GPIO_PB4
+#define	 GPIO_LED_GREEN			GPIO_PB6
+#define	 GPIO_LED_RED			GPIO_PC2
+#define	 GPIO_LED_BLUE			GPIO_PC3
+#define	 GPIO_LED_YELLOW		GPIO_PC3
+#define  GPIO_LED				GPIO_PD5
+
+#define  PB4_INPUT_ENABLE		0
+#define	 PB4_OUTPUT_ENABLE		1
+#define  PB6_INPUT_ENABLE		0
+#define	 PB6_OUTPUT_ENABLE		1
+#define  PC2_INPUT_ENABLE		0
+#define  PC2_OUTPUT_ENABLE		1
+#define  PC3_INPUT_ENABLE		0
+#define	 PC3_OUTPUT_ENABLE		1
+#define  PC0_INPUT_ENABLE		0
+#define	 PC0_OUTPUT_ENABLE		1
+
+#endif
+
+// PB5/PB6 dp/dm for 8266
+//USB DM DP input enable
+#define PB5_INPUT_ENABLE	1
+#define PB6_INPUT_ENABLE	1
+#define LED_ON_LEVAL 		1 		//gpio output high voltage to turn on led
 
 
 /////////////////////// POWER OPTIMIZATION  AT SUSPEND ///////////////////////

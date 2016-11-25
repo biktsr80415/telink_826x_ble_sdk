@@ -410,9 +410,9 @@ typedef struct attProtocolRspPdu{
 /** @} end of group GATT_Char_Cfg_Bit_length */
 
 
-
-typedef u8* (*att_handler_t)(u8 * p);
+typedef int (*att_handleValueConfirm_callback_t)(void);
 typedef int (*att_readwrite_callback_t)(void* p);
+
 typedef struct attribute
 {
   u8  attNum;
@@ -433,4 +433,8 @@ extern u8	blt_indicate_handle;
 ble_sts_t	bls_att_pushNotifyData (u16 handle, u8 *p, int len);
 ble_sts_t	bls_att_pushIndicateData (u16 handle, u8 *p, int len);
 void		bls_att_setAttributeTable (u8 *p);
+
+void 		bls_att_registerHandleValueConfirmCb (att_handleValueConfirm_callback_t cb);
+
+ble_sts_t 	bls_att_setDeviceName(u8* pName,u8 len);
 

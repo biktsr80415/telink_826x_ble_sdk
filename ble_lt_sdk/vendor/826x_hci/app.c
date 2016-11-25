@@ -42,7 +42,7 @@ u32	ui_advertise_begin_tick;
 
 void	task_connect (void)
 {
-//	bls_l2cap_requestConnParamUpdate (24, 32, 0, 400);  //interval=10ms latency=99 timeout=4s
+	bls_l2cap_requestConnParamUpdate (12, 32, 99, 400);  //interval=10ms latency=99 timeout=4s
 }
 
 
@@ -129,7 +129,7 @@ void user_init()
 
 
 	////////////////// BLE stack initialization ////////////////////////////////////
-	u32 *pmac = (u32 *) CFG_ADR_MAC;
+	u32 *pmac = (u32 *) (CFG_ADR_MAC + 10);
 	if (*pmac != 0xffffffff)
 	{
 	    memcpy (tbl_mac, pmac, 6);
@@ -138,7 +138,6 @@ void user_init()
     {
         //TODO : should write mac to flash after pair OK
         tbl_mac[0] = (u8)rand();
-        flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
     }
 
 	//link layer initialization
@@ -147,9 +146,9 @@ void user_init()
 	//l2cap initialization
 	blc_l2cap_register_handler (blc_send_acl); 		//send l2cap 2 uart
 	bls_register_event_data_callback(blc_hci_send_data);		//register event callback
-//	while(1);
+
 	///////////////////// USER application initialization ///////////////////
-#if 1		// default adv and scan rsp settings, not necessary
+#if 0
 	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
@@ -182,19 +181,13 @@ void user_init()
 		gpio_write (GPIO_UTX, 1);			//pull-high RX to avoid mis-trig by floating signal
 		gpio_write (GPIO_URX, 1);			//pull-high RX to avoid mis-trig by floating signal
 #else
-		gpio_set_input_en(GPIO_PB2, 1);
-		gpio_set_input_en(GPIO_PB3, 1);
-		gpio_setup_up_down_resistor(GPIO_PB2, PM_PIN_PULLUP_1M);
-		gpio_setup_up_down_resistor(GPIO_PB3, PM_PIN_PULLUP_1M);
 		uart_io_init(UART_GPIO_8267_PB2_PB3);
 #endif
-
-		CLK16M_UART115200;				//high baudrate could also be achieved by changing settings
+		CLK16M_UART115200;
 		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
-///////flow control//////////////
 #if 0
-//		uart_RTSCfg(1, UART_RTS_MODE_MANUAL, 5, 0);
-//		uart_RTSLvlSet(1);							//RTS is not necessary in current condition
+//		uart_RTSCfg(1, UART_RTS_MODE_MANUAL, 5, 0);	 //no receiving limits required for now
+//		uart_RTSLvlSet(1);
 		uart_CTSCfg(1, 0);
 #endif
 		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler
@@ -205,7 +198,6 @@ void user_init()
 	//mcu 可以通过拉高GPIO_WAKEUP_MODULE将 module从低低功耗唤醒
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
-	gpio_core_wakeup_enable_all(1);
 
 	bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
 #endif

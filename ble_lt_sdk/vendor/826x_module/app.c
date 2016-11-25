@@ -20,8 +20,8 @@ MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
 
-MYFIFO_INIT(blt_txfifo, 40, 16);
-
+//MYFIFO_INIT(blt_txfifo, 40, 16);
+MYFIFO_INIT(blt_txfifo, 80, 8);
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
@@ -183,6 +183,9 @@ void user_init()
 {
 	rf_customized_param_load();  //load customized freq_offset cap value and tp value
 
+	REG_ADDR8(0x74) = 0x53;
+	REG_ADDR16(0x7e) = 0x08d1;
+	REG_ADDR8(0x74) = 0x00;
 	usb_log_init ();
 	usb_dp_pullup_en (1);  //open USB enum
 
@@ -211,7 +214,7 @@ void user_init()
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);
 
 	//smp initialization
-	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
+	//bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
 
 
 	///////////////////// USER application initialization ///////////////////
@@ -238,8 +241,11 @@ void user_init()
 
 	////////////////// SPP initialization ///////////////////////////////////
 	#if (HCI_ACCESS==HCI_USE_USB)
-		//usb_bulk_drv_init (0);
-		//blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
+		blt_set_bluetooth_version (BLUETOOTH_VER_4_2);
+		bls_ll_setAdvChannelMap (BLT_ENABLE_ADV_37);
+		usb_bulk_drv_init (0);
+		blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
+		bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
 	#else	//uart
 		//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
 		//todo:uart init here
@@ -281,7 +287,6 @@ void user_init()
 	//mcu 可以通过拉高GPIO_WAKEUP_MODULE将 module从低低功耗唤醒
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
-	gpio_core_wakeup_enable_all(1);
 
 	GPIO_WAKEUP_MODULE_LOW;
 

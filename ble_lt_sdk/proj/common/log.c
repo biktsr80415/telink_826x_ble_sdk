@@ -2,6 +2,12 @@
 #include "../tl_common.h"
 #include "log.h"
 
+
+#ifndef __LOG_RT_ENABLE__
+#define __LOG_RT_ENABLE__		0
+#endif
+
+
 #if (__LOG_RT_ENABLE__)
 
 #ifndef WIN32	

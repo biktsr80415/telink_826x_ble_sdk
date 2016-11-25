@@ -1,9 +1,6 @@
 
 #pragma once
 
-#ifndef _USER_CONFIG_DEFINED_
-//#error	user_config.h must be include before this
-#endif
 
 #define GPIO_PULL_UP_0		0
 #define GPIO_PULL_UP_1M		1
@@ -230,7 +227,7 @@
 #define PB7_DATA_STRENGTH	1
 #endif
 #ifndef PB0_DATA_OUT
-#define PB0_DATA_OUT	1   //open SWS digital pullup to prevent MCU err
+#define PB0_DATA_OUT	0
 #endif
 #ifndef PB1_DATA_OUT
 #define PB1_DATA_OUT	0
@@ -278,7 +275,7 @@
 #define PB7_FUNC	AS_GPIO
 #endif
 #ifndef PULL_WAKEUP_SRC_PB0
-#define PULL_WAKEUP_SRC_PB0	0
+#define PULL_WAKEUP_SRC_PB0	PM_PIN_PULLUP_1M
 #endif
 #ifndef PULL_WAKEUP_SRC_PB1
 #define PULL_WAKEUP_SRC_PB1	0

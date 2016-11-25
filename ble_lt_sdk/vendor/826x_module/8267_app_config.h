@@ -5,23 +5,10 @@
 extern "C" {
 #endif
 #if __PROJECT_8267_MODULE__
-#define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
-#define	__LOG_RT_ENABLE__		0
-//#define	__DEBUG_PRINT__			0
-//////////// product  Information  //////////////////////////////
-#define ID_VENDOR				0x248a			// for report
-#define ID_PRODUCT_BASE			0x880C
-#define STRING_VENDOR			L"Telink"
-#define STRING_PRODUCT			L"BLE Module"
-#define STRING_SERIAL			L"TLSR8267"
 
-#define CHIP_TYPE				CHIP_TYPE_8267		// 8866-24, 8566-32
-#define APPLICATION_DONGLE		0					// or else APPLICATION_DEVICE
-#define	FLOW_NO_OS				1
 
-#define		RF_FAST_MODE_1M		1
+#define CHIP_TYPE				CHIP_TYPE_8267
 
-//////////////////////CAN NOT CHANGE CONFIG ABOVE ////////////////////////////
 
 
 /////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
@@ -30,7 +17,7 @@ extern "C" {
 #define HCI_ACCESS		HCI_USE_UART
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_MODULE_PM_ENABLE				1
+#define BLE_MODULE_PM_ENABLE				0
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 
@@ -85,7 +72,47 @@ extern "C" {
 
 #endif
 /////////////////// set default   ////////////////
+#define	PULL_WAKEUP_SRC_PB1		PM_PIN_PULLDOWN_100K
+#define	PULL_WAKEUP_SRC_PB2		PM_PIN_PULLDOWN_100K
+#define	PULL_WAKEUP_SRC_PB3		PM_PIN_PULLDOWN_100K
+#define	PULL_WAKEUP_SRC_PB6		PM_PIN_PULLDOWN_100K
+#define PB1_INPUT_ENABLE		1
+#define PB2_INPUT_ENABLE		1
+#define PB3_INPUT_ENABLE		1
+#define PB6_INPUT_ENABLE		1
 
+#if 0  //debug GPIO
+	#define	PD0_FUNC							AS_GPIO
+	#define PD0_INPUT_ENABLE					0
+	#define	PD0_OUTPUT_ENABLE					1
+	#define DBG_CHN0_LOW						gpio_write(GPIO_PD0, 0)
+	#define DBG_CHN0_HIGH						gpio_write(GPIO_PD0, 1)
+	#define DBG_CHN0_TOGGLE						BM_FLIP(reg_gpio_out(GPIO_PD0), GPIO_PD0 & 0xff);
+
+
+	#define	PD1_FUNC							AS_GPIO
+	#define PD1_INPUT_ENABLE					0
+	#define	PD1_OUTPUT_ENABLE					1
+	#define DBG_CHN1_LOW						gpio_write(GPIO_PD1, 0)
+	#define DBG_CHN1_HIGH						gpio_write(GPIO_PD1, 1)
+	#define DBG_CHN1_TOGGLE						BM_FLIP(reg_gpio_out(GPIO_PD1), GPIO_PD1 & 0xff);
+
+
+	#define	PC5_FUNC							AS_GPIO
+	#define PC5_INPUT_ENABLE					0
+	#define	PC5_OUTPUT_ENABLE					1
+	#define DBG_CHN2_LOW						gpio_write(GPIO_PC5, 0)
+	#define DBG_CHN2_HIGH						gpio_write(GPIO_PC5, 1)
+	#define DBG_CHN2_TOGGLE						BM_FLIP(reg_gpio_out(GPIO_PC5), GPIO_PC5 & 0xff);
+
+
+	#define	PC6_FUNC							AS_GPIO
+	#define PC6_INPUT_ENABLE					0
+	#define	PC6_OUTPUT_ENABLE					1
+	#define DBG_CHN3_LOW						gpio_write(GPIO_PC6, 0)
+	#define DBG_CHN3_HIGH						gpio_write(GPIO_PC6, 1)
+	#define DBG_CHN3_TOGGLE						BM_FLIP(reg_gpio_out(GPIO_PC6), GPIO_PC6 & 0xff);
+#endif
 
 
 #include "../common/default_config.h"

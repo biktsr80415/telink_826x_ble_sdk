@@ -28,6 +28,8 @@
 
 MYFIFO_INIT(hci_tx_fifo, 72, 4);
 MYFIFO_INIT(blt_rxfifo, 64, 8);
+
+//MYFIFO_INIT(blt_txfifo, 40, 16);
 ////////////////////////////////////////////////////////////////////
 u16	conn_handle;					//	handle of  connection
 u8 	conn_char_handler[8][8] = {{0}};
@@ -797,8 +799,7 @@ void user_init()
 
 	rf_set_power_level_index (RF_POWER_8dBm);
 
-	ble_master_init (pmac);
-	//ble_set_debug_adv_channel (37);
+	ble_master_init (tbl_mac);
 
 	static u32 aasize;
 	aasize = sizeof (st_ll_conn_master_t);

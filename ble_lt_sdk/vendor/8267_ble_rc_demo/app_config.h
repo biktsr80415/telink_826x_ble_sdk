@@ -5,41 +5,16 @@
 extern "C" {
 #endif
 
-#define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
-#define	__LOG_RT_ENABLE__		0
-//#define	__DEBUG_PRINT__			0
-//////////// product  Information  //////////////////////////////
-#define ID_VENDOR				0x248a			// for report
-#define ID_PRODUCT_BASE			0x880C
-#define STRING_VENDOR			L"Telink"
-#define STRING_PRODUCT			L"BLE Remote"
-#define STRING_SERIAL			L"TLSR8267"
-
 #define CHIP_TYPE				CHIP_TYPE_8267		// 8866-24, 8566-32
-#define APPLICATION_DONGLE		0					// or else APPLICATION_DEVICE
-#define	FLOW_NO_OS				1
-
-#define		RF_FAST_MODE_1M		1
-
-#define MAX_DEV_NAME_LEN		18
-//////////////////////CAN NOT CHANGE CONFIG ABOVE ////////////////////////////
 
 
-/////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
-#define HCI_USE_UART	1
-#define HCI_USE_USB		0
-#define HCI_ACCESS		HCI_USE_USB
 
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			1
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_IR_ENABLE					0
-#define HID_MOUSE_ATT_ENABLE			0
 #define BLE_AUDIO_ENABLE				1
-#define	BLS_HCI_PROCESS_ENABLE			0
 
-
-#define DEV_NAME                        "tRemote"
 
 
 ////////////////////////// AUDIO CONFIG /////////////////////////////
@@ -262,10 +237,6 @@ extern "C" {
 #define MODULE_WATCHDOG_ENABLE		0
 #define WATCHDOG_INIT_TIMEOUT		500  //ms
 
-
-
-/////////////open SWS(PB0)  pullup to prevent MCU err, this is must ////////////
-#define PULL_WAKEUP_SRC_PB0					PM_PIN_PULLUP_1M
 
 
 

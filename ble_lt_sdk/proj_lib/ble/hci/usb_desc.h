@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../../proj/usbstd/CDCClassCommon.h"
+
 enum {
 	BTUSB_USB_STRING_LANGUAGE = 0,
 	BTUSB_USB_STRING_VENDOR,
@@ -47,14 +49,15 @@ typedef struct {
 	USB_Descriptor_Endpoint_t iso_out1;
 } BTUSB_Descriptor_Configuration_t;
 
-u8* sniffer_usbdesc_get_language(void);
-u8* sniffer_usbdesc_get_vendor(void);
-u8* sniffer_usbdesc_get_product(void);
-u8* sniffer_usbdesc_get_serial(void);
-u8* sniffer_usbdesc_get_device(void);
-u8* sniffer_usbdesc_get_configuration(void);
-int sniffer_usbdesc_get_configuration_size(void);
+u8* btusb_usbdesc_get_language(void);
+u8* btusb_usbdesc_get_vendor(void);
+u8* btusb_usbdesc_get_product(void);
+u8* btusb_usbdesc_get_serial(void);
+u8* btusb_usbdesc_get_device(void);
+u8* btusb_usbdesc_get_configuration(void);
+int btusb_usbdesc_get_configuration_size(void);
 
+void btusb_select_cdc_device (int en);
 
 ///////////////////////////////////////////////////////////////////////////////
 //typedef void (*usb_bulk_out_callback_t)(u8 *p, int n, int offset);
@@ -74,3 +77,53 @@ void myusb_bulk_out_command (u8 *p, int n, int offset);
 #define CMD_SET_TAPHW_STATE             0x20
 #define CMD_GET_TAPHW_STATE             0x21
 #define CMD_TGPWR_SETUP                 0x22
+
+
+
+//---------------  CDC ----------------------------------
+
+/** Endpoint number of the CDC device-to-host notification IN endpoint. */
+#define CDC_NOTIFICATION_EPNUM         2
+/** Endpoint number of the CDC device-to-host data IN endpoint. */
+#define CDC_TX_EPNUM                   4
+/** Endpoint number of the CDC host-to-device data OUT endpoint. */
+#define CDC_RX_EPNUM                   5
+/** Size in bytes of the CDC device-to-host notification IN endpoint. */
+#define CDC_NOTIFICATION_EPSIZE        8
+/** Size in bytes of the CDC data IN and OUT endpoints. */
+#define CDC_TXRX_EPSIZE                64
+
+enum {
+    USB_STRING_LANGUAGE = 0,
+    USB_STRING_VENDOR,
+    USB_STRING_PRODUCT,
+    USB_STRING_SERIAL,
+};
+
+// interface id
+typedef enum {
+    USB_INTF_CDC_CCI,
+    USB_INTF_CDC_DCI,
+    USB_INTF_MAX,
+} USB_INTF_ID_E;
+
+typedef struct {
+    // CDC Control Interface
+    USB_CDC_Descriptor_FunctionalHeader_t    CDC_Functional_Header;
+    USB_CDC_Descriptor_FunctionalACM_t       CDC_Functional_ACM;
+    USB_CDC_Descriptor_FunctionalUnion_t     CDC_Functional_Union;
+    USB_CDC_Descriptor_FunctionalUnion_t     CDC_Functional_CallManagement;
+    USB_Descriptor_Endpoint_t                CDC_NotificationEndpoint;
+
+    // CDC Data Interface
+    USB_Descriptor_Interface_t               CDC_DCI_Interface;
+    USB_Descriptor_Endpoint_t                CDC_DataOutEndpoint;
+    USB_Descriptor_Endpoint_t                CDC_DataInEndpoint;
+} USB_CDC_Descriptor_t;
+
+typedef struct {
+    USB_Descriptor_Configuration_Header_t Config;
+    USB_Descriptor_Interface_Association_t cdc_iad;
+    USB_Descriptor_Interface_t cdc_interface;
+    USB_CDC_Descriptor_t cdc_descriptor;
+} USB_Descriptor_Configuration_t;

@@ -1,9 +1,6 @@
 
 #pragma once
 
-#ifndef _USER_CONFIG_DEFINED_
-//#error	user_config.h must be include before this
-#endif
 
 
 #ifndef GPIO0_OUTPUT_ENABLE

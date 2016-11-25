@@ -47,7 +47,7 @@ static u8 my_periConnParamChar = CHAR_PROP_READ;
 u16 my_appearance = GAP_APPEARE_UNKNOWN;
 gap_periConnectParams_t my_periConnParameters = {20, 40, 0, 1000};
 
-extern u8  ble_devName[MAX_DEV_NAME_LEN];
+const u8	my_devName[] = {'t','R','e','m','o','t','e'};
 
 // Device Name Characteristic Properties
 static u8 my_PnPCharacter = CHAR_PROP_READ;
@@ -307,7 +307,7 @@ const attribute_t my_Attributes[] = {
 	// 0001 - 0007  gap
 	{7,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_devNameCharacter), 0},
-	{0,ATT_PERMISSIONS_READ,2,MAX_DEV_NAME_LEN, (u8*)(&my_devNameUUID), (u8*)(&ble_devName), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof(my_devName), (u8*)(&my_devNameUUID), (u8*)(my_devName), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_appearanceCharacter), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_appearance), (u8*)(&my_appearanceUIID), 	(u8*)(&my_appearance), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_periConnParamChar), 0},

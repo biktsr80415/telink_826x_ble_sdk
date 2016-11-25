@@ -355,7 +355,7 @@ void 	rf_receiving_pipe_enble(u8 channel_mask);
 #endif
 
 #ifndef		RF_FAST_MODE_1M
-#define		RF_FAST_MODE_1M		0
+#define		RF_FAST_MODE_1M		1
 #endif
 
 #ifndef		RF_FAST_MODE_2M

@@ -293,8 +293,6 @@ void 	rf_receiving_pipe_enble(u8 channel_mask);
 
 void 	rf_update_tp_value (u8 tp0, u8 tp1);
 
-//#define		RF_FAST_MODE_1M		1
-//#define		RF_MODE_250K		1
 
 #ifdef		RF_MODE_250K
 #define		RF_FAST_MODE_2M		0
@@ -302,7 +300,7 @@ void 	rf_update_tp_value (u8 tp0, u8 tp1);
 #endif
 
 #ifndef		RF_FAST_MODE_1M
-#define		RF_FAST_MODE_1M		0
+#define		RF_FAST_MODE_1M		1
 #endif
 
 #ifndef		RF_FAST_MODE_2M

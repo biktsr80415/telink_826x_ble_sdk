@@ -11594,6 +11594,10 @@
 								<option id="com.telink.tc32eclipse.compiler.option.def.1892059570" name="Define Syms (-D)" superClass="com.telink.tc32eclipse.compiler.option.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__PROJECT_8267_MASTER_KMA_DONGLE__=1"/>
 								</option>
+								<option id="com.telink.tc32eclipse.compiler.option.incpath.1129153417" superClass="com.telink.tc32eclipse.compiler.option.incpath" valueType="includePath">
+									<listOptionValue builtIn="false" value="../proj/mcu_spec"/>
+									<listOptionValue builtIn="false" value="../proj/mcu"/>
+								</option>
 								<inputType id="com.telink.tc32eclipse.compiler.TC32Win.input.1000936372" name="C Source Files" superClass="com.telink.tc32eclipse.compiler.TC32Win.input"/>
 							</tool>
 							<tool command="tc32-elf-ld --gc-sections" id="com.telink.tc32eclipse.tool.linker.TC32Win.app.release.1412485752" name="TC32 C Linker" superClass="com.telink.tc32eclipse.tool.linker.TC32Win.app.release">

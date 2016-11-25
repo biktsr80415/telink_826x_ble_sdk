@@ -13,17 +13,22 @@
 #include "../../proj/drivers/adc.h"
 #include "../../proj_lib/ble/blt_config.h"
 
+#define			APP_BTUSB_CDC_CLASS			1
 
 #if (HCI_ACCESS==HCI_USE_UART)
 #include "../../proj/drivers/uart.h"
 #endif
 
-MYFIFO_INIT(hci_tx_fifo, 72, 4);
+#define			HCI_TX_FIFO_NUM		8
+MYFIFO_INIT(hci_tx_fifo, 72, HCI_TX_FIFO_NUM);
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
+
+//MYFIFO_INIT(blt_txfifo, 40, 16);
 ////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////
+int		dongle_pairing_enable;
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
@@ -62,6 +67,27 @@ void rf_customized_param_load(void)
 	 }
 }
 
+void app_led_en (int id, int en)
+{
+	id &= 7;
+	en = !(LED_ON_LEVAL ^ en);
+	if (id == 0)
+	{
+		gpio_write(GPIO_LED_RED, en);
+	}
+	else if (id == 1)
+	{
+		gpio_write(GPIO_LED_GREEN, en);
+	}
+	else if (id == 2)
+	{
+		gpio_write(GPIO_LED_BLUE, en);
+	}
+	else if (id == 3)
+	{
+		gpio_write(GPIO_LED_WHITE, en);
+	}
+}
 //////////////////////////////////////////
 // Service Discovery
 //////////////////////////////////////////
@@ -79,7 +105,7 @@ void app_register_service (void *p)
 int app_l2cap_handler (u16 conn, u8 *raw_pkt)
 {
 	u8 *p = raw_pkt + 12;
-	blc_hci_send_data (conn | BLM_CONN_HANDLE | HCI_FLAG_ACL_BT_STD, p, p[1]);	//can be removed, debug purpose
+	blc_hci_send_data (conn | BLM_CONN_HANDLE | HCI_FLAG_ACL_BT_STD, p, p[1]);	//
 
 	return 0;
 }
@@ -91,8 +117,63 @@ int app_event_callback (u32 h, u8 *p, int n)
 {
 	static u32 event_cb_num;
 	event_cb_num++;
+	int send_to_hci = 1;
 
-	blc_hci_send_data (h, p, n);
+	if (h == (HCI_FLAG_EVENT_BT_STD | HCI_EVT_LE_META))		//LE event
+	{
+		u8 subcode = p[0];
+
+	//------------ ADV packet --------------------------------------------
+		if (subcode == HCI_SUB_EVT_LE_ADVERTISING_REPORT)	// ADV packet
+		{
+			u8 n = (hci_tx_fifo.wptr - hci_tx_fifo.rptr) & 63;
+			if (n >= HCI_TX_FIFO_NUM - 3)
+			{
+				send_to_hci = 0;
+			}
+		}
+
+	//------------ connection complete -------------------------------------
+		else if (subcode == HCI_SUB_EVT_LE_CONNECTION_COMPLETE)	// connection complete
+		{
+			event_connection_complete_t *pc = (event_connection_complete_t *)p;
+			if (!pc->status)							// status OK
+			{
+				conn_handle = pc->handle;				// connection handle
+				app_led_en (conn_handle, 1);
+			}
+		}
+
+	//------------ connection update complete -------------------------------
+		else if (subcode == HCI_SUB_EVT_LE_CONNECTION_UPDATE_COMPLETE)	// connection update
+		{
+
+		}
+	}
+
+	//------------ disconnect -------------------------------------
+	else if (h == (HCI_FLAG_EVENT_BT_STD | HCI_CMD_DISCONNECTION_COMPLETE))		//disconnect
+	{
+
+		event_disconnection_t	*pd = (event_disconnection_t *)p;
+		app_led_en (pd->handle, 0);
+		//terminate reason
+		if(pd->reason == HCI_ERR_CONN_TIMEOUT){
+
+		}
+		else if(pd->reason == HCI_ERR_REMOTE_USER_TERM_CONN){  //0x13
+
+		}
+		else if(pd->reason == SLAVE_TERMINATE_CONN_ACKED || pd->reason == SLAVE_TERMINATE_CONN_TIMEOUT){
+
+		}
+	}
+
+	if (send_to_hci)
+	{
+		blc_hci_send_data (h, p, n);
+	}
+
 	return 0;
 }
 
@@ -112,6 +193,20 @@ int main_idle_loop ()
 	blc_hci_proc ();
 	////////////////////////////////////// UI entry /////////////////////////////////
 	device_led_process();
+
+	dongle_pairing_enable = !gpio_read (SW1_GPIO);
+	static u32 gpio2 = 0;
+	u8 gpio =	!gpio_read (SW2_GPIO);
+	if (gpio & !gpio2)
+	{
+		app_led_en (3, 1);
+		ll_whiteList_reset ();
+		u8 mac[6] = {0xc3, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
+		blm_ll_createConnection (10, 10, 0, 0, mac, 0,	// scan_min scan_wnd policy adr_type mac own_adr_type,
+								  20, 40, 0, 100,  0, 0);	// connection: min max latency timeout ce_min ce_max
+	}
+	gpio2 = gpio;
+
 
 	////////////////////////////////////// USB /////////////////////////////////
 	btusb_handle_irq ();
@@ -135,7 +230,13 @@ void user_init()
 	rf_customized_param_load();  //load customized freq_offset cap value and tp value
 
 	usb_log_init ();
+	REG_ADDR8(0x74) = 0x53;
+	REG_ADDR16(0x7e) = 0x08d0;
+	REG_ADDR8(0x74) = 0x00;
 	btusb_init ();
+
+	btusb_select_cdc_device (APP_BTUSB_CDC_CLASS);
+
 	usb_dp_pullup_en (1);  //open USB enum
 
 	/////////////////// keyboard drive/scan line configuration /////////
@@ -147,7 +248,13 @@ void user_init()
 
 #if (HCI_ACCESS==HCI_USE_USB)
 	usb_bulk_drv_init (0);
+
+#if APP_BTUSB_CDC_CLASS
+	blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
+#else
 	blc_register_hci_handler (blc_acl_from_btusb, blc_hci_tx_to_btusb);
+#endif
+
 #else	//uart
 	//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
 	//todo:uart init here
@@ -172,8 +279,9 @@ void user_init()
 
 	rf_set_power_level_index (RF_POWER_8dBm);
 
-	ble_master_init (pmac);
+	ble_master_init (tbl_mac);
 	blm_ll_setScanEnable (0, 0);
+	//ble_set_debug_adv_channel (37);
 
 	/////////////////////////////////////////////////////////////////
 	//ll_whiteList_reset();

@@ -73,6 +73,7 @@
 //-- OGF --
 #define HCI_CMD_LINK_CTRL_OPCODE_OGF								 0x04  //0x01 <<2 = 0x04
 //-- OCF --
+#define HCI_CMD_INQUIRY                                          	 0x01
 #define HCI_CMD_DISCONNECT                                           0x06
 #define HCI_CMD_READ_REMOTE_VER_INFO                                 0x1D
 
@@ -170,5 +171,11 @@
 #define HCI_CMD_LE_READ_MAX_DATA_LENGTH                              0x2F
 //core_4.2 above
 
-
+// Vendor specific Commands
+//-- OGF --
+#define HCI_CMD_VENDOR_OPCODE_OGF									 0xFC  //0x3f <<2 = 0xFC
+//-- OCF --
+#define HCI_TELINK_READ_REG											 0x01
+#define HCI_TELINK_WRTIE_REG										 0x02
+#define HCI_TELINK_SET_TX_PWR										 0x03
 #endif /* HCI_CONST_H_ */

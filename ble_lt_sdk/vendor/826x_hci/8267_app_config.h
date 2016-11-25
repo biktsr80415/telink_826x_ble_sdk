@@ -5,33 +5,20 @@
 extern "C" {
 #endif
 #if __PROJECT_8267_HCI__
-#define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
-#define	__LOG_RT_ENABLE__		0
-//#define	__DEBUG_PRINT__			0
-//////////// product  Information  //////////////////////////////
-#define ID_VENDOR				0x248a			// for report
-#define ID_PRODUCT_BASE			0x880C
-#define STRING_VENDOR			L"Telink"
-#define STRING_PRODUCT			L"BLE HCI"
-#define STRING_SERIAL			L"TLSR8267"
 
 #define CHIP_TYPE				CHIP_TYPE_8267		// 8866-24, 8566-32
-#define APPLICATION_DONGLE		0					// or else APPLICATION_DEVICE
-#define	FLOW_NO_OS				1
 
-#define		RF_FAST_MODE_1M		1
-
-//////////////////////CAN NOT CHANGE CONFIG ABOVE ////////////////////////////
 
 
 /////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
 #define HCI_USE_UART	1
 #define HCI_USE_USB		0
-#define HCI_ACCESS		HCI_USE_UART
+#define HCI_ACCESS		HCI_USE_USB
 
 /////////////////// Configure /////////////////////////////////
 #define BLE_MODULE_PM_ENABLE				0
 
+#define		CFG_ADR_MAC						0x80fff0
 
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
 #define GPIO_WAKEUP_MODULE					GPIO_PC6   //mcu wakeup module
