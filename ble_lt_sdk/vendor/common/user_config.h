@@ -15,6 +15,8 @@
 	#include "../8267_smp_test/app_config.h"
 #elif (__PROJECT_8267_HCI__)
 	#include "../826x_hci/8267_app_config.h"
+#elif (__PROJECT_8269_HCI__)
+	#include "../826x_hci/8269_app_config.h"
 #elif (__PROJECT_8267_MODULE__)
 	#include "../826x_module/8267_app_config.h"
 #elif (__PROJECT_826X_SPI_MODULE__)
