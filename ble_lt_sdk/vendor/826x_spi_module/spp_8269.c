@@ -136,7 +136,7 @@ u8 host_dat[HOST_BUFF_NUM][SPP_RX_BUFF_SIZE];//4buffers to buffer SPI packets
 u8 host_dat_wptr = 0;
 u8 host_dat_rptr = 0;
 
-u8 p_module_write[64];// = 0x80ffc0;//data packets received from BLE master
+u8 p_module_write[64];//data packets received from BLE master
 
 /**********************************************************************
  * LOCAL FUNCTIONS
