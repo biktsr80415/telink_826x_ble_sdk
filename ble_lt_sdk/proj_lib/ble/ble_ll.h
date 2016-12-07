@@ -116,6 +116,9 @@ void blt_set_bluetooth_version (u8 v);
 #define			BLS_LINK_STATE_ADV			1
 #define			BLS_LINK_STATE_CONN			2
 
+#define			BLS_FLAG_ADV_IN_SLAVE_MODE				BIT(6)
+#define			BLs_FLAG_SCAN_ENABLE					BIT(0)
+
 #define			LL_PACKET_OCTET_TIME(n)				((n) * 8 + 112)
 
 my_fifo_t			blt_rxfifo;
@@ -234,7 +237,13 @@ typedef struct {
 	u8		conn_update;
 
 
+	u8		master_not_ack_slaveAckUpReq;
+	u8		conn_rcvd_ack_pkt;
+	u16		conn_update_inst_diff;
 
+
+	u32		conn_access_code;
+	u32		conn_crc;
 	u32		connExpectTime;
 	int		conn_interval_adjust;
 	u32		conn_timeout;
@@ -249,9 +258,10 @@ typedef struct {
 	u32		conn_offset_next;
 	u32		conn_interval_next;
 	u16		conn_inst_next;
+	u16		conn_std_interval_next; //standard value,  not * 1.25ms
 	u16		conn_latency_next;
 	u16		conn_std_timeout_next;  //standard value,  not *10ms
-	u16		conn_std_interval_next; //standard value,  not * 1.25ms
+
 
 	u8		conn_chn_hop;
 	u8		conn_chn_map[5];
@@ -316,6 +326,7 @@ st_ll_adv_t  blta;
 
 //////////////////////////////////////
 
+typedef int (*advertise_prepare_handler_t) (rf_packet_adv_t * p);
 typedef void (*irq_st_func) (void);
 typedef int (*l2cap_handler_t) (u8 * p);
 typedef int (*l2cap_master_handler_t) (u16 conn, u8 * p);
@@ -346,7 +357,7 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_PAIRING_BEGIN			5
 #define			BLT_EV_FLAG_PAIRING_FAIL			6
 #define			BLT_EV_FLAG_ENCRYPTION_CONN_DONE    7
-#define			BLT_EV_FLAG_USER_TIMER_WAKEUP		8
+#define			BLT_EV_FLAG_RSVD					8
 #define			BLT_EV_FLAG_GPIO_EARLY_WAKEUP		9
 #define			BLT_EV_FLAG_CHN_MAP_REQ				10
 #define			BLT_EV_FLAG_CONN_PARA_REQ			11
@@ -367,7 +378,7 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 
 
 
-typedef int (*hci_event_callback_t) (u32 h, u8 *para, int n);
+typedef int (*hci_event_handler_t) (u32 h, u8 *para, int n);
 
 typedef int (*blt_LTK_req_callback_t)(u8* rand, u16 ediv);
 
@@ -376,6 +387,7 @@ blc_hci_handler_t			blc_master_handler;
 extern my_fifo_t		hci_tx_fifo;
 
 
+void bls_ll_setAdvChannel (u8 chn0, u8 chn1, u8 chn2);
 /******************************* User Interface  ************************************/
 ble_sts_t 	bls_ll_setRandomAddr(u8 *randomAddr);
 ble_sts_t	bls_ll_setAdvData(u8 *data, u8 len);
@@ -390,6 +402,7 @@ ble_sts_t 	bls_ll_setAdvInterval(u16 intervalMin, u16 intervalMax);
 ble_sts_t 	bls_ll_setAdvChannelMap(u8 adv_channelMap);
 ble_sts_t 	bls_ll_setAdvFilterPolicy(u8 advFilterPolicy);
 
+ble_sts_t	bls_ll_setScanEnable (u8 en, u8 duplicate);
 
 ble_sts_t   bls_ll_setAdvDuration (u32 duration_us, u8 duration_en);
 ble_sts_t  	bls_ll_terminateConnection (u8 reason);
@@ -418,13 +431,15 @@ void 		bls_pm_setWakeupSource(u8 source);
 u32 		bls_pm_getSystemWakeupTick(void);
 
 void 		bls_pm_setManualLatency(u16 latency); //manual set latency to save power
-void 		bls_pm_setUserTimerWakeup(u32 tick, u8 enable); //user set timer wakeup
 void 		bls_pm_enableAdvMcuStall(u8 en);
 
 
+typedef 	void (*pm_appWakeupLowPower_callback_t)(int);
+void 		bls_pm_setAppWakeupLowPower(u32 wakeup_tick, u8 enable);
+void 		bls_pm_registerAppWakeupLowPowerCb(pm_appWakeupLowPower_callback_t cb);
+
 // application
 void		bls_app_registerEventCallback (u8 e, blt_event_callback_t p);
-void 		bls_register_event_data_callback (hci_event_callback_t  *event);
 
 
 // ble irq & ble loop
@@ -461,7 +476,7 @@ ble_sts_t 		bls_hci_le_readBufferSize_cmd(u8 *pData);
 ble_sts_t		bls_hci_receiveACLData(u16 connHandle, u8 PB_Flag, u8 BC_Flag, u8 *pData );
 ble_sts_t		bls_hci_sendACLData();
 
-
+void 			bls_hci_registerEventHandler (hci_event_handler_t  *handler);
 
 
 

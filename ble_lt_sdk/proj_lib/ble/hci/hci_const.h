@@ -22,6 +22,8 @@
 
 /****Events****/
 #define HCI_CMD_DISCONNECTION_COMPLETE                               0x05
+
+#define HCI_EVT_REMOTE_NAME_REQ_COMPLETE                             0x07
 #define HCI_EVT_ENCRYPTION_CHANGE                                    0x08
 #define HCI_EVT_CHANGE_LINK_KEY_COMPLETE							 0x09
 #define HCI_EVT_READ_REMOTE_VER_INFO_COMPLETE                        0x0C
@@ -75,7 +77,9 @@
 //-- OCF --
 #define HCI_CMD_INQUIRY                                          	 0x01
 #define HCI_CMD_DISCONNECT                                           0x06
+#define HCI_CMD_READ_REMOTE_NAME_REQ                                 0x19
 #define HCI_CMD_READ_REMOTE_VER_INFO                                 0x1D
+
 
 
 //Controller & Baseband Commands
@@ -84,6 +88,7 @@
 //-- OCF --
 #define HCI_CMD_SET_EVENT_MASK                                       0x01
 #define HCI_CMD_RESET                                                0x03
+#define HCI_CMD_DELETE_STORED_LINK_KEY								 0x12
 #define HCI_CMD_READ_TX_POWER_LEVEL                                  0x2D
 #define HCI_CMD_SET_CONTROLLER_TO_HOST_FLOW_CTRL                     0x31
 #define HCI_CMD_HOST_BUF_SIZE                                        0x33

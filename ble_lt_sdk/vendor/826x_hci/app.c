@@ -145,7 +145,7 @@ void user_init()
 
 	//l2cap initialization
 	blc_l2cap_register_handler (blc_send_acl); 		//send l2cap 2 uart
-	bls_register_event_data_callback(blc_hci_send_data);		//register event callback
+	bls_hci_registerEventHandler(blc_hci_send_data);		//register event callback
 
 	///////////////////// USER application initialization ///////////////////
 #if 0

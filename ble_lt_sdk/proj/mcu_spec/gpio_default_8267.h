@@ -275,7 +275,7 @@
 #define PB7_FUNC	AS_GPIO
 #endif
 #ifndef PULL_WAKEUP_SRC_PB0
-#define PULL_WAKEUP_SRC_PB0	PM_PIN_PULLUP_1M
+#define PULL_WAKEUP_SRC_PB0		PM_PIN_PULLUP_1M  //sws pullup
 #endif
 #ifndef PULL_WAKEUP_SRC_PB1
 #define PULL_WAKEUP_SRC_PB1	0

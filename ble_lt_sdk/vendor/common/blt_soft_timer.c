@@ -75,7 +75,7 @@ int blt_soft_timer_add(blt_timer_callback_t func, u32 interval_us)
 
 
 //timer 本来就是有序的，删除的时候，采用往前覆盖，所以不会破坏顺序，不需要重新排序
-int  blt_soft_timer_delete(u8 index)
+int  blt_soft_timer_delete_by_index(u8 index)
 {
 	if(index >= blt_timer.currentNum){
 		write_reg32(0x8000, 0x11111121); while(1); //debug ERR
@@ -91,10 +91,37 @@ int  blt_soft_timer_delete(u8 index)
 }
 
 
-
-void  	blt_soft_timer_process(u8 e, u8 *p, int n)
+int 	blt_soft_timer_delete(blt_timer_callback_t func)
 {
-	if(e == BLT_EV_FLAG_USER_TIMER_WAKEUP){  //ealry wakeup
+
+
+	for(int i=0; i<blt_timer.currentNum; i++){
+		if(blt_timer.timer[i].cb == func){
+			blt_soft_timer_delete_by_index(i);
+
+			if(i == 0){  //删除的是最近的timer，需要更新时间
+
+				if( (u32)(blt_timer.timer[0].t - clock_time()) < 3000 *  CLOCK_SYS_CLOCK_1MS){
+					bls_pm_setAppWakeupLowPower(blt_timer.timer[0].t,  1);
+				}
+				else{
+					bls_pm_setAppWakeupLowPower(0, 0);  //disable
+				}
+
+			}
+
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+
+
+void  	blt_soft_timer_process(int type)
+{
+	if(type == CALLBACK_ENTRY){ //callback trigger
 
 	}
 
@@ -115,7 +142,7 @@ void  	blt_soft_timer_process(u8 e, u8 *p, int n)
 				result = blt_timer.timer[i].cb();
 
 				if(result < 0){
-					blt_soft_timer_delete(i);
+					blt_soft_timer_delete_by_index(i);
 				}
 				else if(result == 0){
 					change_flg = 1;
@@ -136,13 +163,11 @@ void  	blt_soft_timer_process(u8 e, u8 *p, int n)
 			blt_soft_timer_sort();
 		}
 
-		u32 nearest_timer_diff = (u32)(blt_timer.timer[0].t - now);
-		if( nearest_timer_diff < 2100 *  CLOCK_SYS_CLOCK_1MS){
-			//enable timer early wakeup long suspend(2100ms most)
-			bls_pm_setUserTimerWakeup(nearest_timer_diff/CLOCK_SYS_CLOCK_1US, 1);
+		if( (u32)(blt_timer.timer[0].t - now) < 3000 *  CLOCK_SYS_CLOCK_1MS){
+			bls_pm_setAppWakeupLowPower(blt_timer.timer[0].t,  1);
 		}
 		else{
-			bls_pm_setUserTimerWakeup(0, 0);  //disable
+			bls_pm_setAppWakeupLowPower(0, 0);  //disable
 		}
 
 	}
@@ -152,9 +177,7 @@ void  	blt_soft_timer_process(u8 e, u8 *p, int n)
 
 void 	blt_soft_timer_init(void)
 {
-	//使用 BLT_EV_FLAG_USER_TIMER_WAKEUP 回调，当定时的时间正好处于suspend中时，可以通过
-	//bls_pm_setUserTimerWakeup来提前将suspend唤醒，然后触发BLT_EV_FLAG_USER_TIMER_WAKEUP
-	bls_app_registerEventCallback (BLT_EV_FLAG_USER_TIMER_WAKEUP, &blt_soft_timer_process);
+	bls_pm_registerAppWakeupLowPowerCb(blt_soft_timer_process);
 }
 
 

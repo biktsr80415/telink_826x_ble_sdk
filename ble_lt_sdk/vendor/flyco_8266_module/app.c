@@ -250,7 +250,7 @@ void user_init()
 		blc_register_hci_handler (flyco_rx_from_uart, flyco_tx_to_uart);//customized uart handler
 	#endif
 	extern int ble_event_handler(u32 h, u8 *para, int n);
-	bls_register_event_data_callback(ble_event_handler);		//register event callback
+	bls_hci_registerEventHandler(ble_event_handler);		//register event callback
 	bls_hci_mod_setEventMask_cmd(0x7fff);			//enable all 15 events,event list see ble_ll.h
 
 	// OTA init

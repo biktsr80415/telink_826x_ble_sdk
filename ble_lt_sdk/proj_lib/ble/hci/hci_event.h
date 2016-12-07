@@ -119,6 +119,22 @@ typedef struct {
 } hci_le_longTermKeyRequestEvt_t;
 
 
+/**
+ *  @brief  Definition for HCI Encryption Change event
+ */
+typedef struct {
+	u8         status;
+	u16        connHandle;
+	u8         encryption_enable;
+} hci_le_encryptEnableEvt_t;
+
+/**
+ *  @brief  Definition for HCI Encryption Key Refresh Complete event
+ */
+typedef struct {
+	u8         status;
+	u16        connHandle;
+} hci_le_encryptKeyRefreshEvt_t;
 
 
 
@@ -149,8 +165,10 @@ void hci_le_readRemoteFeaturesComplete_evt(u8 status, u16 connHandle, u8 * featu
 int hci_le_longTermKeyRequest_evt(u16 connHandle, u8* random, u16 ediv, u8* result);
 int hci_le_readLocalP256KeyComplete_evt(u8* localP256Key, u8* result);
 int hci_le_generateDHKeyComplete_evt(u8* DHkey,  u8* result);
+int hci_le_encryptChange_evt(u16 connhandle,  u8 encrypt_en);
+int hci_le_encryptKeyRefresh_evt(u16 connhandle);
 
-
+int hci_remoteNateReqComplete_evt (u8* bd_addr);
 #endif /* HCI_EVENT_H_ */
 
 

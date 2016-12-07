@@ -1,5 +1,14 @@
 #pragma  once
 
+
+
+#define IRQ_USE_AES_CCM_ENABLE			1
+
+#define MAINLOOP_USING					BIT(0)
+#define IRQ_APPLY_USE					BIT(7)
+extern  volatile u8 aes_ccm_using;
+
+
 #define AES_BLOCK_SIZE     16
 
 
@@ -25,10 +34,6 @@ struct CCM_FLAGS_TAG {
 
 typedef struct CCM_FLAGS_TAG ccm_flags_t;
 
-enum AES_OPT {
-    AES_ENCRYPTION = 0,
-    AES_DECRYPTION,
-};
 
 typedef struct {
     union {
@@ -41,8 +46,6 @@ typedef struct {
 } aes_enc_t;
 
 u8 aes_ccmAuthTran(u8 micLen, u8 *key, u8 *iv, u8 *mStr, u16 mStrLen, u8 *aStr, u16 aStrLen, u8 *result);
-u8 aes_ccmEncTran(u8 M, u8 *key, u8 *iv, u8 *mStr, u16 mStrLen, u8 *aStr, u8 aStrLen, u8 *result);
-u8 aes_ccmDecTran(u8 micLen, u8 *key, u8 *iv, u8 *mStr, u16 mStrLen, u8 *aStr, u8 aStrLen, u8 *mic);
 u8 aes_ccmDecAuthTran(u8 micLen, u8 *key, u8 *iv, u8 *mStr, u16 mStrLen, u8 *aStr, u8 aStrLen, u8 *mic);
 u8 aes_initKey(u8 *key);
 u8 aes_encrypt(u8 *key, u8 *data, u8 *result);

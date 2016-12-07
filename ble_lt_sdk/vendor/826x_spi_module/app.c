@@ -113,7 +113,7 @@ u32 module_wakeup_module_tick;
 
 int app_module_busy ()
 {
-	module_is_working = gpio_read(SSPI_PM_WAKEUP_PIN);//̬
+	module_is_working = gpio_read(SSPI_PM_WAKEUP_PIN);//态
 	module_spi_working = spp_task_finished_flg;
 	module_task_busy = module_is_working || module_spi_working;
 	return module_task_busy;
@@ -143,7 +143,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//��module��uart��ݷ�����Ϻ󣬽�GPIO_WAKEUP_MCU���ͻ���(ȡ����user��ô���)
+	//锟斤拷module锟斤拷uart锟斤拷莘锟斤拷锟斤拷锟较后，斤拷GPIO_WAKEUP_MCU锟斤拷锟酵伙拷锟斤拷(取锟斤拷锟斤拷user锟斤拷么锟斤拷锟�
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
@@ -160,7 +160,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //��Ҫ�� GPIO_WAKEUP_MODULE ����
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //锟斤拷要锟斤拷 GPIO_WAKEUP_MODULE 锟斤拷锟斤拷
 	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
@@ -300,7 +300,7 @@ void user_init()
 	sspi_init(SSPI_TX_NOTIFY_PIN, 0x25);//SSPI_TX_NOTIFY_PIN : 8269 EVK G2
 
 	extern void event_handler(u32 h, u8 *para, int n);
-	bls_register_event_data_callback(event_handler);		//register event callback
+	bls_hci_registerEventHandler(event_handler);		//register event callback
 	bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 
 	// OTA init

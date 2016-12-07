@@ -76,7 +76,7 @@ unsigned char uart_tx_is_busy(){
 */
 void uart_Reset(void){
 
-	write_reg8(0x800061,0x08);
+	write_reg8(0x800061,0x80);
 	write_reg8(0x800061,0x00);
 
 }

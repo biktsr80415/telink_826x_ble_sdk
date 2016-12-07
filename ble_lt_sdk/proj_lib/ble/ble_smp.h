@@ -107,6 +107,14 @@ typedef struct{
 	u8  notifyType;
 }smp_key_notify_t;
 
+typedef struct{
+	u8 sc_sk_dhk_own[32];  // keep sk before receive Ea. and keep dhkey after that.
+	u8 sc_pk_own[64];
+	u8 sc_pk_peer[64];
+}smp_sc_key_t;
+
+
+
 /*
  * smp parameter about peer device.
  * */
@@ -153,33 +161,6 @@ typedef struct {  //82
 
 }smp_param_save_t;
 
-typedef struct {  //82
-	u8		peer_addr_type;
-	u8		peer_key_size;  // 0x00 for unpair
-	u8		peer_addr[6];
-	u16		peer_ediv;
-	u8		peer_random[8];
-	u8		peer_ltk[16];
-	u8		peer_csrk[16];
-	u8		peer_irk[16];
-	// key size
-
-}smp_param_save_m_t;  // master parameter
-
-typedef struct {  //82
-//	u8		peer_addr_type;
-	u8		peer_key_size;  // 0x00 for unpair,  others is keysize
-//	u8		peer_addr[6];
-//	u16		peer_ediv;
-//	u8		peer_random[8];
-//	u8		peer_ltk[16];
-//	u8		peer_csrk[16];
-//	u8		peer_irk[16];
-	u8 		own_ltk[16];
-	// key size
-
-}smp_param_save_s_t; //slave parameter
-
 /*
  * smp parameter about own device.
  * */
@@ -190,8 +171,8 @@ typedef struct{
 	u8						own_conn_type;  //current connection peer own type
 	u8						own_conn_addr[6];
 	smp_authReq_t			auth_req;
-	u8						paring_tk[16];
-	u8						paring_confirm[16];
+	u8						paring_tk[16];   // in security connection to keep own random
+	u8						paring_confirm[16];  // in security connection oob mode to keep peer random
 	u8						own_ltk[16];   //used for generate ediv and random
 }smp_param_own_t;
 

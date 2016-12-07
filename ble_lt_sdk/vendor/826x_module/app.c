@@ -274,7 +274,7 @@ void user_init()
 		blc_register_hci_handler(rx_from_uart_cb,tx_to_uart_cb);				//customized uart handler
 	#endif
 	extern void event_handler(u32 h, u8 *para, int n);
-	bls_register_event_data_callback(event_handler);		//register event callback
+	bls_hci_registerEventHandler(event_handler);		//register event callback
 	bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 
 	// OTA init

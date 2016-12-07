@@ -40,8 +40,6 @@ void event_handler(u32 h, u8 *para, int n)
 				break;
 			case BLT_EV_FLAG_ENCRYPTION_CONN_DONE:
 				break;
-			case BLT_EV_FLAG_USER_TIMER_WAKEUP:
-				break;
 			case BLT_EV_FLAG_GPIO_EARLY_WAKEUP:
 				break;
 			case BLT_EV_FLAG_CHN_MAP_REQ:

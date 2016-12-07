@@ -494,6 +494,20 @@ typedef struct{
 }rf_packet_l2cap_req_t;
 
 typedef struct{
+	u8	llid;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
+	u8  rf_len;				//LEN(5)_RFU(3)
+	u16	l2capLen;
+	u16	chanId;
+	u8  opcode;
+	u8	id;
+	u16 data_len;
+	u16 min_interval;
+	u16 max_interval;
+	u16 latency;
+	u16 timeout;
+}rf_packet_l2cap_connParaUpReq_t;
+
+typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
 	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
 	u8  rf_len;				//LEN(5)_RFU(3)
@@ -773,8 +787,6 @@ typedef struct{
 
 
 typedef struct{
-	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-
 	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
 	u8  rf_len;				//LEN(5)_RFU(3)
 

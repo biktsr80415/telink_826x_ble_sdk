@@ -81,7 +81,7 @@
 #define PA7_DATA_STRENGTH	1
 #endif
 #ifndef PA0_DATA_OUT
-#define PA0_DATA_OUT	1   //SWS digital pullup
+#define PA0_DATA_OUT	0
 #endif
 #ifndef PA1_DATA_OUT
 #define PA1_DATA_OUT	0
@@ -129,7 +129,7 @@
 #define PA7_FUNC	AS_GPIO
 #endif
 #ifndef PULL_WAKEUP_SRC_PA0
-#define PULL_WAKEUP_SRC_PA0	0
+#define PULL_WAKEUP_SRC_PA0		PM_PIN_PULLUP_1M  //sws pullup
 #endif
 #ifndef PULL_WAKEUP_SRC_PA1
 #define PULL_WAKEUP_SRC_PA1	0

@@ -18,8 +18,7 @@
 #if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__)
 
 
-#define  USER_TEST_APP_TIMER_EARLY_WAKEUP		0  //test app timer wakeup
-#define  USER_TEST_BLT_SOFT_TIMER				0  //test soft timer
+#define  USER_TEST_BLT_SOFT_TIMER					0  //test soft timer
 
 
 
@@ -155,57 +154,56 @@ void	task_audio (void)
 #endif
 
 
-#if (USER_TEST_APP_TIMER_EARLY_WAKEUP)
-void gpio_test_app_timer_wakeup(u8 e, u8 *p)
+
+#if (USER_TEST_BLT_SOFT_TIMER)
+int gpio_test0(void)
 {
-	static u32 Ctick = 0;
+	//gpio 0 toggle to see the effect
+	//DBG_CHN0_TOGGLE;
 
-	if(clock_time_exceed(Ctick, 23000)){
-		Ctick = clock_time();
-
-		// GPIO toggle
-
-		bls_pm_setUserTimerWakeup(23000 ,1);
-	}
+	return 0;
 }
 
 
-#endif
 
-
-#if (USER_TEST_BLT_SOFT_TIMER)
 int gpio_test1(void)
 {
 	//gpio 1 toggle to see the effect
+	//DBG_CHN1_TOGGLE;
 
-	//20 ms & 40 ms repeat
 	static u8 flg = 0;
 	flg = !flg;
 	if(flg){
-		return 20000; //20ms
+		return 7000;
 	}
 	else{
-		return 40000; // 40ms
+		return 17000;
 	}
-	//return 0;
+
 }
 
 int gpio_test2(void)
 {
 	//gpio 2 toggle to see the effect
+	//DBG_CHN2_TOGGLE;
 
 	//timer last for 5 second
 	if(clock_time_exceed(0, 5000000)){
-		return -1;
+		//return -1;
+		//blt_soft_timer_delete(&gpio_test2);
 	}
 	else{
-		return 0;
+
 	}
+
+	return 0;
 }
 
 int gpio_test3(void)
 {
 	//gpio 3 toggle to see the effect
+	//DBG_CHN3_TOGGLE;
+
 	return 0;
 }
 
@@ -244,6 +242,13 @@ void	task_connect (u8 e, u8 *p, int n)
 {
 
 	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);   //10ms *(99+1) = 1000 ms
+
+}
+
+void	update_done (u8 e, u8 *p, int n)
+{
+
+
 
 }
 
@@ -561,6 +566,8 @@ void user_init()
 	//ble event call back
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
 	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
+	bls_app_registerEventCallback (BLT_EV_FLAG_CHN_MAP_UPDATE, &update_done);
+	bls_app_registerEventCallback (BLT_EV_FLAG_CONN_PARA_UPDATE, &update_done);
 
 
 	///////////////////// keyboard matrix initialization///////////////////
@@ -637,15 +644,13 @@ void user_init()
 
 
 	//////////////// TEST  /////////////////////////
-#if (USER_TEST_APP_TIMER_EARLY_WAKEUP)
-	bls_app_registerEventCallback (BLT_EV_FLAG_USER_TIMER_WAKEUP, &gpio_test_app_timer_wakeup);
-#endif
-
 #if (USER_TEST_BLT_SOFT_TIMER)
 	blt_soft_timer_init();
-	blt_soft_timer_add(&gpio_test1, 40000); //40ms
-	blt_soft_timer_add(&gpio_test2, 27000); //27ms
-	blt_soft_timer_add(&gpio_test3, 43000); //43ms
+	blt_soft_timer_add(&gpio_test0, 23000);
+	blt_soft_timer_add(&gpio_test1, 7000);
+	blt_soft_timer_add(&gpio_test2, 13000);
+	blt_soft_timer_add(&gpio_test3, 27000);
+
 #endif
 
 
@@ -668,7 +673,7 @@ void main_loop ()
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	#if (BLT_SOFTWARE_TIMER_ENABLE)
-		blt_soft_timer_process(0, 0, 0);
+		blt_soft_timer_process(MAINLOOP_ENTRY);
 	#endif
 
 	blt_slave_main_loop ();
@@ -685,7 +690,7 @@ void main_loop ()
 
 	device_led_process();  //led management
 
-
+	//bls_pm_setSuspendMask(SUSPEND_DISABLE);
 	blt_pm_proc();  //power management
 }
 
