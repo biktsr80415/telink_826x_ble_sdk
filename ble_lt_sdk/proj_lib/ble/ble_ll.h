@@ -423,6 +423,11 @@ void 		bls_ll_adjustScanRspTiming( int t_us );
 u8 			bls_ll_getLatestAvgRSSI(void);
 
 
+int			bls_ll_requestConnBrxEventDisable(void);
+void		bls_ll_disableConnBrxEvent(void);
+void		bls_ll_restoreConnBrxEvent(void);
+
+
 
 // power management
 void		bls_pm_setSuspendMask (u8 mask);
@@ -457,13 +462,13 @@ bool			bls_ll_pushTxFifo (u8 *p);
 ble_sts_t 		bls_ll_getLtkVsConnHandleFail (u16 connHandle);
 ble_sts_t  		bls_ll_setLtk (u16 connHandle,  u8*ltk);
 
-void 			blt_ll_setEncryptionBusy(u8 enc_busy);
-bool 			blt_ll_isEncryptionBusy(void);
-void 			blt_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
+void 			blc_ll_setEncryptionBusy(u8 enc_busy);
+bool 			blc_ll_isEncryptionBusy(void);
+void 			blc_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
 
 
 // hci
-ble_sts_t 		blt_data_length_request (u16 tx, u16 txtime);
+ble_sts_t 		blc_data_length_request (u16 tx, u16 txtime);
 ble_sts_t 		bls_hci_mod_setEventMask_cmd(u32 evtMask);
 ble_sts_t 		bls_hci_le_setEventMask_cmd(u16 evtMask);
 ble_sts_t 		bls_hci_le_getLocalSupportedFeatures(u8 *features);

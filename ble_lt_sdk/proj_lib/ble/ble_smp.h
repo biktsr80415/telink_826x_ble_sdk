@@ -260,7 +260,7 @@ typedef enum{
 /*
  * Return STK generate method.
  * */
-int blt_smp_getGenMethod ();
+int blc_smp_getGenMethod ();
 
 /**************************************************
  * 	used for handle link layer callback (ltk event callback), packet LL_ENC_request .
@@ -270,7 +270,7 @@ int bls_smp_getLtkReq (u8 * random, u16 ediv);
 /*
  * Used for set smp parameter to default.
  * */
-void blt_smp_paramInitDefault ( );
+void blc_smp_paramInitDefault ( );
 
 /**************************************************
  * 	used for save parameter in paring buffer
@@ -282,48 +282,48 @@ int bls_smp_setAddress (u8 *p);
  * 	@return  	0 - setting success
  * 				others - pin code not in ranged.(0 ~ 999,999)
  */
-int blt_smp_enableAuthMITM (int en, u32 pinCodeInput);
+int blc_smp_enableAuthMITM (int en, u32 pinCodeInput);
 
 /*************************************************
  * 	@brief 		used for enable authentication bonding flag.
  */
-int blt_smp_enableBonding (int en);
+int blc_smp_enableBonding (int en);
 
 /*************************************************
  * 	used for set IO capability
  * */
-void blt_smp_setIoCapability (u8 ioCapablility);
+void blc_smp_setIoCapability (u8 ioCapablility);
 
 
 /*************************************************
  * 	used for enable oob flag
  */
-void blt_smp_enableOobFlag (int en, u8 *oobData);
+void blc_smp_enableOobFlag (int en, u8 *oobData);
 
 /*************************************************
  * 	used for set MAX key size
  * */
-void blt_smp_setMaxKeySize (u8 maxKeySize);
+void blc_smp_setMaxKeySize (u8 maxKeySize);
 
 /*
  * API used for set distribute key enable.
  * */
-smp_keyDistribution_t blt_smp_setDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
+smp_keyDistribution_t blc_smp_setDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
 
 /*
  * API used for set distribute key enable.
  * */
-smp_keyDistribution_t blt_smp_expectDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
+smp_keyDistribution_t blc_smp_expectDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
 
 /*************************************************
  * 	used for smp save in flash clean.
  */
-void blt_smp_paramFlashClean ();
+void blc_smp_paramFlashClean ();
 
 /*************************************************
  * 	@brief 		used for reset smp param to default value.
  */
-int blt_smp_paramInit ();
+int blc_smp_paramInit ();
 
 /*
  * Used for handle master_self addr and addr type. called from gap

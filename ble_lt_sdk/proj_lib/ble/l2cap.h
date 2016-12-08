@@ -72,6 +72,7 @@
 void		bls_l2cap_requestConnParamUpdate (u16 min_interval, u16 max_interval, u16 latency, u16 timeout);
 
 void		blc_l2cap_register_handler (void *p);
+void 		blc_l2cap_reg_att_cli_hander(void *p);
 int 		blc_l2cap_packet_receive (u8 * p);
 int 		blc_l2cap_send_data (u16 cid, u8 *p, int n);
 int 		blc_send_acl (u8 *p);
