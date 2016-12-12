@@ -253,14 +253,13 @@ typedef struct {
 	u16		conn_latency;
 	u32		conn_duration;
 
-	u32		conn_winsize_next;
-	u32		conn_timeout_next;
-	u32		conn_offset_next;
-	u32		conn_interval_next;
+	u8		conn_new_param;
+	u8		conn_winsize_next;
+	u16     conn_offset_next;
 	u16		conn_inst_next;
-	u16		conn_std_interval_next; //standard value,  not * 1.25ms
+	u16		conn_interval_next; //standard value,  not * 1.25ms
 	u16		conn_latency_next;
-	u16		conn_std_timeout_next;  //standard value,  not *10ms
+	u16		conn_timeout_next;  //standard value,  not *10ms
 
 
 	u8		conn_chn_hop;

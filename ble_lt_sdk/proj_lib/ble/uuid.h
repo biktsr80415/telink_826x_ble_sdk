@@ -23,6 +23,7 @@
 #define GATT_UUID_REPORT_REF             0x2908     //!< Report Reference
 
 #define GATT_UUID_DEVICE_NAME            0x2a00     //!< Report Reference
+#define GATT_UUID_SERVICE_CHANGE		 0x2a05
 #define	GATT_UUID_BATTERY_LEVEL			 0x2A19
 #define	GATT_UUID_FIRMWARE_VER			 0x2a26		//!<Firmware Version
 /** @} end of group GATT_UUID */

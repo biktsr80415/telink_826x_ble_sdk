@@ -553,7 +553,7 @@ void user_init()
 	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
+	u8 status = bls_ll_setAdvParam( 32, ADV_INTERVAL_30MS, \
 									 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
 	if(status != BLE_SUCCESS){  //adv setting err
@@ -690,7 +690,6 @@ void main_loop ()
 
 	device_led_process();  //led management
 
-	//bls_pm_setSuspendMask(SUSPEND_DISABLE);
 	blt_pm_proc();  //power management
 }
 
