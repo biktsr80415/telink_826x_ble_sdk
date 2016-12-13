@@ -15,7 +15,7 @@
 #include "../../proj/drivers/uart.h"
 #endif
 
-
+MYFIFO_INIT(hci_rx_fifo, 72, 2);
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
@@ -67,7 +67,7 @@ int module_task_busy;
 int	module_uart_data_flg;
 
 #define UART_TX_BUSY			( (hci_tx_fifo.rptr != hci_tx_fifo.wptr) || uart_tx_is_busy() )
-#define UART_RX_BUSY			( rx_uart_w_index != rx_uart_r_index )
+#define UART_RX_BUSY			(hci_rx_fifo.rptr != hci_rx_fifo.wptr)
 
 int app_module_busy ()
 {
@@ -115,6 +115,43 @@ void app_power_management ()
 
 #endif
 }
+
+int blc_rx_from_uart (void)
+{
+	if(my_fifo_get(&hci_rx_fifo) == 0)
+	{
+		return 0;
+	}
+
+	u8* p = my_fifo_get(&hci_rx_fifo);
+	u32 rx_len = p[0]; //usually <= 255 so 1 byte should be sufficient
+
+	if (rx_len)
+	{
+		blc_hci_handler(&p[4], rx_len - 4);
+		my_fifo_pop(&hci_rx_fifo);
+	}
+
+
+	return 0;
+}
+
+int blc_hci_tx_to_uart ()
+{
+	uart_data_t T_txdata_buf;
+	u8 *p = my_fifo_get (&hci_tx_fifo);
+	if (p && !uart_tx_is_busy ())
+	{
+		memcpy(&T_txdata_buf.data, p + 2, p[0]+p[1]*256);
+		T_txdata_buf.len = p[0]+p[1]*256 ;
+		if (uart_Send((u8 *)(&T_txdata_buf)))
+		{
+			my_fifo_pop (&hci_tx_fifo);
+		}
+	}
+	return 0;
+}
+
 
 void user_init()
 {
@@ -171,8 +208,6 @@ void user_init()
 	#else	//uart
 		//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
 		//todo:uart init here
-		rx_uart_r_index = 0;
-		rx_uart_w_index = 0;
 #if __PROJECT_8266_HCI__
 		gpio_set_func(GPIO_UTX, AS_UART);
 		gpio_set_func(GPIO_URX, AS_UART);
@@ -184,7 +219,7 @@ void user_init()
 		uart_io_init(UART_GPIO_8267_PB2_PB3);
 #endif
 		CLK16M_UART115200;
-		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
+		uart_BuffInit(hci_rx_fifo_b, hci_rx_fifo.size, hci_tx_fifo_b);
 #if 0
 //		uart_RTSCfg(1, UART_RTS_MODE_MANUAL, 5, 0);	 //no receiving limits required for now
 //		uart_RTSLvlSet(1);

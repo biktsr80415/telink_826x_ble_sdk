@@ -71,15 +71,6 @@ extern "C" {
 #define PB0_DATA_OUT					1
 
 #endif
-/////////////////// set default   ////////////////
-#define	PULL_WAKEUP_SRC_PB1		PM_PIN_PULLDOWN_100K
-#define	PULL_WAKEUP_SRC_PB2		PM_PIN_PULLDOWN_100K
-#define	PULL_WAKEUP_SRC_PB3		PM_PIN_PULLDOWN_100K
-#define	PULL_WAKEUP_SRC_PB6		PM_PIN_PULLDOWN_100K
-#define PB1_INPUT_ENABLE		1
-#define PB2_INPUT_ENABLE		1
-#define PB3_INPUT_ENABLE		1
-#define PB6_INPUT_ENABLE		1
 
 #if 0  //debug GPIO
 	#define	PD0_FUNC							AS_GPIO

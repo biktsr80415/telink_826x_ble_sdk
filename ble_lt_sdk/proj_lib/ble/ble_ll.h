@@ -486,20 +486,12 @@ void 			bls_hci_registerEventHandler (hci_event_handler_t  *handler);
 
 
 
-
-
-
-
-
-
 int blm_send_acl_to_btusb (u16 conn, u8 *p);
 int blc_acl_from_btusb ();
 
 void blc_register_hci_handler (void *prx, void *ptx);
 int blc_hci_rx_from_usb (void);
-int blc_rx_from_uart (void);
 int blc_hci_tx_to_usb (void);
-int blc_hci_tx_to_uart (void);
 int blc_hci_tx_to_btusb (void);
 
 //------------- ATT client function -------------------------------

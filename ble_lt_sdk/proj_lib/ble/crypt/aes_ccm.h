@@ -2,13 +2,6 @@
 
 
 
-#define IRQ_USE_AES_CCM_ENABLE			1
-
-#define MAINLOOP_USING					BIT(0)
-#define IRQ_APPLY_USE					BIT(7)
-extern  volatile u8 aes_ccm_using;
-
-
 #define AES_BLOCK_SIZE     16
 
 

@@ -18,7 +18,7 @@ extern "C" {
 
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_MODULE_PM_ENABLE				1
+#define BLE_MODULE_PM_ENABLE				0
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
@@ -43,22 +43,6 @@ extern "C" {
 #define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 1);}while(0)
 #define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 0);}while(0)
 #define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PC3, 0); gpio_write(GPIO_PC3, 0);}while(0)
-
-
-//////////////////////////// KEYSCAN  GPIO //////////////////////////////////
-#define	 GPIO_LED		0
-#define	MATRIX_ROW_PULL					PM_PIN_PULLDOWN_100K
-#define	MATRIX_COL_PULL					PM_PIN_PULLUP_10K
-
-
-#define	PULL_WAKEUP_SRC_PD3		PM_PIN_PULLDOWN_100K
-
-#define	PULL_WAKEUP_SRC_PD4		PM_PIN_PULLUP_10K
-#define	PULL_WAKEUP_SRC_PD5		PM_PIN_PULLUP_10K
-
-#define PD3_INPUT_ENABLE		1
-#define PD4_INPUT_ENABLE		1
-#define PD5_INPUT_ENABLE		1
 
 
 /////////////////// Clock  /////////////////////////////////

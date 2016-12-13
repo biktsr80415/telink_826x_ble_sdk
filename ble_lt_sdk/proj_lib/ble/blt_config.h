@@ -65,13 +65,6 @@ typedef struct{
     unsigned char data[UART_DATA_LEN];
 }uart_data_t;
 
-//uart_data_t T_txdata_user;
-unsigned char rx_uart_r_index;
-unsigned char rx_uart_w_index;
-uart_data_t T_txdata_buf;
-uart_data_t T_rxdata_user;
-uart_data_t T_rxdata_buf[2];   // data max 252, user must copy rxdata to other Ram,but not use directly
-
 
 ///////////////////////////////////////dbg channels///////////////////////////////////////////
 #ifndef	DBG_CHN0_TOGGLE

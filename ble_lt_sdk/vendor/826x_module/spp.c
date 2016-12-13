@@ -6,6 +6,7 @@
 extern int	module_uart_data_flg;
 extern u32 module_wakeup_module_tick;
 
+extern my_fifo_t hci_rx_fifo;
 extern my_fifo_t hci_tx_fifo;
 extern void app_suspend_exit ();
 ///////////the code below is just for demonstration of the event callback only////////////
@@ -75,20 +76,19 @@ void event_handler(u32 h, u8 *para, int n)
 /////////////////////////////////////blc_register_hci_handler for spp////////////////////////////
 int rx_from_uart_cb (void)//UART data send to Master,we will handler the data as CMD or DATA
 {
-	if(rx_uart_w_index==rx_uart_r_index)  //rx buff empty
+	if(my_fifo_get(&hci_rx_fifo) == 0)
 	{
-        return 0;
+		return 0;
 	}
 
-	u32 rx_len = T_rxdata_buf[rx_uart_r_index].len + 4 > sizeof(T_rxdata_user) ? sizeof(T_rxdata_user) : T_rxdata_buf[rx_uart_r_index].len + 4;
-	memcpy(&T_rxdata_user, &T_rxdata_buf[rx_uart_r_index], rx_len);
-	memset(&T_rxdata_buf[rx_uart_r_index],0,sizeof(uart_data_t));
+	u8* p = my_fifo_get(&hci_rx_fifo);
+	u32 rx_len = p[0]; //usually <= 255 so 1 byte should be sufficient
 
 	if (rx_len)
 	{
-		bls_uart_handler(T_rxdata_user.data, rx_len - 4);//todo:define your own handler for SPP CMD/DATA
+		bls_uart_handler(&p[4], rx_len - 4);
+		my_fifo_pop(&hci_rx_fifo);
 	}
-	rx_uart_r_index = (rx_uart_r_index + 1)&0x01;
 
 	return 0;
 }
@@ -273,6 +273,7 @@ int hci_send_data (u32 h, u8 *para, int n)
 	return 0;
 }
 
+uart_data_t T_txdata_buf;
 int tx_to_uart_cb (void)
 {
 	u8 *p = my_fifo_get (&hci_tx_fifo);

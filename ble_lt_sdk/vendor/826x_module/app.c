@@ -15,7 +15,7 @@
 #include "../../proj/drivers/uart.h"
 #endif
 
-
+MYFIFO_INIT(hci_rx_fifo, 72, 2);
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
@@ -115,7 +115,7 @@ int	module_uart_data_flg;
 u32 module_wakeup_module_tick;
 
 #define UART_TX_BUSY			( (hci_tx_fifo.rptr != hci_tx_fifo.wptr) || uart_tx_is_busy() )
-#define UART_RX_BUSY			( rx_uart_w_index != rx_uart_r_index )
+#define UART_RX_BUSY			(hci_rx_fifo.rptr != hci_rx_fifo.wptr)
 
 int app_module_busy ()
 {
@@ -144,7 +144,9 @@ int app_suspend_enter ()
 
 void app_power_management ()
 {
-
+#if __PROJECT_8266_MODULE__
+	uart_ErrorCLR();
+#endif
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
@@ -178,6 +180,7 @@ void app_power_management ()
 
 #endif
 }
+
 
 void user_init()
 {
@@ -249,8 +252,6 @@ void user_init()
 	#else	//uart
 		//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
 		//todo:uart init here
-		rx_uart_r_index = 0;
-		rx_uart_w_index = 0;
 #if __PROJECT_8266_MODULE__
 		gpio_set_func(GPIO_UTX, AS_UART);
 		gpio_set_func(GPIO_URX, AS_UART);
@@ -267,7 +268,7 @@ void user_init()
 #endif
 		reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX; //clear uart rx/tx status
 		CLK16M_UART115200;
-		uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
+		uart_BuffInit(hci_rx_fifo_b, hci_rx_fifo.size, hci_tx_fifo_b);
 //		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler
 		extern int rx_from_uart_cb (void);
 		extern int tx_to_uart_cb (void);
