@@ -124,7 +124,7 @@ void	spp_test_read (u8 *p, int n)
 	}
 }
 
-void module_onReceiveData(rf_packet_att_write_t *p)
+int module_onReceiveData(rf_packet_att_write_t *p)
 {
 	u8 len = p->l2capLen - 3;
 	if(len > 0)
