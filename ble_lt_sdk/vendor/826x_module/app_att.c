@@ -135,6 +135,7 @@ int module_onReceiveData(rf_packet_att_write_t *p)
 		spp_test_read (&p->value, len);
 		blc_hci_send_data(header, &p->opcode, len + 3);		//HCI_FLAG_EVENT_TLK_MODULE
 	}
+	return 0;
 }
 #endif
 // Include attribute (Battery service)
