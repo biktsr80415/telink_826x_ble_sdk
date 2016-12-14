@@ -142,6 +142,92 @@ static int i2c_nb_read(u16 adr, u8 * buff, int len){
 	return 0;
 }
 
+static unsigned char select_pin_num(u32 gpio_x){
+	unsigned char pinx_num = gpio_x & 0xff;
+	switch(pinx_num){
+		case 0x01:
+			return 0;
+		break;
+		case 0x02:
+			return 1;
+		break;
+		case 0x04:
+			return 2;
+		break;
+		case 0x08:
+			return 3;
+		break;
+		case 0x10:
+			return 4;
+		break;
+		case 0x20:
+			return 5;
+		break;
+		case 0x40:
+			return 6;
+		break;
+		case 0x80:
+			return 7;
+		break;
+		default:
+		break;
+	}
+}
+
+
+void i2c_pin_initial(u32 gpio_sda,u32 gpio_scl){
+	gpio_set_func(gpio_sda,AS_I2C);
+	gpio_set_func(gpio_scl,AS_I2C);
+
+	unsigned char GPIO_num = (unsigned char)(gpio_sda>>8);
+	switch(GPIO_num){
+		case 0x00://////GROUPA_GP3 and GROUPA_GP4
+		write_reg8(0x5b0,read_reg8(0x5b0)|0x18);///enable the i2c function of A3 and A4.   0x5b0[3]and 0x5b0[4],datasheet is error
+		write_reg8(0x5b1,read_reg8(0x5b1)&0x3f);////disable the i2c function of B6 and B7
+		write_reg8(0x5b2,read_reg8(0x5b2)&0xfc);////disable the i2c function of C0 and C1
+
+		gpio_set_input_en(GPIO_PA3,1);////need to set SDA pin with input in SDK.
+		break;
+		case 0x01:///////GROUPB_GP6 and GROUPB_GP7
+		write_reg8(0x5b1,read_reg8(0x5b1)|0xC0);////enable the i2c function of B6 and B7
+		write_reg8(0x5b0,read_reg8(0x5b0)&0xe7);///disable the i2c function of A3 and A4.   0x5b0[3]and 0x5b0[4],datasheet is error
+		write_reg8(0x5b2,read_reg8(0x5b2)&0xfc);////disable the i2c function of C0 and C1
+
+		gpio_set_input_en(GPIO_PB6,1);
+		break;
+		case 0x02:////GROUPC_GP0 and GROUPC_GP1
+		write_reg8(0x5b2,read_reg8(0x5b2)|0x03);////enable the i2c function of C0 and C1
+		write_reg8(0x5b0,read_reg8(0x5b0)&0xe7);///disable the i2c function of A3 and A4.   0x5b0[3]and 0x5b0[4],datasheet is error
+		write_reg8(0x5b1,read_reg8(0x5b1)&0x3f);////disable the i2c function of B6 and B7
+
+		gpio_set_input_en(GPIO_PC0,1);
+		break;
+		default:
+		break;
+	}
+	/////enable internal 10k pull-up resistors of SDA and SCL pin
+	unsigned char sda_anreg_offset = (gpio_sda>>8)<<3;
+	unsigned char scl_anreg_offset = (gpio_scl>>8)<<3;
+	unsigned char sda_pin_no = select_pin_num(gpio_sda);
+	unsigned char scl_pin_no = select_pin_num(gpio_scl);
+
+	unsigned char sda_pullup_reg;
+	unsigned char sda_pullup_bit;
+	sda_pullup_reg = ((sda_anreg_offset+sda_pin_no)*2+4)/8 + 0x0a;
+	sda_pullup_bit = ((sda_anreg_offset+sda_pin_no)*2+4)%8;
+
+	unsigned char scl_pullup_reg;
+	unsigned char scl_pullup_bit;
+	scl_pullup_reg = ((scl_anreg_offset+scl_pin_no)*2+4)/8 + 0x0a;
+	scl_pullup_bit = ((scl_anreg_offset+scl_pin_no)*2+4)%8;
+
+	WriteAnalogReg(sda_pullup_reg,ReadAnalogReg(sda_pullup_reg)&(~ BIT(sda_pullup_bit)));
+	WriteAnalogReg(sda_pullup_reg,ReadAnalogReg(sda_pullup_reg)|BIT(sda_pullup_bit+1));
+
+	WriteAnalogReg(scl_pullup_reg, ReadAnalogReg(scl_pullup_reg)&(~ BIT(scl_pullup_bit)));
+    WriteAnalogReg(scl_pullup_reg, ReadAnalogReg(scl_pullup_reg)|BIT(scl_pullup_bit+1));
+}
+
 void i2c_init(void){
 #if(I2C_USE_SIMULATION)
 	i2c_init();

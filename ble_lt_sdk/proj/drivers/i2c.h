@@ -12,6 +12,7 @@ u8 i2c_sim_read(u8 id, u8 addr);
 void i2c_sim_burst_read(u8 id, u8 addr, u8 *p, int n);
 void i2c_sim_burst_write(u8 id, u8 addr,u8 *p,int n);
 
+void i2c_pin_initial(u32 gpio_sda,u32 gpio_scl);
 void i2c_init (void);
 int i2c_burst_write(u8 id, u16 adr, u8 * buff, int len);
 int i2c_burst_read(u8 id, u16 adr, u8 * buff, int len);
