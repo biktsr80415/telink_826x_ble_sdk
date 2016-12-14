@@ -435,7 +435,6 @@ void user_init()
 		cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
 
 	}
-	gpio_core_wakeup_enable_all(1);
 
 
 	gpio_set_wakeup		(GPIO_WAKEUP_MCU, 1, 1);  // core(gpio) high wakeup suspend

@@ -286,7 +286,6 @@ void user_init()
 
 #if(PM_ENABLE)
 	gpio_set_wakeup(SSPI_PM_WAKEUP_PIN,1,1);//drive pin core(gpio) high wakeup suspend
-	gpio_core_wakeup_enable_all(1);
 
 	GPIO_WAKEUP_MODULE_LOW;
 

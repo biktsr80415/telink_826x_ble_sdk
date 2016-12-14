@@ -216,7 +216,6 @@ void user_init()
 	//Wakeup source configuration
 	gpio_set_wakeup(BRTS_WAKEUP_MODULE, 1, 1);  	   //drive pin core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (BRTS_WAKEUP_MODULE, BRTS_WAKEUP_LEVEL, 1);  //drive pin pad high wakeup deepsleep
-	gpio_core_wakeup_enable_all(1);
 
 	////////////////// SPP initialization ///////////////////////////////////
 	#if (HCI_ACCESS==HCI_USE_USB)
