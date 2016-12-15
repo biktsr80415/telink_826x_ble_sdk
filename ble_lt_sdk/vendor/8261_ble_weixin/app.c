@@ -46,6 +46,7 @@ MYFIFO_INIT(blt_txfifo, 40, 16);
 u8  tbl_mac [] =  {0xef, 0xe1, 0xe2, 0x11, 0x12, 0xc5};
 #else
 u8  tbl_mac [] =  {0xbf, 0x27, 0x96, 0xbe, 0x7c, 0x08};
+u8  tbl_mac_auth[] = {0x08, 0x7c, 0xbe, 0x96, 0x27, 0xbf};
 #endif
 #if 1
 u8	tbl_advData[] = {
@@ -581,7 +582,7 @@ void user_init()
 	}
 
 	extern void	my_att_init (u8 *p_mac, u8 *p_device_type, u8 *p_device_id, u8 *p_key);
-	my_att_init (tbl_mac,
+	my_att_init (tbl_mac_auth,
 			(u8 *) (memcmp (ff_32_byte, CFG_ADR_DEVICE_TYPE, 32) != 0 ? CFG_ADR_DEVICE_ID : "WeChatDev"),
 			(u8 *) (memcmp (ff_32_byte, CFG_ADR_DEVICE_ID, 32) != 0 ? CFG_ADR_DEVICE_ID : "WeChatBluetoothDevice"),
 			WX_ENABLE_AES ? wx_aes_key : 0
