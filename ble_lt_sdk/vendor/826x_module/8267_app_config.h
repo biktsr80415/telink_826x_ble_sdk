@@ -17,7 +17,7 @@ extern "C" {
 #define HCI_ACCESS		HCI_USE_UART
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_MODULE_PM_ENABLE				0
+#define BLE_MODULE_PM_ENABLE				1
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 
