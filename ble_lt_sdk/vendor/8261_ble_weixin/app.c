@@ -15,7 +15,7 @@
 #include "../common/blt_soft_timer.h"
 #include "../../proj_lib/ble/ble_smp.h"
 #include "i2c_interface.h"
-
+#include "uart_sim.h"
 
 #if (__PROJECT_8261_BLE_WEIXIN__)
 
@@ -725,6 +725,8 @@ void user_init()
 	gpio_set_wakeup (GPIO_PC5, 0, 1);
 	gpio_set_wakeup (GPIO_PD2, 0, 1);
 
+	uart_sim_init(GPIO_PD3);
+	uart_sim_send_one_byte(0x55);
 //	blt_soft_timer_delete(0);
 }
 ////////////////////////////////////////////////////////////////////
