@@ -735,18 +735,49 @@ void user_init()
 ////////////////////////////////////////////////////////////////////
 #define		SEND_DAT_HTML		"send to html"
 #define		SEND_DAT_SERVER		"send to server"
+//CC + MAC + 5 BYTE(TYPE) +4BYTE(FW Ver) + 4BYTE(HW Ver) + 1 BYTE(time zone)
 
+u8	ab_op_code[]		= {	0xCC,
+						   	0x08,0x7C,0xBE,0x96,0x27,0xBF,
+						   	0x01,0x01,0x02,0x0A,0x00,
+						   	0x0A,0x00,0x00,0x00,
+						   	0x0B,0x00,0x00,0x01,
+						   	0x08
+						   };
+u8	tmp_buff[256];
 extern int	wx_push_data_request (u8 *pd, int len, int html);
+
+char hex2ascii(u8 bhex)
+{
+	if( bhex < 10 )
+		return (bhex + 0x30);
+	else
+		return (bhex + 0x37);
+}
+
+void convert_hex_to_ascii(u8 *abbuff, u8 *abarray, int len)
+{
+	for(int i=0; i<len; i++)
+	{
+		abbuff[2*i] 	= hex2ascii((abarray[i]>>4)&0x0F);
+		abbuff[2*i+1]	= hex2ascii((abarray[i])&0x0F);
+	}
+}
 
 void proc_ui ()
 {
 	static u32 wx_dbg_sd;
 
 	static u16 key_vol_up, key_vol_down;
+	memset(tmp_buff,0,512);
+	
+	convert_hex_to_ascii(tmp_buff, ab_op_code, sizeof(ab_op_code));
+
 	u32 kk = gpio_read (GPIO_PC5) && gpio_read (GPIO_PC6);
 	if (key_vol_up && !kk)
 	{
-		wx_push_data_request ((u8*)SEND_DAT_HTML, sizeof (SEND_DAT_HTML), 1);
+//		wx_push_data_request ((u8*)SEND_DAT_HTML, sizeof (SEND_DAT_HTML), 1);
+		wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_code), 0);
 		wx_dbg_sd++;
 	}
 	key_vol_up = kk;
@@ -754,7 +785,7 @@ void proc_ui ()
 	kk = gpio_read (GPIO_PD2) && gpio_read (GPIO_PC7);
 	if (key_vol_down && !kk)
 	{
-		wx_push_data_request ((u8*)SEND_DAT_SERVER, sizeof (SEND_DAT_SERVER), 0);
+		wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_code), 0);
 		wx_dbg_sd++;
 	}
 	key_vol_down = kk;
