@@ -737,13 +737,30 @@ void user_init()
 #define		SEND_DAT_SERVER		"send to server"
 //CC + MAC + 5 BYTE(TYPE) +4BYTE(FW Ver) + 4BYTE(HW Ver) + 1 BYTE(time zone)
 
-u8	ab_op_code[]		= {	0xCC,
+u8	ab_op_cc_code[]		= {	0xCC,
 						   	0x08,0x7C,0xBE,0x96,0x27,0xBF,
 						   	0x01,0x01,0x02,0x0A,0x00,
 						   	0x0A,0x00,0x00,0x00,
 						   	0x0B,0x00,0x00,0x01,
 						   	0x08
 						   };
+/*
+u8 ab_op_c3_code[]		= { 0xC3,
+							0xFF,0x00,0x13,0xC3,
+							0x06,0x9E,0x93,0xCC,
+							0xFF,0x00,0x15,0x77,
+							0x02,
+							0x09
+						  };
+*/
+u8 ab_op_c3_code[]		= { 0xC3,
+							0xFE,0x00,0x14,0xC3,
+							0x58,0x53,0x7E,0xD3,		//UTC must be earlier than the UTC got in 0xCC.
+							0x00,0x00,0x00,0x00,
+							0x00,0x00,0x00,0x00,
+							0x00,
+							0x09
+						  };
 u8	tmp_buff[256];
 extern int	wx_push_data_request (u8 *pd, int len, int html);
 
@@ -766,27 +783,44 @@ void convert_hex_to_ascii(u8 *abbuff, u8 *abarray, int len)
 
 void proc_ui ()
 {
-	static u32 wx_dbg_sd;
+	static u32 wx_dbg_sd_1 = 0;
+	static u32 wx_dbg_sd_2 = 0;
 
 	static u16 key_vol_up, key_vol_down;
 	memset(tmp_buff,0,512);
 	
-	convert_hex_to_ascii(tmp_buff, ab_op_code, sizeof(ab_op_code));
-
+	
 	u32 kk = gpio_read (GPIO_PC5) && gpio_read (GPIO_PC6);
 	if (key_vol_up && !kk)
 	{
 //		wx_push_data_request ((u8*)SEND_DAT_HTML, sizeof (SEND_DAT_HTML), 1);
-		wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_code), 0);
-		wx_dbg_sd++;
+		if( wx_dbg_sd_1 == 0 )
+		{
+			convert_hex_to_ascii(tmp_buff, ab_op_cc_code, sizeof(ab_op_cc_code));
+			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_cc_code), 0);
+		}
+		else{
+			convert_hex_to_ascii(tmp_buff, ab_op_c3_code, sizeof(ab_op_c3_code));
+			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_c3_code), 0);			
+		}
+		wx_dbg_sd_1++;
 	}
 	key_vol_up = kk;
 
 	kk = gpio_read (GPIO_PD2) && gpio_read (GPIO_PC7);
 	if (key_vol_down && !kk)
 	{
-		wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_code), 0);
-		wx_dbg_sd++;
+		if( wx_dbg_sd_2 == 0 )
+		{
+			convert_hex_to_ascii(tmp_buff, ab_op_cc_code, sizeof(ab_op_cc_code));
+			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_cc_code), 0);
+		}
+		else{
+			convert_hex_to_ascii(tmp_buff, ab_op_c3_code, sizeof(ab_op_c3_code));
+			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_c3_code), 0);			
+		}
+		wx_dbg_sd_2++;
+
 	}
 	key_vol_down = kk;
 }
