@@ -761,15 +761,39 @@ u8 ab_op_c3_code[]		= { 0xC3,
 							0x00,
 							0x09
 						  };
-u8	tmp_buff[256];
+u8	tmp_buff[512];
+u8 	tmp_buff_revert[512];
 extern int	wx_push_data_request (u8 *pd, int len, int html);
-
-char hex2ascii(u8 bhex)
+////////////////////////////////////////////////////////
+///////////////////		hex & ascii func 	////////////////
+////////////////////////////////////////////////////////
+char hex2ascii(u8 bhex)	//input data should be [0x00,0x0F].
 {
 	if( bhex < 10 )
-		return (bhex + 0x30);
+		return (bhex + 0x30);		//return (bhex + '0');
 	else
-		return (bhex + 0x37);
+		return (bhex + 0x37);		//return (bhex - 0x0a + 'A');
+//		return (bhex - 0x0a + 'a');
+}
+
+u8	ascii2hex( u8 bascii)	//input data should be [0,9]|[A,F]|[a,f]
+{
+#if 0	
+		if( bascii >= '0' && bascii <= '9')
+			return ( bascii - '0' );
+		else if( bascii >= 'A' && bascii <= 'F' )
+			return ( 0x0a + bascii - 'A' );
+		else
+			return ( 0x0a + bascii - 'a' );
+#else
+		//simpler and can work correctly when input data is as requested.
+		if( bascii <= '9' )
+			return ( bascii - '0' );
+		else if( bascii <= 'F' )
+			return ( 0x0a + bascii - 'A' );
+		else
+			return ( 0x0a + bascii - 'a' );
+#endif
 }
 
 void convert_hex_to_ascii(u8 *abbuff, u8 *abarray, int len)
@@ -779,6 +803,18 @@ void convert_hex_to_ascii(u8 *abbuff, u8 *abarray, int len)
 		abbuff[2*i] 	= hex2ascii((abarray[i]>>4)&0x0F);
 		abbuff[2*i+1]	= hex2ascii((abarray[i])&0x0F);
 	}
+	return;
+}
+
+void convert_ascii_to_hex(u8 *abbuff, u8 *abarray, int len)
+{
+//	memset(abbuff,0xff,len/2);//not necessary.
+	for( int i=0; i<len; i+=2 )
+	{
+		abbuff[i/2]  = ascii2hex(abarray[i])<<4;
+		abbuff[i/2] |= ascii2hex(abarray[i+1]);
+	}
+	return;
 }
 
 void proc_ui ()
@@ -787,7 +823,7 @@ void proc_ui ()
 	static u32 wx_dbg_sd_2 = 0;
 
 	static u16 key_vol_up, key_vol_down;
-	memset(tmp_buff,0,512);
+//	memset(tmp_buff,0,sizeof(tmp_buff));	//not necessary.
 	
 	
 	u32 kk = gpio_read (GPIO_PC5) && gpio_read (GPIO_PC6);
@@ -832,11 +868,20 @@ u32 tick_loop;
 unsigned short battValue[20];
 
 extern u8	blt_slave_main_loop (void);
+u8 test_data[256];
 
 void main_loop ()
 {
 	tick_loop ++;
-
+#if 0
+	//check hex2ascii & ascii2hex.
+	foreach_arr(i,test_data){
+		test_data[i] = i;
+	}
+	convert_hex_to_ascii(tmp_buff, test_data, sizeof(test_data));
+	convert_ascii_to_hex(tmp_buff_revert,tmp_buff,sizeof(test_data)*2);
+	while(1);
+#endif
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	#if (BLT_SOFTWARE_TIMER_ENABLE)
 		blt_soft_timer_process(MAINLOOP_ENTRY);
