@@ -362,8 +362,8 @@ int wx_gen_auth_request(uint8_t *pd, uint8_t *device_id, uint8_t * p_md5, uint8_
 		memcpy (tbuf, tbuf + id_len, 12);
 		aes_cbc_pks7_enc (tbuf, tbuf, 12, key);
 	}
-	wxn = wx_pack_auth_request(pd + 8, 224, p_md5, key ? tbuf : 0, p_mac);
-
+//	wxn = wx_pack_auth_request(pd + 8, 224, p_md5, key ? tbuf : 0, p_mac);
+	wxn = wx_pack_auth_request(pd + 8, 224, 0, key ? tbuf : 0, p_mac);
 	wxn = wx_pack_request (pd, wxn, ECI_req_auth, 0);
 	return wxn;
 }

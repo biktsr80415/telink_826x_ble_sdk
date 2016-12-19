@@ -15,7 +15,7 @@
 #include "../common/blt_soft_timer.h"
 #include "../../proj_lib/ble/ble_smp.h"
 #include "i2c_interface.h"
-
+#include "uart_sim.h"
 
 #if (__PROJECT_8261_BLE_WEIXIN__)
 
@@ -46,6 +46,7 @@ MYFIFO_INIT(blt_txfifo, 40, 16);
 u8  tbl_mac [] =  {0xef, 0xe1, 0xe2, 0x11, 0x12, 0xc5};
 #else
 u8  tbl_mac [] =  {0xbf, 0x27, 0x96, 0xbe, 0x7c, 0x08};
+u8  tbl_mac_auth[] = {0x08, 0x7c, 0xbe, 0x96, 0x27, 0xbf};
 #endif
 #if 1
 u8	tbl_advData[] = {
@@ -581,7 +582,7 @@ void user_init()
 	}
 
 	extern void	my_att_init (u8 *p_mac, u8 *p_device_type, u8 *p_device_id, u8 *p_key);
-	my_att_init (tbl_mac,
+	my_att_init (tbl_mac_auth,
 			(u8 *) (memcmp (ff_32_byte, CFG_ADR_DEVICE_TYPE, 32) != 0 ? CFG_ADR_DEVICE_ID : "WeChatDev"),
 			(u8 *) (memcmp (ff_32_byte, CFG_ADR_DEVICE_ID, 32) != 0 ? CFG_ADR_DEVICE_ID : "WeChatBluetoothDevice"),
 			WX_ENABLE_AES ? wx_aes_key : 0
@@ -725,6 +726,8 @@ void user_init()
 	gpio_set_wakeup (GPIO_PC5, 0, 1);
 	gpio_set_wakeup (GPIO_PD2, 0, 1);
 
+	uart_sim_init(GPIO_PD3);
+	uart_sim_send_one_byte(0x55);
 //	blt_soft_timer_delete(0);
 }
 ////////////////////////////////////////////////////////////////////
@@ -732,27 +735,128 @@ void user_init()
 ////////////////////////////////////////////////////////////////////
 #define		SEND_DAT_HTML		"send to html"
 #define		SEND_DAT_SERVER		"send to server"
+//CC + MAC + 5 BYTE(TYPE) +4BYTE(FW Ver) + 4BYTE(HW Ver) + 1 BYTE(time zone)
 
+u8	ab_op_cc_code[]		= {	0xCC,
+						   	0x08,0x7C,0xBE,0x96,0x27,0xBF,
+						   	0x01,0x01,0x02,0x0A,0x00,
+						   	0x0A,0x00,0x00,0x00,
+						   	0x0B,0x00,0x00,0x01,
+						   	0x08
+						   };
+/*
+u8 ab_op_c3_code[]		= { 0xC3,
+							0xFF,0x00,0x13,0xC3,
+							0x06,0x9E,0x93,0xCC,
+							0xFF,0x00,0x15,0x77,
+							0x02,
+							0x09
+						  };
+*/
+u8 ab_op_c3_code[]		= { 0xC3,
+							0xFE,0x00,0x14,0xC3,
+							0x58,0x53,0x7E,0xD3,		//UTC must be earlier than the UTC got in 0xCC.
+							0x00,0x00,0x00,0x00,
+							0x00,0x00,0x00,0x00,
+							0x00,
+							0x09
+						  };
+u8	tmp_buff[512];
+u8 	tmp_buff_revert[512];
 extern int	wx_push_data_request (u8 *pd, int len, int html);
+////////////////////////////////////////////////////////
+///////////////////		hex & ascii func 	////////////////
+////////////////////////////////////////////////////////
+char hex2ascii(u8 bhex)	//input data should be [0x00,0x0F].
+{
+	if( bhex < 10 )
+		return (bhex + 0x30);		//return (bhex + '0');
+	else
+		return (bhex + 0x37);		//return (bhex - 0x0a + 'A');
+//		return (bhex - 0x0a + 'a');
+}
+
+u8	ascii2hex( u8 bascii)	//input data should be [0,9]|[A,F]|[a,f]
+{
+#if 0	
+		if( bascii >= '0' && bascii <= '9')
+			return ( bascii - '0' );
+		else if( bascii >= 'A' && bascii <= 'F' )
+			return ( 0x0a + bascii - 'A' );
+		else
+			return ( 0x0a + bascii - 'a' );
+#else
+		//simpler and can work correctly when input data is as requested.
+		if( bascii <= '9' )
+			return ( bascii - '0' );
+		else if( bascii <= 'F' )
+			return ( 0x0a + bascii - 'A' );
+		else
+			return ( 0x0a + bascii - 'a' );
+#endif
+}
+
+void convert_hex_to_ascii(u8 *abbuff, u8 *abarray, int len)
+{
+	for(int i=0; i<len; i++)
+	{
+		abbuff[2*i] 	= hex2ascii((abarray[i]>>4)&0x0F);
+		abbuff[2*i+1]	= hex2ascii((abarray[i])&0x0F);
+	}
+	return;
+}
+
+void convert_ascii_to_hex(u8 *abbuff, u8 *abarray, int len)
+{
+//	memset(abbuff,0xff,len/2);//not necessary.
+	for( int i=0; i<len; i+=2 )
+	{
+		abbuff[i/2]  = ascii2hex(abarray[i])<<4;
+		abbuff[i/2] |= ascii2hex(abarray[i+1]);
+	}
+	return;
+}
 
 void proc_ui ()
 {
-	static u32 wx_dbg_sd;
+	static u32 wx_dbg_sd_1 = 0;
+	static u32 wx_dbg_sd_2 = 0;
 
 	static u16 key_vol_up, key_vol_down;
+//	memset(tmp_buff,0,sizeof(tmp_buff));	//not necessary.
+	
+	
 	u32 kk = gpio_read (GPIO_PC5) && gpio_read (GPIO_PC6);
 	if (key_vol_up && !kk)
 	{
-		wx_push_data_request ((u8*)SEND_DAT_HTML, sizeof (SEND_DAT_HTML), 1);
-		wx_dbg_sd++;
+//		wx_push_data_request ((u8*)SEND_DAT_HTML, sizeof (SEND_DAT_HTML), 1);
+		if( wx_dbg_sd_1 == 0 )
+		{
+			convert_hex_to_ascii(tmp_buff, ab_op_cc_code, sizeof(ab_op_cc_code));
+			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_cc_code), 0);
+		}
+		else{
+			convert_hex_to_ascii(tmp_buff, ab_op_c3_code, sizeof(ab_op_c3_code));
+			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_c3_code), 0);			
+		}
+		wx_dbg_sd_1++;
 	}
 	key_vol_up = kk;
 
 	kk = gpio_read (GPIO_PD2) && gpio_read (GPIO_PC7);
 	if (key_vol_down && !kk)
 	{
-		wx_push_data_request ((u8*)SEND_DAT_SERVER, sizeof (SEND_DAT_SERVER), 0);
-		wx_dbg_sd++;
+		if( wx_dbg_sd_2 == 0 )
+		{
+			convert_hex_to_ascii(tmp_buff, ab_op_cc_code, sizeof(ab_op_cc_code));
+			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_cc_code), 0);
+		}
+		else{
+			convert_hex_to_ascii(tmp_buff, ab_op_c3_code, sizeof(ab_op_c3_code));
+			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_c3_code), 0);			
+		}
+		wx_dbg_sd_2++;
+
 	}
 	key_vol_down = kk;
 }
@@ -764,11 +868,20 @@ u32 tick_loop;
 unsigned short battValue[20];
 
 extern u8	blt_slave_main_loop (void);
+u8 test_data[256];
 
 void main_loop ()
 {
 	tick_loop ++;
-
+#if 0
+	//check hex2ascii & ascii2hex.
+	foreach_arr(i,test_data){
+		test_data[i] = i;
+	}
+	convert_hex_to_ascii(tmp_buff, test_data, sizeof(test_data));
+	convert_ascii_to_hex(tmp_buff_revert,tmp_buff,sizeof(test_data)*2);
+	while(1);
+#endif
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	#if (BLT_SOFTWARE_TIMER_ENABLE)
 		blt_soft_timer_process(MAINLOOP_ENTRY);
