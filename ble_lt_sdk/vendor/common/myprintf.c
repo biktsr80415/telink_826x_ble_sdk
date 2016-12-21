@@ -14,10 +14,10 @@
 #define va_arg(ap,t)      ((t *)(ap += sizeof(t)))[-1]
 
 #ifndef		BIT_INTERVAL
-#define		BIT_INTERVAL	(CLOCK_SYS_CLOCK_HZ/115200)
+#define		BIT_INTERVAL	(CLOCK_SYS_CLOCK_HZ/PRINT_BAUD_RATE)
 #endif
 
-static void uart_put_char(u8 byte){
+_attribute_ram_code_ static void uart_put_char(u8 byte){
 	u8 j = 0;
 	u32 t1 = 0,t2 = 0;
 	
