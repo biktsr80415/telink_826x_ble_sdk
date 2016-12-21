@@ -16,6 +16,7 @@
 #include "../../proj_lib/ble/ble_smp.h"
 #include "i2c_interface.h"
 #include "uart_sim.h"
+#include "ls_wx.h"
 
 #if (__PROJECT_8261_BLE_WEIXIN__)
 
@@ -744,15 +745,7 @@ u8	ab_op_cc_code[]		= {	0xCC,
 						   	0x0B,0x00,0x00,0x01,
 						   	0x08
 						   };
-/*
-u8 ab_op_c3_code[]		= { 0xC3,
-							0xFF,0x00,0x13,0xC3,
-							0x06,0x9E,0x93,0xCC,
-							0xFF,0x00,0x15,0x77,
-							0x02,
-							0x09
-						  };
-*/
+
 u8 ab_op_c3_code[]		= { 0xC3,
 							0xFE,0x00,0x14,0xC3,
 							0x58,0x53,0x7E,0xD3,		//UTC must be earlier than the UTC got in 0xCC.
@@ -764,58 +757,6 @@ u8 ab_op_c3_code[]		= { 0xC3,
 u8	tmp_buff[512];
 u8 	tmp_buff_revert[512];
 extern int	wx_push_data_request (u8 *pd, int len, int html);
-////////////////////////////////////////////////////////
-///////////////////		hex & ascii func 	////////////////
-////////////////////////////////////////////////////////
-char hex2ascii(u8 bhex)	//input data should be [0x00,0x0F].
-{
-	if( bhex < 10 )
-		return (bhex + 0x30);		//return (bhex + '0');
-	else
-		return (bhex + 0x37);		//return (bhex - 0x0a + 'A');
-//		return (bhex - 0x0a + 'a');
-}
-
-u8	ascii2hex( u8 bascii)	//input data should be [0,9]|[A,F]|[a,f]
-{
-#if 0	
-		if( bascii >= '0' && bascii <= '9')
-			return ( bascii - '0' );
-		else if( bascii >= 'A' && bascii <= 'F' )
-			return ( 0x0a + bascii - 'A' );
-		else
-			return ( 0x0a + bascii - 'a' );
-#else
-		//simpler and can work correctly when input data is as requested.
-		if( bascii <= '9' )
-			return ( bascii - '0' );
-		else if( bascii <= 'F' )
-			return ( 0x0a + bascii - 'A' );
-		else
-			return ( 0x0a + bascii - 'a' );
-#endif
-}
-
-void convert_hex_to_ascii(u8 *abbuff, u8 *abarray, int len)
-{
-	for(int i=0; i<len; i++)
-	{
-		abbuff[2*i] 	= hex2ascii((abarray[i]>>4)&0x0F);
-		abbuff[2*i+1]	= hex2ascii((abarray[i])&0x0F);
-	}
-	return;
-}
-
-void convert_ascii_to_hex(u8 *abbuff, u8 *abarray, int len)
-{
-//	memset(abbuff,0xff,len/2);//not necessary.
-	for( int i=0; i<len; i+=2 )
-	{
-		abbuff[i/2]  = ascii2hex(abarray[i])<<4;
-		abbuff[i/2] |= ascii2hex(abarray[i+1]);
-	}
-	return;
-}
 
 void proc_ui ()
 {
@@ -823,21 +764,36 @@ void proc_ui ()
 	static u32 wx_dbg_sd_2 = 0;
 
 	static u16 key_vol_up, key_vol_down;
+
+	int 	data_len = 0;
 //	memset(tmp_buff,0,sizeof(tmp_buff));	//not necessary.
-	
-	
+
 	u32 kk = gpio_read (GPIO_PC5) && gpio_read (GPIO_PC6);
 	if (key_vol_up && !kk)
 	{
 //		wx_push_data_request ((u8*)SEND_DAT_HTML, sizeof (SEND_DAT_HTML), 1);
 		if( wx_dbg_sd_1 == 0 )
 		{
-			convert_hex_to_ascii(tmp_buff, ab_op_cc_code, sizeof(ab_op_cc_code));
-			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_cc_code), 0);
+
+			data_len = ls_set_cc_cmd(	tmp_buff,
+										&ab_op_cc_code[1],
+										&ab_op_cc_code[1+6],
+										&ab_op_cc_code[1+6+5],
+										&ab_op_cc_code[1+6+5+4],
+										0x08);
+			wx_push_data_request ((u8*)tmp_buff, data_len, 0);
 		}
 		else{
-			convert_hex_to_ascii(tmp_buff, ab_op_c3_code, sizeof(ab_op_c3_code));
-			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_c3_code), 0);			
+
+			data_len = ls_set_c3_cmd(	tmp_buff,
+										&ab_op_c3_code[1],
+										//0x58537ED3,
+										0xD37E5358|((u32)rand() << 16),		//stored in small endian in compiler. so need to set 0x58 to lowest.
+										0,
+										0,
+										0x01,
+										0x09);
+			wx_push_data_request ((u8*)tmp_buff, data_len, 0);
 		}
 		wx_dbg_sd_1++;
 	}
@@ -848,12 +804,24 @@ void proc_ui ()
 	{
 		if( wx_dbg_sd_2 == 0 )
 		{
-			convert_hex_to_ascii(tmp_buff, ab_op_cc_code, sizeof(ab_op_cc_code));
-			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_cc_code), 0);
+			data_len = ls_set_cc_cmd(	tmp_buff,
+										&ab_op_cc_code[1],
+										&ab_op_cc_code[1+6],
+										&ab_op_cc_code[1+6+5],
+										&ab_op_cc_code[1+6+5+4],
+										0x08);
+			wx_push_data_request ((u8*)tmp_buff, data_len, 0);
 		}
 		else{
-			convert_hex_to_ascii(tmp_buff, ab_op_c3_code, sizeof(ab_op_c3_code));
-			wx_push_data_request ((u8*)tmp_buff, 2*sizeof (ab_op_c3_code), 0);			
+			data_len = ls_set_c3_cmd(	tmp_buff,
+										&ab_op_c3_code[1],
+										//0x58537ED3,
+										0xD37E5358|((u32)rand() << 16),		//stored in small endian in compiler. so need to set 0x58 to lowest.
+										0,
+										0,
+										0x01,
+										0x09);
+			wx_push_data_request ((u8*)tmp_buff, data_len, 0);
 		}
 		wx_dbg_sd_2++;
 
