@@ -37,6 +37,37 @@ _attribute_ram_code_ void irq_handler(void)
 #endif
 }
 
+//please take 826x BLE SDK Developer Handbook for reference(page 24).
+//         8266 512K flash address setting:
+//
+//          0x80000 |~~~~~~~~~~~~~~~~~~|
+//                  |  user data area  |
+//          0x78000 |~~~~~~~~~~~~~~~~~~|
+//                  |  customed value  |
+//          0x77000 |~~~~~~~~~~~~~~~~~~|
+//                  |    MAC address   |
+//          0x76000 |~~~~~~~~~~~~~~~~~~|
+//                  |    pair & sec    |
+//                  |       info       |
+//          0x74000 |~~~~~~~~~~~~~~~~~~|
+//                  |   ota_boot_flg   |
+//          0x73000 |~~~~~~~~~~~~~~~~~~|
+//                  |   ota_boot.bin   |
+//          0x72000 |~~~~~~~~~~~~~~~~~~|
+//                  |  user data area  |
+//                  |                  |
+//                  |                  |
+//          0x40000 |~~~~~~~~~~~~~~~~~~|
+//                  |   OTA new bin    |
+//                  |   storage area   |
+//                  |                  |
+//          0x20000 |~~~~~~~~~~~~~~~~~~|
+//                  | old firmwave bin |
+//                  |                  |
+//                  |                  |
+//          0x00000 |~~~~~~~~~~~~~~~~~~|
+
+////OTA BOOT BIN: .\tcdb.exe wf 72000 -eb -i "E:\Telink_BLE\826x module sdk\826x module sdk git tmp\ble_lt_app\ble_lt_sdk\8266_ota_boot\8266_ota_boot.bin"
 int main (void) {
 	cpu_wakeup_init();
 

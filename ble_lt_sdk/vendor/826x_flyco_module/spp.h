@@ -15,7 +15,7 @@
 //#define IS_FLYCO_SPP_DATA(p)          (!((p[0] == 0x46) && (p[1] == 0x4c) && (p[2] == 0x59) && (p[3] == 0x43) && (p[4] == 0x4F)))
 #define IS_FLYCO_SPP_DATA(p)          (((p[0] == 0xA5) || (p[0] == 0x5A)) && p[15] == 0xAA)
 
-//ACK//0x66,0x65,0x69,0x6b,0x65
+// ACK FLYCO_spp cmd
 #define IS_FLYCO_SPP_CMD_ACK(p)        ((p[0] == 0x66) && (p[1] == 0x65) && (p[2] == 0x69) && (p[3] == 0x6b) && (p[4] == 0x65))
 
 // Definition for FLYCO SPP command header
@@ -137,16 +137,44 @@ typedef struct {
 /*********************************************************************
  * GLOBAL VARIABLES
  */
+//please take 826x BLE SDK Developer Handbook for reference(page 24).
+//         8266 512K flash address setting:
+//          0x80000 |~~~~~~~~~~~~~~~~~~|
+//                  |  user data area  |
+//          0x78000 |~~~~~~~~~~~~~~~~~~|
+//                  |  customed value  |
+//          0x77000 |~~~~~~~~~~~~~~~~~~|
+//                  |    MAC address   |
+//          0x76000 |~~~~~~~~~~~~~~~~~~|
+//                  |    pair & sec    |
+//                  |       info       |
+//          0x74000 |~~~~~~~~~~~~~~~~~~|
+//                  |   ota_boot_flg   |
+//          0x73000 |~~~~~~~~~~~~~~~~~~|
+//                  |   ota_boot.bin   |
+//          0x72000 |~~~~~~~~~~~~~~~~~~|
+//                  |  user data area  |
+//                  |                  |
+//                  |                  |
+//          0x40000 |~~~~~~~~~~~~~~~~~~|
+//                  |   OTA new bin    |
+//                  |   storage area   |
+//                  |                  |
+//          0x20000 |~~~~~~~~~~~~~~~~~~|
+//                  | old firmwave bin |
+//                  |                  |
+//                  |                  |
+//          0x00000 |~~~~~~~~~~~~~~~~~~|
 //////////////////////User data in FLASH//////////////////////
-#define				BAUD_RATE_ADDR        0x55000
-#define				RF_POWER_ADDR         0x56000
-#define				IDENTIFIED_ADDR       0x57000
-#define				ADV_TIMEOUT_ADDR      0x58000
-#define				DEV_NAME1_ADDR        0x59000
-#define				DEV_NAME2_ADDR        0x5a000
-#define				DEV_NAME_ADDR         0x5b000
-#define				ADV_DATA_ADDR         0x5c000
-#define				ADV_INTERVAL_ADDR     0x5d000
+#define				BAUD_RATE_ADDR        0x69000
+#define				RF_POWER_ADDR         0x6a000
+#define				IDENTIFIED_ADDR       0x6b000
+#define				ADV_TIMEOUT_ADDR      0x6c000
+#define				DEV_NAME1_ADDR        0x6d000
+#define				DEV_NAME2_ADDR        0x6e000
+#define				DEV_NAME_ADDR         0x6f000
+#define				ADV_DATA_ADDR         0x70000
+#define				ADV_INTERVAL_ADDR     0x71000
 
 //used to indicate para address index
 typedef struct{
@@ -166,15 +194,15 @@ nv_manage_t adv_data_manage;
 nv_manage_t adv_interval_manage;
 
 typedef enum {
-	NV_FLYCO_ITEM_BAUD_RATE,   //0 0x55000
-	NV_FLYCO_ITEM_RF_POWER,    //1 0x56000
-	NV_FLYCO_ITEM_IDENTIFIED,  //2 0x57000
-	NV_FLYCO_ITEM_ADV_TIMEOUT, //3 0x58000
-	NV_FLYCO_ITEM_DEV_NAME1,   //4 0x59000
-	NV_FLYCO_ITEM_DEV_NAME2,   //5 0x5a000
-	NV_FLYCO_ITEM_DEV_NAME,    //6 0x5b000
-	NV_FLYCO_ITEM_ADV_DATA,    //7 0x5c000
-	NV_FLYCO_ITEM_ADV_INTERVAL,//8 0x5d000
+	NV_FLYCO_ITEM_BAUD_RATE,   //0 0x69000
+	NV_FLYCO_ITEM_RF_POWER,    //1 0x6a000
+	NV_FLYCO_ITEM_IDENTIFIED,  //2 0x6b000
+	NV_FLYCO_ITEM_ADV_TIMEOUT, //3 0x6c000
+	NV_FLYCO_ITEM_DEV_NAME1,   //4 0x6d000
+	NV_FLYCO_ITEM_DEV_NAME2,   //5 0x6e000
+	NV_FLYCO_ITEM_DEV_NAME,    //6 0x6f000
+	NV_FLYCO_ITEM_ADV_DATA,    //7 0x70000
+	NV_FLYCO_ITEM_ADV_INTERVAL,//8 0x71000
 } nv_flycoItemId_t;
 
 /*********************************************************************

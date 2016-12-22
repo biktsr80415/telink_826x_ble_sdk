@@ -14,8 +14,8 @@
 #endif
 
 ////////////// uart spp tx\rx fifo /////////////////
-MYFIFO_INIT(hci_tx_fifo, 72, 8);//statement in spp.c
-MYFIFO_INIT(hci_rx_fifo, 72, 2);//statement in spp.c
+MYFIFO_INIT(hci_tx_fifo, 72, 8);//used in spp.c
+MYFIFO_INIT(hci_rx_fifo, 72, 2);//used in spp.c
 
 ////////////// ble tx\rx fifo //////////////////////
 MYFIFO_INIT(blt_rxfifo, 64, 8);

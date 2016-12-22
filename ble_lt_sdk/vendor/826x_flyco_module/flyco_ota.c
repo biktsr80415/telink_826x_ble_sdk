@@ -26,7 +26,34 @@
 
 //LittleStack for 8266 OTA settings:
 //Follow the telink's ble  architecture for this sdk!
-//8266 512K flash address setting,please take 826x BLE SDK Developer Handbook for reference(page 24).
+//please take 826x BLE SDK Developer Handbook for reference(page 24).
+//         8266 512K flash address setting:
+//          0x80000 |~~~~~~~~~~~~~~~~~~|
+//                  |  user data area  |
+//          0x78000 |~~~~~~~~~~~~~~~~~~|
+//                  |  customed value  |
+//          0x77000 |~~~~~~~~~~~~~~~~~~|
+//                  |    MAC address   |
+//          0x76000 |~~~~~~~~~~~~~~~~~~|
+//                  |    pair & sec    |
+//                  |       info       |
+//          0x74000 |~~~~~~~~~~~~~~~~~~|
+//                  |   ota_boot_flg   |
+//          0x73000 |~~~~~~~~~~~~~~~~~~|
+//                  |   ota_boot.bin   |
+//          0x72000 |~~~~~~~~~~~~~~~~~~|
+//                  |  user data area  |
+//                  |                  |
+//                  |                  |
+//          0x40000 |~~~~~~~~~~~~~~~~~~|
+//                  |   OTA new bin    |
+//                  |   storage area   |
+//                  |                  |
+//          0x20000 |~~~~~~~~~~~~~~~~~~|
+//                  | old firmwave bin |
+//                  |                  |
+//                  |                  |
+//          0x00000 |~~~~~~~~~~~~~~~~~~|
 #define			    NEW_FW_ADR			0x20000
 #define			    OTA_FLG_ADR			0x73000
 #define			    OTA_BOOT_BIN_ADR	0x72000
