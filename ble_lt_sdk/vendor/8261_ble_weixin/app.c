@@ -582,6 +582,10 @@ void user_init()
 		memcpy (wx_aes_key, CFG_ADR_AES_KEY, 16);
 	}
 
+	for(int i=0; i<sizeof(tbl_mac); i++)	//reverse_mac.
+	{
+		tbl_mac_auth[i] = tbl_mac[sizeof(tbl_mac)-1-i];
+	}
 	extern void	my_att_init (u8 *p_mac, u8 *p_device_type, u8 *p_device_id, u8 *p_key);
 	my_att_init (tbl_mac_auth,
 			(u8 *) (memcmp (ff_32_byte, CFG_ADR_DEVICE_TYPE, 32) != 0 ? CFG_ADR_DEVICE_ID : "WeChatDev"),

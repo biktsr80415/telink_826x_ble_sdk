@@ -3,6 +3,7 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj_lib/weixin/weixin.h"
+#include "ls_wx.h"
 #if (__PROJECT_8261_BLE_WEIXIN__)
 //////////////////////////////////////////////////////////////////
 ///				GATT SERVICE LENGTH //////////////////////////////
@@ -208,6 +209,18 @@ void task_weixin (int init)
 				u8 *pd = wx_process_send_data_response(wx_buff_rsp, wx_rsp_ready, wx_p_key, &data_len);
 				if (pd)
 				{
+					//weixin rsp data handle here.
+					switch( g_ls_cur_cmd )
+					{
+						case RSP_USER_INFO:		//0xCC
+							ls_get_cc_rsp(pd);
+							break;
+						case RSP_SCALE_DATA:	//0xC3
+							ls_get_c3_rsp(pd);
+							break;
+						default:
+							break;
+					}
 					LogMsgUsb ("send data response: ", pd, data_len);
 				}
 			}

@@ -140,6 +140,7 @@ typedef struct{
 	ls_push_data_t stPushData;
 }ls_user_cfm_push_data_t;
 
+u8 						g_ls_cur_cmd;
 
 ls_req_download_info_t 	g_ls_req_download_info_data;
 ls_rsp_download_info_t	g_ls_rsp_download_info_data;

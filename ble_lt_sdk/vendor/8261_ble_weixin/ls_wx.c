@@ -57,6 +57,7 @@ int ls_set_cc_cmd(	u8 *abBuff,u8 *abMac, u8 *abMode, u8 *abFwVer, u8 *abHwVer, u
 {
 	memset(&g_ls_req_download_info_data,0x00,sizeof(g_ls_req_download_info_data));
 	g_ls_req_download_info_data.bCmd = 0xCC;
+	g_ls_cur_cmd 					 = 0xCC;
 	if( abMac )
 		memcpy(g_ls_req_download_info_data.abMac,abMac,sizeof(g_ls_req_download_info_data.abMac));
 	if( abMode )
@@ -83,6 +84,7 @@ int ls_set_c3_cmd(u8 *abBuff, u8 *stWeight, u32 dwUTC, u8 *st5k_Imp, u8 *st50k_I
 {
 	memset(&g_ls_scale_data_req_message,0,sizeof(g_ls_scale_data_req_message));
 	g_ls_scale_data_req_message.bCmd = 0xC3;
+	g_ls_cur_cmd					 = 0xC3;
 	if( stWeight )
 		memcpy(&(g_ls_scale_data_req_message.stWeight),stWeight,sizeof(ls_float_t));
 	if( st5k_Imp )
@@ -105,7 +107,7 @@ void ls_get_c3_rsp(u8 *abBuff)
 	if( abBuff )
 	{
 		convert_ascii_to_hex(tmpbuff,abBuff,sizeof(ls_scale_data_rsp_t));
-		memcpy(&g_ls_scale_data_rsp_message, abBuff, sizeof(g_ls_scale_data_rsp_message));
+		memcpy(&g_ls_scale_data_rsp_message, tmpbuff, sizeof(g_ls_scale_data_rsp_message));
 	}
 }
 
