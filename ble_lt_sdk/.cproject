@@ -17900,7 +17900,7 @@
 							</tool>
 							<tool command="tc32-elf-ld --gc-sections" id="com.telink.tc32eclipse.tool.linker.TC32Win.app.release.1910434228" name="TC32 C Linker" superClass="com.telink.tc32eclipse.tool.linker.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.linker.option.libs.1753292946" name="Libraries (-l)" superClass="com.telink.tc32eclipse.linker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="lt_8266"/>
+									<listOptionValue builtIn="false" value="lt_8266_32m"/>
 								</option>
 								<option id="com.telink.tc32eclipse.linker.option.libpath.823878392" name="Libraries Path (-L)" superClass="com.telink.tc32eclipse.linker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj_lib}&quot;"/>

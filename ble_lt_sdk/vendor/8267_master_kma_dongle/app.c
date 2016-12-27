@@ -19,6 +19,8 @@
 
 #if (HCI_ACCESS==HCI_USE_UART)
 #include "../../proj/drivers/uart.h"
+
+MYFIFO_INIT(hci_rx_fifo, 72, 2);
 #endif
 
 //void att_req_write_cmd (u8 *p, u16 h, u8 *pd, int n)
@@ -545,6 +547,8 @@ int app_l2cap_handler (u16 conn, u8 *raw_pkt)
 //////////////////////////////////////////////////////////
 // event call back
 //////////////////////////////////////////////////////////
+int telink_2p4g_connect_state = 0;   // 1: send  connect req
+
 void app_event_callback (u32 h, u8 *p, int n)
 {
 	static u32 event_cb_num;
@@ -562,7 +566,12 @@ void app_event_callback (u32 h, u8 *p, int n)
 			s8 rssi = pa->data[pa->len];
 			const u8 tag_pairing[8] = {0x07,0x09,0x4b,0x54, 0x50,0x41,0x49,0x52};
 			int mac_match = app_device_mac_match (pa->mac, dev_mac);
-			if (ll_whiteList_search ((pa->type >> 6) & 1, pa->mac) == 0)
+			u8 telink_2p4g_paring_data [4] = {0x03, 0xff, 0x01, 0x01};
+			if (memcmp (pa->data, telink_2p4g_paring_data, 4) == 0)
+			{
+				telink_2p4g_connect_state = 1;
+			}
+			else if (ll_whiteList_search ((pa->type >> 6) & 1, pa->mac) == 0)
 			{
 				u8 interval = ll_whiteList_rsvd_field ((pa->type >> 6) & 1, pa->mac);
 				if (interval != 8)
@@ -594,7 +603,15 @@ void app_event_callback (u32 h, u8 *p, int n)
 				static u32 peer_pairing;
 				conn_handle = pc->handle;				// connection handle
 				app_led_en (conn_handle, 1);
-				if (ll_whiteList_search (pc->peer_adr_type, pc->mac))
+				if(telink_2p4g_connect_state == 1)
+				{
+					conn_char_handler[conn_handle&7][0] = 0xfb;  //mic data
+					conn_char_handler[conn_handle&7][3] = 0xfd;  //consumer key
+					conn_char_handler[conn_handle&7][4] = 0xfe;  //keyboard handle
+					conn_char_handler[conn_handle&7][6] = 0xff;  //spp data
+					telink_2p4g_connect_state = 0;
+				}
+				else if (ll_whiteList_search (pc->peer_adr_type, pc->mac))
 				{
 					peer_pairing++;
 					peer_type = pc->peer_adr_type;
@@ -635,6 +652,11 @@ void app_event_callback (u32 h, u8 *p, int n)
 		else if(pd->reason == SLAVE_TERMINATE_CONN_ACKED || pd->reason == SLAVE_TERMINATE_CONN_TIMEOUT){
 
 		}
+		if(telink_2p4g_connect_state == 1)
+		{
+			telink_2p4g_connect_state = 0;   // telink normal 2.4g connect fail
+		}
+
 	}
 
 	if (send_to_hci)
@@ -746,6 +768,44 @@ void main_loop ()
 	}
 }
 
+#if (HCI_ACCESS==HCI_USE_UART)
+int blc_rx_from_uart (void)
+{
+	if(my_fifo_get(&hci_rx_fifo) == 0)
+	{
+		return 0;
+	}
+
+	u8* p = my_fifo_get(&hci_rx_fifo);
+	u32 rx_len = p[0]; //usually <= 255 so 1 byte should be sufficient
+
+	if (rx_len)
+	{
+		blc_hci_handler(&p[4], rx_len - 4);
+		my_fifo_pop(&hci_rx_fifo);
+	}
+
+
+	return 0;
+}
+
+int blc_hci_tx_to_uart ()
+{
+	uart_data_t T_txdata_buf;
+	u8 *p = my_fifo_get (&hci_tx_fifo);
+	if (p && !uart_tx_is_busy ())
+	{
+		memcpy(&T_txdata_buf.data, p + 2, p[0]+p[1]*256);
+		T_txdata_buf.len = p[0]+p[1]*256 ;
+		if (uart_Send((u8 *)(&T_txdata_buf)))
+		{
+			my_fifo_pop (&hci_tx_fifo);
+		}
+	}
+	return 0;
+}
+#endif
+
 ///////////////////////////////////////////
 void user_init()
 {
@@ -778,9 +838,15 @@ void user_init()
 #else	//uart
 	//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
 	//todo:uart init here
+	gpio_set_input_en(GPIO_PB2, 1);
+	gpio_set_input_en(GPIO_PB3, 1);
+	gpio_setup_up_down_resistor(GPIO_PB2, PM_PIN_PULLUP_1M);
+	gpio_setup_up_down_resistor(GPIO_PB3, PM_PIN_PULLUP_1M);
 	uart_io_init(UART_GPIO_8267_PB2_PB3);
 	CLK32M_UART115200;
-	uart_BuffInit((u8 *)(&T_rxdata_buf), sizeof(T_rxdata_buf), (u8 *)(&T_txdata_buf));
+
+	reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX; //clear uart rx/tx status
+	uart_BuffInit(hci_rx_fifo_b, hci_rx_fifo.size, hci_tx_fifo_b);
 	blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);
 #endif
 
