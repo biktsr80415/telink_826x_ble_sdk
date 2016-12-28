@@ -1,5 +1,5 @@
 require "hci_const"	
-require "print_table"
+-- require "print_table"
 handle = tl_usb_init(0xffff);
 handle_bulk = tl_usb_bulk_monitor_init(0xffff);
 --- print("handle : ",string.format("0x%04x",handle_bulk)) 
@@ -116,7 +116,7 @@ then
    tl_error(1)
 else
    print("\n DHKey:")
-   PrintTable(resTbl)
+   -- PrintTable(resTbl)
    print("\n TEST  OK!")
 end
 

@@ -1,4 +1,4 @@
--- require "hci_read_local_version_info"
+require "hci_read_local_version_info"
 
 handle = tl_usb_init(0xffff);
 handle_bulk = tl_usb_bulk_monitor_init(0xffff);

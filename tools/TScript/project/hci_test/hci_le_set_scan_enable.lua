@@ -1,7 +1,7 @@
 require "hci_const"		
 
 
-function hci_le_set_scan_enbale(en,  status)
+function hci_le_set_scan_enable(en,  status)
 
 
 hci_type_cmd = HCI_TYPE_CMD

@@ -1,51 +1,35 @@
 require "hci_const"	
 
-function bls_ll_setAdvEnable(en,  status)
+function hci_le_read_local_p256_pkey(status, ...)
+arg = {...} 
 
+---------------------------------------------------------------------------------
+-- cmdParaLen = 0		    ---
 
 hci_type_cmd = HCI_TYPE_CMD
-opcode_OCF = HCI_CMD_LE_SET_ADVERTISE_ENABLE
+opcode_OCF = HCI_CMD_LE_READ_LOCAL_P256_PUBLIC_KEY
 opcode_OGF = HCI_CMD_LE_OPCODE_OGF
-cmd_param_len = 1
+cmd_param_len = 60
 cmd_total_len = cmd_param_len + 4
 
 numHCIcmds = 1
-event_param_len = 1
-total_param_len = 4
-event_code = HCI_EVT_CMD_COMPLETE
+event_param_len = 66
+total_param_len = 66
+event_code = HCI_EVT_LE_META
+sub_event_code = HCI_SUB_EVT_LE_READ_LOCAL_P256_KEY_COMPLETE
 
----------------------------------------------------------------------------------
-cmd = array.new(cmd_total_len)    -- 5
+cmd = array.new(4)
 cmd[1] = hci_type_cmd
 cmd[2] = opcode_OCF
 cmd[3] = opcode_OGF
 -------------------------------------------
-cmd[4] = cmd_param_len    -- cmdParaLen
+cmd[4] = 0    -- cmdParaLen
 -------------------------------------------
-cmd[5] = en
 ---------------------------------------------------------------------------------
-
---print("\n")
-
---print("    		HCI_LE_Set_Advertise_Enable", )
-print(string.format("\t\t\t\tHCI_LE_Set_Advertise_Enable") )
+print(string.format("\t\tCMD hci_le_read_local_p256_pkey") )
 print("<-------------------------------------------------------------------------------------")
-if(en==1)
-then 
-	print(string.format("\t\t\t\t\t\t(Enable)") )
-else
-	print(string.format("\t\t\t\t\t\t(Disable)") )
-end
+len = tl_usb_bulk_out(handle,cmd, 4)
 
-len = tl_usb_bulk_out(handle,cmd, cmd_total_len)
-
-
-
---repeat
---	resTbl,resLen = tl_usb_bulk_read()
---	tl_sleep_ms(100)
---until(resLen>0)
-	
 start = os.clock()
 while(   os.clock() - start < 0.050)
 do
@@ -57,36 +41,31 @@ do
 		break
    end
 end
-	
-	
+
+
 
 local eventERR = 0
 
 ------------------------------------------------------------------------------    event Params
--- type_evt  evtCode(0e)  evtParamLen  numHciCmds   opCode_OCF   opCode_OGF         status
---    1			1		  	   1		   1			1			 1			       1     
+-- type_evt  evtCode(0e)  evtParamLen          status
+--    1			1		  	   1	      	       1     
 
---  total_param_len =  3 + event_param_len
---  resLen 			=  6 + event_param_len
+--  total_param_len =  event_param_len
+--  resLen 			=  3 + event_param_len
 
-
-if(resLen ~= (6 + event_param_len))
+if(resLen ~= (3 + event_param_len))
 then
 	print("Retrun param length: ", resLen, "\tERR")
 	tl_error(1)
 	return
-end
-
-
+end 														
 
 if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
-	print(string.format("HCI_Command_Complete_Event") )
+	print(string.format("\t\tHCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
 	print(string.format("Status: 0x%02x",resTbl[7])) 
-	
-	if( resTbl[3] == total_param_len and resTbl[4] == numHCIcmds and resTbl[5] == opcode_OCF and 
-		resTbl[6] == opcode_OGF and resTbl[7] == status)
+	if( resTbl[3] == event_param_len  and resTbl[4] == sub_event_code and resTbl[5] == status )
 	then
 		eventERR = 0  --event OK
 	else
@@ -134,43 +113,23 @@ then
 	end
 
 
-	--resTbl[4]: numHciCmds 
-	if(resTbl[4] == numHCIcmds)  
+	--resTbl[4]: sub_event_code 
+	if(resTbl[4] == sub_event_code)  
 	then
-		print(string.format("0x%02x",resTbl[4]), "OK, numHciCmds")  
+		print(string.format("0x%02x",resTbl[4]), "OK, sub_event_code")  
 	else
-		print(string.format("0x%02x",resTbl[4]), "ERR, numHciCmds")   
-	end
-
-	--resTbl[5]: opCode_OCF 
-	if(resTbl[5] == opcode_OCF)  
-	then
-		print(string.format("0x%02x",resTbl[5]), "OK, opcode OCF")  
-	else
-		print(string.format("0x%02x",resTbl[5]), "ERR, opcode OCF")   
+		print(string.format("0x%02x",resTbl[4]), "ERR, sub_event_code")   
 	end
 
 
-	--resTbl[6]: opCode_OGF 
-	if(resTbl[6] == opcode_OGF)  
+	--resTbl[5]: status
+	if(resTbl[5] == status)  
 	then
-		print(string.format("0x%02x",resTbl[6]), "OK, opcode_OGF")  
+		print(string.format("0x%02x",resTbl[5]), "OK, status")  
 	else
-		print(string.format("0x%02x",resTbl[6]), "ERR, opcode_OGF")  
-	end
-
-	--resTbl[7]: status
-	if(resTbl[7] == status)  
-	then
-		print(string.format("0x%02x",resTbl[7]), "OK, status")  
-	else
-		print(string.format("0x%02x",resTbl[7]), "ERR, status") 
+		print(string.format("0x%02x",resTbl[5]), "ERR, status") 
 	end
 end
-
-
-
-
 ------------------------------------- TEST  RESULT ---------------------------------
 if(eventERR == 1)
 then
@@ -183,9 +142,9 @@ else
 	
 end
 
-
 return status
 
 
-
 end  --function end
+
+

@@ -55,6 +55,30 @@ HCI_TYPE_EVENT = 0x04
  HCI_LE_EVT_MASK_DEFAULT                                      = 0x1F
 
 
+-- Controller & Baseband Commands
+-- OGF --
+HCI_CMD_CBC_OPCODE_OGF										 = 0x0C  --=0x03 <<2, controller & baseband control
+-- OCF --
+HCI_CMD_SET_EVENT_MASK                                       = 0x01
+HCI_CMD_RESET                                                = 0x03
+HCI_CMD_DELETE_STORED_LINK_KEY								 = 0x12
+HCI_CMD_READ_TX_POWER_LEVEL                                  = 0x2D
+HCI_CMD_SET_CONTROLLER_TO_HOST_FLOW_CTRL                     = 0x31
+HCI_CMD_HOST_BUF_SIZE                                        = 0x33
+HCI_CMD_HOST_NUM_OF_COMPLETE_PACKETS                         = 0x35
+
+-- Informational Parameters
+-- OGF --
+HCI_CMD_IP_OPCODE_OGF										 = 0x10  --0x04 <<2, information parameter
+-- OCF --
+HCI_CMD_READ_LOCAL_VER_INFO                                  = 0x01
+HCI_CMD_READ_LOCAL_SUPPORTED_CMDS                            = 0x02
+HCI_CMD_READ_LOCAL_SUPPORTED_FEATURES                        = 0x03
+HCI_CMD_READ_EXTENDED_LOCAL_SUPPORTED_FEATURES               = 0x04
+HCI_CMD_READ_BUFFER_SIZE_COMMAND                             = 0x05
+HCI_CMD_READ_BD_ADDR   										 = 0x09
+
+
  HCI_CMD_LE_OPCODE_OGF										 = 0x20  ----= 0x08 <<2 = = 0x20
 
 ---- LE Controller Commands
@@ -108,3 +132,10 @@ HCI_TYPE_EVENT = 0x04
  HCI_CMD_LE_READ_MAX_DATA_LENGTH                              = 0x2F
 ----core_4.2 above
 
+HCI_CMD_LINK_POLICY_OPCODE_OGF								 = 0x08 --0x02<<2 = 0x08
+
+
+
+HCI_CMD_TEST_OPCODE_OGF								 		 = 0x18 --0x06<<2 = 0x18
+
+HCI_CMD_READ_LOOPBACK_MODE									 = 0x01
