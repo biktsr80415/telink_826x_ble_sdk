@@ -15,6 +15,10 @@
 #include "../../proj/drivers/uart.h"
 #endif
 
+#if (PRINT_DEBUG_INFO)
+#include "../common/myprintf.h"
+#endif
+
 MYFIFO_INIT(hci_rx_fifo, 72, 2);
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
@@ -119,8 +123,8 @@ u32 module_wakeup_module_tick;
 
 int app_module_busy ()
 {
-	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcuÓÃGPIO_WAKEUP_MODULEÖ¸Ê¾ ÊÇ·ñ´¦ÓÚuartÊı¾İÊÕ·¢×´Ì¬
-	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module×Ô¼º¼ì²éuart rxºÍtxÊÇ·ñ¶¼´¦ÀíÍê±Ï
+	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcuç”¨GPIO_WAKEUP_MODULEæŒ‡ç¤º æ˜¯å¦å¤„äºuartæ•°æ®æ”¶å‘çŠ¶
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //moduleè‡ªå·±æ£€æŸ¥uart rxå’Œtxæ˜¯å¦éƒ½å¤„ç†å®Œæ¯•
 	module_task_busy = mcu_uart_working || module_uart_working;
 	return module_task_busy;
 }
@@ -152,7 +156,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//µ±moduleµÄuartÊı¾İ·¢ËÍÍê±Ïºó£¬½«GPIO_WAKEUP_MCUÀ­µÍ»òĞü¸¡(È¡¾öÓÚuserÔõÃ´Éè¼Æ)
+	//å½“moduleçš„uartæ•°æ®å‘é€å®Œæ¯•åï¼Œå°†GPIO_WAKEUP_MCUæ‹‰ä½æˆ–æ‚¬æµ®(å–å†³äºuseræ€ä¹ˆè®¾è®¡)
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
@@ -169,7 +173,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //ĞèÒª±» GPIO_WAKEUP_MODULE »½ĞÑ
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //éœ€è¦è¢« GPIO_WAKEUP_MODULE å”¤é†’
 	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
@@ -234,9 +238,9 @@ void user_init()
 		write_reg8(0x8000, 0x11);  //debug
 		while(1);
 	}
-
+    printf("adv parameters setting success!\n\r");
 	bls_ll_setAdvEnable(1);  //adv enable
-
+	printf("enable ble adv!\n\r");
 	rf_set_power_level_index (RF_POWER_8dBm);
 
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);//(SUSPEND_ADV | SUSPEND_CONN)
@@ -285,7 +289,7 @@ void user_init()
 
 
 #if (BLE_MODULE_PM_ENABLE)
-	//mcu ¿ÉÒÔÍ¨¹ıÀ­¸ßGPIO_WAKEUP_MODULE½« module´ÓµÍµÍ¹¦ºÄ»½ĞÑ
+	//mcu å¯ä»¥é€šè¿‡æ‹‰é«˜GPIO_WAKEUP_MODULEå°† moduleä»ä½ä½åŠŸè€—å”¤é†’
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 

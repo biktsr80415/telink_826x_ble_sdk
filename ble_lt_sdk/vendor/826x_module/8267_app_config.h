@@ -21,6 +21,16 @@ extern "C" {
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 
+/////////////////// PRINT DEBUG INFO ///////////////////////
+/* 826x module's pin simulate as a uart tx, Just for debugging */
+#define PRINT_DEBUG_INFO                    0//open/close myprintf
+#if PRINT_DEBUG_INFO
+//defination debug printf pin
+#define PRINT_BAUD_RATE             		1000000 //1M baud rate,should Not bigger than 1M
+#define DEBUG_INFO_TX_PIN           		GPIO_PC6//G0 for 8261/8267 EVK board(C1T80A30_V1.0)
+//#define PC6_OUTPUT_ENABLE	        		1       //mini_printf function contain this
+#define PULL_WAKEUP_SRC_PC6         		PM_PIN_PULLUP_1M
+#endif
 
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
 #define GPIO_WAKEUP_MODULE					GPIO_PA6   //mcu wakeup module

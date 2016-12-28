@@ -23,7 +23,16 @@ extern "C" {
 #define BLE_MODULE_APPLICATION_ENABLE		1
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
 
-
+/////////////////// PRINT DEBUG INFO ///////////////////////
+/* 826x module's pin simulate as a uart tx, Just for debugging */
+#define PRINT_DEBUG_INFO                    0//open/close myprintf
+#if PRINT_DEBUG_INFO
+//defination debug printf pin
+#define PRINT_BAUD_RATE             		1000000 //1M baud rate,should Not bigger than 1M
+#define DEBUG_INFO_TX_PIN           		GPIO_PD3//G9 for 8266 EVK board(C1T53A20_V2.0)
+//#define PD3_OUTPUT_ENABLE	        		1       //mini_printf function contain this
+#define PULL_WAKEUP_SRC_PD3         		PM_PIN_PULLUP_1M
+#endif
 
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
 #define GPIO_WAKEUP_MODULE					GPIO_PC5   //mcu wakeup module

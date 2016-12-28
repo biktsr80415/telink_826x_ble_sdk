@@ -2,6 +2,9 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "spp.h"
 
+#if (PRINT_DEBUG_INFO)
+#include "../common/myprintf.h"
+#endif
 
 extern int	module_uart_data_flg;
 extern u32 module_wakeup_module_tick;
@@ -25,6 +28,7 @@ void event_handler(u32 h, u8 *para, int n)
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
 				task_connect();
+				printf("connection event occured!\n\r");
 			}
 				break;
 			case BLT_EV_FLAG_TERMINATE:
@@ -33,6 +37,7 @@ void event_handler(u32 h, u8 *para, int n)
 				header = 0x0780 + BLT_EV_FLAG_TERMINATE;		//state change event
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
+				printf("terminate event occured!\n\r");
 			}
 				break;
 			case BLT_EV_FLAG_PAIRING_BEGIN:
@@ -250,8 +255,8 @@ int hci_send_data (u32 h, u8 *para, int n)
 	}
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
-	if(!module_uart_data_flg){ //UARTÉÏ¿ÕÏĞ£¬ĞÂµÄÊı¾İ·¢ËÍ
-		GPIO_WAKEUP_MCU_HIGH;  //Í¨ÖªMCUÓĞÊı¾İÁË
+	if(!module_uart_data_flg){ //UARTä¸Šç©ºé—²ï¼Œæ–°çš„æ•°æ®å‘é€
+		GPIO_WAKEUP_MCU_HIGH;  //é€šçŸ¥MCUæœ‰æ•°æ®äº†
 		module_wakeup_module_tick = clock_time() | 1;
 		module_uart_data_flg = 1;
 	}
@@ -284,9 +289,9 @@ int tx_to_uart_cb (void)
 
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
-		//Èç¹ûMCU¶ËÉè¼ÆµÄÓĞµÍ¹¦ºÄ£¬¶ømoduleÓĞÊı¾İÀ­¸ßGPIO_WAKEUP_MCUÊ±Ö»ÊÇ½«mcu»½ĞÑ£¬ÄÇÃ´ĞèÒª¿¼ÂÇ
-		//mcu´Ó»½ĞÑµ½ÄÜ¹»ÎÈ¶¨µÄ½ÓÊÕuartÊı¾İÊÇ·ñĞèÒªÒ»¸ö»Ø¸´Ê±¼äT¡£Èç¹ûĞèÒª»Ø¸´Ê±¼äTµÄ»°£¬ÕâÀï
-		//½«ÏÂÃæµÄ100us¸ÄÎªuserÊµ¼ÊĞèÒªµÄÊ±¼ä¡£
+		//å¦‚æœMCUç«¯è®¾è®¡çš„æœ‰ä½åŠŸè€—ï¼Œè€Œmoduleæœ‰æ•°æ®æ‹‰é«˜GPIO_WAKEUP_MCUæ—¶åªæ˜¯å°†mcuå”¤é†’ï¼Œé‚£ä¹ˆéœ€è¦è€ƒè™‘
+		//mcuä»å”¤é†’åˆ°èƒ½å¤Ÿç¨³å®šçš„æ¥æ”¶uartæ•°æ®æ˜¯å¦éœ€è¦ä¸€ä¸ªå›å¤æ—¶é—´Tã€‚å¦‚æœéœ€è¦å›å¤æ—¶é—´Tçš„è¯ï¼Œè¿™é‡Œ
+		//å°†ä¸‹é¢çš„100usæ”¹ä¸ºuserå®é™…éœ€è¦çš„æ—¶é—´ã€‚
 		if(module_wakeup_module_tick){
 			while( !clock_time_exceed(module_wakeup_module_tick, 100) );
 		}
