@@ -181,7 +181,7 @@ void user_init()
 	bls_ll_init (tbl_mac);
 
 	//l2cap initialization
-	blc_l2cap_register_handler (blc_send_acl); 		//send l2cap 2 uart
+	blc_l2cap_register_handler (bls_hci_sendACLData2Host); 		//send l2cap 2 uart
 	bls_hci_registerEventHandler(blc_hci_send_data);		//register event callback
 
 	///////////////////// USER application initialization ///////////////////
