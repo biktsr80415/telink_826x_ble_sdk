@@ -570,6 +570,7 @@ void app_event_callback (u32 h, u8 *p, int n)
 			if (memcmp (pa->data, telink_2p4g_paring_data, 4) == 0)
 			{
 				telink_2p4g_connect_state = 1;
+				blm_ll_connectDevice (0, pa->mac, 30, 50, 0, 100);
 			}
 			else if (ll_whiteList_search ((pa->type >> 6) & 1, pa->mac) == 0)
 			{
