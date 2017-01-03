@@ -14,6 +14,8 @@ numHCIcmds = 1
 event_param_len = 1
 total_param_len = 4
 event_code = HCI_EVT_CMD_STATUS
+-- le_sub_event = HCI_SUB_EVT_LE_CONNECTION_COMPLETE
+
 ---------------------------------------------------------------------------------
 cmd = array.new(cmd_total_len)    -- 5
 cmd[1] = hci_type_cmd
@@ -32,6 +34,7 @@ print("<------------------------------------------------------------------------
 len = tl_usb_bulk_out(handle,cmd, cmd_total_len)
 
 
+
 --repeat
 --	resTbl,resLen = tl_usb_bulk_read()
 --	tl_sleep_ms(100)
@@ -45,7 +48,6 @@ do
 
    if(resLen > 0)
    then
-        print("resTbl:",resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7],resTbl[8])
 		break
    end
 end
@@ -55,7 +57,7 @@ end
 local eventERR = 0
 
 ------------------------------------------------------------------------------    event Params
--- type_evt  evtCode(0e)  evtParamLen   status      numHciCmds   opCode_OCF       opCode_OGF         
+-- type_evt  evtCode(0e)  evtParamLen  numHciCmds   opCode_OCF   opCode_OGF         status
 --    1			1		  	   1		   1			1			 1			       1     
 
 --  total_param_len =  3 + event_param_len
@@ -73,9 +75,9 @@ end
 
 if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
-	print(string.format("HCI_Command_Status_Event") )
+	print(string.format("HCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
-	print(string.format("Status: 0x%02x",resTbl[4])) 
+	print(string.format("Status: 0x%02x",resTbl[7])) 
 	
 	if( resTbl[3] == total_param_len and resTbl[4] == status and resTbl[5] == numHCIcmds and 
 		resTbl[6] == opcode_OCF and resTbl[7] == opcode_OGF)
@@ -129,24 +131,31 @@ then
 	--resTbl[4]: status 
 	if(resTbl[4] == status)  
 	then
-		print(string.format("0x%02x",resTbl[4]), "OK, Command currently in pending.")  
+		print(string.format("0x%02x",resTbl[4]), "OK, status")  
 	else
-		print(string.format("0x%02x",resTbl[4]), "ERR, Command failed.")---Command Disallowed   
+		print(string.format("0x%02x",resTbl[4]), "ERR, status")   
 	end
 
-	--resTbl[5]: Num_HCI_Command_Packets
+	--resTbl[5]: num hci cmd pkts
 	if(resTbl[5] == numHCIcmds)  
 	then
-		print(string.format("0x%02x",resTbl[5]), "OK, status")  
+		print(string.format("0x%02x",resTbl[5]), "OK, num hci cmd pkts")  
 	else
-		print(string.format("0x%02x",resTbl[5]), "ERR, status") 
+		print(string.format("0x%02x",resTbl[5]), "ERR, num hci cmd pkts") 
 	end
-	
-	if(resTbl[6] == opcode_OCF and resTbl[7] == opcode_OGF)  
+
+	if(resTbl[6] == opcode_OCF)  
 	then
-		print(string.format("0x%02x",resTbl[5]), "OK, status")  
+		print(string.format("0x%02x",resTbl[6]), "OK, opcode_OCF")  
 	else
-		print(string.format("0x%02x",resTbl[5]), "ERR, status") 
+		print(string.format("0x%02x",resTbl[6]), "ERR, opcode_OCF") 
+	end
+
+	if(resTbl[7] == opcode_OGF)  
+	then
+		print(string.format("0x%02x",resTbl[7]), "OK, opcode_OGF")  
+	else
+		print(string.format("0x%02x",resTbl[7]), "ERR, opcode_OGF") 
 	end
 end
 
