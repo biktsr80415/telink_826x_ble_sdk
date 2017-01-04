@@ -57,7 +57,7 @@ end
 local eventERR = 0
 
 ------------------------------------------------------------------------------    event Params
--- type_evt  evtCode(0e)  evtParamLen  numHciCmds   opCode_OCF   opCode_OGF         status
+-- type_evt  evtCode(0e)  evtParamLen   status      numHciCmds   opCode_OCF       opCode_OGF         
 --    1			1		  	   1		   1			1			 1			       1     
 
 --  total_param_len =  3 + event_param_len
@@ -75,9 +75,9 @@ end
 
 if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
-	print(string.format("HCI_Command_Complete_Event") )
+	print(string.format("HCI_Command_Status_Event") )
 	print("-------------------------------------------------------------------------------------->")
-	print(string.format("Status: 0x%02x",resTbl[7])) 
+	print(string.format("Status: 0x%02x",resTbl[4])) 
 	
 	if( resTbl[3] == total_param_len and resTbl[4] == status and resTbl[5] == numHCIcmds and 
 		resTbl[6] == opcode_OCF and resTbl[7] == opcode_OGF)
@@ -165,13 +165,10 @@ end
 ------------------------------------- TEST  RESULT ---------------------------------
 if(eventERR == 1)
 then
-	print("\n TEST  FAIL!")   
-	tl_error(1)
-	
+   print("\n TEST  FAIL!")   
+   tl_error(1)
 else
-
-	tl_error(0)
-	
+   print("\n TEST  OK!")
 end
 
 
