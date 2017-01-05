@@ -77,7 +77,8 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 		print("===========================================>")
 		print(string.format("Status: 0x%02x",event_status)) 
 		
-		if(event_status ~= BLE_SUCCESS or role ~= LL_ROLE_SLAVE or connection_handle~=BLS_CONN_HANDLE)	then
+		--if(event_status ~= BLE_SUCCESS or role ~= LL_ROLE_SLAVE or connection_handle~=BLS_CONN_HANDLE)	then
+		if(event_status ~= BLE_SUCCESS)	then
 			eventERR = 1
 			tl_error(1)
 		end
@@ -201,7 +202,8 @@ elseif(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_CMD_DISCONNECTION_COMPLE
 	print("===========================================>")
 	print(string.format("Status: 0x%02x",event_status)) 
 		
-	if(event_status ~= BLE_SUCCESS or connection_handle~=BLS_CONN_HANDLE)	then
+	--if(event_status ~= BLE_SUCCESS or connection_handle~=BLS_CONN_HANDLE)	then
+	if(event_status ~= BLE_SUCCESS)	then
 		eventERR = 1
 		tl_error(1)
 	end
