@@ -1,4 +1,5 @@
 require "hci_const"  
+require "basic_debug_config"
 
 function hci_le_set_event_mask(status, ...)
 arg = {...} 
@@ -31,17 +32,17 @@ end
 ---------------------------------------------------------------------------------
 
 
-print("\nhci_cmd_le_set_event_mask")
+print("\t\t\t\thci_cmd_le_set_event_mask")
+print("<-------------------------------------------------------------------------------------")
+print(string.format("\t\t\t\t%02x  %02x  %02x  %02x %02x  %02x  %02x  %02x %02x  %02x  %02x  %02x", cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8],cmd[9],cmd[10],cmd[11],cmd[12]))
+print(string.format("\t\t\t\tEventMask: 0x%02x%02x%02x%02x%02x%02x%02x%02x",cmd[12],cmd[11],cmd[10],cmd[9],cmd[8],cmd[7],cmd[6],cmd[5]))
+
 len = tl_usb_bulk_out(handle,cmd,6 )
 
 repeat
 	resTbl,resLen = tl_usb_bulk_read()
 	tl_sleep_ms(50)
 until(resLen>0)
-
-
----------------------------------------------------------------------------------
-print("\nRetrun param length: ", resLen)
 
 
 --for i= 1, resLen do
@@ -51,81 +52,132 @@ print("\nRetrun param length: ", resLen)
 
 local resultERR = 0
 
---resTbl[1]: hci type
-if(resTbl[1] == HCI_TYPE_EVENT)  
+------------------------------------------------------------------------------    event Params
+-- type_evt  evtCode(0e)  evtParamLen  numHciCmds   opCode_OCF   opCode_OGF         status
+--    1			1		  	   1		   1			1			 1			       1     
+
+--  total_param_len =  3 + event_param_len
+--  resLen 			=  6 + event_param_len
+
+
+if(resLen ~= (6 + event_param_len))
 then
-   print(string.format("0x%02x",resTbl[1]), "OK, hci type event")  
-else
-   print(string.format("0x%02x",resTbl[1]), "ERR")  
-   resultERR = 1
+	print("Retrun param length: ", resLen, "\tERR")
+	tl_error(1)
+	tl_log_color(0x000000ff)   --Turn to Red color to indicate ERR
+	return
 end
 
 
---resTbl[2]: event type
-if(resTbl[2] == HCI_EVT_CMD_COMPLETE)  
-then
-   print(string.format("0x%02x",resTbl[2]), "OK, hci command complete event")  
-else
-   print(string.format("0x%02x",resTbl[2]), "ERR")  
-   resultERR = 1
-end
 
---resTbl[3]: Retrun Param len 
-if(resTbl[3] == 4)  
+if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
-   print(string.format("0x%02x",resTbl[3]), "OK, Param len = 4")  
+	print(string.format("HCI_Command_Complete_Event") )
+	print("-------------------------------------------------------------------------------------->")
+	print(string.format("Status: 0x%02x",resTbl[7])) 
+	print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7]) )
+	
+	if( resTbl[3] == total_param_len and resTbl[4] == numHCIcmds and resTbl[5] == opcode_OCF and 
+		resTbl[6] == opcode_OGF and resTbl[7] == status)
+	then
+		eventERR = 0  --event OK
+	else
+		eventERR = 1
+	end
+	
 else
-   print(string.format("0x%02x",resTbl[3]), "ERR")  
-   resultERR = 1
-end
-
-
---resTbl[4]: numHciCmds 
-if(resTbl[4] == 1)  
-then
-   print(string.format("0x%02x",resTbl[4]), "OK, numHciCmds = 1")  
-else
-   print(string.format("0x%02x",resTbl[4]), "ERR")  
-   resultERR = 1
-end
-
---resTbl[5]: opCode_OCF 
-if(resTbl[5] == HCI_CMD_LE_SET_EVENT_MASK)  
-then
-   print(string.format("0x%02x",resTbl[5]), "OK, opcode match")  
-else
-   print(string.format("0x%02x",resTbl[5]), "ERR")  
-   resultERR = 1
+	eventERR = 1
 end
 
 
---resTbl[6]: opCode_OGF 
-if(resTbl[6] == HCI_CMD_LE_OPCODE_OGF)  
+if(eventERR == 1 or PRINT_MODE == PRINT_LEVEL_1 )
 then
-   print(string.format("0x%02x",resTbl[6]), "OK, opcode OGF is 0x20")  
-else
-   print(string.format("0x%02x",resTbl[6]), "ERR")  
-   resultERR = 1
+	print("\n")
+
+	if(PRINT_MODE == PRINT_LEVEL_1)
+	then
+		print("Retrun param length: ", resLen)
+	end
+	
+
+	--resTbl[1]: hci type
+	if(resTbl[1] == HCI_TYPE_EVENT)  
+	then
+		print(string.format("0x%02x",resTbl[1]), "OK, hci type event")  
+	else
+		print(string.format("0x%02x",resTbl[1]), "ERR, hci type event")   
+	end
+
+
+	--resTbl[2]: event type
+	if(resTbl[2] == event_code)  
+	then
+		print(string.format("0x%02x",resTbl[2]), "OK, hci event code")  
+	else
+		print(string.format("0x%02x",resTbl[2]), "ERR, hci event code")   
+	end
+
+	--resTbl[3]: Retrun Param len 
+	if(resTbl[3] == total_param_len)  
+	then
+		print(string.format("0x%02x",resTbl[3]), "OK, totol param len")  
+	else
+		print(string.format("0x%02x",resTbl[3]), "ERR, totol param len")  
+	end
+
+
+	--resTbl[4]: numHciCmds 
+	if(resTbl[4] == numHCIcmds)  
+	then
+		print(string.format("0x%02x",resTbl[4]), "OK, numHciCmds")  
+	else
+		print(string.format("0x%02x",resTbl[4]), "ERR, numHciCmds")   
+	end
+
+	--resTbl[5]: opCode_OCF 
+	if(resTbl[5] == opcode_OCF)  
+	then
+		print(string.format("0x%02x",resTbl[5]), "OK, opcode OCF")  
+	else
+		print(string.format("0x%02x",resTbl[5]), "ERR, opcode OCF")   
+	end
+
+
+	--resTbl[6]: opCode_OGF 
+	if(resTbl[6] == opcode_OGF)  
+	then
+		print(string.format("0x%02x",resTbl[6]), "OK, opcode_OGF")  
+	else
+		print(string.format("0x%02x",resTbl[6]), "ERR, opcode_OGF")  
+	end
+
+	--resTbl[7]: status
+	if(resTbl[7] == status)  
+	then
+		print(string.format("0x%02x",resTbl[7]), "OK, status")  
+	else
+		print(string.format("0x%02x",resTbl[7]), "ERR, status") 
+	end
 end
 
---resTbl[7]: status
-if(resTbl[7] == BLE_SUCCESS)  
-then
-   print(string.format("0x%02x",resTbl[7]), "OK, status is ble success")  
-else
-   print(string.format("0x%02x",resTbl[7]), "ERR")  
-   resultERR = 1
-end
----------------------------------------------------------------------------------
 
------- display whole test result
-if(resultERR == 1)  
+
+
+------------------------------------- TEST  RESULT ---------------------------------
+if(eventERR == 1)
 then
-   print("\n TEST  FAIL!")   
-   tl_error(1)
+	print("\n TEST  FAIL!")   
+	tl_error(1)
+	tl_log_color(0x000000ff)   --Turn to Red color to indicate ERR
+	
 else
-   print("\n TEST  OK!")
+
+	tl_error(0)
+	
 end
+
+
+return status
 
 
 end  --function end

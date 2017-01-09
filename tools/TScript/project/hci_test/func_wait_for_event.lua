@@ -175,9 +175,51 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 		end		
 
 	elseif(Subevent_Code == HCI_SUB_EVT_LE_READ_LOCAL_P256_KEY_COMPLETE)  then
+	    event_param_len = 66
+		event_status = resTbl[5]
+		print(string.format("HCI_LE_Read_Local_P256_Key_Complete_Event") )
+		print("===========================================>")
+		print(string.format("Status: 0x%02x",event_status)) 
+		if(event_status ~= expect_status) then
+			eventERR = 1
+			tl_error(1)
+		else
+			print(string.format("Local_P256_Key:")) 
+			print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[6],resTbl[7], resTbl[8],resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[14],resTbl[15], resTbl[16],resTbl[17], resTbl[18],resTbl[19], resTbl[20],resTbl[21]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[22],resTbl[23], resTbl[24],resTbl[25], resTbl[26],resTbl[27], resTbl[28],resTbl[29]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[30],resTbl[31], resTbl[32],resTbl[33], resTbl[34],resTbl[35], resTbl[36],resTbl[37]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[38],resTbl[39], resTbl[40],resTbl[41], resTbl[42],resTbl[43], resTbl[44],resTbl[45]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[46],resTbl[47], resTbl[48],resTbl[49], resTbl[50],resTbl[51], resTbl[52],resTbl[53]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[54],resTbl[55], resTbl[56],resTbl[57], resTbl[58],resTbl[59], resTbl[60],resTbl[61]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[62],resTbl[63], resTbl[64],resTbl[65], resTbl[66],resTbl[67], resTbl[68],resTbl[69]))
+		end
+		
+		if(eventERR==1 or WAIT_EVENT_DEBUGMODE == PRINT_LEVEL_1) then
+			print(string.format("Status: 0x%02x",event_status)) 
+		end		
 			
 	elseif(Subevent_Code == HCI_SUB_EVT_LE_GENERATE_DHKEY_COMPLETE)  then
-	
+	    event_param_len = 34
+		event_status = resTbl[5] --LE_Generate_DHKey command completed successfully.
+		print(string.format("HCI_LE_Generate_DHKey_Complete_Event") )
+		print("===========================================>")
+		print(string.format("Status: 0x%02x",event_status)) 
+		if(event_status ~= expect_status) then
+			eventERR = 1
+			tl_error(1)
+		else
+			print(string.format("DHKey:")) 
+			print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[6],resTbl[7], resTbl[8],resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[14],resTbl[15], resTbl[16],resTbl[17], resTbl[18],resTbl[19], resTbl[20],resTbl[21]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[22],resTbl[23], resTbl[24],resTbl[25], resTbl[26],resTbl[27], resTbl[28],resTbl[29]))
+			print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[30],resTbl[31], resTbl[32],resTbl[33], resTbl[34],resTbl[35], resTbl[36],resTbl[37]))
+		end
+		
+		if(eventERR==1 or WAIT_EVENT_DEBUGMODE == PRINT_LEVEL_1) then
+			print(string.format("Status: 0x%02x",event_status)) 
+		end		
+		
 	elseif(Subevent_Code == HCI_SUB_EVT_LE_ENHANCED_CONNECTION_COMPLETE)  then
 	
 	elseif(Subevent_Code == HCI_SUB_EVT_LE_DIRECT_ADVERTISE_REPORT)  then
