@@ -1,4 +1,5 @@
 require "hci_const"	
+require "basic_debug_config"
 
 function hci_read_local_supported_features(status, ...)
 arg = {...} 
@@ -27,6 +28,8 @@ cmd[4] = 0    -- cmdParaLen
 ---------------------------------------------------------------------------------
 print(string.format("\t\tCMD hci_read_local_supported_features") )
 print("<-------------------------------------------------------------------------------------")
+print(string.format("\t\t\t\t%02x  %02x  %02x  %02x", cmd[1],cmd[2],cmd[3],cmd[4]) )
+
 len = tl_usb_bulk_out(handle,cmd, 4)
 
 start = os.clock()
@@ -45,9 +48,9 @@ end
 
 local eventERR = 0
 
-------------------------------------------------------------------------------    event Params
--- type_evt  evtCode(0e)  evtParamLen  numHciCmds   opCode_OCF   opCode_OGF         status
---    1			1		  	   1		   1			1			 1			       1     
+-------------------------------------- ----------------------------------------    event Params-----------Return Parameters-------------------
+-- type_evt  evtCode(0e)  evtParamLen   numHciCmds   opCode_OCF   opCode_OGF         status             LMP_Features
+--    1			1		  	   1		   1			1			 1			       1                     8
 
 --  total_param_len =  3 + event_param_len
 --  resLen 			=  6 + event_param_len
@@ -63,6 +66,8 @@ then
 	print(string.format("\t\tHCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
 	print(string.format("Status: 0x%02x",resTbl[7])) 
+	print(string.format("LMP_Features:0x%02x%02x%02x%02x%02x%02x%02x%02x",resTbl[15],resTbl[14],resTbl[13],resTbl[12],resTbl[11],resTbl[10],resTbl[9],resTbl[8]))
+	
 	if( (resTbl[3] == event_param_len + 3)  and resTbl[4] == numHCIcmds and resTbl[5] == opcode_OCF and 
 		resTbl[6] == opcode_OGF and resTbl[7] == status)
 	then

@@ -1,4 +1,5 @@
 require "hci_const"	
+require "basic_debug_config"
 
 function hci_le_read_white_list_size(status, ...)
 arg = {...} 
@@ -27,6 +28,8 @@ cmd[4] = 0    -- cmdParaLen
 ---------------------------------------------------------------------------------
 print(string.format("\t\tCMD hci_le_read_white_list_size") )
 print("<-------------------------------------------------------------------------------------")
+print(string.format("\t\t\t\t%02x  %02x  %02x  %02x", cmd[1],cmd[2],cmd[3],cmd[4]) )
+
 len = tl_usb_bulk_out(handle,cmd, 4)
 
 start = os.clock()
@@ -45,9 +48,9 @@ end
 
 local eventERR = 0
 
-------------------------------------------------------------------------------    event Params
--- type_evt  evtCode(0e)  evtParamLen  numHciCmds   opCode_OCF   opCode_OGF         status
---    1			1		  	   1		   1			1			 1			       1     
+--------------------------------------- ---------------------------------------    event Params---------------------Return Parameters-----------
+-- type_evt  evtCode(0e)  evtParamLen   numHciCmds   opCode_OCF   opCode_OGF         status          White_List_Size
+--    1			1		  	   1		    1			1			 1			       1                   1
 
 --  total_param_len =  3 + event_param_len
 --  resLen 			=  6 + event_param_len
@@ -62,7 +65,10 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
 	print(string.format("\t\tHCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
-	print(string.format("Status: 0x%02x",resTbl[7])) 
+	print(string.format("Status: 0x%02x", resTbl[7])) 
+	print(string.format("White_List_Size: 0x%02x", resTbl[8] ))
+	
+	
 	if( (resTbl[3] == event_param_len + 3)  and resTbl[4] == numHCIcmds and resTbl[5] == opcode_OCF and 
 		resTbl[6] == opcode_OGF and resTbl[7] == status)
 	then
@@ -157,7 +163,7 @@ else
 	
 end
 
-return status
+return status,resTbl[8]
 
 
 end  --function end

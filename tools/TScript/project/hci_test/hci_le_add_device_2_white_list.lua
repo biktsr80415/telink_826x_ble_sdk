@@ -1,4 +1,5 @@
 require "hci_const"	
+require "basic_debug_config"
 
 function hci_le_add_dev_2_white_list(status, ...)
 arg = {...} 
@@ -17,12 +18,12 @@ event_param_len = 1
 total_param_len = 4
 event_code = HCI_EVT_CMD_COMPLETE
 
-cmd = array.new(11)
+cmd = array.new(cmd_total_len)
 cmd[1] = hci_type_cmd
 cmd[2] = opcode_OCF
 cmd[3] = opcode_OGF
 -------------------------------------------
-cmd[4] = 7    -- cmdParaLen
+cmd[4] = cmd_param_len    -- cmdParaLen
 -------------------------------------------
 cmd[5] = 0  -- address type: public
 for i,v in ipairs(arg) do
@@ -32,7 +33,11 @@ end
 ---------------------------------------------------------------------------------
 print(string.format("\t\tCMD hci_le_add_dev_2_white_list") )
 print("<-------------------------------------------------------------------------------------")
-len = tl_usb_bulk_out(handle,cmd, 4)
+print(string.format("\t\t\t\t%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", 
+					cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8],cmd[9],cmd[10],cmd[11] ) )
+print(string.format("\t\t\t\taddr_type:%02x, addr:0x%02x%02x%02x%02x%02x%02x", 
+					0,cmd[11],cmd[10],cmd[9],cmd[8],cmd[7],cmd[6] ) )					
+len = tl_usb_bulk_out(handle,cmd, cmd_total_len)
 
 start = os.clock()
 while(   os.clock() - start < 0.050)
@@ -67,7 +72,7 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
 	print(string.format("\t\tHCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
-	print(string.format("Status: 0x%02x",resTbl[7])) 
+	print(string.format("Status: 0x%02x", resTbl[7])) 
 	if( (resTbl[3] == event_param_len + 3)  and resTbl[4] == numHCIcmds and resTbl[5] == opcode_OCF and 
 		resTbl[6] == opcode_OGF and resTbl[7] == status)
 	then
@@ -162,7 +167,7 @@ else
 	
 end
 
-return status
+return status,resTbl[7]
 
 
 end  --function end

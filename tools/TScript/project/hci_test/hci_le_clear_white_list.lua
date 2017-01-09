@@ -1,5 +1,5 @@
 require "hci_const"	
-
+require "basic_debug_config"
 function hci_le_clear_white_list(status, ...)
 arg = {...} 
 
@@ -27,6 +27,8 @@ cmd[4] = 0    -- cmdParaLen
 ---------------------------------------------------------------------------------
 print(string.format("\t\tCMD hci_le_clear_white_list") )
 print("<-------------------------------------------------------------------------------------")
+print(string.format("\t\t\t\t%02x  %02x  %02x  %02x", cmd[1],cmd[2],cmd[3],cmd[4]) )
+
 len = tl_usb_bulk_out(handle,cmd, 4)
 
 start = os.clock()
@@ -63,6 +65,7 @@ then
 	print(string.format("\t\tHCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
 	print(string.format("Status: 0x%02x",resTbl[7])) 
+	
 	if( (resTbl[3] == event_param_len + 3)  and resTbl[4] == numHCIcmds and resTbl[5] == opcode_OCF and 
 		resTbl[6] == opcode_OGF and resTbl[7] == status)
 	then
