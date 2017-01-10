@@ -31,6 +31,23 @@ end
 
 print(string.format("\t\tCMD hci_le_create_conn") )
 print("<-------------------------------------------------------------------------------------")
+print(string.format("\t\t\t\t%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", 
+					cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8],cmd[9],cmd[10],cmd[11],cmd[12],cmd[13],cmd[14],cmd[15],cmd[16],cmd[17],cmd[18],cmd[19],cmd[20],cmd[21],cmd[22],cmd[23],cmd[24],cmd[25],cmd[26],cmd[27],cmd[28],cmd[29] ) )
+print(string.format("\t\t\t\tLE_Scan_Interval: %04x",cmd[6]*256+cmd[5]))
+print(string.format("\t\t\t\tLE_Scan_Window: %04x",cmd[8]*256+cmd[7]))
+print(string.format("\t\t\t\tInitiator_Filter_Policy: %02x",cmd[9]))
+print(string.format("\t\t\t\tPeer_Address_Type: %02x",cmd[10]))
+print(string.format("\t\t\t\tPeer_Address: 0x%02x%02x%02x%02x%02x%02x",cmd[16],cmd[15],cmd[14],cmd[13],cmd[12],cmd[11]))
+print(string.format("\t\t\t\tOwn_Address_Type: %02x",cmd[17]))
+print(string.format("\t\t\t\tConn_Interval_Min: %04x",cmd[19]*256+cmd[18]))
+print(string.format("\t\t\t\tConn_Interval_Max: %04x",cmd[21]*256+cmd[20]))
+print(string.format("\t\t\t\tConn_Latency: %04x",cmd[23]*256+cmd[22]))
+print(string.format("\t\t\t\tSupervision_Timeout: %04x",cmd[25]*256+cmd[24]))
+print(string.format("\t\t\t\tMinimum_CE_Length: %04x",cmd[27]*256+cmd[26]))
+print(string.format("\t\t\t\tMaximum_CE_Length %04x",cmd[29]*256+cmd[28]))
+			
+
+			
 len = tl_usb_bulk_out(handle,cmd, cmd_total_len)
 
 
@@ -168,7 +185,7 @@ then
    print("\n TEST  FAIL!")   
    tl_error(1)
 else
-   print("\n TEST  OK!")
+   tl_error(0)
 end
 
 

@@ -1,5 +1,5 @@
 require "hci_const"		
-
+require "basic_debug_config"
 
 function hci_le_set_scan_enable(en,  status)
 
@@ -28,6 +28,7 @@ cmd[5] = en
 
 print(string.format("\t\tCMD HCI_LE_Set_SCAN_Enable") )
 print("<-------------------------------------------------------------------------------------")
+print(string.format("\t\t\t\t%02x  %02x  %02x  %02x  %02x", cmd[1],cmd[2],cmd[3],cmd[4],cmd[5]) )
 if(en==1)
 then 
 	print(string.format("\t\t\t\t\t\t(Enable)") )

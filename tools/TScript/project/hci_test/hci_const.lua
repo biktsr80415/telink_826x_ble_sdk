@@ -12,7 +12,7 @@ HCI_TYPE_EVENT = 0x04
 --- hci event
  HCI_CMD_DISCONNECTION_COMPLETE                               = 0x05
  HCI_EVT_ENCRYPTION_CHANGE                                    = 0x08
- HCI_EVT_CHANGE_LINK_KEY_COMPLETE							 = 0x09
+ HCI_EVT_CHANGE_LINK_KEY_COMPLETE							  = 0x09
  HCI_EVT_READ_REMOTE_VER_INFO_COMPLETE                        = 0x0C
  HCI_EVT_CMD_COMPLETE                                         = 0x0E
  HCI_EVT_CMD_STATUS                                           = 0x0F
@@ -46,7 +46,7 @@ HCI_TYPE_EVENT = 0x04
  HCI_LE_EVT_MASK_READ_REMOTE_FEATURE                          = 0x008
  HCI_LE_EVT_MASK_LONG_TERM_KEY_REQUEST                        = 0x010
  HCI_LE_EVT_MASK_REMOTE_CONNECTION_PARAM_REQUEST              = 0x020
- HCI_LE_EVT_MASK_DATA_LENGTH_CHANGE                        	 = 0x040
+ HCI_LE_EVT_MASK_DATA_LENGTH_CHANGE                        	  = 0x040
  HCI_LE_EVT_MASK_READ_LOCAL_P256_PUBLIC_KEY_COMPLETE          = 0x080
  HCI_LE_EVT_MASK_GENERATE_DHKEY_COMPLETE                      = 0x100
  HCI_LE_EVT_MASK_ENHANCED_CONNECTION_COMPLETE                 = 0x200
@@ -116,15 +116,15 @@ HCI_CMD_READ_BD_ADDR   										 = 0x09
  HCI_CMD_LE_REMOTE_CONNECTION_PARAM_REQ_REPLY             	 = 0x20
  HCI_CMD_LE_REMOTE_CONNECTION_PARAM_REQ_NEGATIVE_REPLY    	 = 0x21
 ----core_4.1 above
- HCI_CMD_LE_SET_DATA_LENGTH			                         = 0x22
+ HCI_CMD_LE_SET_DATA_LENGTH			                          = 0x22
  HCI_CMD_LE_READ_SUGGESTED_DEFAULT_DATA_LENGTH                = 0x23
  HCI_CMD_LE_WRITE_SUGGESTED_DEFAULT_DATA_LENGTH               = 0x24
  HCI_CMD_LE_READ_LOCAL_P256_PUBLIC_KEY                        = 0x25
- HCI_CMD_LE_GENERATE_DHKEY		                         	 = 0x26
+ HCI_CMD_LE_GENERATE_DHKEY		                         	  = 0x26
  HCI_CMD_LE_ADD_DEVICE_TO_RESOLVING_LIST                      = 0x27
  HCI_CMD_LE_REMOVE_DEVICE_FROM_RESOLVING_LIST                 = 0x28
  HCI_CMD_LE_CLEAR_RESOLVING_LIST                              = 0x29
- HCI_CMD_LE_READ_RESOLVING_LIST_SIZE                     	 = 0x2A
+ HCI_CMD_LE_READ_RESOLVING_LIST_SIZE                     	  = 0x2A
  HCI_CMD_LE_READ_PEER_RESOLVABLE_ADDRESS            			 = 0x2B
  HCI_CMD_LE_READ_LOCAL_RESOLVABLE_ADDRESS                     = 0x2C
  HCI_CMD_LE_SET_ADDRESS_RESOLUTION_ENABLE                     = 0x2D
@@ -139,3 +139,7 @@ HCI_CMD_LINK_POLICY_OPCODE_OGF								 = 0x08 --0x02<<2 = 0x08
 HCI_CMD_TEST_OPCODE_OGF								 		 = 0x18 --0x06<<2 = 0x18
 
 HCI_CMD_READ_LOOPBACK_MODE									 = 0x01
+
+CHECK_NO_MORE_EVENT = 2
+DATA_CHECK_ENABLE  = 1
+DATA_CHECK_DISABLE = 0

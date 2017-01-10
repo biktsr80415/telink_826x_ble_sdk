@@ -1,6 +1,8 @@
 require "hci_le_generate_dhkey"
 require "hci_le_set_event_mask"
 require "hci_le_read_local_p256_pkey"
+require "func_wait_for_event"
+
 
 handle = tl_usb_init(0xffff);
 handle_bulk = tl_usb_bulk_monitor_init(0xffff);
@@ -17,11 +19,6 @@ hci_le_generate_dhkey(BLE_SUCCESS,0xAA,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x11,0
 
 wait_for_event(10000, BLE_SUCCESS) --LE Generate DHKey Complete
 
-local answer
-io.write("continue with this operation (y/n)? ")
-repeat
-   answer=tl_input_get()
-until answer=='y'
 
 
 print("end!")

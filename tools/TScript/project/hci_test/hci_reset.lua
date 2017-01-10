@@ -1,4 +1,5 @@
 require "hci_const"	
+require "basic_debug_config"
 
 function hci_reset(status, ...)
 arg = {...} 
@@ -27,6 +28,8 @@ cmd[4] = 0    -- cmdParaLen
 ---------------------------------------------------------------------------------
 print(string.format("\t\tCMD hci_reset") )
 print("<-------------------------------------------------------------------------------------")
+print(string.format("\t\t\t\t%02x  %02x  %02x  %02x", cmd[1], cmd[2], cmd[3], cmd[4]))
+
 len = tl_usb_bulk_out(handle,cmd, 4)
 
 start = os.clock()

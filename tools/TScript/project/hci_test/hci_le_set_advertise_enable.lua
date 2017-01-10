@@ -1,4 +1,5 @@
 require "hci_const"	
+require "basic_debug_config"
 
 function bls_ll_setAdvEnable(en,  status)
 
@@ -30,8 +31,8 @@ cmd[5] = en
 --print("    		HCI_LE_Set_Advertise_Enable", )
 print(string.format("\t\t\t\tHCI_LE_Set_Advertise_Enable") )
 print("<-------------------------------------------------------------------------------------")
-if(en==1)
-then 
+print(string.format("\t\t\t\t%02x  %02x  %02x  %02x  %02x", cmd[1],cmd[2],cmd[3],cmd[4],cmd[5]) )
+if(en==1)then 
 	print(string.format("\t\t\t\t\t\t(Enable)") )
 else
 	print(string.format("\t\t\t\t\t\t(Disable)") )
