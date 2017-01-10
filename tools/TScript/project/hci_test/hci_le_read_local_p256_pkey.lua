@@ -79,7 +79,7 @@ then
 	print(string.format("\t\tHCI_Command_Status_Event") )
 	print("-------------------------------------------------------------------------------------->")
 	print(string.format("Status: 0x%02x",resTbl[4])) 
-	print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7]) )
+	--print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7]) )
 	
 	if( resTbl[3] == total_param_len and resTbl[4] == status and resTbl[5] == numHCIcmds and 
 		resTbl[6] == opcode_OCF and resTbl[7] == opcode_OGF)

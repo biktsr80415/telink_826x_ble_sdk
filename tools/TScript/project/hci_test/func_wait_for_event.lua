@@ -16,6 +16,8 @@ do
 
    if(resLen > 0)
    then
+        --print(string.format("0x%02x %02x %02x %02x", resTbl[1],resTbl[2], resTbl[3],resTbl[4]))
+		--print(string.format("resLen: %02x",resLen))
 		break
    end
 end
@@ -55,8 +57,8 @@ Subevent_Code = resTbl[4]
 if(resLen ~=  (evtParamLen+3))
 then
 	print(string.format("Retrun param length %d unmatch with param len %d ", resLen, evtParamLen))
-    print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[1],resTbl[2], resTbl[3],resTbl[4], resTbl[5],resTbl[6], resTbl[7],resTbl[8]))	
-	print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13],resTbl[14],resTbl[15], resTbl[16]))
+    --print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[1],resTbl[2], resTbl[3],resTbl[4], resTbl[5],resTbl[6], resTbl[7],resTbl[8]))	
+	--print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13],resTbl[14],resTbl[15], resTbl[16]))
 	tl_error(1)
 	return 0, 0
 end
@@ -235,11 +237,9 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 	
 	elseif(Subevent_Code == HCI_SUB_EVT_LE_DIRECT_ADVERTISE_REPORT)  then
 	
-	
-	
 	else
 		eventERR = 1
-		print(string.format("event type %d or event code(LE Meta Event) %d ERR", resTbl[1], resTbl[2]))
+		print(string.format("event type 0x%02x or event code(LE Meta Event) 0x%02x ERR", resTbl[1], resTbl[2]))
 	end
 	
 	
@@ -267,7 +267,7 @@ elseif(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_CMD_DISCONNECTION_COMPLE
 	end
 	
 else
-	print(string.format("event type 0x%02x or event code 0x%02x ERR", resTbl[1], resTbl[2])) 
+	print(string.format("event type %02x or event code %02x ERR", resTbl[1], resTbl[2])) 
 	eventERR = 1
 end
 

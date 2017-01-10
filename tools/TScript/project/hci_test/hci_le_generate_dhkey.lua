@@ -46,7 +46,7 @@ print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", cmd[61],cmd[62],cmd[63],
 
 
 start = os.clock()
-while(   os.clock() - start < 0.050)
+while(   os.clock() - start < 5)
 do
    tl_sleep_ms(1)
    resTbl,resLen = tl_usb_bulk_read()
