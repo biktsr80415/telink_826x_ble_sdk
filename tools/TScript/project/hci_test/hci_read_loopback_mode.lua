@@ -1,4 +1,5 @@
 require "hci_const"	
+require "basic_debug_config"
 
 function hci_read_loopback_mode_cmd(status, ...)
 arg = {...} 
@@ -13,8 +14,8 @@ cmd_param_len = 0
 cmd_total_len = cmd_param_len + 4
 
 numHCIcmds = 1
-event_param_len = 2
-total_param_len = 5
+event_param_len = 1
+total_param_len = 4
 event_code = HCI_EVT_CMD_COMPLETE
 
 cmd = array.new(4)
@@ -27,6 +28,7 @@ cmd[4] = 0    -- cmdParaLen
 ---------------------------------------------------------------------------------
 print(string.format("\t\tCMD hci_read_loopback_mode_cmd") )
 print("<-------------------------------------------------------------------------------------")
+print(string.format("\t\t\t\t%02x %02x %02x %02x", cmd[1],cmd[2],cmd[3],cmd[4]) )
 len = tl_usb_bulk_out(handle,cmd, 4)
 
 start = os.clock()
@@ -52,12 +54,15 @@ local eventERR = 0
 --  total_param_len =  3 + event_param_len
 --  resLen 			=  6 + event_param_len
 
--- if(resLen ~= (6 + event_param_len))
--- then
--- 	print("Retrun param length: ", resLen, "\tERR")
--- 	tl_error(1)
--- 	return
--- end 														comment these lines so as to show err reason
+if(resLen ~= (6 + event_param_len))
+then
+	print("Retrun param length: ", resLen, "\tERR")
+	tl_error(1)
+	return
+end 		
+--print(resTbl[1] )	
+--print(resTbl[2] )	
+--print(resTbl[3] )											
 
 if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
