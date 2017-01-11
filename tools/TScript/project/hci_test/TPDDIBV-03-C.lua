@@ -1,7 +1,7 @@
 require "hci_le_set_advertise_enable"
 require "hci_le_set_advertising_param"
 require "basic_ble_const"
-require "hci_le_set advertising_data"
+require "hci_le_set_advertising_data"
 require "hci_le_scan_response_data"
 
 

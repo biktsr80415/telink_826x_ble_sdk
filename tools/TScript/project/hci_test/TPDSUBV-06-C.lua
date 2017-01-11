@@ -1,5 +1,4 @@
 require "hci_le_create_conn"
-require "hci_le_create_conn1"
 require "hci_reset"
 require "func_wait_for_event"
 require "hci_le_set_event_mask"

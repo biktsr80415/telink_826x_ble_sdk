@@ -5,7 +5,7 @@ require "hci_const"
 require "wait_for_le_report_event"
 require "basic_ble_const"
 require "hci_le_set_event_mask"
-require "hci_le_set advertising_data"
+require "hci_le_set_advertising_data"
 require "hci_le_scan_response_data"
 
 
