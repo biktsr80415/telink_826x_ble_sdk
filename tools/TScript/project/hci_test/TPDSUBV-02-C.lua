@@ -12,15 +12,15 @@ handle_bulk = tl_usb_bulk_monitor_init(0xffff);
 tl_usb_bulk_monitor_start(handle_bulk)
 
 bls_ll_setAdvParam(ADV_INTERVAL_20MS,0, ADV_INTERVAL_20MS, 0 ,ADV_TYPE_CONNECTABLE_UNDIRECTED,
-				   OWN_ADDRESS_PUBLIC,BLE_ADDR_PUBLIC,  0x1c, 0xfb, 0x62,
-				   0x38, 0xc1, 0xa4,  BLT_ENABLE_ADV_37,ADV_FP_ALLOW_SCAN_ANY_ALLOW_CONN_ANY ,
+				   OWN_ADDRESS_PUBLIC,BLE_ADDR_PUBLIC,  0xEF, 0xCD, 0xAB,
+				   0x89, 0x67, 0x45,  BLT_ENABLE_ADV_37,ADV_FP_ALLOW_SCAN_ANY_ALLOW_CONN_ANY ,
 				   0);
 				   
 --bls_ll_setAdvData(BLE_SUCCESS, 31, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 --bls_ll_setScanRspData(BLE_SUCCESS, 31, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);				   
 bls_ll_setAdvEnable(1,BLE_SUCCESS)
 
-tl_sleep_ms(1000)
+tl_sleep_ms(10000)
 
 hci_reset(BLE_SUCCESS)
 

@@ -26,7 +26,7 @@ cmd[3] = opcode_OGF
 cmd[4] = 0    -- cmdParaLen
 -------------------------------------------
 ---------------------------------------------------------------------------------
-print(string.format("\t\tCMD hci_read_local_supported_features") )
+print(string.format("\t\t\t\tCMD hci_read_local_supported_features") )
 print("<-------------------------------------------------------------------------------------")
 print(string.format("\t\t\t\t%02x  %02x  %02x  %02x", cmd[1],cmd[2],cmd[3],cmd[4]) )
 
@@ -63,7 +63,7 @@ end
 
 if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
-	print(string.format("\t\tHCI_Command_Complete_Event") )
+	print(string.format("HCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
 	print(string.format("Status: 0x%02x",resTbl[7])) 
 	print(string.format("LMP_Features:0x%02x%02x%02x%02x%02x%02x%02x%02x",resTbl[15],resTbl[14],resTbl[13],resTbl[12],resTbl[11],resTbl[10],resTbl[9],resTbl[8]))

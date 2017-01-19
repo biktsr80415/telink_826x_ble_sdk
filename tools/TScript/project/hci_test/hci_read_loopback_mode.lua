@@ -26,7 +26,7 @@ cmd[3] = opcode_OGF
 cmd[4] = 0    -- cmdParaLen
 -------------------------------------------
 ---------------------------------------------------------------------------------
-print(string.format("\t\tCMD hci_read_loopback_mode_cmd") )
+print(string.format("\t\t\t\tCMD hci_read_loopback_mode_cmd") )
 print("<-------------------------------------------------------------------------------------")
 print(string.format("\t\t\t\t%02x %02x %02x %02x", cmd[1],cmd[2],cmd[3],cmd[4]) )
 len = tl_usb_bulk_out(handle,cmd, 4)
@@ -66,7 +66,7 @@ end
 
 if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
-	print(string.format("\t\tHCI_Command_Complete_Event") )
+	print(string.format("HCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
 	print(string.format("Status: 0x%02x",resTbl[7])) 
 	if( (resTbl[3] == event_param_len + 3)  and resTbl[4] == numHCIcmds and resTbl[5] == opcode_OCF and 

@@ -57,8 +57,8 @@ Subevent_Code = resTbl[4]
 if(resLen ~=  (evtParamLen+3))
 then
 	print(string.format("Retrun param length %d unmatch with param len %d ", resLen, evtParamLen))
-    --print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[1],resTbl[2], resTbl[3],resTbl[4], resTbl[5],resTbl[6], resTbl[7],resTbl[8]))	
-	--print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13],resTbl[14],resTbl[15], resTbl[16]))
+    print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[1],resTbl[2], resTbl[3],resTbl[4], resTbl[5],resTbl[6], resTbl[7],resTbl[8]))	
+	print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x", resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13],resTbl[14],resTbl[15], resTbl[16]))
 	tl_error(1)
 	return 0, 0
 end

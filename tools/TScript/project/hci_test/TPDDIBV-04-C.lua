@@ -21,7 +21,7 @@ hci_le_set_scan_parameter(BLE_SUCCESS, SCAN_TYPE_PASSIVE, SCAN_INTERVAL_330MS, S
 
 hci_le_set_scan_enable(1,BLE_SUCCESS)
 										   
-wait_for_le_report_event(10000, DATA_CHECK_DISABLE, LL_TYPE_ADV_IND, BLE_ADDR_PUBLIC, 0xa4c13862, 0xfb1c)
+wait_for_le_report_event(10000, DATA_CHECK_ENABLE, LL_TYPE_ADV_IND, BLE_ADDR_PUBLIC, 0x456789ab, 0xcdef)
 
 hci_le_set_scan_enable(0,BLE_SUCCESS)
 

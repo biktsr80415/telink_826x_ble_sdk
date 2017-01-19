@@ -94,7 +94,7 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 		print(string.format("HCI_LE_Advertising_Report_Event") )
 		print("===========================================>")
 		print(string.format("Event_type:0x%02x, Addr_type:0x%02x, Addr: 0x%08x%04x, data0:0x%02x, rssi:0x%02x",Event_Type,Address_Type, Address_high4, Address_low2, Data0, RSSI)) 
-		print("<===========================================")		
+		--print("<===========================================")		
 				
 		if(Num_Reports ~= 1 or Length + 12 ~= evtParamLen) then	
 			eventERR = 1
@@ -122,7 +122,7 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 			elseif(Address_high4~=check_adr_high4) then
 				print(string.format("Address_high4:0x%08x, ERR", Address_high4))		
 			elseif(Address_low2~= check_adr_low2) then
-				print(string.format("Address_low2:0x%04x, ERR", Address_low2))	
+				print(string.format("Address_low2:0x%04x, check_adr_low2:0x%04x  ERR", Address_low2, check_adr_low2))	
 			end
 		end
 		

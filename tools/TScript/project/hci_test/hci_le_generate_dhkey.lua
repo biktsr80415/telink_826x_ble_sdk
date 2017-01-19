@@ -31,18 +31,18 @@ end
 
 len = tl_usb_bulk_out(handle,cmd, cmd_total_len)
 
-print(string.format("\t\tCMD hci_le_generate_dhkey") )
+print(string.format("\t\t\t\tCMD hci_le_generate_dhkey") )
 print("<-------------------------------------------------------------------------------------")
 print(string.format("\t\t\t\t%02x %02x %02x %02x", cmd[1],cmd[2],cmd[3],cmd[4]) )
-print("Remote_P-256_Public_Key:")
-print(string.format("0x%02x%02x%02x%02x%02x%02x%02x%02x",cmd[5],cmd[6], cmd[7],  cmd[8], cmd[9],  cmd[10],cmd[11], cmd[12]))
-print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", cmd[13],cmd[14],cmd[15], cmd[16],cmd[17], cmd[18],cmd[19], cmd[20]))
-print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", cmd[21],cmd[22],cmd[23], cmd[24],cmd[25], cmd[26],cmd[27], cmd[28]))
-print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", cmd[29],cmd[30],cmd[31], cmd[32],cmd[33], cmd[34],cmd[35], cmd[36]))
-print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", cmd[37],cmd[38],cmd[39], cmd[40],cmd[41], cmd[42],cmd[43], cmd[44]))
-print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", cmd[45],cmd[46],cmd[47],cmd[48], cmd[49],cmd[50], cmd[51], cmd[52]))
-print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", cmd[53],cmd[54],cmd[55], cmd[56],cmd[57], cmd[58],cmd[59], cmd[60]))
-print(string.format("%02x%02x%02x%02x%02x%02x%02x%02x", cmd[61],cmd[62],cmd[63], cmd[64],cmd[65], cmd[66],cmd[67], cmd[68]))
+print("\t\t\t\tRemote_P-256_Public_Key:")
+print(string.format("\t\t\t\t0x%02x%02x%02x%02x%02x%02x%02x%02x",cmd[5],cmd[6], cmd[7],  cmd[8], cmd[9],  cmd[10],cmd[11], cmd[12]))
+print(string.format("\t\t\t\t%02x%02x%02x%02x%02x%02x%02x%02x", cmd[13],cmd[14],cmd[15], cmd[16],cmd[17], cmd[18],cmd[19], cmd[20]))
+print(string.format("\t\t\t\t%02x%02x%02x%02x%02x%02x%02x%02x", cmd[21],cmd[22],cmd[23], cmd[24],cmd[25], cmd[26],cmd[27], cmd[28]))
+print(string.format("\t\t\t\t%02x%02x%02x%02x%02x%02x%02x%02x", cmd[29],cmd[30],cmd[31], cmd[32],cmd[33], cmd[34],cmd[35], cmd[36]))
+print(string.format("\t\t\t\t%02x%02x%02x%02x%02x%02x%02x%02x", cmd[37],cmd[38],cmd[39], cmd[40],cmd[41], cmd[42],cmd[43], cmd[44]))
+print(string.format("\t\t\t\t%02x%02x%02x%02x%02x%02x%02x%02x", cmd[45],cmd[46],cmd[47],cmd[48], cmd[49],cmd[50], cmd[51], cmd[52]))
+print(string.format("\t\t\t\t%02x%02x%02x%02x%02x%02x%02x%02x", cmd[53],cmd[54],cmd[55], cmd[56],cmd[57], cmd[58],cmd[59], cmd[60]))
+print(string.format("\t\t\t\t%02x%02x%02x%02x%02x%02x%02x%02x", cmd[61],cmd[62],cmd[63], cmd[64],cmd[65], cmd[66],cmd[67], cmd[68]))
 
 
 start = os.clock()
@@ -77,7 +77,7 @@ end
 
 if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == event_code)
 then
-	print(string.format("\t\tHCI_Command_Status_Event") )
+	print(string.format("HCI_Command_Status_Event") )
 	print("-------------------------------------------------------------------------------------->")
 	print(string.format("Status: 0x%02x",resTbl[4])) 
 	--print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7]) )
