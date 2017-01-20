@@ -80,6 +80,9 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 		print(string.format("HCI_LE_Connection_Complete_Event") )
 		print("===========================================>")
 		print(string.format("Status: 0x%02x",event_status)) 
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2], resTbl[3],resTbl[4], resTbl[5],resTbl[6], resTbl[7]))	
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[9],resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13], resTbl[14]))
+        print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[15],resTbl[16], resTbl[17],resTbl[18], resTbl[19],resTbl[20], resTbl[21], resTbl[22]))	
 		
 		--if(event_status ~= BLE_SUCCESS or role ~= LL_ROLE_SLAVE or connection_handle~=BLS_CONN_HANDLE)	then
 		if(event_status ~= BLE_SUCCESS)	then
@@ -117,6 +120,7 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 		print(string.format("HCI_LE_Connection_Update_Complete_Event") )
 		print("===========================================>")
 		print(string.format("Status: 0x%02x",event_status)) 
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2], resTbl[3],resTbl[4], resTbl[5],resTbl[6], resTbl[7], resTbl[8],resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13]))	
 		
 		if(event_status ~= BLE_SUCCESS or connection_handle~=BLS_CONN_HANDLE)	then
 			eventERR = 1
@@ -193,6 +197,16 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 		print(string.format("HCI_LE_Read_Local_P256_Key_Complete_Event") )
 		print("===========================================>")
 		print(string.format("Status: 0x%02x",event_status)) 
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7], resTbl[8]) )
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13], resTbl[14],resTbl[15], resTbl[16]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[17], resTbl[18],resTbl[19], resTbl[20],resTbl[21], resTbl[22],resTbl[23], resTbl[24]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[25], resTbl[26],resTbl[27], resTbl[28],resTbl[29], resTbl[30],resTbl[31], resTbl[32]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[33], resTbl[34],resTbl[35], resTbl[36],resTbl[37], resTbl[38],resTbl[39], resTbl[40]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[41], resTbl[42],resTbl[43], resTbl[44],resTbl[45], resTbl[46],resTbl[47], resTbl[48]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[49], resTbl[50],resTbl[51], resTbl[52],resTbl[53], resTbl[54],resTbl[55], resTbl[56]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[57], resTbl[58],resTbl[59], resTbl[60],resTbl[61], resTbl[62],resTbl[63], resTbl[64]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x", resTbl[65], resTbl[66],resTbl[67], resTbl[68],resTbl[69]))
+		
 		if(event_status ~= expect_status) then
 			eventERR = 1
 			tl_error(1)
@@ -218,6 +232,11 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 		print(string.format("HCI_LE_Generate_DHKey_Complete_Event") )
 		print("===========================================>")
 		print(string.format("Status: 0x%02x",event_status)) 
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7], resTbl[8]) )
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[9], resTbl[10],resTbl[11], resTbl[12],resTbl[13], resTbl[14],resTbl[15], resTbl[16]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[17], resTbl[18],resTbl[19], resTbl[20],resTbl[21], resTbl[22],resTbl[23], resTbl[24]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[25], resTbl[26],resTbl[27], resTbl[28],resTbl[29], resTbl[30],resTbl[31], resTbl[32]))
+		print(string.format("%02x  %02x  %02x  %02x  %02x", resTbl[33], resTbl[34],resTbl[35], resTbl[36],resTbl[37]))
 		if(event_status ~= expect_status) then
 			eventERR = 1
 			tl_error(1)

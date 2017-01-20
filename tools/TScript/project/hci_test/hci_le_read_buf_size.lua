@@ -66,6 +66,7 @@ then
 	print(string.format("HCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
 	print(string.format("Status: 0x%02x",resTbl[7])) 
+	print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7], resTbl[8],resTbl[9], resTbl[10]) )
 	print(string.format("HC_LE_Data_Packet_Length: 0x%04x", resTbl[8]+resTbl[9]*256))
 	print(string.format("HC_Total_Num_LE_Data_Packets: 0x%02x", resTbl[10]))
 	

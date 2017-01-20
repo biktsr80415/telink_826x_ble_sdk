@@ -12,7 +12,7 @@ handle_bulk = tl_usb_bulk_monitor_init(0xffff);
 --- print("handle : ",string.format("0x%04x",handle_bulk)) 
 tl_usb_bulk_monitor_start(handle_bulk)
 
-hci_le_set_event_mask(BLE_SUCCESS, 0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00) 
+hci_le_set_event_mask(BLE_SUCCESS, 0xff,0x04,0x00,0x00,0x00,0x00,0x00,0x00) 
 hci_le_set_scan_parameter(BLE_SUCCESS, SCAN_TYPE_PASSIVE, SCAN_INTERVAL_330MS, SCAN_INTERVAL_330MS,
 										   OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_ANY)
 

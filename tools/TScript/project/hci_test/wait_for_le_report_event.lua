@@ -93,8 +93,13 @@ if(resTbl[1] == HCI_TYPE_EVENT and resTbl[2] == HCI_EVT_LE_META) then
 	
 		print(string.format("HCI_LE_Advertising_Report_Event") )
 		print("===========================================>")
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", 
+				resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7],resTbl[8],resTbl[9], resTbl[10]) )
+		print(string.format("%02x  %02x  %02x  %02x  %02x  %02x", 
+				resTbl[11],resTbl[12],resTbl[13],resTbl[14],resTbl[15],resTbl[16]) )
+				
 		print(string.format("Event_type:0x%02x, Addr_type:0x%02x, Addr: 0x%08x%04x, data0:0x%02x, rssi:0x%02x",Event_Type,Address_Type, Address_high4, Address_low2, Data0, RSSI)) 
-		--print("<===========================================")		
+		
 				
 		if(Num_Reports ~= 1 or Length + 12 ~= evtParamLen) then	
 			eventERR = 1

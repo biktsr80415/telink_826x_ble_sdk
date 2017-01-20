@@ -67,6 +67,7 @@ then
 	print(string.format("HCI_Command_Complete_Event") )
 	print("-------------------------------------------------------------------------------------->")
 	print(string.format("Status: 0x%02x", resTbl[7])) 
+	print(string.format("%02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x", resTbl[1],resTbl[2],resTbl[3],resTbl[4],resTbl[5],resTbl[6],resTbl[7],resTbl[8]) )
 	print(string.format("White_List_Size: 0x%02x", resTbl[8] ))
 	
 	
