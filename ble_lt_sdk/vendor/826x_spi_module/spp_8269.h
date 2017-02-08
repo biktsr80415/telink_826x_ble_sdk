@@ -173,8 +173,7 @@ typedef enum{
  * Public Functions
  */
 void spp_init(void);
-void spp_onModuleCmd(void);
-void host_next_status (void);
+void spp_onModuleCmd(u8* p, int n);
 
 ///////////////////////////////8269_spi.h////////////////////////////////////////////
 enum SPI_MODE{

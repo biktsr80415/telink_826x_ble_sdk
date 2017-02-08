@@ -118,25 +118,12 @@ void spi_read_buff_8267(unsigned short addr,unsigned char* pbuff,unsigned int le
 u8 *spp_rx_buff = 0x80Bf80;
 u8 *spp_tx_buff = 0x80Bfc0;
 
-#else  //�����������ַ����ʱdebug���������ʽ
-
+#else  //锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟街凤拷锟斤拷锟绞眃ebug锟斤拷锟斤拷锟斤拷锟斤拷锟绞�
 u8 spp_rx_buff[SPP_RX_BUFF_SIZE];
 u8 spp_tx_buff[SPP_TX_BUFF_SIZE];
 
 #endif
 
-//status buffer used to buffer send back data packets to SPI master
-u8 host_st[HOST_BUFF_NUM][SPP_TX_BUFF_SIZE];
-
-u8 host_st_wptr = 0;
-u8 host_st_rptr = 0;
-u8 ble_module_flag;
-
-u8 host_dat[HOST_BUFF_NUM][SPP_RX_BUFF_SIZE];//4buffers to buffer SPI packets
-u8 host_dat_wptr = 0;
-u8 host_dat_rptr = 0;
-
-u8 p_module_write[64];//data packets received from BLE master
 
 /**********************************************************************
  * LOCAL FUNCTIONS
@@ -145,7 +132,7 @@ extern u8 notify_or_indicate_flg;
 //handle:spp
 extern u8  spp_handle_s2c;
 extern u8  tbl_mac[];
-
+u8 ble_module_flag;
 
 
 ///////////the code below is just for demonstration of the event callback only////////////
@@ -189,128 +176,47 @@ void spp_dataHandler(u8 *pData, u8 len){// notify/indicate the Master like mobil
 	}
 }
 
-
-void	host_next_status (void)
-{
-	if (host_st_wptr == host_st_rptr)			//status buffer empty, clear GPIO flag
-	{
-		SPI_MODULE_DATE_FINISH;
-		*(u32 *)spp_tx_buff = 0; //reset command buffer, if master read zero data, ignore the event
-		ble_module_flag &= ~FLAG_HOST_STATUS_BUSY;
-	}
-	else
-	{
-		u8 *p = host_st[host_st_rptr++ & (HOST_BUFF_NUM - 1)];
-		memcpy (spp_tx_buff, p, p[1] + 2);
-	}
-}
-
-
-u8 tst2;// for test
 u8	host_push_status (u16 st, int n, u8 *p)
 {
-	if( ((host_st_wptr - host_st_rptr) & (HOST_BUFF_NUM*2 - 1)) >= HOST_BUFF_NUM )
-	{
-		return 1;
-	}
+	u8 *pw = my_fifo_wptr(&hci_tx_fifo);
 
+	if (!pw || n >= hci_tx_fifo.size)
+	{
+		return -1;
+	}
 	u8 i = 0;
-	/////////////////////////////////////////////////////////////////
-	u8 *pw = host_st[host_st_wptr++ & (HOST_BUFF_NUM - 1)];
 	if (n > 20)
 	{
 		n = 20;
 	}
-
 	st = ( st & 0x03FF) | 0x0400;//event ID
-
 	pw[i++] = 0xFF;	//token
-
 	pw[i++] = n+2;  //length
-
 	pw[i++] = st;
 	pw[i++] = st >> 8;
-
 	if(st == 0x0731){//data receive, add handle
 		pw[i++] = 0x01;
 		pw[i++] = 0x00;
 		pw[1] = n+4;
 	}
-
 	if (n)
 	{
 		memcpy (pw + i, p, n);//write data to staus buffer
 	}
-
-	if (!(ble_module_flag & FLAG_HOST_STATUS_BUSY))
-	{
-		//led_onoff(WHITE_LED, (++tst2) % 2 ? 1 : 0);
-		host_next_status();
-		ble_module_flag |= FLAG_HOST_STATUS_BUSY;//rise busy flag
-		SPI_MODULE_DATE_READY;
-
-
-
-	}
+	my_fifo_next (&hci_tx_fifo);
 	return 0;
 }
 
-/********************************************************
-*
-*	@brief	Push the coarse PDU received from SPI master to BLE master device. Responsible for abstract the
-*			data payload from the frame. The packets send from SPI master follow this form:
-*			|0			1	|	1		2	| 3	.....	n |
-*			 *Command ID*	  *param Len n*	  *PayLoad*
-*
-*	@param	*p:	address of the SPI mapping buffer
-*
-*	@return	0: send success
-*			else: send error.
-*/
-u8	host_push_data (u8 *p)
-{
-	int num = (host_dat_wptr - host_dat_rptr) & 31;//11111
-	if(bls_ll_getCurrentState()!=BLS_LINK_STATE_CONN){
-		return DATA_SEND_FAILED_NOCONNECTION;
-	}
-
-	if (num >= HOST_BUFF_NUM)
-	{
-		return DATA_SEND_FAILED_BUSY;
-	}
-	if (p[2] > NOTIFY_MAXIMUM_DATA_LEN)
-	{
-		return DATA_SEND_FAILED_TXLEN;
-	}
-	u8 *pw = host_dat[host_dat_wptr++ & (HOST_BUFF_NUM - 1)];
-	*pw = p[2];
-	memcpy (pw+1, p + 4, p[2]);
-	return 0;
-}
 
 //spp cmd internal process function
-
-/*********************************************************************
- * @fn      spp_onModuleCmd
- *
- * @brief   Module command handler.
- *
- * @param   None
- *
- * @return  None
- */
-void spp_onModuleCmd(void)
+void spp_onModuleCmd(u8* p, int n)
 {
-
 	u8 backCode = SPP_RESULT_SUCCESS;
 	u8 read_buf_num[4];
-	spp_cmd_t *sppData = (spp_cmd_t *)spp_rx_buff;
+	spp_cmd_t *sppData = (spp_cmd_t *)p;
 
 	switch (sppData->cmdID)
 	{
-		case HC_ACK:
-			host_next_status ();
-			break;
 		// set advertising interval: 01 ff 02 00 50 00: 80 *0.625ms
 		case HC_SET_ADV_INTERVAL:
 		{
@@ -329,7 +235,6 @@ void spp_onModuleCmd(void)
 
 		case HC_NOTIFY_DATA: //data packet
 			backCode = host_push_data(spp_rx_buff);
-		    host_push_status(HC_NOTIFY_DATA,1,&backCode);
 
 		    break;
 		// enable/disable advertising: 0a ff 01 00  01
@@ -468,49 +373,3 @@ void module_send_stateEvent(void ){
 
 }
 
-u8 tst;
-u8 spp_task_finished_flg = 0;//
-void task_host(void){
-	if(reg_irq_src & FLD_IRQ_GPIO_RISC2_EN ){//&& gpio_read(GPIO_PB4)){
-
-        reg_irq_src = FLD_IRQ_GPIO_RISC2_EN;  //clear irq src
-
-        if(*(u16*)(spp_rx_buff) != 0){//MSPI write irq
-			//led_onoff(RED_LED, (++tst) % 2 ? 1 : 0);
-			spp_onModuleCmd();
-			spp_task_finished_flg = 1;//spp tsk start
-			*(u16*)(spp_rx_buff) = 0;
-		}
-		else{//MSPI read irq
-			if(*(u16*)(spp_tx_buff)){
-				ble_module_flag &= ~FLAG_HOST_STATUS_BUSY;//clear busy flag
-				host_next_status (); // ACK command, go to next status
-				spp_task_finished_flg = 0;//spp tsk finished
-			}
-		}
-
-	}
-	////////////////////// data received from master ///////////////////////
-	if (p_module_write[0])
-	{
-#if PRINT_DEBUG_INFO
-		printf("data received from app, rec.data.len:0x%1x\n",(unsigned)(u8 )p_module_write[0]);
-#endif
-		host_push_status (EV_DATA_REC, p_module_write[0], p_module_write+1);
-		p_module_write[0] = 0;
-	}
-	////////////////////// send data to master /////////////////////////////////
-	if (bls_ll_getTxFifoNumber() < 3 && (host_dat_wptr != host_dat_rptr)) //data
-	{
-		u8 *ps = host_dat[host_dat_rptr++ & (HOST_BUFF_NUM - 1)];
-		bls_att_pushNotifyData (spp_handle_s2c, ps + 1, ps[0]);
-#if PRINT_DEBUG_INFO
-	printf("packet send to phone\n");
-#endif
-	}
-	////////////////////// module states change ////////////////////////////
-	if(ble_module_flag & FLAG_NOTIFY_STATE_CHANGE){	//track module states
-		module_send_stateEvent();
-	}
-
-}

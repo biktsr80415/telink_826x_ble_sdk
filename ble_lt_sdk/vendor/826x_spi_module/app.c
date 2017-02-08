@@ -144,7 +144,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//閿熸枻鎷穖odule閿熸枻鎷穟art閿熸枻鎷疯帢閿熸枻鎷烽敓鏂ゆ嫹閿熻緝鍚庯紝鏂ゆ嫹GPIO_WAKEUP_MCU閿熸枻鎷烽敓閰典紮鎷烽敓鏂ゆ嫹(鍙栭敓鏂ゆ嫹閿熸枻鎷穟ser閿熸枻鎷蜂箞閿熸枻鎷烽敓锟�
+	//闁跨喐鏋婚幏绌杘dule闁跨喐鏋婚幏绌焌rt闁跨喐鏋婚幏鐤涪闁跨喐鏋婚幏鐑芥晸閺傘倖瀚归柨鐔荤窛閸氬函绱濋弬銈嗗GPIO_WAKEUP_MCU闁跨喐鏋婚幏鐑芥晸闁板吀绱幏鐑芥晸閺傘倖瀚�閸欐牠鏁撻弬銈嗗闁跨喐鏋婚幏绌焥er闁跨喐鏋婚幏铚傜疄闁跨喐鏋婚幏鐑芥晸閿燂拷
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
@@ -161,8 +161,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //閿熸枻鎷疯閿熸枻鎷�GPIO_WAKEUP_MODULE 閿熸枻鎷烽敓鏂ゆ嫹
-	}
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闁跨喐鏋婚幏鐤渽闁跨喐鏋婚幏锟紾PIO_WAKEUP_MODULE 闁跨喐鏋婚幏鐑芥晸閺傘倖瀚�	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
 	{
@@ -242,7 +241,7 @@ int blc_hci_rx (void)
 	u8* p = my_fifo_get(&hci_rx_fifo);
 	if(p)
 	{
-		blc_hci_handler (p + 2,  1);  //para1 has no use
+		spp_onModuleCmd (p + 2,  1);  //para1 has no use
 		my_fifo_pop(&hci_rx_fifo);
 	}
 
@@ -387,8 +386,6 @@ void main_loop ()
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	blt_slave_main_loop ();
-
-	task_host();
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 	//  add spp UI task
