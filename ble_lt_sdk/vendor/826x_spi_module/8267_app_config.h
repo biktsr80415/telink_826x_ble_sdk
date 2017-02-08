@@ -65,10 +65,9 @@ extern "C" {
 
 #endif
 
-#define SPI_MODULE_DATE_FINISH	gpio_set_output_en(SSPI_TX_NOTIFY_PIN, 0)
-#define SPI_MODULE_DATE_READY	gpio_set_output_en(SSPI_TX_NOTIFY_PIN, 1); \
-	                            WaitUs(100); \
-                                gpio_set_output_en(SSPI_TX_NOTIFY_PIN, 0)
+#define SPI_MODULE_DATA_FINISH	gpio_setup_up_down_resistor(GPIO_PC4, PM_PIN_PULLUP_1M)//gpio_write(SSPI_TX_NOTIFY_PIN, 1);
+#define SPI_MODULE_DATA_READY	gpio_setup_up_down_resistor(GPIO_PC4, PM_PIN_PULLDOWN_100K)//gpio_write(SSPI_TX_NOTIFY_PIN, 0)
+
 
 
 ////////////////////////////////////////////////////////
