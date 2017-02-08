@@ -15,25 +15,6 @@ volatile u8 dbg_irq;
 _attribute_ram_code_ void irq_handler(void)
 {
 	irq_blt_slave_handler ();
-#if (HCI_ACCESS==HCI_USE_UART)
-	unsigned char irqS = reg_dma_rx_rdy0;
-    if(irqS & BIT(0))	//rx
-    {
-    	reg_dma_rx_rdy0 = FLD_DMA_UART_RX;
-		u8* w = hci_rx_fifo.p + (hci_rx_fifo.wptr & (hci_rx_fifo.num-1)) * hci_rx_fifo.size;
-		if(w[0]!=0)
-		{
-			my_fifo_next(&hci_rx_fifo);
-			u8* p = hci_rx_fifo.p + (hci_rx_fifo.wptr & (hci_rx_fifo.num-1)) * hci_rx_fifo.size;
-			reg_dma0_addr = (u16)((u32)p);
-		}
-    }
-
-    if(irqS & BIT(1))	//tx
-    {
-    	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
-    }
-#elif (HCI_ACCESS==HCI_USE_SPI)
     unsigned char spi_irq = reg_i2c_irq_status;
     if(spi_irq & BIT(1) )
 	{
@@ -52,7 +33,6 @@ _attribute_ram_code_ void irq_handler(void)
 			}
 		}
 	}
-#endif
 }
 
 int main (void) {

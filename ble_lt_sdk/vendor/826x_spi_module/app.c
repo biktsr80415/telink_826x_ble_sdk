@@ -9,18 +9,17 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
 #include "spp_8269.h"
+u8 *spi_rx_buff = 0x80fe00;  //fe00~fe48 72 rx buff
+u8 *spi_tx_buff = 0x80fe60;	 //fe60~fea8 72 tx buff
 
+u8 tx_done_status = 1;
 
+MYFIFO_INIT(hci_rx_fifo, 72, 2);
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
 
-//MYFIFO_INIT(blt_txfifo, 40, 16);
-MYFIFO_INIT(blt_txfifo, 80, 8);
-
-extern void task_host(void);
-extern u8 spp_task_finished_flg;
-
+MYFIFO_INIT(blt_txfifo, 40, 16);
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
@@ -105,17 +104,19 @@ void rf_customized_param_load(void)
 }
 
 u32 tick_wakeup;
-int	module_is_working;
-int	module_spi_working;
+int	mcu_uart_working;
+int	module_uart_working;
 int module_task_busy;
-
+int	module_uart_data_flg;
 u32 module_wakeup_module_tick;
+#define HCI_TX_BUSY			( (hci_tx_fifo.rptr != hci_tx_fifo.wptr) || *(u32*)(spi_tx_buff)!=0 )
+#define HCI_RX_BUSY			(hci_rx_fifo.rptr != hci_rx_fifo.wptr || *(u32*)(spi_rx_buff)!=0)
 
 int app_module_busy ()
 {
-	module_is_working = gpio_read(SSPI_PM_WAKEUP_PIN);//态
-	module_spi_working = spp_task_finished_flg;
-	module_task_busy = module_is_working || module_spi_working;
+	mcu_uart_working = (gpio_read(GPIO_UCTSC5)==0);
+	module_uart_working = HCI_TX_BUSY || HCI_RX_BUSY;
+	module_task_busy = mcu_uart_working || module_uart_working;
 	return module_task_busy;
 }
 
@@ -143,7 +144,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//锟斤拷module锟斤拷uart锟斤拷莘锟斤拷锟斤拷锟较后，斤拷GPIO_WAKEUP_MCU锟斤拷锟酵伙拷锟斤拷(取锟斤拷锟斤拷user锟斤拷么锟斤拷锟�
+	//閿熸枻鎷穖odule閿熸枻鎷穟art閿熸枻鎷疯帢閿熸枻鎷烽敓鏂ゆ嫹閿熻緝鍚庯紝鏂ゆ嫹GPIO_WAKEUP_MCU閿熸枻鎷烽敓閰典紮鎷烽敓鏂ゆ嫹(鍙栭敓鏂ゆ嫹閿熸枻鎷穟ser閿熸枻鎷蜂箞閿熸枻鎷烽敓锟�
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
@@ -160,7 +161,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //锟斤拷要锟斤拷 GPIO_WAKEUP_MODULE 锟斤拷锟斤拷
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //閿熸枻鎷疯閿熸枻鎷�GPIO_WAKEUP_MODULE 閿熸枻鎷烽敓鏂ゆ嫹
 	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
@@ -211,25 +212,78 @@ void sspi_init(int pin, int divider){
 	gpio_set_input_en(GPIO_PB6,1);
 	gpio_set_input_en(GPIO_PB7,1);
 
+	reg_spi_sp |= FLD_SPI_ENABLE;			//force PADs act as spi
 	//div_clock: bit[6:0]
 	write_reg8(0x0a,read_reg8(0x0a)|divider);// spi clock=system clock/((div_clock+1)*2)
 	write_reg8(0x09,read_reg8(0x09)&0xfd);// disable master mode
 	write_reg8(0x0b,read_reg8(0x0b)|SPI_MODE0);// select SPI mode,surpport four modes
 
-	reg_spi_ctrl = FLD_SPI_ADDR_AUTO;
-	reg_spi_sp = FLD_SPI_ENABLE;			//force PADs act as spi
+//	reg_spi_ctrl = FLD_SPI_ADDR_AUTO;
+//	reg_spi_sp = FLD_SPI_ENABLE;			//force PADs act as spi
 
 	// pin used to notify the MSPI(8267 EVK), SSPI's data has been sent to MSPI
-	gpio_set_func(pin, AS_GPIO);
-	gpio_write(pin, 0);
-	gpio_set_input_en(pin, 1);//gpio_set_output_en(pin, 1);//out
+//	gpio_set_func(pin, AS_GPIO);
+//	gpio_set_data_strength(pin,0);
+//	gpio_set_input_en(pin, 0);//
+//	gpio_set_output_en(pin, 1);//out
+//	gpio_write(pin, 1);
 
 	//register CN pin's irq,when MSPI's data sent complete,the CN changed HIGH
-	gpio_set_input_en(GPIO_PB4, 1); //GPIO_PB4 SPI B port : CN
-	gpio_set_interrupt(GPIO_PB4, 0);	// rising edge
+//	gpio_set_input_en(GPIO_PB4, 1); //GPIO_PB4 SPI B port : CN
+//	gpio_set_interrupt(GPIO_PB4, 0);	// rising edge
 
-	reg_irq_mask |= FLD_IRQ_GPIO_RISC2_EN;
+	reg_irq_mask |= FLD_IRQ_HOST_CMD_EN;
+//	reg_irq_src = FLD_IRQ_HOST_CMD_EN;			//enable spi irq
+}
 
+volatile u8 dbg_handle;
+int blc_hci_rx (void)
+{
+	u8* p = my_fifo_get(&hci_rx_fifo);
+	if(p)
+	{
+		blc_hci_handler (p + 2,  1);  //para1 has no use
+		my_fifo_pop(&hci_rx_fifo);
+	}
+
+	return 0;
+}
+
+int blc_hci_tx ()
+{
+	u8 *p = my_fifo_get (&hci_tx_fifo);
+	if(*(u32*)spi_tx_buff == 0 && p)
+	{
+		dbg_handle++;
+		memcpy(spi_tx_buff, p, p[0]+p[1]*256+2);
+		my_fifo_pop (&hci_tx_fifo);
+	}
+	if(p!=0 ||*(u32*)spi_tx_buff != 0)
+	{
+		tx_done_status = 0;
+		SPI_MODULE_DATA_READY;
+	}
+	else if(p == 0&&*(u32*)spi_tx_buff == 0)
+	{
+		tx_done_status = 1;
+	}
+	return 0;
+}
+
+void spi_write_handler (void)
+{
+	my_fifo_push(&hci_rx_fifo,spi_rx_buff,70);		//todo:copy spi received data to spi buffer
+	*(u32*)(spi_rx_buff) = 0;
+}
+
+void spi_read_handler (void)
+{
+	u8 *p = my_fifo_get (&hci_tx_fifo);
+	*(u32*)spi_tx_buff = 0; //reset command buffer, if master read zero data, ignore the event
+	if (p)
+	{
+//		SPI_MODULE_DATA_FINISH;
+	}
 }
 
 void user_init()
