@@ -104,7 +104,7 @@ void module_onReceiveData(rf_packet_att_write_t *p)
 		u32 header;
 		header = 0x07a0;		//data received event
 		header |= (3 << 16) | (1<<24);
-		host_push_status(header, len + 3 , p->opcode);
+		host_push_status(header, len  , p->opcode);
 	}
 }
 #endif

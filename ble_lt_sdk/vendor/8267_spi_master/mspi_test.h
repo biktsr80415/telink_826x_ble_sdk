@@ -1,5 +1,12 @@
-#ifndef SPI_H
-#define SPI_H
+/*
+ * mspi_test.h
+ *
+ *  Created on: 2017-2-8
+ *      Author: Administrator
+ */
+
+#ifndef MSPI_TEST_H_
+#define MSPI_TEST_H_
 
 enum SPI_MODE{
 	SPI_MODE0=0,
@@ -25,8 +32,4 @@ void spi_write_buff_8267(unsigned short addr ,unsigned char* pbuff,unsigned int 
 void spi_read_buff_8267(unsigned short addr,unsigned char* pbuff,unsigned int len);
 #endif
 
-
-
-
-#endif
-
+#endif /* MSPI_TEST_H_ */

@@ -1,5 +1,5 @@
 #include "../../proj/tl_common.h"
-#include "../../proj/drivers/spi_8267.h"
+#include "mspi_test.h"
 
 #if(__PROJECT_8267_SPI_MASTER__)
 #define			FLAG_TOKEN				0xff
@@ -25,8 +25,8 @@ int host_spi_write (u8 *p, int n)
 #endif
 	for (int i=0; i<n+3; i++) {
 		// send "ff 80 00" to start write
-		reg_spi_data =  i == 0 ? 0xfe :
-						i == 1 ? 0x00 ://80
+		reg_spi_data =  i == 0 ? 0xbf ://ff
+						i == 1 ? 0x80 ://80
 						i == 2 ? 0x00 :  	p[i-3];
 		while (reg_spi_ctrl & FLD_SPI_BUSY);
 	}
@@ -71,8 +71,8 @@ int host_spi_read (u8 *p)
 	int len = 64;
 	for (int i=0; i<64 ; i++) {
 		// send "ff c0 80" first to start read
-		reg_spi_data =  i == 0 ? 0xfe :
-						i == 1 ? 0x60 : 0x80;
+		reg_spi_data =  i == 0 ? 0xbf :
+						i == 1 ? 0xc0 : 0x80;
 
 		while (reg_spi_ctrl & FLD_SPI_BUSY);
 		if (i>2)

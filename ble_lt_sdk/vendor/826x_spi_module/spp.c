@@ -5,7 +5,7 @@
  *      Author: yafei.tu
  */
 #include "../tl_common.h"
-#include "spp_8269.h"
+#include "spp.h"
 #include "../../proj/drivers/spi.h"
 #include "../../proj/mcu_spec/gpio_8267.h"
 #include "../../proj_lib/ble/ble_ll.h"
@@ -115,13 +115,12 @@ void spi_read_buff_8267(unsigned short addr,unsigned char* pbuff,unsigned int le
 ///////////////////////////////////spp based on spi//////////////////////////////////////////
 #if 1
 //the top of Stack - 128 Bytes.(tx 64 Bytes,rx 64 Bytes)
-u8 *spp_rx_buff = 0x80Bf80;
-u8 *spp_tx_buff = 0x80Bfc0;
-
-#else  //锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟街凤拷锟斤拷锟绞眃ebug锟斤拷锟斤拷锟斤拷锟斤拷锟绞�
-u8 spp_rx_buff[SPP_RX_BUFF_SIZE];
-u8 spp_tx_buff[SPP_TX_BUFF_SIZE];
-
+//stack_top = 0x80c000,reserve 72*2 byte for spi buffer
+u8 *spi_rx_buff = 0x80BF80;  //fe00~fe48 64 rx buff
+u8 *spi_tx_buff = 0x80BFC0;	 //fe60~fea8 64 tx buff
+#else
+u8 spi_rx_buff[SPP_RX_BUFF_SIZE];
+u8 spi_rx_buff[SPP_TX_BUFF_SIZE];
 #endif
 
 
@@ -146,7 +145,6 @@ int event_handler(u32 h, u8 *para, int n)
 			{
                 task_connect();//connection parameters request!!!
 				gpio_write (RED_LED, 1);//HIGH
-				ble_module_flag |= FLAG_NOTIFY_STATE_CHANGE;
 			}
 				break;
 			case BLT_EV_FLAG_TERMINATE:
@@ -156,7 +154,6 @@ int event_handler(u32 h, u8 *para, int n)
 					ui_ota_is_working = 0;
 				}
 				gpio_write(RED_LED, 0);//LOW
-				ble_module_flag |= FLAG_NOTIFY_STATE_CHANGE;
 			}
 				break;
 			case BLT_EV_FLAG_SUSPEND_ENTER:
@@ -164,15 +161,6 @@ int event_handler(u32 h, u8 *para, int n)
 			default:
 				break;
 		}
-	}
-}
-
-void spp_dataHandler(u8 *pData, u8 len){// notify/indicate the Master like mobile phone!
-	if(notify_or_indicate_flg){
-		bls_att_pushNotifyData(spp_handle_s2c, pData, len);
-	}
-	else{
-		bls_att_pushIndicateData(spp_handle_s2c, pData, len);
 	}
 }
 
@@ -185,10 +173,10 @@ u8	host_push_status (u16 st, int n, u8 *p)
 		return -1;
 	}
 	u8 i = 0;
-	if (n > 20)
-	{
-		n = 20;
-	}
+//	if (n > 20)
+//	{
+//		n = 20;
+//	}
 	st = ( st & 0x03FF) | 0x0400;//event ID
 	pw[i++] = 0xFF;	//token
 	pw[i++] = n+2;  //length
@@ -232,10 +220,10 @@ void spp_onModuleCmd(u8* p, int n)
 			host_push_status(HC_SET_ADV_INTERVAL,1,&backCode);
 		}
 			break;
-
-		case HC_NOTIFY_DATA: //data packet
-			backCode = host_push_data(spp_rx_buff);
-
+        // notify data packet
+		case HC_NOTIFY_DATA:
+			backCode = bls_att_pushNotifyData(spp_handle_s2c, sppData->data, sppData->paramLen);
+			host_push_status(HC_NOTIFY_DATA,1,&backCode);
 		    break;
 		// enable/disable advertising: 0a ff 01 00  01
 		case HC_ENABLE_DISABLE_ADV: //enable or disable ble module advertising function
@@ -356,20 +344,5 @@ void spp_onModuleCmd(u8* p, int n)
 			break;
 
 	}
-}
-
-u8 tst1;
-volatile u8 current_state;
-void module_send_stateEvent(void ){
-
-	ble_module_flag &= ~FLAG_NOTIFY_STATE_CHANGE;//clear state change send flag
-	u8 sendBack[3]= {0,0,0};
-	current_state = bls_ll_getCurrentState();
-	u16 module_handle = (current_state == BLS_LINK_STATE_CONN)?0x0001:0xffff;
-	sendBack[0] = module_handle;
-	sendBack[1] = module_handle>>8;
-	sendBack[2] = current_state;
-	host_push_status(EV_STATE_CHANGE,3,sendBack);
-
 }
 

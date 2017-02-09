@@ -8,9 +8,11 @@
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
-#include "spp_8269.h"
-u8 *spi_rx_buff = 0x80fe00;  //fe00~fe48 72 rx buff
-u8 *spi_tx_buff = 0x80fe60;	 //fe60~fea8 72 tx buff
+#include "spp.h"
+
+//statement in file: spp.c line 118 & 119.
+extern u8 *spi_rx_buff;  //fe00~fe48 72 rx buff
+extern u8 *spi_tx_buff;	 //fe60~fea8 72 tx buff
 
 u8 tx_done_status = 1;
 
@@ -241,7 +243,7 @@ int blc_hci_rx (void)
 	u8* p = my_fifo_get(&hci_rx_fifo);
 	if(p)
 	{
-		spp_onModuleCmd (p + 2,  1);  //para1 has no use
+		spp_onModuleCmd (p+2,  p[0] + p[1]<<8);  //para1 has no use
 		my_fifo_pop(&hci_rx_fifo);
 	}
 
@@ -271,7 +273,7 @@ int blc_hci_tx ()
 
 void spi_write_handler (void)
 {
-	my_fifo_push(&hci_rx_fifo,spi_rx_buff,70);		//todo:copy spi received data to spi buffer
+	my_fifo_push(&hci_rx_fifo,spi_rx_buff,64);		//todo:copy spi received data to spi buffer
 	*(u32*)(spi_rx_buff) = 0;
 }
 
@@ -350,6 +352,7 @@ void user_init()
 
 	////////////////// SPI initialization ///////////////////////////////////
 	sspi_init(SSPI_TX_NOTIFY_PIN, 0x25);//SSPI_TX_NOTIFY_PIN : 8269 EVK G2
+	blc_register_hci_handler(blc_hci_rx,blc_hci_tx);//customized spi spp handler
 
 	extern void event_handler(u32 h, u8 *para, int n);
 	bls_hci_registerEventHandler(event_handler);		//register event callback

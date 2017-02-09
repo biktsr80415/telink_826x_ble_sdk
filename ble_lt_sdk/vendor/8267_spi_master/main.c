@@ -8,7 +8,7 @@
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/ble_ll.h"
-#include "../../proj/drivers/spi_8267.h"
+#include "mspi_test.h"
 #include "../../proj/drivers/flash.h"
 
 extern _attribute_ram_code_ void irq_handler(void);
