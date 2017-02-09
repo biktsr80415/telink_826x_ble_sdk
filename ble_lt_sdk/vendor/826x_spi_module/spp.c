@@ -172,11 +172,8 @@ u8	host_push_status (u16 st, int n, u8 *p)
 	{
 		return -1;
 	}
+
 	u8 i = 0;
-//	if (n > 20)
-//	{
-//		n = 20;
-//	}
 	st = ( st & 0x03FF) | 0x0400;//event ID
 	pw[i++] = 0xFF;	//token
 	pw[i++] = n+2;  //length

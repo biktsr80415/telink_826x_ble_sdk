@@ -219,20 +219,6 @@ void sspi_init(int pin, int divider){
 	write_reg8(0x09,read_reg8(0x09)&0xfd);// disable master mode
 	write_reg8(0x0b,read_reg8(0x0b)|SPI_MODE0);// select SPI mode,surpport four modes
 
-//	reg_spi_ctrl = FLD_SPI_ADDR_AUTO;
-//	reg_spi_sp = FLD_SPI_ENABLE;			//force PADs act as spi
-
-	// pin used to notify the MSPI(8267 EVK), SSPI's data has been sent to MSPI
-//	gpio_set_func(pin, AS_GPIO);
-//	gpio_set_data_strength(pin,0);
-//	gpio_set_input_en(pin, 0);//
-//	gpio_set_output_en(pin, 1);//out
-//	gpio_write(pin, 1);
-
-	//register CN pin's irq,when MSPI's data sent complete,the CN changed HIGH
-//	gpio_set_input_en(GPIO_PB4, 1); //GPIO_PB4 SPI B port : CN
-//	gpio_set_interrupt(GPIO_PB4, 0);	// rising edge
-
 	reg_irq_mask |= FLD_IRQ_HOST_CMD_EN;
 //	reg_irq_src = FLD_IRQ_HOST_CMD_EN;			//enable spi irq
 }
@@ -256,7 +242,7 @@ int blc_hci_tx ()
 	if(*(u32*)spi_tx_buff == 0 && p)
 	{
 		dbg_handle++;
-		memcpy(spi_tx_buff, p, p[0]+p[1]*256+2);
+		memcpy(spi_tx_buff, p, p[1] + 2);
 		my_fifo_pop (&hci_tx_fifo);
 	}
 	if(p!=0 ||*(u32*)spi_tx_buff != 0)
@@ -267,24 +253,26 @@ int blc_hci_tx ()
 	else if(p == 0&&*(u32*)spi_tx_buff == 0)
 	{
 		tx_done_status = 1;
+		SPI_MODULE_DATA_FINISH;
 	}
 	return 0;
 }
-
+volatile u8 dlen;
 void spi_write_handler (void)
 {
-	my_fifo_push(&hci_rx_fifo,spi_rx_buff,64);		//todo:copy spi received data to spi buffer
+	//  spi rx buffer:
+	//spp format(Hex):xx ff lenL lenH data(data len = lenL+lenH<<8)
+	dlen = 4 + *(u16*)(spi_rx_buff+2);
+	if(dlen < 64){
+		my_fifo_push(&hci_rx_fifo, spi_rx_buff, dlen);		//todo:copy spi received data to spi buffer
+	}
 	*(u32*)(spi_rx_buff) = 0;
 }
 
 void spi_read_handler (void)
 {
-	u8 *p = my_fifo_get (&hci_tx_fifo);
 	*(u32*)spi_tx_buff = 0; //reset command buffer, if master read zero data, ignore the event
-	if (p)
-	{
-//		SPI_MODULE_DATA_FINISH;
-	}
+	SPI_MODULE_DATA_FINISH;
 }
 
 void user_init()

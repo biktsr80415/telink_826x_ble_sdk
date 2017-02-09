@@ -151,7 +151,7 @@ DAT0:
 	.word	0x12			    @IRQ    @0
 	.word	0x13			    @SVC    @4
 	.word	(irq_stk + IRQ_STK_SIZE)
-	.word	(0x80c000)		    @12  stack end
+	.word	(0x80c000 - 128)		    @12  stack end :spi buffer 64*2
 	.word	(_start_bss_)               @16
 	.word	(_end_bss_)                 @20
 	.word	(0x80060c)                  @24
@@ -170,7 +170,7 @@ DATA_I:
 	.word	_end_data_
 
 FLL_D:
-	.word	0xffffffff
+	.word	0x00000000 @0xffffffff
 	.word	(_start_data_)
 	.word	(0x80c000)
 

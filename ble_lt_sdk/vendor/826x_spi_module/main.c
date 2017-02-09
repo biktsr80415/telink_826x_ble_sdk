@@ -20,7 +20,7 @@ _attribute_ram_code_ void irq_handler(void)
 	{
     	reg_i2c_clr_status |= BIT(1);  //clear irq src
 
-		if(*(u16*)(spi_rx_buff) != 0)
+		if(*(u32*)(spi_rx_buff) != 0)
 		{//MSPI write irq
 			dbg_irq++;
 			spi_write_handler();
