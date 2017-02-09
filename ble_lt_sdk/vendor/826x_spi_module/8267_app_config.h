@@ -28,7 +28,8 @@ extern "C" {
 #define PD0_FUNC 				AS_GPIO
 #define PD0_INPUT_ENABLE		0
 #define	PD0_OUTPUT_ENABLE		1
-#define PULL_WAKEUP_SRC_PD0		PM_PIN_PULLUP_1M
+#define	PD0_DATA_OUT            1
+//#define PULL_WAKEUP_SRC_PD0		PM_PIN_PULLUP_1M
 
 #if 1
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
@@ -66,11 +67,11 @@ extern "C" {
 #endif
 
 //finish:1
-#define SPI_MODULE_DATA_FINISH	gpio_setup_up_down_resistor(SSPI_TX_NOTIFY_PIN, PM_PIN_PULLUP_1M)//gpio_write(SSPI_TX_NOTIFY_PIN, 1);
-//#define SPI_MODULE_DATA_FINISH	do{gpio_set_output_en(SSPI_TX_NOTIFY_PIN, 1); gpio_write(SSPI_TX_NOTIFY_PIN, 1);}while(0)
+//#define SPI_MODULE_DATA_FINISH	gpio_setup_up_down_resistor(SSPI_TX_NOTIFY_PIN, PM_PIN_PULLUP_1M)//gpio_write(SSPI_TX_NOTIFY_PIN, 1);
+#define SPI_MODULE_DATA_FINISH	do{gpio_set_output_en(SSPI_TX_NOTIFY_PIN, 1); gpio_write(SSPI_TX_NOTIFY_PIN, 1);}while(0)
 //ready:0
-#define SPI_MODULE_DATA_READY	gpio_setup_up_down_resistor(SSPI_TX_NOTIFY_PIN, PM_PIN_PULLDOWN_100K)//gpio_write(SSPI_TX_NOTIFY_PIN, 0)
-//#define SPI_MODULE_DATA_READY	do{gpio_set_output_en(SSPI_TX_NOTIFY_PIN, 1); gpio_write(SSPI_TX_NOTIFY_PIN, 0);}while(0)
+//#define SPI_MODULE_DATA_READY	gpio_setup_up_down_resistor(SSPI_TX_NOTIFY_PIN, PM_PIN_PULLDOWN_100K)//gpio_write(SSPI_TX_NOTIFY_PIN, 0)
+#define SPI_MODULE_DATA_READY	do{gpio_set_output_en(SSPI_TX_NOTIFY_PIN, 1); gpio_write(SSPI_TX_NOTIFY_PIN, 0);}while(0)
 
 
 

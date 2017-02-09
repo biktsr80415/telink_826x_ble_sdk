@@ -121,7 +121,7 @@ void proc_host() {
 		reg_host_if &= 15;
 		if (reg_host_if == HOST_IF_SPI)
 		{
-			host_spi_init (8);
+			//host_spi_init (8);
 		}
 	}
 	//////////// get command from bulk-out endpoint //////////////////////
@@ -141,10 +141,7 @@ void proc_host() {
 
 	//////////// get status from slave: interrupt or polling //////////////////////
 #if (!DEBUG_SPI)
-//	if (host_if_polling || reg_irq_src & FLD_IRQ_GPIO_RISC2_EN){
 	if (host_if_polling || !gpio_read(MSPI_RX_NOTIFY_PIN)){
-		reg_irq_src = FLD_IRQ_GPIO_RISC2_EN;
-
 		int n = 0;
 
 		if (reg_host_if == HOST_IF_SPI){
@@ -153,17 +150,6 @@ void proc_host() {
             //n = buff_event[1];
 
 			if (n>2) {//only n > 2 .
-				///////////////////for test///////////////////////////
-				#if DEBUG_TEST
-				if (buff_event[2] == 0xcc && buff_event[3] == 0xff){
-					if(buff_event[4]){
-						led_onoff(WHITE_LED, ON);
-					}
-					else{
-						led_onoff(WHITE_LED, OFF);
-					}
-				}
-				#endif
 				send_status (buff_event, n);
 			}
 		}

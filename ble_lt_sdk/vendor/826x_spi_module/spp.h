@@ -7,12 +7,6 @@
 
 #pragma once
 
-#define SPP_RX_BUFF_SIZE				64
-#define SPP_TX_BUFF_SIZE				32
-
-#define	HOST_BUFF_NUM					4
-
-
 #define	SPP_RESULT_SUCCESS				0
 #define	SPP_RESULT_FAILED				1
 #define	SPP_GET_OR_SETPARA_FAILED_NOCONNECTION	3 //Add by tuyf
@@ -26,9 +20,6 @@
 /**
  *  @brief  Function to check spp cmd/data type
  */
-#define IS_SPP_CMD(p)           		((p[0] == 0xCC) && (p[1] == 0xFF))
-#define IS_SPP_DATA(p)          		((p[0] == 0xBB) && (p[1] == 0xFF))
-
 
 #define SPP_GET_EVT_FROM_CMD(cmd)    	((cmd&0x03ff)|0x0400)
 
@@ -172,10 +163,12 @@ typedef enum{
 /*********************************************************************
  * Public Functions
  */
+
 void spp_init(void);
 void spp_onModuleCmd(u8* p, int n);
+u8	host_push_status (u16 st, int n, u8 *p);
 
-///////////////////////////////8269_spi.h////////////////////////////////////////////
+///////////////////////////////8267_spi.h////////////////////////////////////////////
 enum SPI_MODE{
 	SPI_MODE0=0,
 	SPI_MODE2,
@@ -200,3 +193,4 @@ void spi_write_buff_8267(unsigned short addr ,unsigned char* pbuff,unsigned int 
 void spi_read_buff_8267(unsigned short addr,unsigned char* pbuff,unsigned int len);
 #endif
 /////////////////////////////////////////////////////////////////////////////////////
+

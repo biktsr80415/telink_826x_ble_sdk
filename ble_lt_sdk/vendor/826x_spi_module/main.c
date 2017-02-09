@@ -22,13 +22,14 @@ _attribute_ram_code_ void irq_handler(void)
 
 		if(*(u32*)(spi_rx_buff) != 0)
 		{//MSPI write irq
-			dbg_irq++;
+
 			spi_write_handler();
 		}
 		else
 		{//MSPI read irq
 			if(*(u32*)(spi_tx_buff))
 			{
+				dbg_irq++;
 				spi_read_handler (); // ACK command, go to next status
 			}
 		}

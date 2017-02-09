@@ -168,8 +168,7 @@ u8	host_push_status (u16 st, int n, u8 *p)
 {
 	u8 *pw = my_fifo_wptr(&hci_tx_fifo);
 
-	if (!pw || n >= hci_tx_fifo.size)
-	{
+	if (!pw || n >= hci_tx_fifo.size){
 		return -1;
 	}
 
@@ -179,13 +178,8 @@ u8	host_push_status (u16 st, int n, u8 *p)
 	pw[i++] = n+2;  //length
 	pw[i++] = st;
 	pw[i++] = st >> 8;
-	if(st == 0x0731){//data receive, add handle
-		pw[i++] = 0x01;
-		pw[i++] = 0x00;
-		pw[1] = n+4;
-	}
-	if (n)
-	{
+
+	if (n){
 		memcpy (pw + i, p, n);//write data to staus buffer
 	}
 	my_fifo_next (&hci_tx_fifo);
@@ -226,11 +220,9 @@ void spp_onModuleCmd(u8* p, int n)
 		case HC_ENABLE_DISABLE_ADV: //enable or disable ble module advertising function
 			if(sppData->data[0] && bls_ll_getCurrentState() == BLS_LINK_STATE_IDLE){
 				bls_ll_setAdvEnable(1);
-				ble_module_flag |= FLAG_NOTIFY_STATE_CHANGE;
 			}
 			else if(!sppData->data[0] && bls_ll_getCurrentState() == BLS_LINK_STATE_ADV){
 				bls_ll_setAdvEnable(0);
-				ble_module_flag |= FLAG_NOTIFY_STATE_CHANGE;
 			}
 			else if(sppData->data[0] && bls_ll_getCurrentState() == BLS_LINK_STATE_ADV){
 				//do nothing

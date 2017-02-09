@@ -241,14 +241,17 @@ int blc_hci_tx ()
 	u8 *p = my_fifo_get (&hci_tx_fifo);
 	if(*(u32*)spi_tx_buff == 0 && p)
 	{
-		dbg_handle++;
+		//                             len = length(stateL stateH data)
+        //spi tx buffer format(Hex):ff len stateL stateH data(data length = len-2)
 		memcpy(spi_tx_buff, p, p[1] + 2);
 		my_fifo_pop (&hci_tx_fifo);
 	}
 	if(p!=0 ||*(u32*)spi_tx_buff != 0)
 	{
+		dbg_handle++;
 		tx_done_status = 0;
 		SPI_MODULE_DATA_READY;
+		sleep_us(500);
 	}
 	else if(p == 0&&*(u32*)spi_tx_buff == 0)
 	{

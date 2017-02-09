@@ -209,13 +209,9 @@ void led_onoff(u32 pin,u8 onoff){
 	gpio_write(pin, onoff&&0x01);
 }
 
-static int spi_irq_pin = 0;
 void spi_read_data_from_8269spi(u8* data, u8 len);
 
 void spi_master_register(int pin){
-
-	// pin used to notify the MSPI(8267 EVK), SSPI's data has been ready, waitting for MSPI 8267 to read
-	spi_irq_pin = pin;
 
 //register MSPI_RX_NOTIFY_PIN pin's irq, when SSPI's data sent complete,the NOTIFY pin changed HIGH delay hold on 100us, then LOW
 //	gpio_set_input_en(pin, 1);
@@ -226,8 +222,9 @@ void spi_master_register(int pin){
 	gpio_set_func (pin, AS_GPIO);		//gpio
 	gpio_set_input_en(pin, 1);
 	gpio_set_output_en (pin, 0);		//output disable
-	gpio_write (pin, 1);				//pull-up enable
-	gpio_set_interrupt (pin, 0);
+	gpio_setup_up_down_resistor(pin, PM_PIN_PULLUP_10K);
+
+	//gpio_set_interrupt (pin, 0);
 }
 
 void mspi_8267_init(void){

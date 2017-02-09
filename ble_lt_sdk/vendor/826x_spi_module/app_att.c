@@ -2,6 +2,7 @@
 #include "../../proj_lib/ble/ble_ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
+#include "spp.h"
 
 #if(__PROJECT_826X_SPI_MODULE__)
 
@@ -98,13 +99,11 @@ u8 spp_handle_c2s = SPP_HANDLE_C2S;
 extern u8 p_module_write[64];//data packets received from BLE master
 void module_onReceiveData(rf_packet_att_write_t *p)
 {
-	u8 len = p->l2capLen - 3;
+	u8 len = p->l2capLen;
 	if(len > 0)
 	{
-		u32 header;
-		header = 0x07a0;		//data received event
-		header |= (3 << 16) | (1<<24);
-		host_push_status(header, len  , p->opcode);
+		u32 header = 0x07a0;		//data received event
+		host_push_status(header, len, &p->opcode);
 	}
 }
 #endif
