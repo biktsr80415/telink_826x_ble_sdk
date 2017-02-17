@@ -71,7 +71,7 @@ u8 ble_connected_1st_flg;
 //read user data in FLASH
 void flyco_load_para_addr(u32 addr, int* index, u8* p, u8 len){
 	int idx=0;
-	for (idx=0; idx < 4*1024; idx+=32)//4K per sector
+	for (idx=0; idx < 4*1024; idx += 32)//4K per sector
 	{
 		if (*(u16 *)(addr+idx) == U16_MAX)	//end
 		{
@@ -109,7 +109,7 @@ void flyco_erase_para(u32 addr, int* index){
 	*index = idx;
 	////////////////////above get index in flash//////
 
-	if(*index>= 4064){//4096-32
+	if(*index>= 4032){//4064-32
 		nv_manage_t p;
 		p.curNum = 0x01;
 		memcpy (p.data, (u32*)(addr+ *index + 2), 30);
