@@ -61,6 +61,8 @@ extern "C" {
 //shut down the input enable of some gpios, to lower io leakage at suspend state
 //for example:  #define PA2_INPUT_ENABLE   0
 
+///////////// avoid ADC module current leakage (when module on suspend status) //////////////////////////////
+#define ADC_MODULE_CLOSED               write_reg8(0x6b,0x00) // adc clk disable
 
 
 /////////////////// Clock  /////////////////////////////////

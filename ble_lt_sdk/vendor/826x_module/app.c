@@ -230,9 +230,9 @@ void user_init()
 	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
 
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 5, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
-			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
+			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
 
 	if(status != BLE_SUCCESS){  //adv setting err
 		write_reg8(0x8000, 0x11);  //debug

@@ -53,6 +53,16 @@ extern "C" {
 #define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 0);}while(0)
 #define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PC3, 0); gpio_write(GPIO_PC3, 0);}while(0)
 
+/////////////////////// POWER OPTIMIZATION  AT SUSPEND ///////////////////////
+//notice that: all setting here aims at power optimization ,they depends on
+//the actual hardware design.You should analyze your hardware board and then
+//find out the io leakage
+
+//shut down the input enable of some gpios, to lower io leakage at suspend state
+//for example:  #define PA2_INPUT_ENABLE   0
+
+///////////// avoid ADC module current leakage (when module on suspend status) //////////////////////////////
+#define ADC_MODULE_CLOSED               write_reg8(0x6b,0x00) // adc clk disable
 
 /////////////////// Clock  /////////////////////////////////
 #define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC
@@ -65,6 +75,7 @@ extern "C" {
 /////////////////// watchdog  //////////////////////////////
 #define MODULE_WATCHDOG_ENABLE		0
 #define WATCHDOG_INIT_TIMEOUT		500  //ms
+
 
 
 #if 0

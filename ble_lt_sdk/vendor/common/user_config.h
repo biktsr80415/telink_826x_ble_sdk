@@ -19,6 +19,8 @@
 	#include "../826x_hci/8269_app_config.h"
 #elif (__PROJECT_8267_MODULE__)
 	#include "../826x_module/8267_app_config.h"
+#elif (__PROJECT_8269_MODULE__)
+	#include "../826x_module/8269_app_config.h"
 #elif (__PROJECT_826X_SPI_MODULE__)
 	#include "../826x_spi_module/8267_app_config.h"
 #elif (__PROJECT_8267_SPI_MASTER__)
