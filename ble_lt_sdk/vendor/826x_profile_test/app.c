@@ -13,7 +13,7 @@
 u8 tx_done_status = 1;
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
-MYFIFO_INIT(blt_txfifo, 40, 16);
+MYFIFO_INIT(blt_txfifo, 80, 8);
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
@@ -93,7 +93,7 @@ void user_init()
 	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
 
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 5, \
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_20MS, ADV_INTERVAL_30MS, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
 

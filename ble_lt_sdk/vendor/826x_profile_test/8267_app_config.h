@@ -80,38 +80,6 @@ extern "C" {
 #define PB3_INPUT_ENABLE		1
 #define PB6_INPUT_ENABLE		1
 
-#if 0  //debug GPIO
-	#define	PD0_FUNC							AS_GPIO
-	#define PD0_INPUT_ENABLE					0
-	#define	PD0_OUTPUT_ENABLE					1
-	#define DBG_CHN0_LOW						gpio_write(GPIO_PD0, 0)
-	#define DBG_CHN0_HIGH						gpio_write(GPIO_PD0, 1)
-	#define DBG_CHN0_TOGGLE						BM_FLIP(reg_gpio_out(GPIO_PD0), GPIO_PD0 & 0xff);
-
-
-	#define	PD1_FUNC							AS_GPIO
-	#define PD1_INPUT_ENABLE					0
-	#define	PD1_OUTPUT_ENABLE					1
-	#define DBG_CHN1_LOW						gpio_write(GPIO_PD1, 0)
-	#define DBG_CHN1_HIGH						gpio_write(GPIO_PD1, 1)
-	#define DBG_CHN1_TOGGLE						BM_FLIP(reg_gpio_out(GPIO_PD1), GPIO_PD1 & 0xff);
-
-
-	#define	PC5_FUNC							AS_GPIO
-	#define PC5_INPUT_ENABLE					0
-	#define	PC5_OUTPUT_ENABLE					1
-	#define DBG_CHN2_LOW						gpio_write(GPIO_PC5, 0)
-	#define DBG_CHN2_HIGH						gpio_write(GPIO_PC5, 1)
-	#define DBG_CHN2_TOGGLE						BM_FLIP(reg_gpio_out(GPIO_PC5), GPIO_PC5 & 0xff);
-
-
-	#define	PC6_FUNC							AS_GPIO
-	#define PC6_INPUT_ENABLE					0
-	#define	PC6_OUTPUT_ENABLE					1
-	#define DBG_CHN3_LOW						gpio_write(GPIO_PC6, 0)
-	#define DBG_CHN3_HIGH						gpio_write(GPIO_PC6, 1)
-	#define DBG_CHN3_TOGGLE						BM_FLIP(reg_gpio_out(GPIO_PC6), GPIO_PC6 & 0xff);
-#endif
 
 
 #include "../common/default_config.h"
