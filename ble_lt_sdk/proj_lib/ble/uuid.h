@@ -58,7 +58,7 @@
 #define SERVICE_UUID_SCAN_PARAMETER                               0x1813
 #define SERVICE_UUID_TX_POWER                                     0x1804
 #define SERVICE_UUID_USER_DATA                                    0x181C
-
+#define SERVICE_UUID_WEIGHT_SCALE                                 0x181D
 
 ////////////////////////////////////
 // Telink Service
