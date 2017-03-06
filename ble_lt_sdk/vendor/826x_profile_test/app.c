@@ -112,10 +112,59 @@ void key_proc(){
 	if(!gpio_read(KEY1)){
 		sleep_us(50000);
 		if(!gpio_read(KEY1)){
+#if BAS_DIS_SCPS_TPS
 			//u8 vv= 60;
 			//bls_att_pushNotifyData(10, &vv, 1);//BS
 			u8 vv = 1;
 			bls_att_pushNotifyData(36, &vv, 1);
+#elif BLS || BLP
+			extern blood_pressure_measure_packet blood_pressure_measure_val;
+			time_packet tm;
+			tm.year = 2017;
+			tm.month = 3;
+			tm.day = 6;
+			tm.hours = 11;
+			tm.minutes = 56;
+			tm.seconds = 43;
+
+			//Blood Pressure Units Flag(mmg);Time Stamp Flag(present);Pulse Rate Flag(present);	User ID Flag(not present);Measurement Status Flag(present)
+			blood_pressure_measure_val.bpmFlag = 0b0011110;
+			blood_pressure_measure_val.bpmSys = 80.9;
+			blood_pressure_measure_val.bpmSysDiastoli = 120.2;
+			blood_pressure_measure_val.bpmMAR = 88;
+			blood_pressure_measure_val.timeInf = tm;
+			blood_pressure_measure_val.pulseRate = 78;
+			blood_pressure_measure_val.userID = 0x01;
+			blood_pressure_measure_val.measurementStatus = 0;
+
+			bls_att_pushIndicateData(10, (u8*)&blood_pressure_measure_val, sizeof(blood_pressure_measure_packet));
+#elif HRS || HRP
+			extern heart_rate_measurement_packet heart_rate_measure_val;
+			//Heart Rate Value Format(u16 bpm);Sensor Contact Status(Sensor Contact feature is not supported in the current connection);	Energy Expended Status( not present);
+			//RR-Interval (One or more RR-Interval values are present)
+			heart_rate_measure_val.hrmFlag = 0b00010011;
+			heart_rate_measure_val.hrVal = 78;
+			heart_rate_measure_val.eryexd = 5;
+			heart_rate_measure_val.rr_interval = 7;
+			bls_att_pushNotifyData(10, (u8*)&heart_rate_measure_val, sizeof(heart_rate_measure_val));
+#elif WSS || WSP
+			extern weight_measure_packet weightScale_measure_val;
+			time_packet tm;
+			tm.year = 2017;
+			tm.month = 3;
+			tm.day = 6;
+			tm.hours = 11;
+			tm.minutes = 56;
+			tm.seconds = 43;
+			//Measurement Units(kg);Time stamp present;	User ID present;BMI and Height present;
+			weightScale_measure_val.wmFlag = 0b00001110;
+			weightScale_measure_val.wmHeight = 655;
+			weightScale_measure_val.timeInf = tm;
+			weightScale_measure_val.userID = 1;
+			weightScale_measure_val.wmBMI = 22;
+			weightScale_measure_val.wmHeight = 173;
+			bls_att_pushIndicateData(10, (u8*)&weightScale_measure_val, sizeof(weight_measure_packet));
+#endif
 		}
 	}
 }

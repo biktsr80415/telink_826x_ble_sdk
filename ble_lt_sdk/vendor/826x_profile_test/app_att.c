@@ -178,31 +178,13 @@ u16 immediateAlertLevel_charUUID                = CHARACTERISTIC_UUID_ALERT_LEVE
 //////////////////////////////// weight scale /////////////////////////////////////////////
 #define CHARACTERISTIC_UUID_WEIGHT_SCALE_FEATURE                    0x2A9E
 #define CHARACTERISTIC_UUID_WEIGHT_MEASUREMENT						0x2A9D
-//time info packet structure, should transfer to time service later
-typedef struct {
-	u16 year;
-	u8 month;
-	u8 day;
-	u8 hours;
-	u8 minutes;
-	u8 seconds;
-} time_packet;
-//weight measurement data structure
-typedef struct {
-	u8 wmFlag;
-	u16 wmWeight;
-	time_packet timeInf;
-	u8 userID;
-	u16 wmBMI;
-	u16 wmHeight;
-} weight_measure_packet;
 
 const u16 weightScale_serviceUUID  				= SERVICE_UUID_WEIGHT_SCALE;
 const u16 weightScale_featureUUID 				= CHARACTERISTIC_UUID_WEIGHT_SCALE_FEATURE;
 // weight scale feature Property
 u8 weightScale_feature_prop 					= CHAR_PROP_READ;
 //weight scale feature value
-u32 weightScale_feature_val 					= 0x00000018;//supported bmi, weight resolution 0.1kg, height not specified
+u32 weightScale_feature_val 					= 0x0000019f;//Time Stamp Supported \supported bmi\Multiple Users Supported, weight resolution 0.1kg, height resolution 0.001m
 const u16 weightScale_measureUUID 				= CHARACTERISTIC_UUID_WEIGHT_MEASUREMENT;
 // weight measure feature Property
 u8 weightScale_measure_prop 					= CHAR_PROP_INDICATE;
@@ -229,18 +211,6 @@ u16 weightScale_measureCCC 						= 0x0000;
 #define CHARACTERISTIC_UUID_BLOOD_PRESSURE_MEASUREMENT		 0x2A35
 #define CHARACTERISTIC_UUID_INTERMEDIATE_CUFF_PRESSURE       0x2A36
 #define CHARACTERISTIC_UUID_BLOOD_PRESSURE_FEATURE           0x2A49
-
-//Blood Pressure Measurement data structure
-typedef struct {
-	u8 bpmFlag;
-	float bpmSys;        //Systolic
-	float bpmSysDiastoli;//Diastoli
-	float bpmMAR;        //Mean Arterial Pressure
-	time_packet timeInf; //weight scale defined
-	float pulseRate;     //pulse Rate
-	u8 userID;
-	u16 measurementStatus;
-} blood_pressure_measure_packet;
 
 const u16 bloodPressure_serviceUUID             = SERVICE_UUID_BLOOD_PRESSURE;
 
@@ -271,13 +241,6 @@ u16 blood_pressure_feature_val = 0x0c;//00001100 	Irregular Pulse Detection feat
 #define CHARACTERISTIC_UUID_HEART_RATE_MEASUREMENT      0x2A37
 #define CHARACTERISTIC_UUID_BODY_SENSOR_LOCATION        0x2A38
 #define CHARACTERISTIC_UUID_HEART_RATE_CONTROL_POINT    0x2A39
-//heart rate measurement data structure
-typedef struct {
-	u8 hrmFlag;
-	u16 hrVal;        //Heart Rate Measurement Value
-	u16 eryexd;//Energy Expended
-	u16 rr_interval; //RR-Interval
-} heart_rate_measurement_packet;
 
 const u16 heartRate_serviceUUID             	= SERVICE_UUID_HEART_RATE;
 
@@ -302,15 +265,6 @@ u8 heart_rate_control_point_val;
 
 
 
-//////////////////////////////// service ATT table test /////////////////////////////////////
-#define BAS_DIS_SCPS_TPS 					    0//BS_DIS_SCPS_TPS
-#define PXP            							0//PXP profile
-#define BLS            							0//BLS
-#define BLP            							0//BLP
-#define HRS            							0//HRS
-#define HRP            							1//HRP
-#define WSS            							0//WSS
-#define WSP            							0//WSP
 // TM : to modify
 const attribute_t my_Attributes[] = {
 #if PXP//PXP

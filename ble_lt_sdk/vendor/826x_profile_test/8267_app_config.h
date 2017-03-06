@@ -40,7 +40,57 @@ extern "C" {
 
 
 
+//////////////////////////////// service ATT table test /////////////////////////////////////
+#define BAS_DIS_SCPS_TPS 					    0//BS_DIS_SCPS_TPS
+#define PXP            							0//PXP profile
+#define BLS            							0//BLS
+#define BLP            							0//BLP
+#define HRS            							0//HRS
+#define HRP            							0//HRP
+#define WSS            							0//WSS
+#define WSP            							0//WSP
+#define CTS            							1//CTS
 
+#include "../../proj/common/types.h"
+//time info packet structure, should transfer to time service later
+typedef struct {
+	u16 year;
+	u8 month;
+	u8 day;
+	u8 hours;
+	u8 minutes;
+	u8 seconds;
+} time_packet;
+
+//weight measurement data structure
+typedef struct {
+	u8 wmFlag;
+	u16 wmWeight;
+	time_packet timeInf;
+	u8 userID;
+	u16 wmBMI;
+	u16 wmHeight;
+} weight_measure_packet;
+
+//Blood Pressure Measurement data structure
+typedef struct {
+	u8 bpmFlag;
+	short bpmSys;        //Systolic
+	short bpmSysDiastoli;//Diastoli
+	short bpmMAR;        //Mean Arterial Pressure
+	time_packet timeInf; //weight scale defined
+	short pulseRate;     //pulse Rate
+	u8 userID;
+	u16 measurementStatus;
+} blood_pressure_measure_packet;
+
+//heart rate measurement data structure
+typedef struct {
+	u8 hrmFlag;
+	u16 hrVal;        //Heart Rate Measurement Value
+	u16 eryexd;//Energy Expended
+	u16 rr_interval; //RR-Interval
+} heart_rate_measurement_packet;
 
 /////////////////////// POWER OPTIMIZATION  AT SUSPEND ///////////////////////
 //notice that: all setting here aims at power optimization ,they depends on
