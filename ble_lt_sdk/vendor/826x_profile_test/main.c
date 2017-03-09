@@ -5,7 +5,9 @@
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/ble_ll.h"
 #include "../../proj_lib/ble/blt_config.h"
-
+#if (PRINT_DEBUG_INFO)
+#include "../common/myprintf.h"
+#endif
 //extern my_fifo_t hci_rx_fifo;
 extern u8 *spi_rx_buff;
 extern u8 *spi_tx_buff;

@@ -38,6 +38,16 @@ extern "C" {
 
 ////////////////////////////////////////////////////////
 
+/////////////////// PRINT DEBUG INFO ///////////////////////
+/* 826x module's pin simulate as a uart tx, Just for debugging */
+#define PRINT_DEBUG_INFO                    1//open/close myprintf
+#if PRINT_DEBUG_INFO
+//defination debug printf pin
+#define PRINT_BAUD_RATE             		1000000 //1M baud rate,should Not bigger than 1M
+#define DEBUG_INFO_TX_PIN           		GPIO_PC6//G0 for 8261/8267 EVK board(C1T80A30_V1.0)
+//#define PC6_OUTPUT_ENABLE	        		1       //mini_printf function contain this
+#define PULL_WAKEUP_SRC_PC6         		PM_PIN_PULLUP_1M
+#endif
 
 
 //////////////////////////////// service ATT table test /////////////////////////////////////
@@ -49,8 +59,17 @@ extern "C" {
 #define HRP            							0//HRP
 #define WSS            							0//WSS
 #define WSP            							0//WSP
-#define CTS            							1//CTS
+#define CGMS            						1//CGMS
+#define CGMP            						0//CGMP
 
+#define CGMS_SEN_RAA_BV_01_C                    1//测试测量模拟数据有200条，在初始化代码中实现 CGMS/SEN/RAE/BI-02-C
+#ifndef E2E_CRC_FLAG_ENABLE
+#define E2E_CRC_FLAG_ENABLE                     0
+#endif
+
+#if CGMS || CGMP
+#define E2E_CRC_FLAG_ENABLE                     0//test case for : CGMS/SEN/CGMCP/BV-01-C [CGM Specific Ops – ‘Get CGM Communication Interval with E2E-CRC’]
+#endif
 #include "../../proj/common/types.h"
 //time info packet structure, should transfer to time service later
 typedef struct {
@@ -91,6 +110,187 @@ typedef struct {
 	u16 eryexd;//Energy Expended
 	u16 rr_interval; //RR-Interval
 } heart_rate_measurement_packet;
+
+//cgm_measurement data structure
+typedef struct {
+	u8 size;
+	u8 cgmMflg;
+	short cgmGlucoseConcentration;//SFLOAT
+	u16 timeOffset;
+	//u8 sensorStatusAnnunciation[3];//	Optional if bit 5 or bit 6 or bit 7 of the cgmMflg field is set to “1”, otherwise excluded.
+	short cgmTrendInformation;//This field is optional if the device supports CGM Trend information (Bit 15 in CGM Feature is set to 1) otherwise excluded.
+	short cgmQuality;//This field is optional if the device supports CGM Quality (Bit 16 in CGM Feature is set to 1) otherwise excluded.
+#if E2E_CRC_FLAG_ENABLE
+	u16 e2eCRC; // This field is mandatory,if the device supports E2E-CRC (Bit 12 in CGM Feature is set to 1) otherwise excluded.
+#endif
+} cgm_measurement_packet;
+
+//CGM Status data structure
+typedef struct {
+	u8 cgmFeature[3];
+	u8 cgmTypeSample;//bit[0:3]:cgmType -- bit[4:7]:cgmSample
+	           //if the device supports E2E-safety (E2E-CRC Supported bit is set in CGM Feature), the feature are secured by a CRC calculated over all data.
+	u16 e2eCRC;// If the device doesn´t support E2E-safety the value of the field shall be set to 0xFFFF.
+} cgm_feature_packet;
+
+//CGM Status data structure
+typedef struct {
+	u16 timeOffset;
+	u8 cgmStatus[3];
+#if E2E_CRC_FLAG_ENABLE
+	u16 e2eCRC;//Mandatory if device supports E2E-CRC (Bit 12 is set in CGM Feature) otherwise excluded.
+#endif
+} cgm_status_packet;
+
+//CGM Session Start Time data struct
+typedef struct {
+	time_packet sessionStartTime;
+	s8 timeZone;
+	u8 dstOffset;
+#if E2E_CRC_FLAG_ENABLE
+	u16 e2eCRC;//Mandatory if device supports E2E-CRC (Bit 12 is set in CGM Feature) otherwise excluded.
+#endif
+} cgm_session_start_time_packet;
+
+//CGM Session Run Time data struct
+typedef struct {
+	u16 cgmSessionRunTime;
+#if E2E_CRC_FLAG_ENABLE
+	u16 e2eCRC;//Mandatory if device supports E2E-CRC (Bit 12 is set in CGM Feature) otherwise excluded.
+#endif
+} cgm_session_run_time_packet;
+
+/////////////////////////////////////// Record Access Control Point /////////////////////////////////////////////
+typedef struct {
+	u8 opCode;
+	u8 operator;
+	u16 operand;
+} record_access_control_point_packet;
+
+enum record_access_control_point_opCode{
+	Report_stored_records = 1,         // (Operator: Value from Operator Table)
+	Delete_stored_records,             // (Operator: Value from Operator Table)
+	Abort_operation =3,                // (Operator: Null 'value of 0x00 from Operator Table')
+	Report_number_of_stored_records,   // (Operator: Value from Operator Table)
+	Number_of_stored_records_response = 5, // (Operator: Null 'value of 0x00 from Operator Table')
+	Response_Code,                     // (Operator: Null 'value of 0x00 from Operator Table')
+};
+
+enum record_access_control_point_operator{
+	All_records = 1,
+	Less_than_or_equal_to,
+	Greater_than_or_equal_to =3,
+	Within_range_of,    // (inclusive)
+	First_record = 5,   //(i.e. oldest record)
+	Last_record,        //(i.e. most recent record)
+};
+
+enum record_access_control_point_operand{
+	Filter_parameters1 = 1,      // (as appropriate to Operator and Service)
+	Filter_parameters2,          // (as appropriate to Operator and Service)
+	Not_included = 3,
+	Filter_parameters3,          // (as appropriate to Operator and Service)
+	Number_of_Records = 5,      // (Field size defined per service)
+	Request_Op_Code,            // Response Code Value
+};
+
+enum record_access_control_point_Response_Code_Value{
+	Success = 1,                // Normal response for successful operation
+	OpCode_not_supported,       // Normal response if unsupported Op Code is received
+	Invalid_Operator = 3,       // Normal response if Operator received does not meet the requirements of the service (e.g. Null was expected)
+	Operator_not_supported,     // Normal response if unsupported Operator is received
+	Invalid_Operand = 5,        // Normal response if Operand received does not meet the requirements of the service
+	No_records_found,           // Normal response if request to report stored records or request to delete stored records resulted in no records meeting criteria.
+	Abort_unsuccessful = 7,     // Normal response if request for Abort cannot be completed
+	Procedure_not_completed,    // Normal response if unable to complete a procedure for any reason
+	Operand_not_supported = 9,  // Normal response if unsupported Operand is received
+};
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////// CGM Specific Ops Control Point ////////////////////////////////////////////
+//CGM Specific Ops Control
+typedef struct {
+	u8 opCode;
+	u8 opCodeResponseCodes;
+	u8 operand;
+#if E2E_CRC_FLAG_ENABLE
+	u16 e2eCRC;//Mandatory if device supports E2E-CRC (Bit 12 is set in CGM Feature) otherwise excluded.
+#endif
+	short  glucoseConcentrationOfCalibration;//Calibration Value - Glucose Concentration of Calibration
+	u16 calibrationTime;
+	u8 calibrationTypeSampleLocation;//bit[0:3]:Calibration Type -- bit[4:7]:Calibration Sample Location
+	u16 nextCalibrationTime;
+	u16 calibrationDataRecordNumber;
+	u8  calibrationStatus;
+} cgm_specific_ops_control_point_packet;
+
+enum cgm_specific_ops_control_point_opCode{
+	Set_CGM_Communication_Interva = 1,//The response to this control point is Response Code (Op Code 0x0F)
+	Get_CGM_Communication_Interva = 2,//The normal response to this control point is Op Code 0x03. For error conditions, the response is defined in the Op Code - Response Codes field
+	CGM_Communication_Interval_response =3,//This is the normal response to Op Code 0x02
+	Set_Glucose_Calibration_Value =4,//The response to this control point is defined in Op Code - Response Codes field
+	Get_Glucose_Calibration_Value =5,//The normal response to this control point is Op Code 0x06. for error conditions, the response is defined in the Op Code - Response Codes field
+	Glucose_Calibration_Value_response =6,//Glucose Calibration Value response
+	Set_Patient_High_Alert_Level =7,//The response to this control point is defined in Op Code - Response Codes field
+	Get_Patient_High_Alert_Level =8,//The normal response to this control point is Op Code 0x09. For error conditions, the response is defined in the Op Code - Response Codes field
+	Patient_High_Alert_Level_Response =9,//	This is the normal response to Op Code 0x08
+	Set_Patient_Low_Alert_Level =10,//The response to this control point is defined in Op Code - Response Codes field
+	Get_Patient_Low_Alert_Level =11,//The normal response to this control point is Op Code 0x0C. the response is defined in the Op Code - Response Codes field
+	Patient_Low_Alert_Level_Response =12,//This is the normal response to Op Code 0x0B
+	Set_Hypo_Alert_Level =13,//The response to this control point is defined in Op Code - Response Codes field
+	Get_Hypo_Alert_Level =14,//The normal response to this control point is Op Code 0x0F. the response is defined in the Op Code - Response Codes field
+	Hypo_Alert_Level_Response =15,//This is the normal response to Op Code 0x0E
+	Set_Hyper_Alert_Level =16,//The response to this control point is defined in Op Code - Response Codes field
+	Get_Hyper_Alert_Level =17,//The normal response to this control point is Op Code 0x12. The response is defined in the Op Code - Response Codes field
+	Hyper_Alert_Level_Response =18,//This is the normal response to Op Code 0x11
+	Set_Rate_of_Decrease_Alert_Level =19,//The response to this control point is defined in Op Code - Response Codes field
+	Get_Rate_of_Decrease_Alert_Level =20,//The normal response to this control point is Op Code 0x15. For error conditions, the response is Response Code
+	Rate_of_Decrease_Alert_Level_Response =21,//This is the normal response to Op Code 0x14
+	Set_Rate_of_Increase_Alert_Level =22,//The response to this control point is defined in Op Code - Response Codes field
+	Get_Rate_of_Increase_Alert_Level =23,//The normal response to this control point is Op Code 0x18. For error conditions, the response is Response Code
+	Rate_of_Increase_Alert_Level_Response =24,//This is the normal response to Op Code 0x17
+	Reset_Device_Specific_Alert =25,//The response to this control point is defined in Op Code - Response Codes field
+	Start_the_Session =26,//The response to this control point is defined in Op Code - Response Codes field
+	Stop_the_Session =27,//The response to this control point is defined in Op Code - Response Codes field
+	csocp_Response_Code =28,//see Op Code - Response Codes field
+};
+
+enum cgm_specific_ops_control_point_opCode_rsp{
+    csocp_Success =1,//Normal response for successful operation.
+	Op_Code_not_supported =2,	//Normal response if unsupported Op Code is received.
+	csocp_Invalid_Operand	=3,//Normal response if Operand received does not meet the requirements of the service.
+	csocp_Procedure_not_completed	=4,//Normal response if unable to complete a procedure for any reason.
+	Parameter_out_of_range	=5,//Normal response if Operand received does not meet the range requirements
+};
+
+enum cgm_specific_ops_control_point_Operand{
+	Communication_Interval_in_minutes =1,
+	Communication_Interval_in_minutes1 =3,
+	Operand_value =4,//Operand value as defined in the Calibration Value Fields.
+	Calibration_Data_Record_Number =5,
+	Calibration_Data =6,
+	Patient_High_bG_value =7,// in mg/dL
+	Patient_High_bG_value1 = 9,// in mg/dL
+	Patient_Low_bG_value =10,//in mg/dL
+	Patient_Low_bG_value1 =12, //in mg/dL
+	Hypo_Alert_Level_value =13,// in mg/dL
+	Hypo_Alert_Level_value1 =15,// in mg/dL
+	Hypo_Alert_Level_value2 =16,// in mg/dL
+	Hypo_Alert_Level_value3 =18,// in mg/dL
+	Rate_of_Decrease_Alert_Level =19,// value in mg/dL/min
+	Rate_of_Decrease_Alert_Level1 =21,// value in mg/dL/min
+	Rate_of_Increase_Alert_Level =22,// value in mg/dL/min
+	Rate_of_Increase_Alert_Level1 =24,// value in mg/dL/min
+	csocp_Request_Op_Code = 28, //Response Code Value
+};
+
+enum cgm_specific_ops_control_point_Calibration_Status{
+	Calibration_Data_rejected = 0,
+	Calibration_Data_success = 1,
+	Calibration_Data_out_of_range = 2,
+	Calibration_Process_Pending = 4,
+};
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /////////////////////// POWER OPTIMIZATION  AT SUSPEND ///////////////////////
 //notice that: all setting here aims at power optimization ,they depends on

@@ -59,6 +59,7 @@
 #define SERVICE_UUID_TX_POWER                                     0x1804
 #define SERVICE_UUID_USER_DATA                                    0x181C
 #define SERVICE_UUID_WEIGHT_SCALE                                 0x181D
+#define SERVICE_UUID_CONTINUOUS_GLUCOSE_MONITORING                0x181F
 
 ////////////////////////////////////
 // Telink Service

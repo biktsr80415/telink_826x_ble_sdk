@@ -19,7 +19,7 @@
 #include "../common/myprintf.h"
 #endif
 
-MYFIFO_INIT(hci_rx_fifo, 72, 2);
+MYFIFO_INIT(hci_rx_fifo, 72, 2);//20X6+5 =125    128Byte
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
@@ -230,7 +230,7 @@ void user_init()
 	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
 
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 5, \
+	u8 status = bls_ll_setAdvParam( 400, 400 + 16, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
 
