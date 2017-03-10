@@ -12,7 +12,9 @@
 #include "../common/myprintf.h"
 #endif
 
-extern unsigned short crc16 (unsigned char *pD, int len);
+#if E2E_CRC_FLAG_ENABLE
+extern unsigned short e2e_crc16 (unsigned char *pD, int len);
+#endif
 
 u8 tx_done_status = 1;
 
@@ -35,50 +37,6 @@ u8	tbl_scanRsp [] = {
 void	task_connect (void)
 {
 	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
-#if CGMS || CGMP//params init
-	extern cgm_measurement_packet cgm_measurement_packet_val;
-	extern cgm_feature_packet cgm_feature_packet_val;
-	extern cgm_status_packet cgm_status_packet_val;
-	extern cgm_session_start_time_packet cgm_session_start_time_packet_val;
-	extern cgm_session_run_time_packet cgm_session_run_time_packet_val;
-	extern record_access_control_point_packet record_access_control_point_packet_val;
-	extern cgm_specific_ops_control_point_packet cgm_specific_ops_control_point_packet_val;
-
-#if !E2E_CRC_FLAG_ENABLE
-	cgm_feature_packet_val.cgmFeature[0] = 0b00000000;
-	cgm_feature_packet_val.cgmFeature[1] = 0b10000000;//CGM Quality supported;
-	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
-	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
-	cgm_feature_packet_val.e2eCRC = 0xFFFF;//the device doesn´t support E2E-safety & cgmFeature bit12:0
-#else
-	cgm_feature_packet_val.cgmFeature[0] = 0b00000000;
-	cgm_feature_packet_val.cgmFeature[1] = 0b10010000;//CGM Quality supported;E2E-safety supported
-	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
-	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
-	cgm_feature_packet_val.e2eCRC = crc16((u8*)&cgm_feature_packet_val, sizeof(cgm_feature_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
-#endif
-
-	cgm_measurement_packet_val.size = 10;
-	cgm_measurement_packet_val.cgmMflg = 0b00000011;//CGM Trend Information Present;CGM Quality Present;
-	cgm_measurement_packet_val.cgmGlucoseConcentration =44;
-	cgm_measurement_packet_val.timeOffset = 5;
-	cgm_measurement_packet_val.cgmTrendInformation = 42;
-	cgm_measurement_packet_val.cgmQuality = 33;
-#if E2E_CRC_FLAG_ENABLE
-	cgm_feature_packet_val.e2eCRC = crc16((u8*)&cgm_measurement_packet_val, sizeof(cgm_measurement_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
-#endif
-
-	cgm_status_packet_val.timeOffset =4;
-#if E2E_CRC_FLAG_ENABLE
-	cgm_status_packet_val.e2eCRC = crc16((u8*)&cgm_status_packet_val, sizeof(cgm_status_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
-#endif
-
-	cgm_session_run_time_packet_val.cgmSessionRunTime = 2;
-#if E2E_CRC_FLAG_ENABLE
-	cgm_session_run_time_packet_val.e2eCRC = crc16((u8*)&cgm_session_run_time_packet_val, sizeof(cgm_session_run_time_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
-#endif
-
-#endif
 }
 
 
@@ -103,6 +61,10 @@ void rf_customized_param_load(void)
 	 }
 }
 
+#if E2E_CRC_FLAG_ENABLE//Test [CDC Demo Continuous Glucose Monitoring Service CGMS_v1.0.1 P35 :computation for a sample
+u8 data[10] ={0x3e,1,2,3,4,5,6,7,8,9};
+volatile u16 crc;
+#endif
 
 void user_init()
 {
@@ -134,7 +96,9 @@ void user_init()
 	//smp initialization
 	bls_smp_enableParing (SMP_PARING_PEER_TRRIGER );
 
-
+#if E2E_CRC_FLAG_ENABLE
+	crc = e2e_crc16(data, 10);printf("Demo test CRC function! CRC =%d",crc);
+#endif
 	///////////////////// USER application initialization ///////////////////
 
 	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
@@ -157,9 +121,52 @@ void user_init()
 	//ble event call back
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
 
-	//模拟200条测量数据
-#if CGMS_SEN_RAA_BV_01_C
+#if CGMS || CGMP//params init
+	extern cgm_measurement_packet cgm_measurement_packet_val;
+	extern cgm_feature_packet cgm_feature_packet_val;
+	extern cgm_status_packet cgm_status_packet_val;
+	extern cgm_session_start_time_packet cgm_session_start_time_packet_val;
+	extern cgm_session_run_time_packet cgm_session_run_time_packet_val;
+	extern record_access_control_point_packet record_access_control_point_packet_val;
+	extern cgm_specific_ops_control_point_packet cgm_specific_ops_control_point_packet_val;
+
+#if !E2E_CRC_FLAG_ENABLE
+	cgm_feature_packet_val.cgmFeature[0] = 0b00000000;
+	cgm_feature_packet_val.cgmFeature[1] = 0b10000000;//CGM Quality supported;
+	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
+	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
+	cgm_feature_packet_val.e2eCRC = 0xFFFF;//the device doesn´t support E2E-safety & cgmFeature bit12:0
+#else
+	cgm_feature_packet_val.cgmFeature[0] = 0b00000000;
+	cgm_feature_packet_val.cgmFeature[1] = 0b10010000;//CGM Quality supported;E2E-safety supported
+	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
+	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
+	cgm_feature_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_feature_packet_val, sizeof(cgm_feature_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
+#endif
+
+//	cgm_measurement_packet_val.size = 10;
+//	cgm_measurement_packet_val.cgmMflg = 0b00000011;//CGM Trend Information Present;CGM Quality Present;
+//	cgm_measurement_packet_val.cgmGlucoseConcentration =44;
+//	cgm_measurement_packet_val.timeOffset = 5;
+//	cgm_measurement_packet_val.cgmTrendInformation = 42;
+//	cgm_measurement_packet_val.cgmQuality = 33;
+//#if E2E_CRC_FLAG_ENABLE
+//	cgm_measurement_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_measurement_packet_val, sizeof(cgm_measurement_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
+//#endif
+
+	cgm_status_packet_val.timeOffset = 4;
+#if E2E_CRC_FLAG_ENABLE
+	cgm_status_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_status_packet_val, sizeof(cgm_status_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
+#endif
+
+	cgm_session_run_time_packet_val.cgmSessionRunTime = 2;
+#if E2E_CRC_FLAG_ENABLE
+	cgm_session_run_time_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_session_run_time_packet_val, sizeof(cgm_session_run_time_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
+#endif
+
+	//模拟x条测量数据
 	simulate_cgm_measurement_data();
+
 #endif
 }
 

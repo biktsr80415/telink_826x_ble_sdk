@@ -62,14 +62,30 @@ extern "C" {
 #define CGMS            						1//CGMS
 #define CGMP            						0//CGMP
 
-#define CGMS_SEN_RAA_BV_01_C                    1//测试测量模拟数据有200条，在初始化代码中实现 CGMS/SEN/RAE/BI-02-C
+#if CGMS || CGMP //======================================================================================================================================
+
+#define CGMS_SEN_RAA_BV_01_C                    0//测试测量模拟数据有200条， CGMS/SEN/RAE/BI-02-C测试用例也要打开 以模拟这么多数据
+#define CGMS_SEN_CN_BV_02_C                     0
+#define CGMS_SEN_CGMCP_BV_03_C                  0//该测试项包含CGMS/SEN/CGMCP/BV-01-C [CGM Specific Ops – ‘Get CGM Communication Interval with E2E-CRC’]
+
+#if CGMS_SEN_CN_BV_02_C
+#define SENSOR_STATUS_FLG_ENABLE                1
+#endif
+
+#if CGMS_SEN_CGMCP_BV_03_C
+#define E2E_CRC_FLAG_ENABLE                     1
+#endif
+
 #ifndef E2E_CRC_FLAG_ENABLE
 #define E2E_CRC_FLAG_ENABLE                     0
 #endif
 
-#if CGMS || CGMP
-#define E2E_CRC_FLAG_ENABLE                     0//test case for : CGMS/SEN/CGMCP/BV-01-C [CGM Specific Ops – ‘Get CGM Communication Interval with E2E-CRC’]
+#ifndef SENSOR_STATUS_FLG_ENABLE
+#define SENSOR_STATUS_FLG_ENABLE                0
 #endif
+
+#endif//=================================================================================================================================================
+
 #include "../../proj/common/types.h"
 //time info packet structure, should transfer to time service later
 typedef struct {
@@ -117,7 +133,9 @@ typedef struct {
 	u8 cgmMflg;
 	short cgmGlucoseConcentration;//SFLOAT
 	u16 timeOffset;
-	//u8 sensorStatusAnnunciation[3];//	Optional if bit 5 or bit 6 or bit 7 of the cgmMflg field is set to “1”, otherwise excluded.
+#if SENSOR_STATUS_FLG_ENABLE
+	u8 sensorStatusAnnunciation[3];//	Optional if bit 5 or bit 6 or bit 7 of the cgmMflg field is set to “1”, otherwise excluded.
+#endif
 	short cgmTrendInformation;//This field is optional if the device supports CGM Trend information (Bit 15 in CGM Feature is set to 1) otherwise excluded.
 	short cgmQuality;//This field is optional if the device supports CGM Quality (Bit 16 in CGM Feature is set to 1) otherwise excluded.
 #if E2E_CRC_FLAG_ENABLE
@@ -223,6 +241,16 @@ typedef struct {
 	u16 calibrationDataRecordNumber;
 	u8  calibrationStatus;
 } cgm_specific_ops_control_point_packet;
+
+//actually
+//Actually CGM Specific Ops Control
+typedef struct {
+	u8 opCode;
+	u8 operand;
+#if E2E_CRC_FLAG_ENABLE
+	u16 e2eCRC;//Mandatory if dev
+#endif
+}actually_cgm_specific_ops_control_point_packet;
 
 enum cgm_specific_ops_control_point_opCode{
 	Set_CGM_Communication_Interva = 1,//The response to this control point is Response Code (Op Code 0x0F)

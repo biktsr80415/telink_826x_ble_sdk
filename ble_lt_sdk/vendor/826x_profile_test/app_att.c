@@ -321,34 +321,59 @@ record_access_control_point_packet record_access_control_point_packet_val;
 cgm_specific_ops_control_point_packet cgm_specific_ops_control_point_packet_val;
 
 ////////////////////////////////////////////////////////////////////////////
-#if  !CGMS_SEN_RAA_BV_01_C
-#define RECORD_NUMS                      4
+#if CGMS || CGMP//===============================================================================================
 
-//模拟的测量数据库：
-cgm_measurement_packet cgm_measurement_val[RECORD_NUMS] = {
-		{10, 0b00000011, 14,  0, 12, 13},
-		{10, 0b00000011, 24,  5, 22, 23},
-		{10, 0b00000011, 34, 10, 32, 33},
-		{10, 0b00000011, 44, 15, 42, 43},
-};
+#if E2E_CRC_FLAG_ENABLE
+unsigned short e2e_crc16 (unsigned char *pD, int len){
+	static unsigned short  poly[2] = {0, 0x8408};     //D0 + D5 + D12 + D16 =>0b 0000 0000 0000 0001 0001 0000 0010 0001=>     0x11021
+	unsigned short  crc = 0xffff;
+	u8 j,i;
+
+	for(j=len; j>0; j--)
+	{
+		u8 ds = *pD++;
+		for(i=0; i<8; i++)
+		{
+			crc = (crc >> 1) ^ poly[(crc ^ ds ) & 1];
+			ds = ds >> 1;
+		}
+	}
+	return crc;
+}
+#endif
+
+#if CGMS_SEN_RAA_BV_01_C
+#define  RECORD_NUMS                      200
 #else
-#define RECORD_NUMS                      200
+#define  RECORD_NUMS                      4
+#endif
 //模拟的测量数据库
 cgm_measurement_packet cgm_measurement_val[RECORD_NUMS];
 void simulate_cgm_measurement_data(void){
 	foreach(i, RECORD_NUMS){
 		cgm_measurement_val[i].size = 10;
+
+#if SENSOR_STATUS_FLG_ENABLE
+		cgm_measurement_val[i].cgmMflg = 0b00100011;//Optional if bit 5 or bit 6 or bit 7 of the cgmMflg field is set to “1”, otherwise excluded.
+#else
 		cgm_measurement_val[i].cgmMflg = 0b00000011;
+#endif
 		cgm_measurement_val[i].cgmGlucoseConcentration = 10;
 		cgm_measurement_val[i].timeOffset = i*5;
 		cgm_measurement_val[i].cgmTrendInformation = 11;
 		cgm_measurement_val[i].cgmQuality =22;
+#if SENSOR_STATUS_FLG_ENABLE
+		cgm_measurement_val[i].sensorStatusAnnunciation[0] = 0;
+		cgm_measurement_val[i].sensorStatusAnnunciation[1] = 0;
+		cgm_measurement_val[i].sensorStatusAnnunciation[2] = 0;
+#endif
+
 #if E2E_CRC_FLAG_ENABLE
-		cgm_measurement_val[i].e2eCRC = crc16((u8*)&cgm_measurement_val, sizeof(cgm_measurement_packet)-2); // This field is mandatory,if the device supports E2E-CRC (Bit 12 in CGM Feature is set to 1) otherwise excluded.
+		cgm_measurement_val[i].e2eCRC = e2e_crc16((u8*)&cgm_measurement_val, sizeof(cgm_measurement_packet)-2); // This field is mandatory,if the device supports E2E-CRC (Bit 12 in CGM Feature is set to 1) otherwise excluded.
 #endif
 	}
 }
-#endif
+
 ///////////////////////////////////////////////////////////////////////////
 
 extern const rf_packet_att_writeRsp_t pkt_writeRsp;
@@ -370,6 +395,11 @@ int cgm_session_start_time_write_callback(void * p){
 		u8* r = (u8 *)(&pkt_errRsp);
 		blt_push_fifo_hold (r + 4);
 	}
+
+#if E2E_CRC_FLAG_ENABLE
+	//invald CRC
+#endif
+
 	memcpy(&cgm_session_start_time_packet_val, tmp, sizeof(cgm_session_start_time_packet));
 
 
@@ -382,19 +412,22 @@ u8 abort_operation_procedure_flg;
 u8 cnt;
 u8 write_racp_flg;
 rf_packet_att_write_t *tmp_racp_req;
-u8 Procedure_in_progress_flg;//表示每一个op处理是否结束
+
+//RACP相关的procedure是否处理结束
+u8 Report_Stored_Records_all_procedure;
+u8 Report_Stored_Records_greaterOrEqual_procedure;
+
 int record_access_control_point_write_callback(void *p){
 	tmp_racp_req = (rf_packet_att_write_t*)p;
 	record_access_control_point_packet * tmp_racp = (record_access_control_point_packet*)&tmp_racp_req->value;
 	//首先执行write_callback,执行完了后，回复write_rsp.
 	//应用层不要做write_rsp动作，协议底层在write_callback执行完后，会发送该指令！
 	//blt_push_fifo_hold((u8*)(&pkt_writeRsp) + 4);//先回复Write RSP ，then do write_callback!
-    printf("tmp_racp: opCode= %d	operator= %d	operand = %d\n",tmp_racp->opCode,tmp_racp->operator,tmp_racp->operand);
-    printf("req->len: %d\n",tmp_racp_req->l2capLen -3);
+    printf("tmp_racp: opCode= %1d	operator= %1d	operand = %6d\n",tmp_racp->opCode,tmp_racp->operator,tmp_racp->operand);
+    printf("req->len: %1d\n",tmp_racp_req->l2capLen -3);
     printf("record_access_control_point_write_callback\n\r");
 
-
-	if(Procedure_in_progress_flg){
+	if(Report_Stored_Records_all_procedure || Report_Stored_Records_greaterOrEqual_procedure){
 		pkt_errRsp.errReason = 0xFE;//Procedure Already in Progress
 		u8* r = (u8 *)(&pkt_errRsp);
 		blt_push_fifo_hold (r + 4);
@@ -402,19 +435,86 @@ int record_access_control_point_write_callback(void *p){
 		return 0;
 	}
 
+	if(cgm_measurement_clientCharCfg == 0 || record_access_control_point_clientCharCfg == 0){
+		pkt_errRsp.errReason = 0xFD;//Client Characteristic Configuration Descriptor Improperly Configured
+		u8* r = (u8 *)(&pkt_errRsp);
+		blt_push_fifo_hold (r + 4);
+		printf("write_rsp_with_error:0xFE\n");
+		return 0;
+	}
+
+#if E2E_CRC_FLAG_ENABLE
+	//invald CRC
+#endif
+
     write_racp_flg = 1;
 
 	return 0;
 }
 
-u8 Report_Stored_Records_procedure;
+
+u16 Report_Stored_Records_all_cnt;
+u16 Report_Stored_Records_greaterOrEqual_cnt;
+u16 Report_Stored_Records_greaterOrEqual_filterVal;
 void process_RACP_write_callback(void){
+	//Report Stored Records procedure--(Report_stored_records - All_records)
+	if(Report_Stored_Records_all_procedure){
+		printf("start Report_Stored_Records_all_procedure\n");
+		WaitMs(10);//不加延时，过不了测试，原因200比数据很快发送完毕，procedure标志来不及判断，按道理20ms，200笔数据，也要4s发送完毕，只要在4s之前
+		bls_att_pushNotifyData(10, (u8*)&cgm_measurement_val[Report_Stored_Records_all_cnt], sizeof(cgm_measurement_packet));
+		Report_Stored_Records_all_cnt++;
+		if(Report_Stored_Records_all_cnt == RECORD_NUMS){
+			record_access_control_point_packet tmp;
+			tmp.operator = 0;//NULL
+			tmp.operand = Report_stored_records | Success<<8 ;
+			tmp.opCode = Response_Code;
+			bls_att_pushIndicateData(21, (u8*)&tmp, sizeof(record_access_control_point_packet));
+			Report_Stored_Records_all_procedure = 0;
+			Report_Stored_Records_all_cnt = 0;
+			printf("stop Report_Stored_Records_all_procedure\n");
+		}
+	}
+	//Report Stored Records procedure--(Report_stored_records - Greater_than_or_equal_to)
+	if(Report_Stored_Records_greaterOrEqual_procedure){
+		printf("start Report_Stored_Records_greaterOrEqual_procedure\n");
+		foreach(i, RECORD_NUMS){
+			if(cgm_measurement_val[i].timeOffset >= Report_Stored_Records_greaterOrEqual_filterVal){
+				Report_Stored_Records_greaterOrEqual_cnt = i;
+				break;
+			}
+		}
+
+		if(Report_Stored_Records_greaterOrEqual_cnt){
+			WaitMs(10);
+			bls_att_pushNotifyData(10, (u8*)&cgm_measurement_val[Report_Stored_Records_greaterOrEqual_cnt], sizeof(cgm_measurement_packet));
+			Report_Stored_Records_greaterOrEqual_cnt++;
+			if(Report_Stored_Records_greaterOrEqual_cnt == RECORD_NUMS){
+				record_access_control_point_packet tmp;
+				tmp.operator = 0;//NULL
+				tmp.operand = Greater_than_or_equal_to | Success<<8 ;
+				tmp.opCode = Response_Code;
+				bls_att_pushIndicateData(21, (u8*)&tmp, sizeof(record_access_control_point_packet));
+				Report_Stored_Records_greaterOrEqual_procedure = 0;
+				printf("stop Report_Stored_Records_greaterOrEqual_procedure\n");
+			}
+		}
+		else{//0 No recode found!
+			record_access_control_point_packet tmp;
+			tmp.operator = 0;//NULL
+			tmp.operand = Greater_than_or_equal_to | No_records_found<<8  ;
+			tmp.opCode = Response_Code;
+			bls_att_pushIndicateData(21, (u8*)&tmp, sizeof(record_access_control_point_packet));
+			Report_Stored_Records_greaterOrEqual_procedure =0;
+			printf("stop Report_Stored_Records_greaterOrEqual_procedure\n");
+		}
+	}
+
 	if(!write_racp_flg)
 		return;
 	else{//write_RACP_occur
 		record_access_control_point_packet * tmp_racp = (record_access_control_point_packet*)&tmp_racp_req->value;
 		write_racp_flg = 0;
-    	Procedure_in_progress_flg = 1;
+
 		u8 timeoffset;
 		u16 min_filterVal;
 		u8 tmp_operand[3];
@@ -434,7 +534,6 @@ void process_RACP_write_callback(void){
 	                    	cnt++;
 	                    	if(abort_operation_procedure_flg){
 								abort_operation_procedure_flg = 0;
-								Procedure_in_progress_flg = 0;
 								return;
 							}
 	                    	printf("notify Report_stored_records All_records\n");
@@ -446,7 +545,7 @@ void process_RACP_write_callback(void){
 						tmp_racp->opCode = Response_Code;
 						bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
 #else
-						Report_Stored_Records_procedure = 1;
+						Report_Stored_Records_all_procedure = 1;
 #endif
 						break;
 
@@ -473,7 +572,6 @@ void process_RACP_write_callback(void){
 									filterflg = 1;
 									if(abort_operation_procedure_flg){
 										abort_operation_procedure_flg = 0;
-										Procedure_in_progress_flg = 0;
 										return;
 									}
 									bls_att_pushNotifyData(10, (u8*)&cgm_measurement_val[i], sizeof(cgm_measurement_packet));
@@ -492,6 +590,9 @@ void process_RACP_write_callback(void){
 								tmp_racp->opCode = Response_Code;
 								bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
 							}
+#else
+							Report_Stored_Records_greaterOrEqual_filterVal = min_filterVal;
+							Report_Stored_Records_greaterOrEqual_procedure = 1;
 #endif
 						}
 						break;
@@ -521,6 +622,9 @@ void process_RACP_write_callback(void){
 //						break;
 //					}
 					abort_operation_procedure_flg = 1;
+
+					Report_Stored_Records_all_procedure = 0;
+					Report_Stored_Records_greaterOrEqual_procedure = 0;
 
 					tmp_racp->operator = 0;//NULL
 					tmp_racp->operand = tmp_racp->opCode | Success<<8 ;
@@ -602,18 +706,21 @@ void process_RACP_write_callback(void){
 				break;
 
 		}
-		Procedure_in_progress_flg = 0;
     }
 }
 
 u8 write_csocp_flg;
-cgm_specific_ops_control_point_packet *tmp_csocp;
+rf_packet_att_write_t *tmp_csocp_req;
 int cgm_specific_ops_control_point_write_callback(void *p){
-	rf_packet_att_write_t *req = (rf_packet_att_write_t*)p;
-	tmp_csocp = (cgm_specific_ops_control_point_packet*)&req->value;
+	tmp_csocp_req = (rf_packet_att_write_t*)p;
+	actually_cgm_specific_ops_control_point_packet* tmp_csocp = (actually_cgm_specific_ops_control_point_packet*)&tmp_csocp_req->value;
 	//首先执行write_callback,执行完了后，回复write_rsp.
 	//应用层不要做write_rsp动作，协议底层在write_callback执行完后，会发送该指令！
 	//blt_push_fifo_hold((u8*)(&pkt_writeRsp) + 4);//先回复Write RSP ，then do write_callback!
+
+	printf("tmp_csocp: opCode= %d	operand = %d", tmp_csocp->opCode, tmp_csocp->operand);
+	printf("req->len: %1d\n", tmp_csocp_req->l2capLen -3);
+	printf("record_access_control_point_write_callback\n\r");
 
 	write_csocp_flg = 1;
 
@@ -624,13 +731,16 @@ u8 periodic_communication_enable_flg = 1;
 u8 communication_interval =                   2;//2min init
 #define COMMUNICATION_INTERVAL_SMALLEST       1//device smallest communication interval
 
-extern unsigned short crc16 (unsigned char *pD, int len);
+
 
 void process_CSOCP_write_callback(void){
 	if(!write_csocp_flg)
 		return;
-	else{//write_RACP_occur
+	else{//write_CSOCP_occur
 		write_csocp_flg = 0;
+
+		actually_cgm_specific_ops_control_point_packet* tmp_csocp = (actually_cgm_specific_ops_control_point_packet*)&tmp_csocp_req->value;
+        u8 rsp_csop[4];
     	switch(tmp_csocp->opCode){
     		case Set_CGM_Communication_Interva:
     			periodic_communication_enable_flg = 0;//disable the periodic communication
@@ -640,16 +750,32 @@ void process_CSOCP_write_callback(void){
     			else{
     				communication_interval = tmp_csocp->operand;//Communication_Interval_in_minutes
     			}
-    			*(u16*)&tmp_csocp->operand = tmp_csocp->opCode | csocp_Success<<8;
-    			tmp_csocp->opCode = csocp_Response_Code;
-    			bls_att_pushIndicateData(24, (u8*)tmp_csocp, 4);//sizeof(cgm_specific_ops_control_point_packet));
+
+    			rsp_csop[0] = csocp_Response_Code;
+    			rsp_csop[1] = csocp_Success;
+#if E2E_CRC_FLAG_ENABLE
+    			rsp_csop[2] = e2e_crc16((u8*)rsp_csop, 2)&0xff ;
+    			rsp_csop[3] = e2e_crc16((u8*)rsp_csop , 2)>>8;// This field is mandatory,if the device supports E2E-CRC (Bit 12 in CGM Feature is set to 1) otherwise excluded.
+    			printf("rsp_csop E2E-CRC1=%x\n",e2e_crc16((u8*)rsp_csop, 2));
+    			bls_att_pushIndicateData(24, (u8*)rsp_csop, 4);
+#else
+    			bls_att_pushIndicateData(24, (u8*)rsp_csop, 2);
+#endif
     			break;
 
     		case Get_CGM_Communication_Interva:
                 //Operand: N.A.
-    			tmp_csocp->opCode = CGM_Communication_Interval_response;
-    			tmp_csocp->operand = communication_interval;
-    			bls_att_pushIndicateData(24, (u8*)tmp_csocp, 4);//sizeof(cgm_specific_ops_control_point_packet));
+    			rsp_csop[0] = CGM_Communication_Interval_response;
+    			rsp_csop[1] = communication_interval;
+
+#if E2E_CRC_FLAG_ENABLE
+    			rsp_csop[2] = e2e_crc16((u8*)rsp_csop, 2)&0xff ;
+    			rsp_csop[3] = e2e_crc16((u8*)rsp_csop , 2)>>8;// This field is mandatory,if the device supports E2E-CRC (Bit 12 in CGM Feature is set to 1) otherwise excluded.
+    			printf("rsp_csop E2E-CRC2=%x\n",e2e_crc16((u8*)rsp_csop, 2));
+    			bls_att_pushIndicateData(24, (u8*)rsp_csop, 4);
+#else
+    			bls_att_pushIndicateData(24, (u8*)rsp_csop, 2);
+#endif
     			break;
 
 //    		case Set_Glucose_Calibration_Value:
@@ -664,6 +790,8 @@ void process_CSOCP_write_callback(void){
     	}
 	}
 }
+#endif//============================================================================================================================
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
