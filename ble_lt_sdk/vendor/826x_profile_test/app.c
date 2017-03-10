@@ -119,17 +119,13 @@ void user_init()
 	rf_set_power_level_index (RF_POWER_8dBm);
 
 	//ble event call back
-	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
+	//bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
 
 #if CGMS || CGMP//params init
-	extern cgm_measurement_packet cgm_measurement_packet_val;
 	extern cgm_feature_packet cgm_feature_packet_val;
 	extern cgm_status_packet cgm_status_packet_val;
-	extern cgm_session_start_time_packet cgm_session_start_time_packet_val;
 	extern cgm_session_run_time_packet cgm_session_run_time_packet_val;
-	extern record_access_control_point_packet record_access_control_point_packet_val;
-	extern cgm_specific_ops_control_point_packet cgm_specific_ops_control_point_packet_val;
-
+	extern void simulate_cgm_measurement_data(void);
 #if !E2E_CRC_FLAG_ENABLE
 	cgm_feature_packet_val.cgmFeature[0] = 0b00000000;
 	cgm_feature_packet_val.cgmFeature[1] = 0b10000000;//CGM Quality supported;
@@ -143,16 +139,6 @@ void user_init()
 	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
 	cgm_feature_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_feature_packet_val, sizeof(cgm_feature_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
 #endif
-
-//	cgm_measurement_packet_val.size = 10;
-//	cgm_measurement_packet_val.cgmMflg = 0b00000011;//CGM Trend Information Present;CGM Quality Present;
-//	cgm_measurement_packet_val.cgmGlucoseConcentration =44;
-//	cgm_measurement_packet_val.timeOffset = 5;
-//	cgm_measurement_packet_val.cgmTrendInformation = 42;
-//	cgm_measurement_packet_val.cgmQuality = 33;
-//#if E2E_CRC_FLAG_ENABLE
-//	cgm_measurement_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_measurement_packet_val, sizeof(cgm_measurement_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
-//#endif
 
 	cgm_status_packet_val.timeOffset = 4;
 #if E2E_CRC_FLAG_ENABLE
@@ -237,7 +223,6 @@ void key_proc(){
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
-extern void process_RACP_write_callback(void);
 void main_loop ()
 {
 	static u32 tick_loop;
@@ -247,7 +232,11 @@ void main_loop ()
 
 	key_proc();
 
+#if CGMS || CGMP
+	extern void process_RACP_write_callback(void);
+	extern void process_CSOCP_write_callback(void);
 	process_RACP_write_callback();
 	process_CSOCP_write_callback();
+#endif
 
 }

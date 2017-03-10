@@ -319,8 +319,18 @@ cgm_session_start_time_packet cgm_session_start_time_packet_val;
 cgm_session_run_time_packet cgm_session_run_time_packet_val;
 record_access_control_point_packet record_access_control_point_packet_val;
 cgm_specific_ops_control_point_packet cgm_specific_ops_control_point_packet_val;
+/////////////////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////
+
+////////////////////// continuous glucose monitoring Profile ////////////////////////////////
+//======================== 1.continuous glucose monitoring ==========================
+//line:267 ~ 321.above.
+//====================== Bond Management Service (Optional) =========================
+//========================== 2.device information ===================================
+//line:71 ~ 103.above.
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #if CGMS || CGMP//===============================================================================================
 
 #if E2E_CRC_FLAG_ENABLE
@@ -396,10 +406,6 @@ int cgm_session_start_time_write_callback(void * p){
 		blt_push_fifo_hold (r + 4);
 	}
 
-#if E2E_CRC_FLAG_ENABLE
-	//invald CRC
-#endif
-
 	memcpy(&cgm_session_start_time_packet_val, tmp, sizeof(cgm_session_start_time_packet));
 
 
@@ -423,6 +429,7 @@ int record_access_control_point_write_callback(void *p){
 	//首先执行write_callback,执行完了后，回复write_rsp.
 	//应用层不要做write_rsp动作，协议底层在write_callback执行完后，会发送该指令！
 	//blt_push_fifo_hold((u8*)(&pkt_writeRsp) + 4);//先回复Write RSP ，then do write_callback!
+
     printf("tmp_racp: opCode= %1d	operator= %1d	operand = %6d\n",tmp_racp->opCode,tmp_racp->operator,tmp_racp->operand);
     printf("req->len: %1d\n",tmp_racp_req->l2capLen -3);
     printf("record_access_control_point_write_callback\n\r");
@@ -522,14 +529,14 @@ void process_RACP_write_callback(void){
 			case Report_stored_records:
 				switch(tmp_racp->operator){
 					case All_records://No Operand Used
-//						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 2)){
+//						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
 //							tmp_racp->operator = 0;//NULL
 //							tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
 //							tmp_racp->opCode = Response_Code;
 //							bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
 //							break;
 //						}
-#if 0
+#if 0//程序 不可以这么处理，每一个main_loop上报一次数据比较合理，符合当前BLE架构
 	                    foreach(i, RECORD_NUMS){
 	                    	cnt++;
 	                    	if(abort_operation_procedure_flg){
@@ -566,7 +573,7 @@ void process_RACP_write_callback(void){
 						}
 						else if(timeoffset == 0x01){
 							u8 filterflg = 0;
-#if 0
+#if 0//程序 不可以这么处理，每一个main_loop上报一次数据比较合理，符合当前BLE架构
 							foreach(i, RECORD_NUMS){
 								if(cgm_measurement_val[i].timeOffset >= min_filterVal){
 									filterflg = 1;
@@ -614,7 +621,7 @@ void process_RACP_write_callback(void){
 
 			case Abort_operation://the Server shall stop any RACP procedures currently in progress and shall make a best effort to stop sending any further data.
 				if(tmp_racp->operator == 0){//operator == Null (0x00) & No Operand Used
-//					if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 2)){
+//					if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
 //						tmp_racp->operator = 0;//NULL
 //						tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
 //						tmp_racp->opCode = Response_Code;
@@ -637,7 +644,7 @@ void process_RACP_write_callback(void){
 				switch(tmp_racp->operator){
 				    record_access_control_point_packet rsps;
 					case All_records://No Operand Used
-//						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 2)){
+//						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
 //							tmp_racp->operator = 0;//NULL
 //							tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
 //							tmp_racp->opCode = Response_Code;
@@ -794,14 +801,6 @@ void process_CSOCP_write_callback(void){
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-
-////////////////////// continuous glucose monitoring Profile ////////////////////////////////
-//======================== 1.continuous glucose monitoring ==========================
-//line:267 ~ 321.above.
-//====================== Bond Management Service (Optional) =========================
-//========================== 2.device information ===================================
-//line:71 ~ 103.above.
-/////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // TM : to modify
