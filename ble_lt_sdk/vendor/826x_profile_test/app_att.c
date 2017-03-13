@@ -236,6 +236,7 @@ blood_pressure_measure_packet blood_pressure_measure_val;
 blood_pressure_measure_packet intermediate_cuff_pressure_val;
 u16 blood_pressure_feature_val = 0x0c;//00001100 	Irregular Pulse Detection feature supported
                                                   //Pulse Rate Range Detection feature supported
+                                                  //Multiple Bonds not supported
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -398,13 +399,17 @@ int cgm_session_start_time_write_callback(void * p){
 		pkt_errRsp.errReason = 0xFF;//Out of Range
 		u8* r = (u8 *)(&pkt_errRsp);
 		blt_push_fifo_hold (r + 4);
+		return 0;
 	}
 
+#if CGMS_SEN_CBE_BI_06_C //General Error Handling – ‘Missing CRC’
 	if((req->l2capLen - 3) == (sizeof(time_packet) + 2)){//No CRC
 		pkt_errRsp.errReason = 0x80;//Missing CRC
 		u8* r = (u8 *)(&pkt_errRsp);
 		blt_push_fifo_hold (r + 4);
+		return 0;
 	}
+#endif
 
 	memcpy(&cgm_session_start_time_packet_val, tmp, sizeof(cgm_session_start_time_packet));
 
@@ -449,10 +454,6 @@ int record_access_control_point_write_callback(void *p){
 		printf("write_rsp_with_error:0xFE\n");
 		return 0;
 	}
-
-#if E2E_CRC_FLAG_ENABLE
-	//invald CRC
-#endif
 
     write_racp_flg = 1;
 
@@ -529,13 +530,13 @@ void process_RACP_write_callback(void){
 			case Report_stored_records:
 				switch(tmp_racp->operator){
 					case All_records://No Operand Used
-//						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
-//							tmp_racp->operator = 0;//NULL
-//							tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
-//							tmp_racp->opCode = Response_Code;
-//							bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
-//							break;
-//						}
+						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
+							tmp_racp->operator = 0;//NULL
+							tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
+							tmp_racp->opCode = Response_Code;
+							bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
+							break;
+						}
 #if 0//程序 不可以这么处理，每一个main_loop上报一次数据比较合理，符合当前BLE架构
 	                    foreach(i, RECORD_NUMS){
 	                    	cnt++;
@@ -621,13 +622,13 @@ void process_RACP_write_callback(void){
 
 			case Abort_operation://the Server shall stop any RACP procedures currently in progress and shall make a best effort to stop sending any further data.
 				if(tmp_racp->operator == 0){//operator == Null (0x00) & No Operand Used
-//					if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
-//						tmp_racp->operator = 0;//NULL
-//						tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
-//						tmp_racp->opCode = Response_Code;
-//						bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
-//						break;
-//					}
+					if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
+						tmp_racp->operator = 0;//NULL
+						tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
+						tmp_racp->opCode = Response_Code;
+						bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
+						break;
+					}
 					abort_operation_procedure_flg = 1;
 
 					Report_Stored_Records_all_procedure = 0;
@@ -644,13 +645,13 @@ void process_RACP_write_callback(void){
 				switch(tmp_racp->operator){
 				    record_access_control_point_packet rsps;
 					case All_records://No Operand Used
-//						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
-//							tmp_racp->operator = 0;//NULL
-//							tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
-//							tmp_racp->opCode = Response_Code;
-//							bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
-//							break;
-//						}
+						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
+							tmp_racp->operator = 0;//NULL
+							tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
+							tmp_racp->opCode = Response_Code;
+							bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
+							break;
+						}
 	                    //Number of Stored Records Response
 						rsps.opCode = Number_of_stored_records_response;
 						rsps.operator = 0;//NULL
@@ -787,7 +788,7 @@ void process_CSOCP_write_callback(void){
 
 //    		case Set_Glucose_Calibration_Value:
 //    		case Get_Glucose_Calibration_Value:
-//    			 //......
+//    			 ......
 //    		case Stop_the_Session:
 //    			break
 
@@ -798,8 +799,6 @@ void process_CSOCP_write_callback(void){
 	}
 }
 #endif//============================================================================================================================
-
-/////////////////////////////////////////////////////////////////////////////////////////////
 
 
 

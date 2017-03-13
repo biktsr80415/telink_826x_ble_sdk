@@ -114,7 +114,11 @@ void user_init()
 		while(1);
 	}
 
+#if BLP || CGMP
+	bls_ll_setAdvEnable(0);  //adv disable
+#else
 	bls_ll_setAdvEnable(1);  //adv enable
+#endif
 
 	rf_set_power_level_index (RF_POWER_8dBm);
 
@@ -158,6 +162,20 @@ void user_init()
 
 
 void key_proc(){
+    //Key2
+	if(!gpio_read(KEY2)){
+			sleep_us(50000);
+			if(!gpio_read(KEY2)){
+#if BLP || CGMP
+				bls_ll_setAdvEnable(1);  //adv enable
+#endif
+#if WSP
+				smp_param_reset();//擦除绑定信息
+#endif
+			}
+	}
+
+	//Key1
 	if(!gpio_read(KEY1)){
 		sleep_us(50000);
 		if(!gpio_read(KEY1)){
@@ -213,8 +231,18 @@ void key_proc(){
 			weightScale_measure_val.userID = 1;
 			weightScale_measure_val.wmBMI = 22;
 			weightScale_measure_val.wmHeight = 173;
-			bls_att_pushIndicateData(10, (u8*)&weightScale_measure_val, sizeof(weight_measure_packet));
 
+#if WSP//test for WSP/SEN/WST/BI-01-I [Single User Weight Scale – No Bond Relation]
+			extern int flash_exist_data (u32 flash_addr);
+			if(flash_exist_data(0x74000)){//查看FLASH是否有绑定信息，没有就不发送数据
+				bls_att_pushIndicateData(10, (u8*)&weightScale_measure_val, sizeof(weight_measure_packet));
+			}
+			else{
+				//Do nothing
+			}
+#else
+			bls_att_pushIndicateData(10, (u8*)&weightScale_measure_val, sizeof(weight_measure_packet));
+#endif
 
 #endif
 		}

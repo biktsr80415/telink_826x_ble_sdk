@@ -58,8 +58,8 @@ extern "C" {
 #define HRS            							0//HRS
 #define HRP            							0//HRP
 #define WSS            							0//WSS
-#define WSP            							0//WSP
-#define CGMS            						1//CGMS
+#define WSP            							1//WSP
+#define CGMS            						0//CGMS
 #define CGMP            						0//CGMP
 
 #if CGMS || CGMP //======================================================================================================================================
@@ -67,12 +67,13 @@ extern "C" {
 #define CGMS_SEN_RAA_BV_01_C                    0//测试测量模拟数据有200条， CGMS/SEN/RAE/BI-02-C测试用例也要打开 以模拟这么多数据
 #define CGMS_SEN_CN_BV_02_C                     0
 #define CGMS_SEN_CGMCP_BV_03_C                  0//该测试项包含CGMS/SEN/CGMCP/BV-01-C [CGM Specific Ops – ‘Get CGM Communication Interval with E2E-CRC’]
+#define CGMS_SEN_CBE_BI_06_C                    0//General Error Handling – ‘Missing CRC’].即IUT支持E2E CRC
 
 #if CGMS_SEN_CN_BV_02_C
 #define SENSOR_STATUS_FLG_ENABLE                1
 #endif
 
-#if CGMS_SEN_CGMCP_BV_03_C
+#if CGMS_SEN_CGMCP_BV_03_C || CGMS_SEN_CBE_BI_06_C
 #define E2E_CRC_FLAG_ENABLE                     1
 #endif
 
