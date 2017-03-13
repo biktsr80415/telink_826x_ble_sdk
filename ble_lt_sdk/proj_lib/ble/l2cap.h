@@ -67,15 +67,35 @@
 
 
 
+
+typedef struct{
+	u16 	connParaUpReq_minInterval;
+	u16 	connParaUpReq_maxInterval;
+	u16 	connParaUpReq_latency;
+	u16 	connParaUpReq_timeout;
+
+	u8		connParaUpReq_pending;
+}para_up_req_t;
+
+para_up_req_t	para_upReq;
+
+
+
+
+typedef int (*l2cap_handler_t) (u16 conn, u8 * p);
+
+extern l2cap_handler_t	blc_l2cap_handler;
+
+
+
 /******************************* User Interface  ************************************/
 //Slave
 void		bls_l2cap_requestConnParamUpdate (u16 min_interval, u16 max_interval, u16 latency, u16 timeout);
 
 void		blc_l2cap_register_handler (void *p);
-void 		blc_l2cap_reg_att_cli_hander(void *p);
-int 		blc_l2cap_packet_receive (u8 * p);
+int 		blc_l2cap_packet_receive (u16 handle, u8 * p);
 int 		blc_l2cap_send_data (u16 cid, u8 *p, int n);
-int 		bls_hci_sendACLData2Host (u8 *p);
+
 
 
 //Master

@@ -39,11 +39,50 @@
 #define LL_FEATURE_MASK_LL_PRIVACY                           0x40
 #define LL_FEATURE_MASK_EXTENDED_SCANNER_FILTER_POLICIES     0x80   //core_4.2
 
-#define LL_FEATURE_MASK_DEFAULT                              LL_FEATURE_MASK_LL_ENCRYPTION
+
+#if (BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE)
+
+	#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
+									   	   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
+									   	   LL_FEATURE_MASK_LE_PING							  |   \
+									   	   LL_FEATURE_MASK_LE_DATA_PACKET_EXTENSION	)
+#else
+
+	#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
+									   	   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
+									   	   LL_FEATURE_MASK_LE_PING					)
+#endif
+
+
+typedef enum {
+	SCAN_TYPE_PASSIVE = 0x00,
+	SCAN_TYPE_ACTIVE,
+} scan_type_t;
 
 
 
 
+
+
+#define 		ADV_INTERVAL_3_125MS                        5
+#define 		ADV_INTERVAL_3_75MS                         6
+#define 		ADV_INTERVAL_10MS                           16
+#define 		ADV_INTERVAL_20MS                           32
+#define 		ADV_INTERVAL_30MS                           48
+#define 		ADV_INTERVAL_100MS                          160
+#define 		ADV_INTERVAL_1_28_S                         0x0800
+#define 		ADV_INTERVAL_10_24S                         16384
+
+#define 		ADV_LOW_LATENCY_DIRECT_INTERVAL             ADV_INTERVAL_10MS
+#define 		ADV_HIGH_LATENCY_DIRECT_INTERVAL            ADV_INTERVAL_3_75MS
+
+
+#define 		SCAN_INTERVAL_30MS                           48
+#define 		SCAN_INTERVAL_60MS                           96
+#define 		SCAN_INTERVAL_90MS                           144
+#define 		SCAN_INTERVAL_100MS                          160
+#define 		SCAN_INTERVAL_200MS                          320
+#define 		SCAN_INTERVAL_300MS                          480
 
 
 
@@ -126,7 +165,7 @@ typedef enum {
     HCI_ERR_CONN_NOT_ESTABLISH									   = HCI_ERR_CONN_FAILED_TO_ESTABLISH,  //0x3E
 
     
-    LL_ERR_START = 0x40,
+    LL_ERR_START = 0x50,
 	LL_ERR_WHITE_LIST_PUBLIC_ADDR_TABLE_FULL,                        //!< The white list public addr table full
 	LL_ERR_WHITE_LIST_PRIVATE_RESOLVABLE_IRK_TABLE_FULL,
 	LL_EER_FEATURE_NOT_SUPPORTED,
@@ -135,9 +174,10 @@ typedef enum {
 	LL_ERR_ADDR_NOT_EXIST_IN_WHITE_LIST, //0x46
 	LL_ERR_ADDR_ALREADY_EXIST_IN_WHITE_LIST, //0x47
 	LL_ERR_WHITE_LIST_NV_DISABLED, //0x48
+	LL_ERR_CURRENT_STATE_NOT_SUPPORTED_THIS_CMD,
     
     
-    L2CAP_ERR_START = 0x49,
+    L2CAP_ERR_START = 0x60,
     L2CAP_ERR_MUX_EXCCED,                                //!< The AUTOPEND pending all is turned on
     L2CAP_ERR_INVALID_PACKET_LEN,                        //!< The AUTOPEND pending all is turned off
     L2CAP_ERR_BEACON_LOSS,                               //!< The beacon was lost following a synchronization request
@@ -153,7 +193,7 @@ typedef enum {
     L2CAP_ERR_LEN_NOT_MATCH,                             //!< length not match
     
     
-    ATT_ERR_START = 0x57,
+    ATT_ERR_START = 0x70,
     ATT_ERR_INVALID_HANDLE,                              //!< The attribute handle given was not valid on this server
     ATT_ERR_READ_NOT_PERMITTED,                          //!< The attribute cannot be read
     ATT_ERR_WRITE_NOT_PERMITTED,                         //!< The attribute cannot be written
@@ -175,7 +215,7 @@ typedef enum {
     ATT_ERR_ENQUEUE_FAILED,                              //!< register service failed when enqueue
     ATT_ERR_PREVIOUS_INDICATE_DATA_HAS_NOT_CONFIRMED,
 
-    GAP_ERR_START = 0x70,
+    GAP_ERR_START = 0x90,
     GAP_ERR_INVALID_ROLE,
     GAP_ERR_MEMORY_ERROR,
     GAP_ERR_INVALID_STATE,
@@ -187,7 +227,7 @@ typedef enum {
     SERVICE_ERR_INVALID_PARAMETER,
 	SERVICE_ERR_NOTI_NOT_PERMITTED,
     
-    SMP_EER_MUX_EXCCED = 0x80,                          //!< The AUTOPEND pending all is turned on 
+    SMP_EER_MUX_EXCCED = 0xA0,                          //!< The AUTOPEND pending all is turned on
     SMP_EER_INVALID_PACKET_LEN,                         //!< The AUTOPEND pending all is turned off 
     SMP_EER_INVALID_STATE,                              //!< received cmd in invalid state 
     SMP_EER_USER_CANCEL,                                //!< user channcel status  
@@ -209,17 +249,19 @@ typedef enum {
     SMP_EER_ADDR_RESOLVE_FAIL,                          //!< The operation is time out 
 
 
-    SPP_ERR_START = 0xA0,
+    SPP_ERR_START = 0xC0,
     SPP_ERR_NO_HANDLER,
     
 
-	BLE_COMMON_ERR_START = 0xE0,
+	BLE_COMMON_ERR_START = 0xD0,
     BLE_ERR_DUPLICATE_PACKET,
 	BLE_ERR_INVALID_STATE,
 	BLE_ERR_INVALID_PARAMETER,
 	BLE_ERR_NO_RESOURCE,
 
 	NO_BONDED_MAC_ADDRESS_FOR_DIRCET_ADV,
+
+
 
 	SLAVE_TERMINATE_CONN_ACKED = 0xF0,
 	SLAVE_TERMINATE_CONN_TIMEOUT    = 0xF1,
@@ -350,7 +392,11 @@ typedef struct{
 	u8  rf_len;				//LEN(6)_RFU(2)
 
 	u8	advA[6];			//address
+#if (TEST_LONG_ADV_PACKET)
+	u8	data[80];
+#else
 	u8	data[31];			//0-31 byte
+#endif
 }rf_packet_adv_t;
 
 
@@ -366,7 +412,7 @@ typedef struct{
 
 typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8 	type;
+	rf_adv_head_t  header;	//RA(1)_TA(1)_RFU(2)_TYPE(4)
 	u8  rf_len;				//LEN(6)_RFU(2)
 
 	u8	scanA[6];			//
@@ -375,7 +421,7 @@ typedef struct{
 
 typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
+	rf_adv_head_t  header;				//RA(1)_TA(1)_RFU(2)_TYPE(4)
 	u8  rf_len;				//LEN(6)_RFU(2)
 
 	u8	advA[6];			//address
@@ -401,7 +447,7 @@ typedef struct{
 
 typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
-	u8	type;				//RA(1)_TA(1)_RFU(2)_TYPE(4): connect request PDU
+	rf_adv_head_t  header;				//RA(1)_TA(1)_RFU(2)_TYPE(4): connect request PDU
 	u8  rf_len;				//LEN(6)_RFU(2)
 	u8	scanA[6];			//
 	u8	advA[6];			//
@@ -1014,8 +1060,6 @@ typedef void (*user_task_handler_t)(void);
 #define SMP_FAST_CONNECT   		1
 
 
-
-int 	blt_fifo_empty ();
 u8 *	bls_smp_pushPkt (int type);
 u8 * 	bls_smp_sendInfo ();
 
@@ -1074,12 +1118,6 @@ typedef struct {
 extern salveMac_t tbl_slaveMac;
 
 
-typedef struct {
-	u8		is_bonded;
-	u8		bonded_initA_type;
-	u8		bonded_initA[6];
-}bond_initA_t;
-extern bond_initA_t 	blt_bond;
 
 typedef struct {
 	u8	num;

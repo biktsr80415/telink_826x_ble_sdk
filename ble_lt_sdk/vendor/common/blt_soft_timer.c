@@ -6,9 +6,7 @@
  */
 
 #include "../../proj/tl_common.h"
-#include "../../proj_lib/rf_drv.h"
-#include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 
 #include "../common/blt_soft_timer.h"
 
@@ -126,7 +124,12 @@ void  	blt_soft_timer_process(int type)
 	}
 
 	u32 now = clock_time();
-	if(!blt_timer.currentNum || !blt_is_timer_expired(blt_timer.timer[0].t, now) ){
+	if(!blt_timer.currentNum){
+		bls_pm_setAppWakeupLowPower(0, 0);  //disable
+		return;
+	}
+
+	if( !blt_is_timer_expired(blt_timer.timer[0].t, now) ){
 		return;
 	}
 
@@ -170,6 +173,9 @@ void  	blt_soft_timer_process(int type)
 			bls_pm_setAppWakeupLowPower(0, 0);  //disable
 		}
 
+	}
+	else{
+		bls_pm_setAppWakeupLowPower(0, 0);  //disable
 	}
 
 }

@@ -376,4 +376,8 @@ int blm_smp_startEncryption (u16 connhandle);
 int blm_smp_initParingParam (u16 connhandle, u8 OOB_en, u8 OOB_data[16], u8 MITM_en, u32 pin_code, u8 bonding_en, u8 IO_Cap);
 //		u8 m_LTK, u8 m_IRK, u8 m_CSRK, u8 s_LTK, u8 s_IRK, u8 s_CSRK );
 
+/**************************************************
+ * Used for notify sm layer the state change in ll;
+ */
+void blm_smp_cryptStateChanged (u8 connhandle, u8 cur_crypt_state);
 #endif /* BLE_SMP_H_ */

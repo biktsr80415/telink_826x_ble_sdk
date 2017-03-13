@@ -7,7 +7,6 @@
 
 #include "../../proj/tl_common.h"
 #include "../../proj/mcu/pwm.h"
-#include "../../proj_lib/ble/ble_ll.h"
 
 #include "rc_ir.h"
 

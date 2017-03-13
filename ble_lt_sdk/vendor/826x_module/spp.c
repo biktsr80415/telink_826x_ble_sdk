@@ -1,4 +1,7 @@
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj/tl_common.h"
+#include "../../proj_lib/rf_drv.h"
+#include "../../proj_lib/pm.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "spp.h"
 
@@ -140,7 +143,7 @@ int bls_uart_handler (u8 *p, int n)
 	else if (cmd == SPP_CMD_GET_BUF_SIZE)
 	{
 		u8 r[4];
-		para[0] = (u8)bls_hci_le_readBufferSize_cmd( (u8 *)(r) );
+		para[0] = (u8)blc_hci_le_readBufferSize_cmd( (u8 *)(r) );
 		para[1] = r[2];
 		para_len = 2;
 	}
@@ -193,7 +196,7 @@ int bls_uart_handler (u8 *p, int n)
 	// get module current work state: 16 ff 00 00
 	else if (cmd == SPP_CMD_GET_CUR_STATE)
 	{
-		para[1] = bls_ll_getCurrentState();
+		para[1] = blc_ll_getCurrentState();
 		para_len = 2;
 	}
 	// terminate connection: 17 ff 00 00
@@ -255,8 +258,8 @@ int hci_send_data (u32 h, u8 *para, int n)
 	}
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
-	if(!module_uart_data_flg){ //UART上空闲，新的数据发送
-		GPIO_WAKEUP_MCU_HIGH;  //通知MCU有数据了
+	if(!module_uart_data_flg){ //UART涓婄┖闂诧紝鏂扮殑鏁版嵁鍙戦�
+		GPIO_WAKEUP_MCU_HIGH;  //閫氱煡MCU鏈夋暟鎹簡
 		module_wakeup_module_tick = clock_time() | 1;
 		module_uart_data_flg = 1;
 	}
@@ -289,9 +292,9 @@ int tx_to_uart_cb (void)
 
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
-		//如果MCU端设计的有低功耗，而module有数据拉高GPIO_WAKEUP_MCU时只是将mcu唤醒，那么需要考虑
-		//mcu从唤醒到能够稳定的接收uart数据是否需要一个回复时间T。如果需要回复时间T的话，这里
-		//将下面的100us改为user实际需要的时间。
+		//濡傛灉MCU绔璁＄殑鏈変綆鍔熻�锛岃�module鏈夋暟鎹媺楂楪PIO_WAKEUP_MCU鏃跺彧鏄皢mcu鍞ら啋锛岄偅涔堥渶瑕佽�铏�
+		//mcu浠庡敜閱掑埌鑳藉绋冲畾鐨勬帴鏀秛art鏁版嵁鏄惁闇�涓�釜鍥炲鏃堕棿T銆傚鏋滈渶瑕佸洖澶嶆椂闂碩鐨勮瘽锛岃繖閲�
+		//灏嗕笅闈㈢殑100us鏀逛负user瀹為檯闇�鐨勬椂闂淬�
 		if(module_wakeup_module_tick){
 			while( !clock_time_exceed(module_wakeup_module_tick, 100) );
 		}

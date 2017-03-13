@@ -149,7 +149,11 @@ static inline void rf_set_ble_access_code (u8 *p)
 
 static inline void rf_set_ble_access_code_adv ()
 {
+#if (TEST_SPECAIL_ADV_ACCESS_CODE)
+	write_reg32 (0x800408, 0x12345678);
+#else
 	write_reg32 (0x800408, 0xd6be898e);
+#endif
 }
 
 static inline void rf_set_access_code0 (u32 code)

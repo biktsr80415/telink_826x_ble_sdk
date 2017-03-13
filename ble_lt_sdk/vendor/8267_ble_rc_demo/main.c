@@ -5,7 +5,7 @@
 #include "../../vendor/common/user_config.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 
 #if (__PROJECT_8267_BLE_RC_DEMO__)
 
@@ -27,7 +27,7 @@ _attribute_ram_code_ void irq_handler(void)
 	}
 #endif
 
-	irq_blt_slave_handler ();
+	irq_blt_sdk_handler ();
 
 }
 

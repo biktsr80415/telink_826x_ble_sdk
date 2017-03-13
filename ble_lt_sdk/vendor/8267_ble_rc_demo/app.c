@@ -1,8 +1,7 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj/drivers/keyboard.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
@@ -167,7 +166,7 @@ void	task_audio (void)
 	proc_mic_encoder ();
 
 	//////////////////////////////////////////////////////////////////
-	if (bls_ll_getTxFifoNumber() < 11)
+	if (blc_ll_getTxFifoNumber() < 11)
  	{
 		int *p = mic_encoder_data_buffer ();
 		if (p)					//around 3.2 ms @16MHz clock
@@ -243,7 +242,7 @@ void deepback_pre_proc(int *det_key)
 #if 0
 	// to handle deepback key cache
 	extern u32 blt_conn_start_tick; //ble connect establish time
-	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blt_state == BLT_LINK_STATE_CONN \
+	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLT_LINK_STATE_CONN \
 			&& clock_time_exceed(blt_conn_start_tick,25000)){
 
 		memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
@@ -432,7 +431,7 @@ _attribute_ram_code_ void blt_pm_proc(void)
 		}
 
 		//adv 60s, deepsleep
-		if( bls_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
+		if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
 			clock_time_exceed(advertise_begin_tick , ADV_IDLE_ENTER_DEEP_TIME * 1000000)){
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
@@ -440,7 +439,7 @@ _attribute_ram_code_ void blt_pm_proc(void)
 			analog_write(DEEP_ANA_REG1, user_key_mode);
 		}
 		//conn 60s no event(key/voice/led), enter deepsleep
-		else if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
+		else if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
 				clock_time_exceed(latest_user_event_tick, CONN_IDLE_ENTER_DEEP_TIME * 1000000) ){
 
 			bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
@@ -473,7 +472,7 @@ void blt_system_power_optimize(void)  //to lower system power
 //_attribute_ram_code_
 void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
-	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
+	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
 	}
 }
@@ -512,11 +511,21 @@ void user_init()
 	}
 
 
-	bls_ll_init (tbl_mac);  								//link layer initialization
+///////////// BLE stack Initialization ////////////////
+	////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
+
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
+
+
+
+	////// Host Initialization  //////////
 	extern void my_att_init ();
-	my_att_init (); 									    //att initialization
-	blc_l2cap_register_handler (blc_l2cap_packet_receive);  //l2cap initialization
-	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER ); 		//smp initialization
+	my_att_init (); //gatt initialization
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
+	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER ); 	//smp initialization
 
 
 
@@ -604,6 +613,7 @@ void user_init()
 
 		///////////////////// Power Management initialization///////////////////
 	#if(BLE_REMOTE_PM_ENABLE)
+		blc_ll_initPowerManagement_module();
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 		bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &ble_remote_set_sleep_wakeup);
 	#else
@@ -627,7 +637,6 @@ void user_init()
 u32 tick_loop;
 unsigned short battValue[20];
 
-extern u8	blt_slave_main_loop (void);
 
 void main_loop (void)
 {
@@ -635,7 +644,7 @@ void main_loop (void)
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
 
-	blt_slave_main_loop ();
+	blt_sdk_main_loop();
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 	if(ui_mic_enable){
