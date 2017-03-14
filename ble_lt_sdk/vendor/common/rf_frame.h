@@ -70,6 +70,30 @@ typedef struct{
 
 }rf_packet_pairing_t;
 
+#if(MOUSE_PIPE1_DATA_WITH_DID)
+typedef struct {
+	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
+
+	u8  rf_len;
+	u8	proto;
+	u8	flow;
+	u8	type;
+
+//	u32 gid;		//pipe0 code,	used as sync code for control pipe in hamster
+
+	u8	rssi;
+	u8	per;
+	u8	seq_no;
+	u8	pno;
+
+	u32 did;
+
+	u8 data[MOUSE_FRAME_DATA_NUM*sizeof(mouse_data_t)]; //now the data length is variable, if the previous no ACK, data will send again in next time
+
+}rf_packet_mouse_t;
+
+#else
+
 typedef struct {
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
 
@@ -87,6 +111,7 @@ typedef struct {
 	u8 data[MOUSE_FRAME_DATA_NUM*sizeof(mouse_data_t)]; //now the data length is variable, if the previous no ACK, data will send again in next time
 
 }rf_packet_mouse_t;
+#endif
 
 typedef struct {
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number

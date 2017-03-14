@@ -1,5 +1,5 @@
 #include "../../proj/tl_common.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 
 #if (__PROJECT_8267_BLE_RC_DEMO__)

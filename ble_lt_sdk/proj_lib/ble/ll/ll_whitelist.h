@@ -8,7 +8,7 @@
 #ifndef LL_WHITELIST_H_
 #define LL_WHITELIST_H_
 
-#include "ble_common.h"
+#include "../ble_common.h"
 
 
 
@@ -33,6 +33,17 @@
 
 //adv filter policy set to zero, not use whitelist
 #define		ADV_FP_NONE								    ADV_FP_ALLOW_SCAN_ANY_ALLOW_CONN_ANY
+
+
+#define		SCAN_FP_ALLOW_ADV_ANY						0x00  //except direct adv address not match
+#define 	SCAN_FP_ALLOW_ADV_WL        				0x01  //except direct adv address not match
+#define 	SCAN_FP_ALLOW_UNDIRECT_ADV      			0x02  //and direct adv address match initiator's resolvable private MAC
+#define 	SCAN_FP_ALLOW_ADV_WL_DIRECT_ADV_MACTH		0x03  //and direct adv address match initiator's resolvable private MAC
+
+
+#define 	INITIATE_FP_ADV_ANY        					0x00
+#define 	INITIATE_FP_ADV_WL         					0x01
+
 
 typedef u8 irk_key_t[16];
 
@@ -123,6 +134,8 @@ ble_sts_t ll_whiteList_getSize(u8 *returnPublicAddrListSize) ;
  *              LL_ERR_ADDR_NOT_EXIST_IN_WHITE_LIST (0x46, Addr not exist in white list table)
  */
 ble_sts_t ll_whiteList_search(u8 type, u8 *addr) ;
+
+u8 * ll_searchAddrInWhiteListTbl(u8 type, u8 *addr);  //stack use
 
 ble_sts_t 	ll_whiteList_reset(void);
 

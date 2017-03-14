@@ -58,8 +58,8 @@ extern "C" {
 #define HRS            							0//HRS
 #define HRP            							0//HRP
 #define WSS            							0//WSS
-#define WSP            							1//WSP
-#define CGMS            						0//CGMS
+#define WSP            							0//WSP
+#define CGMS            						1//CGMS
 #define CGMP            						0//CGMP
 
 #if CGMS || CGMP //======================================================================================================================================

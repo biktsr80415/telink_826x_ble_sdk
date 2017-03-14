@@ -1,8 +1,7 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj/drivers/keyboard.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
@@ -74,30 +73,8 @@ const led_cfg_t led_cfg[] = {
 
 u32	advertise_begin_tick;
 
+
 u8	ui_mic_enable = 0;
-
-
-int lowBattDet_enable = 0;
-void		ui_enable_mic (u8 en)
-{
-	ui_mic_enable = en;
-
-	gpio_set_output_en (GPIO_PC3, en);		//AMIC Bias output
-	gpio_write (GPIO_PC3, en);
-
-	device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
-
-
-	if(en){  //audio on
-		lowBattDet_enable = 1;
-		battery2audio();////switch auto mode
-	}
-	else{  //audio off
-		audio2battery();////switch manual mode
-		lowBattDet_enable = 0;
-	}
-}
-
 
 extern kb_data_t	kb_event;
 
@@ -126,6 +103,33 @@ u32 stuckKey_keyPressTime;
 
 
 #if (BLE_AUDIO_ENABLE)
+
+
+
+
+
+int lowBattDet_enable = 0;
+void		ui_enable_mic (u8 en)
+{
+	ui_mic_enable = en;
+
+	gpio_set_output_en (GPIO_PC3, en);		//AMIC Bias output
+	gpio_write (GPIO_PC3, en);
+
+	device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
+
+
+	if(en){  //audio on
+		lowBattDet_enable = 1;
+		battery2audio();////switch auto mode
+	}
+	else{  //audio off
+		audio2battery();////switch manual mode
+		lowBattDet_enable = 0;
+	}
+}
+
+
 void	task_audio (void)
 {
 	static u32 audioProcTick = 0;
@@ -141,7 +145,7 @@ void	task_audio (void)
 	proc_mic_encoder ();		//about 1.2 ms @16Mhz clock
 
 	//////////////////////////////////////////////////////////////////
-	if (bls_ll_getTxFifoNumber() < 8)
+	if (blc_ll_getTxFifoNumber() < 8)
 	{
 		int *p = mic_encoder_data_buffer ();
 		if (p)					//around 3.2 ms @16MHz clock
@@ -230,9 +234,12 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 		sendTerminate_before_enterDeep = 2;
 	}
 
+
+#if (BLE_AUDIO_ENABLE)
 	if(ui_mic_enable){
 		ui_enable_mic (0);
 	}
+#endif
 
 	advertise_begin_tick = clock_time();
 
@@ -282,7 +289,7 @@ void deepback_pre_proc(int *det_key)
 #if 0
 	// to handle deepback key cache
 	extern u32 blt_conn_start_tick; //ble connect establish time
-	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blt_state == BLT_LINK_STATE_CONN \
+	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLT_LINK_STATE_CONN \
 			&& clock_time_exceed(blt_conn_start_tick,25000)){
 
 		memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
@@ -468,14 +475,14 @@ void blt_pm_proc(void)
 		}
 
 		//adv 60s, deepsleep
-		if( bls_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
+		if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
 			clock_time_exceed(advertise_begin_tick , 60 * 1000000)){
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
 			analog_write(DEEP_ANA_REG0, ADV_DEEP_FLG);
 		}
 		//conn 60s no event(key/voice/led), enter deepsleep
-		else if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
+		else if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
 				clock_time_exceed(latest_user_event_tick, 60 * 1000000) ){
 
 			bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
@@ -493,7 +500,7 @@ void blt_pm_proc(void)
 
 _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
-	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
+	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
 	}
 }
@@ -541,7 +548,18 @@ void user_init()
 	}
 
 
-	bls_ll_init (tbl_mac);  	//link layer initialization
+///////////// BLE stack Initialization ////////////////
+	////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
+
+	//blc_ll_initScanning_module(tbl_mac);		//scan module: 		 optional
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
+
+
+
+	////// Host Initialization  //////////
 	extern void my_att_init ();
 	my_att_init (); //gatt initialization
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
@@ -549,11 +567,14 @@ void user_init()
 
 
 
-	///////////////////// USER application initialization ///////////////////
+
+
+
+///////////////////// USER application initialization ///////////////////
 	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
-	u8 status = bls_ll_setAdvParam( 32, ADV_INTERVAL_30MS, \
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 									 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
 	if(status != BLE_SUCCESS){  //adv setting err
@@ -579,7 +600,7 @@ void user_init()
 	}
 
 #if(KEYSCAN_IRQ_TRIGGER_MODE)
-	reg_irq_src = FLD_IRQ_GPIO_EN;
+	reg_irq_src = FLD_IRQ_GPIO_EN;   //clear gpio interupt ststus
 #endif
 
 	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_keyboard);
@@ -665,18 +686,19 @@ void user_init()
 u32 tick_loop;
 unsigned short battValue[20];
 
-extern u8	blt_slave_main_loop (void);
 
 void main_loop ()
 {
 	tick_loop ++;
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
-	#if (BLT_SOFTWARE_TIMER_ENABLE)
+	#if (USER_TEST_BLT_SOFT_TIMER)
 		blt_soft_timer_process(MAINLOOP_ENTRY);
 	#endif
 
-	blt_slave_main_loop ();
+	////////////////////////////////////// BLE entry ////////////////////////////
+	//blt_slave_main_loop ();
+	blt_sdk_main_loop();
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////

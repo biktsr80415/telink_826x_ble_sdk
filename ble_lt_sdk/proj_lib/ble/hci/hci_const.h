@@ -51,6 +51,26 @@
 
 
 
+
+
+//Event mask - last octet
+#define HCI_EVT_MASK_NONE                                        	 0x0000000000
+#define HCI_EVT_MASK_INQUIRY_COMPLETE                          	  	 0x0000000001
+#define HCI_EVT_MASK_INQUIRY_RESULT                              	 0x0000000002
+#define HCI_EVT_MASK_CONNECTION_COMPELETE                        	 0x0000000004
+#define HCI_EVT_MASK_CONNECTION_REQUEST                          	 0x0000000008
+#define HCI_EVT_MASK_DISCONNECTION_COMPLETE                      	 0x0000000010     //
+#define HCI_EVT_MASK_AUTHENTICATION_COMPLETE                     	 0x0000000020
+#define HCI_EVT_MASK_REMOTE_NAME_REQUEST_COMPLETE                	 0x0000000040
+#define HCI_EVT_MASK_ENCRYPTION_CHANGE                           	 0x0000000080
+#define HCI_EVT_MASK_CHANGE_CONECTION_LINK_KEY_COMPLETE              0x0000000100
+#define HCI_EVT_MASK_MASTER_LINK_KEY_COMPLETE                        0x0000000200
+#define HCI_EVT_MASK_READ_REMOTE_SUPPORTED_FEATURES_COMPLETE     	 0x0000000400
+#define HCI_EVT_MASK_READ_REMOTE_VERSION_INFORMATION_COMPLETE    	 0x0000000800     //
+
+#define HCI_EVT_MASK_DEFAULT                                     	 HCI_EVT_MASK_DISCONNECTION_COMPLETE
+
+
 // LE Event mask - last octet
 #define HCI_LE_EVT_MASK_NONE                                         0x000
 #define HCI_LE_EVT_MASK_CONNECTION_COMPLETE                          0x001
@@ -65,7 +85,7 @@
 #define HCI_LE_EVT_MASK_ENHANCED_CONNECTION_COMPLETE                 0x200
 #define HCI_LE_EVT_MASK_DIRECT_ADVERTISING_REPORT                    0x400
 
-#define HCI_LE_EVT_MASK_DEFAULT                                      0x1F
+#define HCI_LE_EVT_MASK_DEFAULT                                      0
 
 
 
@@ -164,7 +184,7 @@
 #define HCI_CMD_LE_READ_SUGGESTED_DEFAULT_DATA_LENGTH                0x23
 #define HCI_CMD_LE_WRITE_SUGGESTED_DEFAULT_DATA_LENGTH               0x24
 #define HCI_CMD_LE_READ_LOCAL_P256_PUBLIC_KEY                        0x25
-#define HCI_CMD_LE_GENERATE_DHKEY_COMPLETE                         	 0x26
+#define HCI_CMD_LE_GENERATE_DHKEY                         	 		 0x26
 #define HCI_CMD_LE_ADD_DEVICE_TO_RESOLVING_LIST                      0x27
 #define HCI_CMD_LE_REMOVE_DEVICE_FROM_RESOLVING_LIST                 0x28
 #define HCI_CMD_LE_CLEAR_RESOLVING_LIST                              0x29
@@ -175,6 +195,8 @@
 #define HCI_CMD_LE_SET_RESOLVABLE_PRIVATE_ADDRESS_TIMEOUT            0x2E
 #define HCI_CMD_LE_READ_MAX_DATA_LENGTH                              0x2F
 //core_4.2 above
+#define HCI_CMD_LINK_POLICY_OPCODE_OGF								 0x08 //0x02<<2 = 0x08
+#define HCI_CMD_TEST_OPCODE_OGF										 0x18 //0x06<<2 = 0x18
 
 // Vendor specific Commands
 //-- OGF --
@@ -183,4 +205,6 @@
 #define HCI_TELINK_READ_REG											 0x01
 #define HCI_TELINK_WRTIE_REG										 0x02
 #define HCI_TELINK_SET_TX_PWR										 0x03
+
+#define HCI_TELINK_SET_RXTX_DATA_LEN								 0x40
 #endif /* HCI_CONST_H_ */

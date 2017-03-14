@@ -1,9 +1,10 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
+#include "../../proj_lib/ble/hci/hci.h"
 #include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll_whitelist.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj_lib/ble/blt_config.h"
@@ -83,15 +84,20 @@ void user_init()
         flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
     }
 
-	//link layer initialization
-	bls_ll_init (tbl_mac);
+	///////////// BLE stack Initialization ////////////////
+	////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
 
-	//gatt initialization
+	//blc_ll_initScanning_module(tbl_mac);		//scan module: 		 optional
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
+
+
+	////// Host Initialization  //////////
 	extern void my_att_init ();
-	my_att_init ();
-
-	//l2cap initialization
-	blc_l2cap_register_handler (blc_l2cap_packet_receive);
+	my_att_init (); //gatt initialization
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
 
 	//smp initialization
 	bls_smp_enableParing (SMP_PARING_PEER_TRRIGER );
@@ -256,7 +262,7 @@ void main_loop ()
 	static u32 tick_loop;
 	tick_loop ++;
 	////////////////////////////////////// BLE entry /////////////////////////////////
-	blt_slave_main_loop ();
+	blt_sdk_main_loop ();
 
 	key_proc();
 

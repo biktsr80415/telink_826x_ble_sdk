@@ -58,8 +58,8 @@
 #define SERVICE_UUID_SCAN_PARAMETER                               0x1813
 #define SERVICE_UUID_TX_POWER                                     0x1804
 #define SERVICE_UUID_USER_DATA                                    0x181C
-#define SERVICE_UUID_WEIGHT_SCALE                                 0x181D
 #define SERVICE_UUID_CONTINUOUS_GLUCOSE_MONITORING                0x181F
+
 
 ////////////////////////////////////
 // Telink Service
@@ -94,7 +94,7 @@
 
 
 #define CHARACTERISTIC_UUID_BATTERY_LEVEL                    0x2A19
-
+#define CHARACTERISTIC_UUID_ALERT_LEVEL						 0x2A06
 
 #include "service/hids.h"
 #include "service/device_information.h"

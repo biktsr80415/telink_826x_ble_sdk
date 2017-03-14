@@ -410,6 +410,8 @@ typedef struct attProtocolRspPdu{
 /** @} end of group GATT_Char_Cfg_Bit_length */
 
 
+
+
 typedef int (*att_handleValueConfirm_callback_t)(void);
 typedef int (*att_readwrite_callback_t)(void* p);
 
@@ -425,6 +427,9 @@ typedef struct attribute
   att_readwrite_callback_t r;
 } attribute_t;
 
+
+
+int 		l2cap_att_client_handler (u16 conn, u8 *p);
 
 
 extern u8	blt_indicate_handle;

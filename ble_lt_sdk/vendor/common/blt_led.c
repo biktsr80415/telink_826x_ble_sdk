@@ -6,10 +6,6 @@
  */
 
 #include "../../proj/tl_common.h"
-#include "../../proj_lib/rf_drv.h"
-#include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
-
 #include "../common/blt_led.h"
 
 device_led_t device_led;

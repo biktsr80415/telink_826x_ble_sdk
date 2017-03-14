@@ -1,15 +1,16 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
+#include "../../proj_lib/ble/hci/hci.h"
 #include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj/mcu/pwm.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj/drivers/adc.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
+
 
 #if (HCI_ACCESS==HCI_USE_UART)
 #include "../../proj/drivers/uart.h"
@@ -123,8 +124,8 @@ u32 module_wakeup_module_tick;
 
 int app_module_busy ()
 {
-	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcuç”¨GPIO_WAKEUP_MODULEæŒ‡ç¤º æ˜¯å¦å¤„äºuartæ•°æ®æ”¶å‘çŠ¶
-	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //moduleè‡ªå·±æ£€æŸ¥uart rxå’Œtxæ˜¯å¦éƒ½å¤„ç†å®Œæ¯•
+	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcuÓÃGPIO_WAKEUP_MODULEÖ¸Ê¾ ÊÇ·ñ´¦ÓÚuartÊı¾İÊÕ·¢×´Ì¬
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module×Ô¼º¼ì²éuart rxºÍtxÊÇ·ñ¶¼´¦ÀíÍê±Ï
 	module_task_busy = mcu_uart_working || module_uart_working;
 	return module_task_busy;
 }
@@ -156,7 +157,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//å½“moduleçš„uartæ•°æ®å‘é€å®Œæ¯•åï¼Œå°†GPIO_WAKEUP_MCUæ‹‰ä½æˆ–æ‚¬æµ®(å–å†³äºuseræ€ä¹ˆè®¾è®¡)
+	//µ±moduleµÄuartÊı¾İ·¢ËÍÍê±Ïºó£¬½«GPIO_WAKEUP_MCUÀ­µÍ»òĞü¸¡(È¡¾öÓÚuserÔõÃ´Éè¼Æ)
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
@@ -173,7 +174,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //éœ€è¦è¢« GPIO_WAKEUP_MODULE å”¤é†’
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //ĞèÒª±» GPIO_WAKEUP_MODULE »½ĞÑ
 	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
@@ -197,7 +198,6 @@ void user_init()
 	usb_dp_pullup_en (1);  //open USB enum
 
 
-	////////////////// BLE stack initialization ////////////////////////////////////
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff)
 	{
@@ -210,15 +210,21 @@ void user_init()
         flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
     }
 
-	//link layer initialization
-	bls_ll_init (tbl_mac);
 
-	//gatt initialization
+///////////// BLE stack Initialization ////////////////
+	////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
+
+	//blc_ll_initScanning_module(tbl_mac);		//scan module: 		 optional
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
+
+
+	////// Host Initialization  //////////
 	extern void my_att_init ();
-	my_att_init ();
-
-	//l2cap initialization
-	blc_l2cap_register_handler (blc_l2cap_packet_receive);
+	my_att_init (); //gatt initialization
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
 
 	//smp initialization
 	//bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
@@ -230,7 +236,7 @@ void user_init()
 	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
 
-	u8 status = bls_ll_setAdvParam( 400, 400 + 16, \
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16, \
 			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
 
@@ -279,7 +285,7 @@ void user_init()
 		blc_register_hci_handler(rx_from_uart_cb,tx_to_uart_cb);				//customized uart handler
 	#endif
 	extern void event_handler(u32 h, u8 *para, int n);
-	bls_hci_registerEventHandler(event_handler);		//register event callback
+	blc_hci_registerControllerEventHandler(event_handler);		//register event callback
 	bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 
 	// OTA init
@@ -289,7 +295,7 @@ void user_init()
 
 
 #if (BLE_MODULE_PM_ENABLE)
-	//mcu å¯ä»¥é€šè¿‡æ‹‰é«˜GPIO_WAKEUP_MODULEå°† moduleä»ä½ä½åŠŸè€—å”¤é†’
+	//mcu ¿ÉÒÔÍ¨¹ıÀ­¸ßGPIO_WAKEUP_MODULE½« module´ÓµÍµÍ¹¦ºÄ»½ĞÑ
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 
@@ -312,7 +318,7 @@ void main_loop ()
 	tick_loop ++;
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
-	blt_slave_main_loop ();
+	blt_sdk_main_loop();
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////

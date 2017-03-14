@@ -9,7 +9,7 @@
 #define HCI_EVENT_H_
 
 #include "hci.h"
-
+#include "../ble_common.h"
 
 /**
  *  @brief  Definition for general HCI event packet
@@ -89,13 +89,23 @@ typedef struct {
 } hci_le_readRemoteFeaturesCompleteEvt_t;
 
 
+typedef struct {
+	u8         subEventCode;
+	u16        connHandle;  //未对齐    只要不是指针就没问题
+	u16  	   maxTxOct;
+	u16		   maxTxtime;
+	u16  	   maxRxOct;
+	u16		   maxRxtime;
+} hci_le_dataLengthChangeEvt_t;
+
+
 /**
  *  @brief  Definition for HCI LE Read Local P-256 Public Key Complete event
  */
 typedef struct {
 	u8         subEventCode;
 	u8         status;
-	u8         localP256Key[32];
+	u8         localP256Key[64];
 } hci_le_readLocalP256KeyCompleteEvt_t;
 
 /**
