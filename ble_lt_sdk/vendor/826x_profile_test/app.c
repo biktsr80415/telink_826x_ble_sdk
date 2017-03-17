@@ -24,7 +24,7 @@ MYFIFO_INIT(blt_txfifo, 80, 8);
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
-u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
+u8  tbl_mac [] = {0xa4, 0xc1, 0x38, 0x11, 0x22, 0x1c};
 
 u8	tbl_advData[] = {
 	 0x05, 0x09, 't', 'M', 'o', 'd',
@@ -71,19 +71,6 @@ void user_init()
 {
 	rf_customized_param_load();  //load customized freq_offset cap value and tp value
 
-	////////////////// BLE stack initialization ////////////////////////////////////
-	u32 *pmac = (u32 *) CFG_ADR_MAC;
-	if (*pmac != 0xffffffff)
-	{
-	    memcpy (tbl_mac, pmac, 6);
-	}
-    else
-    {
-        //TODO : should write mac to flash after pair OK
-        tbl_mac[0] = (u8)rand();
-        flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
-    }
-
 	///////////// BLE stack Initialization ////////////////
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU(tbl_mac);   //mandatory
@@ -129,7 +116,7 @@ void user_init()
 	rf_set_power_level_index (RF_POWER_8dBm);
 
 	//ble event call back
-	//bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
+	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
 
 #if CGMS || CGMP//params init
 	extern cgm_feature_packet cgm_feature_packet_val;
@@ -141,26 +128,26 @@ void user_init()
 	cgm_feature_packet_val.cgmFeature[1] = 0b10000000;//CGM Quality supported;
 	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
 	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
-	cgm_feature_packet_val.e2eCRC = 0xFFFF;//the device doesn´t support E2E-safety & cgmFeature bit12:0
+	cgm_feature_packet_val.e2eCRC = 0xFFFF;//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
 #else
 	cgm_feature_packet_val.cgmFeature[0] = 0b00000000;
 	cgm_feature_packet_val.cgmFeature[1] = 0b10010000;//CGM Quality supported;E2E-safety supported
 	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
 	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
-	cgm_feature_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_feature_packet_val, sizeof(cgm_feature_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
+	cgm_feature_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_feature_packet_val, sizeof(cgm_feature_packet)-2);//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
 #endif
 
 	cgm_status_packet_val.timeOffset = 4;
 #if E2E_CRC_FLAG_ENABLE
-	cgm_status_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_status_packet_val, sizeof(cgm_status_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
+	cgm_status_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_status_packet_val, sizeof(cgm_status_packet)-2);//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
 #endif
 
 	cgm_session_run_time_packet_val.cgmSessionRunTime = 2;
 #if E2E_CRC_FLAG_ENABLE
-	cgm_session_run_time_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_session_run_time_packet_val, sizeof(cgm_session_run_time_packet)-2);//the device doesn´t support E2E-safety & cgmFeature bit12:0
+	cgm_session_run_time_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_session_run_time_packet_val, sizeof(cgm_session_run_time_packet)-2);//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
 #endif
 
-	//模拟x条测量数据
+	//模拟的测量数据
 	simulate_cgm_measurement_data();
 
 #endif
@@ -176,7 +163,7 @@ void key_proc(){
 				bls_ll_setAdvEnable(1);  //adv enable
 #endif
 #if WSP
-				smp_param_reset();//擦除绑定信息
+				smp_param_reset();//閹匡箓娅庣紒鎴濈暰娣団剝浼�
 #endif
 			}
 	}
@@ -238,9 +225,9 @@ void key_proc(){
 			weightScale_measure_val.wmBMI = 22;
 			weightScale_measure_val.wmHeight = 173;
 
-#if WSP//test for WSP/SEN/WST/BI-01-I [Single User Weight Scale – No Bond Relation]
+#if WSP//test for WSP/SEN/WST/BI-01-I [Single User Weight Scale 閳ワ拷No Bond Relation]
 			extern int flash_exist_data (u32 flash_addr);
-			if(flash_exist_data(0x74000)){//查看FLASH是否有绑定信息，没有就不发送数据
+			if(flash_exist_data(0x74000)){//閺屻儳婀匜LASH閺勵垰鎯侀張澶岀拨鐎规矮淇婇幁顖ょ礉濞屸剝婀佺亸鍙樼瑝閸欐垿锟介弫鐗堝祦
 				bls_att_pushIndicateData(10, (u8*)&weightScale_measure_val, sizeof(weight_measure_packet));
 			}
 			else{

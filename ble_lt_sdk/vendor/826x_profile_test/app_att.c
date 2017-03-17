@@ -440,7 +440,8 @@ int record_access_control_point_write_callback(void *p){
     printf("req->len: %1d\n",tmp_racp_req->l2capLen -3);
     printf("record_access_control_point_write_callback\n\r");
 
-	if(Report_Stored_Records_all_procedure || Report_Stored_Records_greaterOrEqual_procedure){
+    if((Report_Stored_Records_all_procedure || Report_Stored_Records_greaterOrEqual_procedure) && (tmp_racp->opCode != Abort_operation)){
+
 		pkt_errRsp.errReason = 0xFE;//Procedure Already in Progress
 		u8* r = (u8 *)(&pkt_errRsp);
 		blt_push_fifo_hold (r + 4);
@@ -452,7 +453,7 @@ int record_access_control_point_write_callback(void *p){
 		pkt_errRsp.errReason = 0xFD;//Client Characteristic Configuration Descriptor Improperly Configured
 		u8* r = (u8 *)(&pkt_errRsp);
 		blt_push_fifo_hold (r + 4);
-		printf("write_rsp_with_error:0xFE\n");
+		printf("write_rsp_with_error:0xFD\n");
 		return 0;
 	}
 
@@ -464,6 +465,7 @@ int record_access_control_point_write_callback(void *p){
 
 u16 Report_Stored_Records_all_cnt;
 u16 Report_Stored_Records_greaterOrEqual_cnt;
+u8 run_only_once;
 u16 Report_Stored_Records_greaterOrEqual_filterVal;
 void process_RACP_write_callback(void){
 	//Report Stored Records procedure--(Report_stored_records - All_records)
@@ -486,31 +488,36 @@ void process_RACP_write_callback(void){
 	//Report Stored Records procedure--(Report_stored_records - Greater_than_or_equal_to)
 	if(Report_Stored_Records_greaterOrEqual_procedure){
 		printf("start Report_Stored_Records_greaterOrEqual_procedure\n");
-		foreach(i, RECORD_NUMS){
-			if(cgm_measurement_val[i].timeOffset >= Report_Stored_Records_greaterOrEqual_filterVal){
-				Report_Stored_Records_greaterOrEqual_cnt = i;
-				break;
+
+		if(!run_only_once){
+			run_only_once = 1;
+			foreach(i, RECORD_NUMS){
+				if(cgm_measurement_val[i].timeOffset >= Report_Stored_Records_greaterOrEqual_filterVal){
+					Report_Stored_Records_greaterOrEqual_cnt = i;
+					break;
+				}
 			}
 		}
 
 		if(Report_Stored_Records_greaterOrEqual_cnt){
-			WaitMs(10);
 			bls_att_pushNotifyData(10, (u8*)&cgm_measurement_val[Report_Stored_Records_greaterOrEqual_cnt], sizeof(cgm_measurement_packet));
+			WaitMs(10);
 			Report_Stored_Records_greaterOrEqual_cnt++;
 			if(Report_Stored_Records_greaterOrEqual_cnt == RECORD_NUMS){
 				record_access_control_point_packet tmp;
 				tmp.operator = 0;//NULL
-				tmp.operand = Greater_than_or_equal_to | Success<<8 ;
+				tmp.operand = Report_stored_records | Success<<8 ;
 				tmp.opCode = Response_Code;
 				bls_att_pushIndicateData(21, (u8*)&tmp, sizeof(record_access_control_point_packet));
 				Report_Stored_Records_greaterOrEqual_procedure = 0;
+				Report_Stored_Records_greaterOrEqual_cnt = 0;
 				printf("stop Report_Stored_Records_greaterOrEqual_procedure\n");
 			}
 		}
 		else{//0 No recode found!
 			record_access_control_point_packet tmp;
 			tmp.operator = 0;//NULL
-			tmp.operand = Greater_than_or_equal_to | No_records_found<<8  ;
+			tmp.operand = Report_stored_records | No_records_found<<8  ;
 			tmp.opCode = Response_Code;
 			bls_att_pushIndicateData(21, (u8*)&tmp, sizeof(record_access_control_point_packet));
 			Report_Stored_Records_greaterOrEqual_procedure =0;
@@ -531,31 +538,14 @@ void process_RACP_write_callback(void){
 			case Report_stored_records:
 				switch(tmp_racp->operator){
 					case All_records://No Operand Used
-						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
+						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 != 2)){
 							tmp_racp->operator = 0;//NULL
 							tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
 							tmp_racp->opCode = Response_Code;
 							bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
 							break;
 						}
-#if 0//程序 不可以这么处理，每一个main_loop上报一次数据比较合理，符合当前BLE架构
-	                    foreach(i, RECORD_NUMS){
-	                    	cnt++;
-	                    	if(abort_operation_procedure_flg){
-								abort_operation_procedure_flg = 0;
-								return;
-							}
-	                    	printf("notify Report_stored_records All_records\n");
-
-	                    	bls_att_pushNotifyData(10, (u8*)&cgm_measurement_val[i], sizeof(cgm_measurement_packet));
-	                    }
-						tmp_racp->operator = 0;//NULL
-						tmp_racp->operand = tmp_racp->opCode | Success<<8 ;
-						tmp_racp->opCode = Response_Code;
-						bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
-#else
 						Report_Stored_Records_all_procedure = 1;
-#endif
 						break;
 
 					case Greater_than_or_equal_to:
@@ -574,35 +564,8 @@ void process_RACP_write_callback(void){
 							bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
 						}
 						else if(timeoffset == 0x01){
-							u8 filterflg = 0;
-#if 0//程序 不可以这么处理，每一个main_loop上报一次数据比较合理，符合当前BLE架构
-							foreach(i, RECORD_NUMS){
-								if(cgm_measurement_val[i].timeOffset >= min_filterVal){
-									filterflg = 1;
-									if(abort_operation_procedure_flg){
-										abort_operation_procedure_flg = 0;
-										return;
-									}
-									bls_att_pushNotifyData(10, (u8*)&cgm_measurement_val[i], sizeof(cgm_measurement_packet));
-								}
-							}
-
-							if(filterflg){
-								tmp_racp->operator = 0;//NULL
-								tmp_racp->operand = tmp_racp->opCode | Success<<8 ;
-								tmp_racp->opCode = Response_Code;
-								bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
-							}
-							else{
-								tmp_racp->operator = 0;//NULL
-								tmp_racp->operand = tmp_racp->opCode | No_records_found<<8  ;
-								tmp_racp->opCode = Response_Code;
-								bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
-							}
-#else
 							Report_Stored_Records_greaterOrEqual_filterVal = min_filterVal;
 							Report_Stored_Records_greaterOrEqual_procedure = 1;
-#endif
 						}
 						break;
 //					case Less_than_or_equal_to:
@@ -623,7 +586,7 @@ void process_RACP_write_callback(void){
 
 			case Abort_operation://the Server shall stop any RACP procedures currently in progress and shall make a best effort to stop sending any further data.
 				if(tmp_racp->operator == 0){//operator == Null (0x00) & No Operand Used
-					if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
+					if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 != 2)){
 						tmp_racp->operator = 0;//NULL
 						tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
 						tmp_racp->opCode = Response_Code;
@@ -644,16 +607,16 @@ void process_RACP_write_callback(void){
 
 			case Report_number_of_stored_records:
 				switch(tmp_racp->operator){
-				    record_access_control_point_packet rsps;
+					record_access_control_point_packet rsps;
 					case All_records://No Operand Used
-						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 == 4)){
+						if(tmp_racp->operand && (tmp_racp_req->l2capLen-3 != 2)){
 							tmp_racp->operator = 0;//NULL
 							tmp_racp->operand = tmp_racp->opCode | Invalid_Operand<<8 ;
 							tmp_racp->opCode = Response_Code;
 							bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
 							break;
 						}
-	                    //Number of Stored Records Response
+						//Number of Stored Records Response
 						rsps.opCode = Number_of_stored_records_response;
 						rsps.operator = 0;//NULL
 						rsps.operand = RECORD_NUMS;//模拟本地有x笔测量数据
@@ -676,16 +639,16 @@ void process_RACP_write_callback(void){
 							bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
 						}
 						else if(timeoffset == 0x01){
-	                        foreach(i, RECORD_NUMS){
-	                        	if(cgm_measurement_val[i].timeOffset >= min_filterVal){
-	                        		//Number of Stored Records Response
+							foreach(i, RECORD_NUMS){
+								if(cgm_measurement_val[i].timeOffset >= min_filterVal){
+									//Number of Stored Records Response
 									tmp_racp->opCode = Number_of_stored_records_response;
 									tmp_racp->operator = 0;//NULL
 									tmp_racp->operand = RECORD_NUMS - i;
 									bls_att_pushIndicateData(21, (u8*)tmp_racp, sizeof(record_access_control_point_packet));
 									break;
-	                        	}
-	                        }
+								}
+							}
 						}
 						break;
 
@@ -715,7 +678,7 @@ void process_RACP_write_callback(void){
 				break;
 
 		}
-    }
+	}
 }
 
 u8 write_csocp_flg;

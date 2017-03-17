@@ -64,10 +64,10 @@ extern "C" {
 
 #if CGMS || CGMP //======================================================================================================================================
 
-#define CGMS_SEN_RAA_BV_01_C                    0//测试测量模拟数据有200条， CGMS/SEN/RAE/BI-02-C测试用例也要打开 以模拟这么多数据
-#define CGMS_SEN_CN_BV_02_C                     0
-#define CGMS_SEN_CGMCP_BV_03_C                  0//该测试项包含CGMS/SEN/CGMCP/BV-01-C [CGM Specific Ops – ‘Get CGM Communication Interval with E2E-CRC’]
-#define CGMS_SEN_CBE_BI_06_C                    0//General Error Handling – ‘Missing CRC’].即IUT支持E2E CRC
+#define CGMS_SEN_RAA_BV_01_C                    0//濞村鐦ù瀣櫤濡剝瀚欓弫鐗堝祦閺堬拷00閺夆槄绱�CGMS/SEN/RAE/BI-02-C濞村鐦悽銊ょ伐娑旂喕顪呴幍鎾崇磻 娴犮儲膩閹风喕绻栨稊鍫濐檵閺佺増宓�#define CGMS_SEN_CN_BV_02_C                     0
+#define CGMS_SEN_CN_BV_02_C                     0//CN两项开这个宏
+#define CGMS_SEN_CGMCP_BV_03_C                  0//鐠囥儲绁寸拠鏇�閸栧懎鎯圕GMS/SEN/CGMCP/BV-01-C [CGM Specific Ops 閳ワ拷閳ユオet CGM Communication Interval with E2E-CRC閳ユ┚
+#define CGMS_SEN_CBE_BI_06_C                    0//General Error Handling 閳ワ拷閳ユコissing CRC閳ユ┚.閸楃煼UT閺�垱瀵擡2E CRC
 
 #if CGMS_SEN_CN_BV_02_C
 #define SENSOR_STATUS_FLG_ENABLE                1
@@ -135,7 +135,7 @@ typedef struct {
 	short cgmGlucoseConcentration;//SFLOAT
 	u16 timeOffset;
 #if SENSOR_STATUS_FLG_ENABLE
-	u8 sensorStatusAnnunciation[3];//	Optional if bit 5 or bit 6 or bit 7 of the cgmMflg field is set to “1”, otherwise excluded.
+	u8 sensorStatusAnnunciation[3];//	Optional if bit 5 or bit 6 or bit 7 of the cgmMflg field is set to 閳ワ拷閳ワ拷 otherwise excluded.
 #endif
 	short cgmTrendInformation;//This field is optional if the device supports CGM Trend information (Bit 15 in CGM Feature is set to 1) otherwise excluded.
 	short cgmQuality;//This field is optional if the device supports CGM Quality (Bit 16 in CGM Feature is set to 1) otherwise excluded.
@@ -149,7 +149,7 @@ typedef struct {
 	u8 cgmFeature[3];
 	u8 cgmTypeSample;//bit[0:3]:cgmType -- bit[4:7]:cgmSample
 	           //if the device supports E2E-safety (E2E-CRC Supported bit is set in CGM Feature), the feature are secured by a CRC calculated over all data.
-	u16 e2eCRC;// If the device doesn´t support E2E-safety the value of the field shall be set to 0xFFFF.
+	u16 e2eCRC;// If the device doesn楹搕 support E2E-safety the value of the field shall be set to 0xFFFF.
 } cgm_feature_packet;
 
 //CGM Status data structure
