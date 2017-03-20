@@ -1,14 +1,21 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
+#include "../../proj_lib/ble/hci/hci.h"
 #include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll_whitelist.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
+#if (PRINT_DEBUG_INFO)
+#include "../common/myprintf.h"
+#endif
 
+#if E2E_CRC_FLAG_ENABLE
+extern unsigned short e2e_crc16 (unsigned char *pD, int len);
+#endif
 
 u8 tx_done_status = 1;
 
@@ -17,7 +24,7 @@ MYFIFO_INIT(blt_txfifo, 80, 8);
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
-u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
+u8  tbl_mac [] = {0xa4, 0xc1, 0x38, 0x11, 0x22, 0x1c};
 
 u8	tbl_advData[] = {
 	 0x05, 0x09, 't', 'M', 'o', 'd',
@@ -55,38 +62,36 @@ void rf_customized_param_load(void)
 	 }
 }
 
+#if E2E_CRC_FLAG_ENABLE//Test [CDC Demo Continuous Glucose Monitoring Service CGMS_v1.0.1 P35 :computation for a sample
+u8 data[10] ={0x3e,1,2,3,4,5,6,7,8,9};
+volatile u16 crc;
+#endif
 
 void user_init()
 {
 	rf_customized_param_load();  //load customized freq_offset cap value and tp value
 
-	////////////////// BLE stack initialization ////////////////////////////////////
-	u32 *pmac = (u32 *) CFG_ADR_MAC;
-	if (*pmac != 0xffffffff)
-	{
-	    memcpy (tbl_mac, pmac, 6);
-	}
-    else
-    {
-        //TODO : should write mac to flash after pair OK
-        tbl_mac[0] = (u8)rand();
-        flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
-    }
+	///////////// BLE stack Initialization ////////////////
+	////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
 
-	//link layer initialization
-	bls_ll_init (tbl_mac);
+	//blc_ll_initScanning_module(tbl_mac);		//scan module: 		 optional
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
 
-	//gatt initialization
+
+	////// Host Initialization  //////////
 	extern void my_att_init ();
-	my_att_init ();
-
-	//l2cap initialization
-	blc_l2cap_register_handler (blc_l2cap_packet_receive);
+	my_att_init (); //gatt initialization
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
 
 	//smp initialization
-	//bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
+	bls_smp_enableParing (SMP_PARING_PEER_TRRIGER );
 
-
+#if E2E_CRC_FLAG_ENABLE
+	crc = e2e_crc16(data, 10);printf("Demo test CRC function! CRC =%d",crc);
+#endif
 	///////////////////// USER application initialization ///////////////////
 
 	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
@@ -102,13 +107,68 @@ void user_init()
 		while(1);
 	}
 
+#if BLP || CGMP
+	bls_ll_setAdvEnable(0);  //adv disable
+#else
 	bls_ll_setAdvEnable(1);  //adv enable
+#endif
 
 	rf_set_power_level_index (RF_POWER_8dBm);
+
+	//ble event call back
+	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
+
+#if CGMS || CGMP//params init
+	extern cgm_feature_packet cgm_feature_packet_val;
+	extern cgm_status_packet cgm_status_packet_val;
+	extern cgm_session_run_time_packet cgm_session_run_time_packet_val;
+	extern void simulate_cgm_measurement_data(void);
+#if !E2E_CRC_FLAG_ENABLE
+	cgm_feature_packet_val.cgmFeature[0] = 0b00000000;
+	cgm_feature_packet_val.cgmFeature[1] = 0b10000000;//CGM Quality supported;
+	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
+	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
+	cgm_feature_packet_val.e2eCRC = 0xFFFF;//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
+#else
+	cgm_feature_packet_val.cgmFeature[0] = 0b00000000;
+	cgm_feature_packet_val.cgmFeature[1] = 0b10010000;//CGM Quality supported;E2E-safety supported
+	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
+	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
+	cgm_feature_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_feature_packet_val, sizeof(cgm_feature_packet)-2);//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
+#endif
+
+	cgm_status_packet_val.timeOffset = 4;
+#if E2E_CRC_FLAG_ENABLE
+	cgm_status_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_status_packet_val, sizeof(cgm_status_packet)-2);//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
+#endif
+
+	cgm_session_run_time_packet_val.cgmSessionRunTime = 2;
+#if E2E_CRC_FLAG_ENABLE
+	cgm_session_run_time_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_session_run_time_packet_val, sizeof(cgm_session_run_time_packet)-2);//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
+#endif
+
+	//模拟的测量数据
+	simulate_cgm_measurement_data();
+
+#endif
 }
 
 
 void key_proc(){
+    //Key2
+	if(!gpio_read(KEY2)){
+			sleep_us(50000);
+			if(!gpio_read(KEY2)){
+#if BLP || CGMP
+				bls_ll_setAdvEnable(1);  //adv enable
+#endif
+#if WSP
+				smp_param_reset();//閹匡箓娅庣紒鎴濈暰娣団剝浼�
+#endif
+			}
+	}
+
+	//Key1
 	if(!gpio_read(KEY1)){
 		sleep_us(50000);
 		if(!gpio_read(KEY1)){
@@ -147,6 +207,7 @@ void key_proc(){
 			heart_rate_measure_val.eryexd = 5;
 			heart_rate_measure_val.rr_interval = 7;
 			bls_att_pushNotifyData(10, (u8*)&heart_rate_measure_val, sizeof(heart_rate_measure_val));
+
 #elif WSS || WSP
 			extern weight_measure_packet weightScale_measure_val;
 			time_packet tm;
@@ -163,7 +224,19 @@ void key_proc(){
 			weightScale_measure_val.userID = 1;
 			weightScale_measure_val.wmBMI = 22;
 			weightScale_measure_val.wmHeight = 173;
+
+#if WSP//test for WSP/SEN/WST/BI-01-I [Single User Weight Scale 閳ワ拷No Bond Relation]
+			extern int flash_exist_data (u32 flash_addr);
+			if(flash_exist_data(0x74000)){//閺屻儳婀匜LASH閺勵垰鎯侀張澶岀拨鐎规矮淇婇幁顖ょ礉濞屸剝婀佺亸鍙樼瑝閸欐垿锟介弫鐗堝祦
+				bls_att_pushIndicateData(10, (u8*)&weightScale_measure_val, sizeof(weight_measure_packet));
+			}
+			else{
+				//Do nothing
+			}
+#else
 			bls_att_pushIndicateData(10, (u8*)&weightScale_measure_val, sizeof(weight_measure_packet));
+#endif
+
 #endif
 		}
 	}
@@ -176,8 +249,15 @@ void main_loop ()
 	static u32 tick_loop;
 	tick_loop ++;
 	////////////////////////////////////// BLE entry /////////////////////////////////
-	blt_slave_main_loop ();
+	blt_sdk_main_loop ();
 
 	key_proc();
+
+#if CGMS || CGMP
+	extern void process_RACP_write_callback(void);
+	extern void process_CSOCP_write_callback(void);
+	process_RACP_write_callback();
+	process_CSOCP_write_callback();
+#endif
 
 }

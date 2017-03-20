@@ -55642,7 +55642,7 @@
 								<option id="com.telink.tc32eclipse.compiler.option.def.1403322339" name="Define Syms (-D)" superClass="com.telink.tc32eclipse.compiler.option.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__PROJECT_8261_MULTI_MOUSE__=1"/>
 								</option>
-								<option id="com.telink.tc32eclipse.compiler.option.incpath.2093234661" superClass="com.telink.tc32eclipse.compiler.option.incpath" valueType="includePath">
+								<option id="com.telink.tc32eclipse.compiler.option.incpath.2093234661" name="Include Paths (-I)" superClass="com.telink.tc32eclipse.compiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="../proj/mcu_spec"/>
 									<listOptionValue builtIn="false" value="../proj/mcu"/>
 									<listOptionValue builtIn="false" value="../proj_lib"/>
