@@ -27,7 +27,7 @@ extern "C" {
 #define PRINT_DEBUG_INFO                    0//open/close myprintf
 #if PRINT_DEBUG_INFO
 //defination debug printf pin
-#define PRINT_BAUD_RATE             		1000000 //1M baud rate,should Not bigger than 1M
+#define PRINT_BAUD_RATE             		1000000 //1M baud rate,should Not bigger than 1M, when system clock is 16M.
 #define DEBUG_INFO_TX_PIN           		GPIO_PC6//G0 for 8261/8267 EVK board(C1T80A30_V1.0)
 //#define PC6_OUTPUT_ENABLE	        		1       //mini_printf function contain this
 #define PULL_WAKEUP_SRC_PC6         		PM_PIN_PULLUP_1M

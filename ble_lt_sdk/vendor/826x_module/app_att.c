@@ -127,13 +127,15 @@ void	spp_test_read (u8 *p, int n)
 int module_onReceiveData(rf_packet_att_write_t *p)
 {
 	u8 len = p->l2capLen - 3;
+
 	if(len > 0)
 	{
 		u32 header;
 		header = 0x07a0;		//data received event
 		header |= (3 << 16) | (1<<24);
 		spp_test_read (&p->value, len);
-		blc_hci_send_data(header, &p->opcode, len + 3);		//HCI_FLAG_EVENT_TLK_MODULE
+		extern int hci_send_data (u32 h, u8 *para, int n);
+		hci_send_data(header, &p->opcode, len + 3);		//HCI_FLAG_EVENT_TLK_MODULE
 	}
 	return 0;
 }
@@ -147,7 +149,7 @@ const u8 my_OtaUUID[16]		= TELINK_SPP_DATA_OTA;
 
 static u8 my_OtaProp		= CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP;
 const u8  my_OtaName[] = {'O', 'T', 'A'};
-u8	 	my_OtaData 		= 0x00;
+u8	 	my_OtaData 	   = 0x00;
 
 
 // TM : to modify
@@ -190,7 +192,7 @@ const attribute_t my_Attributes[] = {
 	// OTA
 	{4,ATT_PERMISSIONS_READ, 2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_OtaServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				//prop
-	{0,ATT_PERMISSIONS_WRITE,16,1,(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
+	{0,ATT_PERMISSIONS_RDWR,16,1,(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
 	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
 
 };
