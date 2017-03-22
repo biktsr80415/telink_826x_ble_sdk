@@ -25,6 +25,7 @@
 #include "ll_master.h"
 
 extern u8					blt_state;
+extern st_ll_scan_t  blts;
 
 #define         VENDOR_ID                       0x0211
 #define			BLUETOOTH_VER_4_0				6

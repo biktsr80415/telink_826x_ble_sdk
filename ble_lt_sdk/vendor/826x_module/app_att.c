@@ -49,6 +49,13 @@ u16 my_appearance = GAP_APPEARE_UNKNOWN;
 gap_periConnectParams_t my_periConnParameters = {20, 40, 0, 1000};
 
 
+const u16 my_gattServiceUUID = SERVICE_UUID_GENERIC_ATTRIBUTE;
+const u8  serviceChangedProp = CHAR_PROP_INDICATE;
+const u16 serviceChangeUIID = GATT_UUID_SERVICE_CHANGE;
+u16 serviceChangeVal[2] = {0};
+static u8 indCharCfg[6] = {0x0b, 0x00, 0x02, 0x29};
+
+
 #define DEV_NAME                        "tModule"
 extern u8  ble_devName[];
 
@@ -155,9 +162,9 @@ u8	 	my_OtaData 	   = 0x00;
 // TM : to modify
 const attribute_t my_Attributes[] = {
 #if (TELIK_SPP_SERVICE_ENABLE)
-	{22,0,0,0,0,0},	// total num of attribute
+	{26,0,0,0,0,0},	// total num of attribute
 #else
-	{14,0,0,0,0,0},	// total num of attribute
+	{18,0,0,0,0,0},	// total num of attribute
 #endif
 
 	// 0001 - 0007  gap
@@ -170,7 +177,14 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_periConnParameters),(u8*)(&my_periConnParamUUID), 	(u8*)(&my_periConnParameters), 0},
 
 
-	// 0008 - 000a  device Information Service
+	// 0008 - 000b gatt
+	{4,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gattServiceUUID), 0},
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&serviceChangedProp), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof (serviceChangeVal), (u8*)(&serviceChangeUIID), 	(u8*)(&serviceChangeVal), 0},
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof (indCharCfg),(u8*)(&clientCharacterCfgUUID), (u8*)(indCharCfg), 0},
+
+
+	// 000c - 000e  device Information Service
 	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_devServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_PnPCharacter), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},

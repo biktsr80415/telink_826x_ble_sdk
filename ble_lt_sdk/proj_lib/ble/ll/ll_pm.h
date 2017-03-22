@@ -44,6 +44,8 @@ typedef struct {
 	u16		valid_latency;
 	u16 	latency_use;
 
+	u8 		timer_wakeup;
+
 }st_ll_pm_t;
 
 

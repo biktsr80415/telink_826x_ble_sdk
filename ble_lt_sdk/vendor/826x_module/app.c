@@ -89,27 +89,6 @@ void	task_connect (void)
 }
 
 
-void rf_customized_param_load(void)
-{
-	  // customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
-	 if( (*(unsigned char*) CUST_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) CUST_CAP_INFO_ADDR)&0x1f) );
-	 }
-
-	 //customize TP0, flash 0x77041 customize TP1
-	 if( ((*(unsigned char*) (CUST_TP_INFO_ADDR)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+1)) != 0xff) ){
-		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
-	 }
-
-
-	 // customize 32k RC cap value, if not customized, default ana_32 is 0x80
-	 if( (*(unsigned char*) CUST_RC32K_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x32, *(unsigned char*) CUST_RC32K_CAP_INFO_ADDR );
-	 }
-}
-
 u32 tick_wakeup;
 int	mcu_uart_working;
 int	module_uart_working;
@@ -124,8 +103,8 @@ u32 module_wakeup_module_tick;
 
 int app_module_busy ()
 {
-	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcuÓÃGPIO_WAKEUP_MODULEÖ¸Ê¾ ÊÇ·ñ´¦ÓÚuartÊý¾ÝÊÕ·¢×´Ì¬
-	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module×Ô¼º¼ì²éuart rxºÍtxÊÇ·ñ¶¼´¦ÀíÍê±Ï
+	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcuï¿½ï¿½GPIO_WAKEUP_MODULEÖ¸Ê¾ ï¿½Ç·ï¿½ï¿½ï¿½uartï¿½ï¿½ï¿½ï¿½Õ·ï¿½×´Ì¬
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //moduleï¿½Ô¼ï¿½ï¿½ï¿½ï¿½uart rxï¿½ï¿½txï¿½Ç·ñ¶¼´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	module_task_busy = mcu_uart_working || module_uart_working;
 	return module_task_busy;
 }
@@ -157,7 +136,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//µ±moduleµÄuartÊý¾Ý·¢ËÍÍê±Ïºó£¬½«GPIO_WAKEUP_MCUÀ­µÍ»òÐü¸¡(È¡¾öÓÚuserÔõÃ´Éè¼Æ)
+	//ï¿½ï¿½moduleï¿½ï¿½uartï¿½ï¿½Ý·ï¿½ï¿½ï¿½ï¿½ï¿½Ïºó£¬½ï¿½GPIO_WAKEUP_MCUï¿½ï¿½ï¿½Í»ï¿½ï¿½ï¿½(È¡ï¿½ï¿½ï¿½ï¿½userï¿½ï¿½Ã´ï¿½ï¿½ï¿½)
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
@@ -174,7 +153,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //ÐèÒª±» GPIO_WAKEUP_MODULE »½ÐÑ
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //ï¿½ï¿½Òªï¿½ï¿½ GPIO_WAKEUP_MODULE ï¿½ï¿½ï¿½ï¿½
 	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
@@ -189,7 +168,7 @@ void app_power_management ()
 
 void user_init()
 {
-	rf_customized_param_load();  //load customized freq_offset cap value and tp value
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
 	REG_ADDR8(0x74) = 0x53;
 	REG_ADDR16(0x7e) = 0x08d1;
@@ -295,7 +274,7 @@ void user_init()
 
 
 #if (BLE_MODULE_PM_ENABLE)
-	//mcu ¿ÉÒÔÍ¨¹ýÀ­¸ßGPIO_WAKEUP_MODULE½« module´ÓµÍµÍ¹¦ºÄ»½ÐÑ
+	//mcu ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½GPIO_WAKEUP_MODULEï¿½ï¿½ moduleï¿½ÓµÍµÍ¹ï¿½ï¿½Ä»ï¿½ï¿½ï¿½
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 

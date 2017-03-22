@@ -212,9 +212,6 @@ void battery_by_comp_init();
 
 void pm_init(void);
 
-static inline int cpu_get_32k_tick (void) {
-	return 1;
-}
 
 //deepsleep mode must use this function for resume 1.8V analog register
 void cpu_wakeup_init(void);

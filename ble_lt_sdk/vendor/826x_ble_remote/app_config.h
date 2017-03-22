@@ -6,21 +6,28 @@ extern "C" {
 #endif
 
 
+
 #if (__PROJECT_8267_BLE_REMOTE__)
 	#define CHIP_TYPE				CHIP_TYPE_8267
-#else
+#elif (__PROJECT_8261_BLE_REMOTE__)
 	#define CHIP_TYPE				CHIP_TYPE_8261
+#elif (__PROJECT_8269_BLE_REMOTE__)
+	#define CHIP_TYPE				CHIP_TYPE_8269
+#else
+
 #endif
 
 
-/////////////////// MODULE /////////////////////////////////
-#define BLE_REMOTE_PM_ENABLE				1
-#define BLE_REMOTE_SECURITY_ENABLE      	1
 
-#if (__PROJECT_8267_BLE_REMOTE__)
-	#define BLE_AUDIO_ENABLE				1
-#else
+/////////////////// MODULE /////////////////////////////////
+#define BLE_REMOTE_PM_ENABLE			1
+#define BLE_REMOTE_SECURITY_ENABLE      1
+#define REMOTE_IR_ENABLE					0
+
+#if (__PROJECT_8261_BLE_REMOTE__)   //8261 not support audio
 	#define BLE_AUDIO_ENABLE				0
+#else
+	#define BLE_AUDIO_ENABLE				1
 #endif
 
 
@@ -31,20 +38,17 @@ extern "C" {
 	#define	ADPCM_PACKET_LEN				128
 	#define TL_MIC_ADPCM_UNIT_SIZE			248
 
-	#if BLE_DMIC_ENABLE
-		#define	TL_MIC_32K_FIR_16K			0
-	#else
-		#define	TL_MIC_32K_FIR_16K			1
-	#endif
-
+	#define	TL_MIC_32K_FIR_16K				1
 
 	#if TL_MIC_32K_FIR_16K
 		#define	TL_MIC_BUFFER_SIZE				1984
 	#else
 		#define	TL_MIC_BUFFER_SIZE				992
 	#endif
-#endif
 
+	#define GPIO_AMIC_BIAS					GPIO_PC6
+
+#endif
 
 
 
@@ -68,45 +72,165 @@ extern "C" {
 #define KB_MAP_REPEAT					{VK_1, }
 
 
-#define	PC4_INPUT_ENABLE				0	//amic digital input disable
-#define	PC5_INPUT_ENABLE				0	//amic digital input disable
+#define			CR_VOL_UP		0xf0
+#define			CR_VOL_DN		0xf1
+#define			CR_VOL_MUTE		0xf2
+#define			CR_POWER		0xf3
+#define			CR_SEL			0xf4
+#define			CR_UP			0xf5
+#define			CR_DN			0xf6
+#define			CR_LEFT			0xf7
+#define			CR_RIGHT		0xf8
+#define			CR_HOME			0xf9
+#define			CR_REWIND		0xfa
+#define			CR_NEXT			0xfb
+#define			CR_PREV			0xfc
+#define			CR_STOP			0xfd
 
-//CR: consumer report,  media key
-#define			CR_VOL_UP		0xfd	//0x0001
-#define			CR_VOL_DN		0xfe    //0x0002
+#define			GPIO_LED				GPIO_PC7
 
-#define			CR_VOL_MUTE		0xf1  	//0x0004, 1<<2
-#define			CR_POWER		0xf2  	//0x0008, 2<<2
-#define			CR_SEL			0xf3  	//0x000c, 3<<2
-#define			CR_UP			0xf4  	//0x0010, 4<<2
-#define			CR_DN			0xf5  	//0x0014, 5<<2
-#define			CR_LEFT			0xf6  	//0x0018, 6<<2
-#define			CR_RIGHT		0xf7  	//0x001c, 7<<2
-#define			CR_HOME			0xf8  	//0x0020, 8<<2
-#define			CR_REWIND		0xf9  	//0x0024, 9<<2
-#define			CR_NEXT			0xfa  	//0x0028, a<<2
-#define			CR_PREV			0xfb  	//0x002c, b<<2
-#define			CR_STOP			0xfc  	//0x0030, c<<2
+#define 		GPIO_IR_CONTROL			GPIO_PD0
+
+#define		 	VOICE					0xc0
+#define 		VOICE_KEYCODE_OUT		0x40
+#define 		KEY_MODE_SWITCH			0xc1
 
 
-#define	GPIO_LED				GPIO_PA4
-#define		KB_MAP_NORMAL	{\
-				{CR_VOL_MUTE,	VK_3,	  	VK_1,		VK_MEDIA,	}, \
-				{VK_2,	 		VK_5,	  	VK_M,		VK_4,	 	}, \
-				{CR_RIGHT,	 	VK_NONE,	CR_SEL,		CR_LEFT,	}, \
-				{CR_REWIND,	 	VK_NONE,	CR_DN,		CR_HOME,	}, \
-				{CR_VOL_UP,	 	VK_NONE,	VK_MMODE,	CR_VOL_DN,	}, \
-				{VK_WEB,		VK_NONE,	CR_UP,		CR_POWER,	}, }
+#define 		IR_VK_0			0x00
+#define 		IR_VK_1			0x01
+#define 		IR_VK_2			0x02
+#define			IR_VK_3			0x03
+#define			IR_VK_4			0x04
+#define 		IR_VK_5			0x05
+#define 		IR_VK_6			0x06
+#define 		IR_VK_7			0x07
+#define 		IR_VK_8			0x08
+#define 		IR_VK_9			0x09
 
-#define  KB_DRIVE_PINS  {GPIO_PB1, GPIO_PB2, GPIO_PB3, GPIO_PB6}
-#define  KB_SCAN_PINS   {GPIO_PD4, GPIO_PD5, GPIO_PD6, GPIO_PD7, GPIO_PE0, GPIO_PE1}
+#define 		IR_POWER		0x12
+#define			IR_AUDIO_MUTE	0x0d
+#define 		IR_NETFLIX		0x0f
+#define			IR_BACK			0x0e
+#define			IR_VOL_UP		0x0b
+#define			IR_VOL_DN		0x0c
+#define 		IR_NEXT			0x20
+#define 		IR_PREV			0x21
+#define			IR_MENU			0x23
+#define 		IR_HOME			0x24
+#define 		IR_OPER_KEY		0x2e
+#define 		IR_INFO			0x2f
+#define			IR_REWIND		0x32
+#define 		IR_FAST_FOWARD	0x34
+#define 		IR_PLAY_PAUSE	0x35
+#define			IR_GUIDE		0x41
+#define 		IR_UP			0x45
+#define			IR_DN			0x44
+#define 		IR_LEFT			0x42
+#define 		IR_RIGHT		0x43
+#define			IR_SEL			0x46
+#define 		IR_RED_KEY		0x6b
+#define 		IR_GREEN_KEY	0x6c
+#define 		IR_YELLOW_KEY	0x6d
+#define 		IR_BLUE_KEY		0x6e
+#define 		IR_RECORD		0x72
+#define 		IR_OPTION		0x73
+#define 		IR_STOP			0x74
+#define 		IR_SEARCH		0x75
+#define 		IR_TEXT			0x76
+#define 		IR_VOICE		0x77
+#define 		IR_PAUSE		0x78
 
+#define			T_VK_CH_UP		0xd0
+#define			T_VK_CH_DN		0xd1
+
+
+#if (BLE_IR_ENABLE)
+	#define		KB_MAP_NORMAL	{\
+					{0, 	1,		2,		3,		4,		5,		6,		}, \
+					{7,		8,		9,		10,		VOICE,	12,		13,		}, \
+					{14,	15,		16,		17,		18,		19, 	KEY_MODE_SWITCH, }, \
+					{21,	22,		23,		24,		25,		26,		27,		}, \
+					{28,	29,		30,		31,		32,		33,		34,		}, \
+					{35,	36,		37,		38,		39,		40,		41,		}, \
+					{42,	43,		44,		45,		46,		47,		48,		}, }
+
+	#define		KB_MAP_BLE	{\
+					VK_7,		VK_4,			VK_1,		VK_NONE,			VK_VOL_DN,	VK_VOL_UP,	VK_ESC	, \
+					VK_LEFT,	VK_NONE,		VK_NONE,	VK_FAST_BACKWARD,	VK_NONE,	VK_NONE,	VK_POWER, \
+					VK_RIGHT,	VK_HOME,		VK_NONE,	VK_FAST_FORWARD,	VK_STOP,	VK_NONE,	KEY_MODE_SWITCH , \
+					VK_9,	 	VK_6,			VK_3,		VK_NONE,			VK_CH_DN,	VK_CH_UP,	VK_APP , \
+					VK_NONE,	VK_W_MUTE,		VK_NONE,	VK_DOWN,			VK_ENTER,	VK_UP,		VK_NONE , \
+					VK_NONE,	VK_NONE,		VK_0,		VK_8,				VK_5,		VK_2,		VK_NONE , \
+					VK_W_STOP,	VK_PLAY_PAUSE,	VK_NONE,	VK_NONE,			VK_NONE,	VK_NONE,	VK_NONE, }
+
+
+	#define		KB_MAP_IR	{\
+					IR_VK_7,	IR_VK_4,	IR_VK_1,	IR_RED_KEY,	IR_VOL_DN,	IR_VOL_UP,	IR_BACK	, \
+					IR_LEFT,	VK_NONE,	VK_NONE,	IR_PREV,	VK_NONE,	VK_MMODE,	IR_POWER, \
+					IR_RIGHT,	IR_HOME,	VK_NONE,	IR_NEXT,	IR_STOP,	IR_SEARCH,	KEY_MODE_SWITCH , \
+					IR_VK_9,	IR_VK_6,	IR_VK_3,	IR_BLUE_KEY,VK_CH_DN,	VK_CH_UP,	IR_MENU , \
+					IR_YELLOW_KEY,VK_NONE,	VK_NONE,	IR_DN,		IR_SEL,		IR_UP,		VK_NONE , \
+					VK_NONE,	VK_NONE,	IR_VK_0,	IR_VK_8,	IR_VK_5,	IR_VK_2,	IR_GREEN_KEY , \
+					IR_PAUSE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE, }
+#else
+
+	#define		KB_MAP_NORMAL	{\
+					VK_7,		VK_4,			VK_1,		VK_NONE,			VK_VOL_DN,	VK_VOL_UP,	VK_ESC	, \
+					VK_LEFT,	VK_NONE,		VK_NONE,	VK_FAST_BACKWARD,	VOICE,		VK_NONE,	VK_POWER, \
+					VK_RIGHT,	VK_HOME,		VK_NONE,	VK_FAST_FORWARD,	VK_STOP,	VK_NONE,	KEY_MODE_SWITCH , \
+					VK_9,	 	VK_6,			VK_3,		VK_NONE,			VK_CH_DN,	VK_CH_UP,	VK_APP , \
+					VK_NONE,	VK_W_MUTE,		VK_NONE,	VK_DOWN,			VK_ENTER,	VK_UP,		VK_NONE , \
+					VK_NONE,	VK_NONE,		VK_0,		VK_8,				VK_5,		VK_2,		VK_NONE , \
+					VK_W_STOP,	VK_PLAY_PAUSE,	VK_NONE,	VK_NONE,			VK_NONE,	VK_NONE,	VK_NONE, }
+
+#endif  //end of REMOTE_IR_ENABLE
+
+
+#define  KB_DRIVE_PINS  {GPIO_PA6, GPIO_PA7, GPIO_PB1, GPIO_PB4, GPIO_PB5, GPIO_PB6, GPIO_PB7}
+#define  KB_SCAN_PINS   {GPIO_PD3, GPIO_PD4, GPIO_PD5, GPIO_PD6, GPIO_PD7, GPIO_PE0, GPIO_PE1}
+
+#define	PA6_FUNC				AS_GPIO
+#define	PA7_FUNC				AS_GPIO
+#define	PB1_FUNC				AS_GPIO
+#define	PB4_FUNC				AS_GPIO
+#define	PB5_FUNC				AS_GPIO
+#define	PB6_FUNC				AS_GPIO
+#define	PB7_FUNC				AS_GPIO
+
+#define	PULL_WAKEUP_SRC_PA6		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PA7		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PB1		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PB4		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PB5		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PB6		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PB7		MATRIX_ROW_PULL
+
+#define PA6_INPUT_ENABLE		1
+#define PA7_INPUT_ENABLE		1
+#define PB1_INPUT_ENABLE		1
+#define PB4_INPUT_ENABLE		1
+#define PB5_INPUT_ENABLE		1
+#define PB6_INPUT_ENABLE		1
+#define PB7_INPUT_ENABLE		1
+
+
+#define	PD3_FUNC				AS_GPIO
+#define	PD4_FUNC				AS_GPIO
+#define	PD5_FUNC				AS_GPIO
+#define	PD6_FUNC				AS_GPIO
+#define	PD7_FUNC				AS_GPIO
+#define	PE0_FUNC				AS_GPIO
+#define	PE1_FUNC				AS_GPIO
+
+#define	PULL_WAKEUP_SRC_PD3		MATRIX_COL_PULL
 #define	PULL_WAKEUP_SRC_PD4		MATRIX_COL_PULL
 #define	PULL_WAKEUP_SRC_PD5		MATRIX_COL_PULL
 #define	PULL_WAKEUP_SRC_PD6		MATRIX_COL_PULL
 #define	PULL_WAKEUP_SRC_PD7		MATRIX_COL_PULL
 #define	PULL_WAKEUP_SRC_PE0		MATRIX_COL_PULL
 #define	PULL_WAKEUP_SRC_PE1		MATRIX_COL_PULL
+
+#define PD3_INPUT_ENABLE		1
 #define PD4_INPUT_ENABLE		1
 #define PD5_INPUT_ENABLE		1
 #define PD6_INPUT_ENABLE		1
@@ -115,22 +239,8 @@ extern "C" {
 #define PE1_INPUT_ENABLE		1
 
 
-
-#define	PULL_WAKEUP_SRC_PB1		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PB2		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PB3		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PB6		MATRIX_ROW_PULL
-#define PB1_INPUT_ENABLE		1
-#define PB2_INPUT_ENABLE		1
-#define PB3_INPUT_ENABLE		1
-#define PB6_INPUT_ENABLE		1
-
-
-
 #define		KB_MAP_NUM		KB_MAP_NORMAL
 #define		KB_MAP_FN		KB_MAP_NORMAL
-
-
 
 
 /////////////////// Clock  /////////////////////////////////
@@ -147,26 +257,23 @@ extern "C" {
 
 
 
-#define  SIHUI_DEBUG_BLE_SLAVE				0
 
-#if(SIHUI_DEBUG_BLE_SLAVE)
-#define	LOG_IN_RAM							0
+#define  SIHUI_GPIO_DEBUG					0
+#if(SIHUI_GPIO_DEBUG)
 
-#undef	__LOG_RT_ENABLE__
-#define __LOG_RT_ENABLE__					0
+#define PA2_FUNC				AS_GPIO //debug gpio chn0 : A2
+#define PA3_FUNC				AS_GPIO //debug gpio chn1 : A3
+#define PA4_FUNC				AS_GPIO //debug gpio chn2 : A4
+#define PA5_FUNC				AS_GPIO //debug gpio chn3 : A5
+#define PB2_FUNC				AS_GPIO //debug gpio chn4 : B2
+#define PB3_FUNC				AS_GPIO //debug gpio chn5 : B3
 
-#define PA2_INPUT_ENABLE					0
-#define PA3_INPUT_ENABLE					0
-#define PA5_INPUT_ENABLE					0
-#define PC0_INPUT_ENABLE					0
-#define PC1_INPUT_ENABLE					0
-#define PC6_INPUT_ENABLE					0
 #define PA2_OUTPUT_ENABLE					1
 #define PA3_OUTPUT_ENABLE					1
+#define PA4_OUTPUT_ENABLE					1
 #define PA5_OUTPUT_ENABLE					1
-#define PC0_OUTPUT_ENABLE					1
-#define PC1_OUTPUT_ENABLE					1
-#define PC6_OUTPUT_ENABLE					1
+#define PB2_OUTPUT_ENABLE					1
+#define PB3_OUTPUT_ENABLE					1
 
 #define DBG_CHN0_LOW		( *(unsigned char *)0x800583 &= (~0x04) )
 #define DBG_CHN0_HIGH		( *(unsigned char *)0x800583 |= 0x04 )
@@ -174,18 +281,18 @@ extern "C" {
 #define DBG_CHN1_LOW		( *(unsigned char *)0x800583 &= (~0x08) )
 #define DBG_CHN1_HIGH		( *(unsigned char *)0x800583 |= 0x08 )
 #define DBG_CHN1_TOGGLE		( *(unsigned char *)0x800583 ^= 0x08 )
-#define DBG_CHN2_LOW		( *(unsigned char *)0x800583 &= (~0x20) )
-#define DBG_CHN2_HIGH		( *(unsigned char *)0x800583 |= 0x20 )
-#define DBG_CHN2_TOGGLE		( *(unsigned char *)0x800583 ^= 0x20 )
-#define DBG_CHN3_LOW		( *(unsigned char *)0x800593 &= (~0x01) )
-#define DBG_CHN3_HIGH		( *(unsigned char *)0x800593 |= 0x01 )
-#define DBG_CHN3_TOGGLE		( *(unsigned char *)0x800593 ^= 0x01 )
-#define DBG_CHN4_LOW		( *(unsigned char *)0x800593 &= (~0x02) )
-#define DBG_CHN4_HIGH		( *(unsigned char *)0x800593 |= 0x02 )
-#define DBG_CHN4_TOGGLE		( *(unsigned char *)0x800593 ^= 0x02 )
-#define DBG_CHN5_LOW		( *(unsigned char *)0x800593 &= (~0x40) )
-#define DBG_CHN5_HIGH		( *(unsigned char *)0x800593 |= 0x40 )
-#define DBG_CHN5_TOGGLE		( *(unsigned char *)0x800593 ^= 0x40 )
+#define DBG_CHN2_LOW		( *(unsigned char *)0x800583 &= (~0x10) )
+#define DBG_CHN2_HIGH		( *(unsigned char *)0x800583 |= 0x10 )
+#define DBG_CHN2_TOGGLE		( *(unsigned char *)0x800583 ^= 0x10 )
+#define DBG_CHN3_LOW		( *(unsigned char *)0x800583 &= (~0x20) )
+#define DBG_CHN3_HIGH		( *(unsigned char *)0x800583 |= 0x20 )
+#define DBG_CHN3_TOGGLE		( *(unsigned char *)0x800583 ^= 0x20 )
+#define DBG_CHN4_LOW		( *(unsigned char *)0x80058b &= (~0x04) )
+#define DBG_CHN4_HIGH		( *(unsigned char *)0x80058b |= 0x04 )
+#define DBG_CHN4_TOGGLE		( *(unsigned char *)0x80058b ^= 0x04 )
+#define DBG_CHN5_LOW		( *(unsigned char *)0x80058b &= (~0x08) )
+#define DBG_CHN5_HIGH		( *(unsigned char *)0x80058b |= 0x08 )
+#define DBG_CHN5_TOGGLE		( *(unsigned char *)0x80058b ^= 0x08 )
 
 #else
 #define DBG_CHN0_LOW

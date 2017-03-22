@@ -7,20 +7,31 @@
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/ll/ll.h"
 
-#if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__)
+#if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
 extern void user_init();
 extern void deep_wakeup_proc(void);
 
 _attribute_ram_code_ void irq_handler(void)
 {
+#if (BLE_IR_ENABLE)
+	u32 src = reg_irq_src;
+	if(src & FLD_IRQ_TMR1_EN){
+		ir_irq_send();
+		reg_tmr_sta = FLD_TMR_STA_TMR1;
+	}
+
+	if(src & FLD_IRQ_TMR2_EN){
+		ir_repeat_handle();
+		reg_tmr_sta = FLD_TMR_STA_TMR2;
+	}
+#endif
 
 	irq_blt_sdk_handler ();
 
 }
 
 int main (void) {
-
 	cpu_wakeup_init();
 
 	clock_init();

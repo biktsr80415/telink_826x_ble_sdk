@@ -1,9 +1,8 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/ble/ll/ll.h"
-#include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 
-#if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__)
+#if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
 typedef struct
 {
@@ -48,6 +47,12 @@ static u8 my_periConnParamChar = CHAR_PROP_READ;
 u16 my_appearance = GAP_APPEARE_UNKNOWN;
 gap_periConnectParams_t my_periConnParameters = {20, 40, 0, 1000};
 
+
+const u16 my_gattServiceUUID = SERVICE_UUID_GENERIC_ATTRIBUTE;
+const u8  serviceChangedProp = CHAR_PROP_INDICATE;
+const u16 serviceChangeUIID = GATT_UUID_SERVICE_CHANGE;
+u16 serviceChangeVal[2] = {0};
+static u8 indCharCfg[6] = {0x0b, 0x00, 0x02, 0x29};
 
 
 const u8	my_devName[] = {'t','R','e','m','o','t','e'};
@@ -181,31 +186,30 @@ static const u8 reportMap[] =
     0xC0,        // End Collection
 
     #if 1
-    // Report ID 3 consumer report,  media key
-
+    // Report ID 3
     0x05, 0x0C,   // Usage Page (Consumer)
     0x09, 0x01,   // Usage (Consumer Control)
     0xA1, 0x01,   // Collection (Application)
     0x85, 0x02,   //     Report Id (3)
 
-    0x09, 0xE9,   //   Usage (Volume Up)            //0x0001
-    0x09, 0xEA,   //   Usage (Volume Down)			//0x0002
+    0x09, 0xE9,   //   Usage (Volume Up)			//consumer report: 0x0001
+    0x09, 0xEA,   //   Usage (Volume Down)			//consumer report: 0x0002
     0x15, 0x00,   //   Logical Min (0)
     0x75, 0x01,   //   Report Size (1)
     0x95, 0x02,   //   Report Count (2)
     0x81, 0x02,   //   Input (Data, Var, Abs)
-    0x09, 0xE2,   //   Usage (Mute)					//0x0004, 1<<2
-    0x09, 0x30,   //   Usage (Power)				//0x0008, 2<<2
-    0x09, 0x41,   //   Usage (Menu Pick)			//0x000c, 3<<2
-    0x09, 0x42,   //   Usage (Menu Up)				//0x0010, 4<<2
-    0x09, 0x43,   //   Usage (Menu Down)			//0x0014, 5<<2
-    0x09, 0x44,   //   Usage (Menu Left)			//0x0018, 6<<2
-    0x09, 0x45,   //   Usage (Menu Right)			//0x001c, 7<<2
-    0x0a, 0x23, 0x02,   //   Usage (HOME)			//0x0020, 8<<2
-    0x09, 0xB4,   //   Usage (Rewind)				//0x0024, 9<<2
-    0x09, 0xB5,   //   Usage (Scan Next)			//0x0028, a<<2
-    0x09, 0xB6,   //   Usage (Scan Prev)			//0x002c, b<<2
-    0x09, 0xB7,   //   Usage (Stop)					//0x0030, c<<2
+    0x09, 0xE2,   //   Usage (Mute)					//consumer report: 0x0004
+    0x09, 0x30,   //   Usage (Power)				//consumer report: 0x0008
+    0x09, 0x41,   //   Usage (Menu Pick)			//consumer report: 0x000c
+    0x09, 0x42,   //   Usage (Menu Up)				//consumer report: 0x0010
+    0x09, 0x43,   //   Usage (Menu Down)			//consumer report: 0x0014
+    0x09, 0x44,   //   Usage (Menu Left)			//consumer report: 0x0018
+    0x09, 0x45,   //   Usage (Menu Right)			//consumer report: 0x001c
+    0x0a, 0x23, 0x02,   //   Usage (HOME)			//consumer report: 0x0020
+    0x09, 0xB4,   //   Usage (Rewind)				//consumer report: 0x0024
+    0x09, 0xB5,   //   Usage (Scan Next)			//consumer report: 0x0028
+    0x09, 0xB6,   //   Usage (Scan Prev)			//consumer report: 0x002c
+    0x09, 0xB7,   //   Usage (Stop)					//consumer report: 0x0030
     0x15, 0x01,   //   Logical Min (1)
     0x25, 0x0C,   //   Logical Max (12)
     0x75, 0x04,   //   Report Size (4)
@@ -307,7 +311,11 @@ static u16 include[3] = {0x0026, 0x0028, SERVICE_UUID_BATTERY};
 
 // TM : to modify
 const attribute_t my_Attributes[] = {
-	{50,0,0,0,0,0},	// total num of attribute
+#if (BLE_AUDIO_ENABLE)
+	{54,0,0,0,0,0},	// total num of attribute
+#else
+	{48,0,0,0,0,0},	// total num of attribute
+#endif
 
 	// 0001 - 0007  gap
 	{7,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
@@ -319,85 +327,92 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_periConnParameters),(u8*)(&my_periConnParamUUID), 	(u8*)(&my_periConnParameters), 0},
 
 
-	// 0008 - 000a  device Information Service
+	// 0008 - 000b gatt
+	{4,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gattServiceUUID), 0},
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&serviceChangedProp), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof (serviceChangeVal), (u8*)(&serviceChangeUIID), 	(u8*)(&serviceChangeVal), 0},
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof (indCharCfg),(u8*)(&clientCharacterCfgUUID), (u8*)(indCharCfg), 0},
+
+
+	// 000c - 000e  device Information Service
 	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_devServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_PnPCharacter), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},
 
 
 	/////////////////////////////////// 4. HID Service /////////////////////////////////////////////////////////
-	// 000b
+	// 000f
 	{27,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_hidServiceUUID), 0},
 
-	// 000c - 000e  include battery service
+	// 0010  include battery service
 	{0,ATT_PERMISSIONS_READ,2,sizeof(include),(u8*)(&hidIncludeUUID), 	(u8*)(include), 0},
 
-	// 000d - 000e  protocol mode
+	// 0011 - 0012  protocol mode
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&protocolModeProp), 0},				//prop
 	{0,ATT_PERMISSIONS_RDWR,2, sizeof(protocolMode),(u8*)(&hidProtocolModeUUID), 	(u8*)(&protocolMode), 0},	//value
 
-	// 000f - 0011  boot keyboard input report (char-val-client)
+	// 0013 - 0015  boot keyboard input report (char-val-client)
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&bootKeyInReportProp), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,2,sizeof(bootKeyInReport),(u8*)(&hidbootKeyInReportUUID), 	(u8*)(&bootKeyInReport), 0},	//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof(bootKeyInReportCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)(bootKeyInReportCCC), 0},	//value
 
-	// 0012 - 0013   boot keyboard output report (char-val)
+	// 0016 - 0017   boot keyboard output report (char-val)
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&bootKeyOutReportProp), 0},				//prop
 	{0,ATT_PERMISSIONS_RDWR,2, sizeof(bootKeyOutReport), (u8*)(&hidbootKeyOutReportUUID), 	(u8*)(&bootKeyOutReport), 0},	//value
 
 
-	// 0014 - 0017. consume report in: 4 (char-val-client-ref)
+	// 0018 - 001b. consume report in: 4 (char-val-client-ref)
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&reportConsumerControlInProp), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,2, sizeof(reportConsumerControlIn),(u8*)(&hidReportUUID), 	(u8*)(reportConsumerControlIn), 0},	//value
 	{0,ATT_PERMISSIONS_READ|ATT_PERMISSIONS_AUTHEN_WRITE,2,sizeof(reportConsumerControlInCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)(reportConsumerControlInCCC), 0},	//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof(reportRefConsumerControlIn),(u8*)(&reportRefUUID), 	(u8*)(reportRefConsumerControlIn), 0},	//value
 
-	// 0018 - 001b . report in : 4 (char-val-client-ref)
+	// 001c - 001f . report in : 4 (char-val-client-ref)
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&reportKeyInProp), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,2, sizeof(reportKeyIn),(u8*)(&hidReportUUID), 	(u8*)(reportKeyIn), 0},	//value
 	{0,ATT_PERMISSIONS_READ|ATT_PERMISSIONS_AUTHEN_WRITE,2,sizeof(reportKeyInCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)(reportKeyInCCC), 0},	//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof(reportRefKeyIn),(u8*)(&reportRefUUID), 	(u8*)(reportRefKeyIn), 0},	//value
 
-	// 001c - 001e . report out: 3 (char-val-ref)
+	// 0020 - 0022 . report out: 3 (char-val-ref)
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&reportKeyOutProp), 0},				//prop
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof(reportKeyOut),(u8*)(&hidReportUUID), 	(u8*)(reportKeyOut), 0},	//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof(reportRefKeyOut),(u8*)(&reportRefUUID), 	(u8*)(reportRefKeyOut), 0},	//value
 
-	// 001f - 0021 . report map: 3
+	// 0023 - 0025 . report map: 3
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&reportMapProp), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,2,sizeof(reportMap),(u8*)(&hidReportMapUUID), 	(u8*)(reportMap), 0},	//value
 	{0,ATT_PERMISSIONS_READ|ATT_PERMISSIONS_WRITE,2,sizeof(extServiceUUID),(u8*)(&extReportRefUUID), 	(u8*)(&extServiceUUID), 0},	//value
 
-	// 0022 - 0023 . hid information: 2
+	// 0026 - 0027 . hid information: 2
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&hidInfoProps), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,2, sizeof(hidInformation),(u8*)(&hidinformationUUID), 	(u8*)(hidInformation), 0},	//value
 
-	// 0024 - 0025 . control point: 2
+	// 0028 - 0029 . control point: 2
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&controlPointProp), 0},				//prop
 	{0,ATT_PERMISSIONS_WRITE,2, sizeof(controlPoint),(u8*)(&hidCtrlPointUUID), 	(u8*)(&controlPoint), 0},	//value
 
 	////////////////////////////////////// 31. Battery Service /////////////////////////////////////////////////////
-	// 0026 - 0028
+	// 002a - 002c
 	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_batServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_batProp), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,2,sizeof(my_batVal),(u8*)(&my_batCharUUID), 	(u8*)(my_batVal), 0},	//value
 
 
-#if (__PROJECT_8267_BLE_REMOTE__)
-	// 0029 Audio
+#if (BLE_AUDIO_ENABLE)
+	// 002d Audio
 	{10,ATT_PERMISSIONS_READ,2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_AudioUUID), 0},
 
-	// 002a - 002c  MIC
+	// 002e - 0030  MIC
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_MicProp), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,16,sizeof(my_MicData),(u8*)(&my_MicUUID), 	(u8*)(&my_MicData), 0},	//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_MicName),(u8*)(&userdesc_UUID), (u8*)(my_MicName), 0},
 
-	// 002d - 002f  SPEAKER
+	// 0031 - 0033  SPEAKER
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_SpeakerProp), 0},				//prop
 	{0,ATT_PERMISSIONS_WRITE,16,sizeof(my_SpeakerData),(u8*)(&my_SpeakerUUID), 	(u8*)(&my_SpeakerData), 0},//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_SpeakerName),(u8*)(&userdesc_UUID), (u8*)(my_SpeakerName), 0},
 
-	// 0030 - 0032  OTA
+	// 0034 - 0036  OTA
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				//prop
 	{0,ATT_PERMISSIONS_RDWR,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
@@ -405,9 +420,10 @@ const attribute_t my_Attributes[] = {
 	// OTA
 	{4,ATT_PERMISSIONS_READ, 2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_OtaServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				//prop
-	{0,ATT_PERMISSIONS_WRITE,16,1,(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
+	{0,ATT_PERMISSIONS_RDWR,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
 	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
 #endif
+
 };
 
 void	my_att_init ()
@@ -415,4 +431,4 @@ void	my_att_init ()
 	bls_att_setAttributeTable ((u8 *)my_Attributes);
 }
 
-#endif
+#endif  //end of __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__
