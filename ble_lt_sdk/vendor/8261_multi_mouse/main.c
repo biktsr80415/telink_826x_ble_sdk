@@ -5,7 +5,7 @@
 #include "../../vendor/common/user_config.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 
 #include "../link_layer/rf_ll.h"
 
@@ -55,7 +55,7 @@ _attribute_ram_code_ void irq_handler(void)
 
     }
     else{
-    	irq_blt_slave_handler ();
+    	irq_blt_sdk_handler ();
     }
 
 

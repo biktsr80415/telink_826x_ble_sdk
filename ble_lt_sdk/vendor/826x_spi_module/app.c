@@ -146,8 +146,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//闁跨喐鏋婚幏绌杘dule闁跨喐鏋婚幏绌焌rt闁跨喐鏋婚幏鐤涪闁跨喐鏋婚幏鐑芥晸閺傘倖瀚归柨鐔荤窛閸氬函绱濋弬銈嗗GPIO_WAKEUP_MCU闁跨喐鏋婚幏鐑芥晸闁板吀绱幏鐑芥晸閺傘倖瀚�閸欐牠鏁撻弬銈嗗闁跨喐鏋婚幏绌焥er闁跨喐鏋婚幏铚傜疄闁跨喐鏋婚幏鐑芥晸閿燂拷
-	if(module_uart_data_flg && !module_uart_working){
+	//闂佽法鍠愰弸濠氬箯缁屾潣dule闂佽法鍠愰弸濠氬箯缁岀剬rt闂佽法鍠愰弸濠氬箯閻ゎ垰娑梺璺ㄥ枑閺嬪骞忛悜鑺ユ櫢闁哄倶鍊栫�褰掓煥閻旇崵绐涢柛姘嚱缁辨繈寮妶鍡楊伓GPIO_WAKEUP_MCU闂佽法鍠愰弸濠氬箯閻戣姤鏅搁梺鏉垮悁缁鳖噣骞忛悜鑺ユ櫢闁哄倶鍊栫�锟介柛娆愮墵閺佹捇寮妶鍡楊伓闂佽法鍠愰弸濠氬箯缁岀劌er闂佽法鍠愰弸濠氬箯閾氬倻鐤勯梺璺ㄥ枑閺嬪骞忛悜鑺ユ櫢闁跨噦鎷�	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
 		GPIO_WAKEUP_MCU_LOW;
@@ -163,7 +162,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闁跨喐鏋婚幏鐤渽闁跨喐鏋婚幏锟紾PIO_WAKEUP_MODULE 闁跨喐鏋婚幏鐑芥晸閺傘倖瀚�	}
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闂佽法鍠愰弸濠氬箯閻ゎ垼娓介梺璺ㄥ枑閺嬪骞忛敓绱綪IO_WAKEUP_MODULE 闂佽法鍠愰弸濠氬箯閻戣姤鏅搁柡鍌樺�鐎氾拷	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
 	{
@@ -297,8 +296,12 @@ void user_init()
         flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
     }
 
-	//link layer initialization
-	bls_ll_init (tbl_mac);
+	////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
+
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
 
 	//gatt initialization
 	extern void my_att_init ();

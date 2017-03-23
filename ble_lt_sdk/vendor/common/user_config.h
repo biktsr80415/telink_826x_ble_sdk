@@ -41,8 +41,6 @@
 	#include "../826x_ble_remote/app_config.h"
 #elif (__PROJECT_8266_OTA_BOOT__ || __PROJECT_8261_OTA_BOOT__)
 	#include "../826x_ota_boot/app_config.h"
-#elif (__PROJECT_8267_MCU_RC__)
-	#include "../8267_mcu_rc/app_config.h"
 #elif (__PROJECT_8261_BLE_WEIXIN__)
 	#include "../8261_ble_weixin/app_config.h"
 #else

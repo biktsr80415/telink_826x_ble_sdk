@@ -205,7 +205,7 @@ void spp_onModuleCmd(u8* p, int n)
 				backCode = SPP_RESULT_FAILED;
 			else{
 				//before set adv interval, make sure module in the adv state
-				if(bls_ll_getCurrentState()!=BLS_LINK_STATE_ADV)
+				if(blc_ll_getCurrentState()!=BLS_LINK_STATE_ADV)
 					bls_ll_setAdvInterval(advInterval, advInterval);
 			}
 			host_push_status(HC_SET_ADV_INTERVAL,1,&backCode);
@@ -218,13 +218,13 @@ void spp_onModuleCmd(u8* p, int n)
 		    break;
 		// enable/disable advertising: 0a ff 01 00  01
 		case HC_ENABLE_DISABLE_ADV: //enable or disable ble module advertising function
-			if(sppData->data[0] && bls_ll_getCurrentState() == BLS_LINK_STATE_IDLE){
+			if(sppData->data[0] && blc_ll_getCurrentState() == BLS_LINK_STATE_IDLE){
 				bls_ll_setAdvEnable(1);
 			}
-			else if(!sppData->data[0] && bls_ll_getCurrentState() == BLS_LINK_STATE_ADV){
+			else if(!sppData->data[0] && blc_ll_getCurrentState() == BLS_LINK_STATE_ADV){
 				bls_ll_setAdvEnable(0);
 			}
-			else if(sppData->data[0] && bls_ll_getCurrentState() == BLS_LINK_STATE_ADV){
+			else if(sppData->data[0] && blc_ll_getCurrentState() == BLS_LINK_STATE_ADV){
 				//do nothing
 			}
 			else
@@ -274,7 +274,7 @@ void spp_onModuleCmd(u8* p, int n)
 			break;
 		// get module current work state: 16 ff 00 00
 		case HC_GET_MODULE_STATE:
-			backCode = bls_ll_getCurrentState();
+			backCode = blc_ll_getCurrentState();
 			host_push_status(HC_GET_MODULE_STATE,1,&backCode);
 			break;
 		// set device name: 13 ff 0a 00  01 02 03 04 05 06 07 08 09 0a
@@ -291,7 +291,7 @@ void spp_onModuleCmd(u8* p, int n)
 		// get connection parameter: 14 ff 00 00		,returrn interval(4) latency(2) timeout(4)
 		case HC_GET_CONNECTION_PARAM:
 		{
-			if(bls_ll_getCurrentState()!=BLS_LINK_STATE_CONN){
+			if(blc_ll_getCurrentState()!=BLS_LINK_STATE_CONN){
 				backCode = SPP_GET_OR_SETPARA_FAILED_NOCONNECTION;//0x03 connection not established
 				host_push_status(HC_GET_CONNECTION_PARAM,1,&backCode);//busy
 			}
@@ -304,7 +304,7 @@ void spp_onModuleCmd(u8* p, int n)
 			break;
 		// set connection parameter: 15 ff 08 00 a0 00 a2 00 00 00 2c 01 (min, max, latency, timeout)
 		case HC_SET_CONNECTION_PARAM:
-			if(bls_ll_getCurrentState()!=BLS_LINK_STATE_CONN){
+			if(blc_ll_getCurrentState()!=BLS_LINK_STATE_CONN){
 				backCode = SPP_GET_OR_SETPARA_FAILED_NOCONNECTION;
 				host_push_status(HC_SET_CONNECTION_PARAM,1,&backCode);
 			}
@@ -325,7 +325,7 @@ void spp_onModuleCmd(u8* p, int n)
 			break;
 		// terminate connection: 17 ff 00 00
 		case HC_TERMINATE_CONNECTION:
-			(bls_ll_getCurrentState() == BLS_LINK_STATE_CONN)? bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN):(backCode = 1);
+			(blc_ll_getCurrentState() == BLS_LINK_STATE_CONN)? bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN):(backCode = 1);
 			host_push_status(HC_TERMINATE_CONNECTION,1,&backCode);
 			break;
 

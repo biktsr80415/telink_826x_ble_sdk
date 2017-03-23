@@ -177,8 +177,12 @@ void user_init()
         tbl_mac[0] = (u8)rand();
     }
 
-	//link layer initialization
-	bls_ll_init (tbl_mac);
+	////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
+
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
 
 	//l2cap initialization
 	blc_l2cap_register_handler (bls_hci_sendACLData2Host); 		//send l2cap 2 uart

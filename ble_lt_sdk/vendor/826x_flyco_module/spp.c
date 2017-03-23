@@ -35,7 +35,7 @@ extern u8  devName2[20];
 
 flyco_spp_AppCallbacks_t *flyco_spp_cbs;
 
-u8 devNameT[26] = {0};//Temporary storage device name, data structure:[12：DevName1；6：DevName2]
+u8 devNameT[26] = {0};//Temporary storage device name, data structure:[12锛欴evName1锛�锛欴evName2]
 u8 set_devname1_flg = 0;//Set devname1 flag
 
 #define	UART_SEND    uart_Send_kma
@@ -452,10 +452,10 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 #endif
 
 				u8 rssi;
-				if(bls_ll_getCurrentState() != BLS_LINK_STATE_CONN)
+				if(blc_ll_getCurrentState() != BLS_LINK_STATE_CONN)
 					rssi = 0x80;//If not connected, according to FLYCO cmd provision rssi=0x80;
 				else
-					rssi = bls_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB≤RSSI≤5dB
+					rssi = bls_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB鈮SSI鈮�dB
 
 				//if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
 					//flyco_spp_module_rsp2cmd(pp->cmdID, &rssi, 1);
@@ -468,7 +468,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 			u8 connectStatus = 0x00;
 			if(pp->len == 0){
 			
-				if(bls_ll_getCurrentState() == BLS_LINK_STATE_CONN)
+				if(blc_ll_getCurrentState() == BLS_LINK_STATE_CONN)
 					connectStatus = 0x01;
 				flyco_spp_module_rsp2cmd(pp->cmdID, &connectStatus, 1);
 			}
@@ -549,8 +549,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 				    set_devname1_flg = 0;
 					u8 devNameTmp1[20], devNameTmp2[20];
 
-					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1；* 1 1 1 1 space Null；
-					memcpy(devNameTmp2, devNameT + 13, 7);
+					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1锛� 1 1 1 1 space Null锛�					memcpy(devNameTmp2, devNameT + 13, 7);
 
 					nv_write(NV_FLYCO_ITEM_DEV_NAME1, devNameTmp1, 20);
 					nv_write(NV_FLYCO_ITEM_DEV_NAME2, devNameTmp2, 20);
@@ -664,7 +663,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				//The first value of the broadcast array is the total length of the broadcast data!
-				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data：FLYCO
+				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data锛欶LYCO
 				if(advTem[0]){
 					memcpy(advData, advTem, 20);
 				}
@@ -767,7 +766,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_SET_ADV_TIMEOUT:{//Adv time set, boot or wake up after the parameter effect!
 			if(pp->len == 1){
 				flyco_spp_cmd_adv_timeout_t *p = (flyco_spp_cmd_adv_timeout_t *)pp;
-				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit：us, enlarge 1000，timeout unit:s
+				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit锛歶s, enlarge 1000锛宼imeout unit:s
 				nv_write(NV_FLYCO_ITEM_ADV_TIMEOUT, (u8 *)&adv_timeout, 4);
 				//bls_ll_setAdvDuration(adv_timeout, adv_timeout == 0 ? 0 : 1);
 				if(adv_timeout == 0)bls_ll_setAdvEnable(1);
@@ -965,10 +964,10 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 #endif
 
 				u8 rssi;
-				if(bls_ll_getCurrentState() != BLS_LINK_STATE_CONN)
+				if(blc_ll_getCurrentState() != BLS_LINK_STATE_CONN)
 					rssi = 0x80;//If not connected, according to FLYCO cmd provision rssi=0x80;
 				else
-					rssi = bls_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB≤RSSI≤5dB
+					rssi = bls_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB鈮SSI鈮�dB
 				//if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
 					//flyco_spp_received_master_rsp2cmd(pp->cmdID, &rssi, 1);
 			}
@@ -980,7 +979,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 			u8 connectStatus = 0x00;
 			if(pp->len == 0){
 
-				if(bls_ll_getCurrentState() == BLS_LINK_STATE_CONN)
+				if(blc_ll_getCurrentState() == BLS_LINK_STATE_CONN)
 					connectStatus = 0x01;
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, &connectStatus, 1);
 			}
@@ -1062,8 +1061,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 				    set_devname1_flg = 0;
 					u8 devNameTmp1[20], devNameTmp2[20];
 
-					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1；* 1 1 1 1 space Null；
-					memcpy(devNameTmp2, devNameT + 13, 7);
+					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1锛� 1 1 1 1 space Null锛�					memcpy(devNameTmp2, devNameT + 13, 7);
 
 					nv_write(NV_FLYCO_ITEM_DEV_NAME1, devNameTmp1, 20);
 					nv_write(NV_FLYCO_ITEM_DEV_NAME2, devNameTmp2, 20);
@@ -1177,7 +1175,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				//The first value of the broadcast array is the total length of the broadcast data!
-				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data：FLYCO
+				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data锛欶LYCO
 				if(advTem[0]){
 					memcpy(advData,advTem, 20);
 				}
@@ -1278,7 +1276,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_SET_ADV_TIMEOUT:{//Adv time set, boot or wake up after the parameter effect!
 			if(pp->len == 1){
 				flyco_spp_cmd_adv_timeout_t *p = (flyco_spp_cmd_adv_timeout_t *)pp;
-				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit：us, enlarge 1000，timeout unit:s
+				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit锛歶s, enlarge 1000锛宼imeout unit:s
 				nv_write(NV_FLYCO_ITEM_ADV_TIMEOUT, (u8 *)&adv_timeout, 4);
 				//bls_ll_setAdvDuration(adv_timeout, adv_timeout == 0 ? 0 : 1);
 				if(adv_timeout == 0)bls_ll_setAdvEnable(1);
@@ -1338,7 +1336,7 @@ void blt_user_timerCb_proc(void){
 	//if OTA is processing, heart beat should Not work!!!
 	extern u8 ui_ota_is_working;
 
-    if(!ui_ota_is_working && (bls_ll_getCurrentState() == BLS_LINK_STATE_CONN) && spp_cmd_get_rssi_flg){
+    if(!ui_ota_is_working && (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN) && spp_cmd_get_rssi_flg){
 		if(ble_connected_1st_flg){
 			//bigger than 10s,slave will terminate
 			if(clock_time_exceed(spp_cmd_get_rssi_tick , 10000000)){
@@ -1366,14 +1364,13 @@ void blt_user_timerCb_proc(void){
 		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 5000 * sys_tick_per_us);
 	}
     //disconnect spp cmd
-	if(spp_cmd_disconnect_flg && (bls_ll_getCurrentState() == BLS_LINK_STATE_CONN) && clock_time_exceed(spp_cmd_disconnect_tick , 40000)){  //spp cmd ack disconnect timeout
+	if(spp_cmd_disconnect_flg && (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN) && clock_time_exceed(spp_cmd_disconnect_tick , 40000)){  //spp cmd ack disconnect timeout
 		spp_cmd_disconnect_flg = 0;
 		if(spp_cmd_disconnect_master_flg){//Master disconnect
 			spp_cmd_disconnect_master_flg =0;
 		}
 		else{//Slave disconnect
-			bls_ll_setAdvEnable(0);//Add 不广播
-		}
+			bls_ll_setAdvEnable(0);//Add 涓嶅箍鎾�		}
 
 		bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
 	}

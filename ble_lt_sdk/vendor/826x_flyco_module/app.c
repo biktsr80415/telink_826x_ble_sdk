@@ -292,15 +292,28 @@ void user_init()
 	//adv timeout unit:us
 	bls_ll_setAdvDuration(adv_timeout, adv_timeout == 0 ? 0 : 1);//close adv timeout
 
-	//link layer initialization
-	bls_ll_init (tbl_mac);
-	//gatt initialization
+
+
+
+///////////// BLE stack Initialization ////////////////
+	////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
+
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
+
+
+
+	////// Host Initialization  //////////
 	extern void my_att_init ();
-	my_att_init ();//NOTE: my_att_init  must after bls_ll_init, and before bls_ll_setAdvParam
-	//l2cap initialization
-	blc_l2cap_register_handler (blc_l2cap_packet_receive);
-	//smp initialization
-	//bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
+	my_att_init (); //gatt initialization
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
+
+	//bls_smp_enableParing (SMP_PARING_CONN_TRRIGER ); 	//smp initialization
+
+
+
 
 	ble_sts_t status =  \
 	bls_ll_setAdvParam( advinterval, advinterval_max, \
@@ -378,7 +391,7 @@ void main_loop ()
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	blt_slave_main_loop ();
 
-//	if(bls_ll_getCurrentState() == BLS_LINK_STATE_IDLE){//Idle state
+//	if(blc_ll_getCurrentState() == BLS_LINK_STATE_IDLE){//Idle state
 //		cpu_sleep_wakeup(0, PM_WAKEUP_TIMER, clock_time() + 10 * CLOCK_SYS_CLOCK_1MS);
 //	}
 //	else{//ble Adv & Conn state

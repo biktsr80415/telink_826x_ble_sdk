@@ -1,8 +1,7 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj/drivers/keyboard.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
@@ -486,14 +485,14 @@ void blt_pm_proc(void)
 		}
 
 		//adv 60s, deepsleep
-		if( bls_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
+		if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
 			clock_time_exceed(advertise_begin_tick , 60 * 1000000)){
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
 			analog_write(DEEP_ANA_REG0, ADV_DEEP_FLG);
 		}
 		//conn 60s no event(key/voice/led), enter deepsleep
-		else if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
+		else if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
 				clock_time_exceed(latest_user_event_tick, 60 * 1000000) ){
 
 			bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
@@ -511,7 +510,7 @@ void blt_pm_proc(void)
 
 _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
-	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
+	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
 	}
 }
@@ -574,7 +573,21 @@ void user_init()
 
 	wx_set_adv_mac (tbl_advData, tbl_mac, sizeof(tbl_advData)-1);
 
-	bls_ll_init (tbl_mac);  	//link layer initialization
+///////////// BLE stack Initialization ////////////////
+	////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
+
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
+
+
+
+	////// Host Initialization  //////////
+	extern void my_att_init ();
+	my_att_init (); //gatt initialization
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
+	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER ); 	//smp initialization
 //	extern void my_att_init ();
 //	my_att_init (); //gatt initialization
 
@@ -840,7 +853,6 @@ void proc_ui ()
 u32 tick_loop;
 unsigned short battValue[20];
 
-extern u8	blt_slave_main_loop (void);
 u8 test_data[256];
 
 void main_loop ()
@@ -860,14 +872,14 @@ void main_loop ()
 		blt_soft_timer_process(MAINLOOP_ENTRY);
 	#endif
 
-	blt_slave_main_loop ();
+	blt_sdk_main_loop();
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 	// weixin func is processed in task_weixin();
 	task_weixin(0);
 
 	//when flash needs to be erased , make sure it's not in ble connection state.
-	if( bls_ll_getCurrentState() != BLS_LINK_STATE_CONN )
+	if( blc_ll_getCurrentState() != BLS_LINK_STATE_CONN )
 	{
 		//free to erase flash here.
 		//code start
