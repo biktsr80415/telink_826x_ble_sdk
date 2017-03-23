@@ -23,7 +23,7 @@
 #define 	ADV_IDLE_ENTER_DEEP_TIME		60  //60 s
 #define 	CONN_IDLE_ENTER_DEEP_TIME		60  //60 s
 
-MYFIFO_INIT(hci_tx_fifo, 72, 4);
+
 MYFIFO_INIT(blt_rxfifo, 64, 8);
 MYFIFO_INIT(blt_txfifo, 40, 16);
 ////////////////////////////////////////////////////////////////////
@@ -602,8 +602,9 @@ void user_init()
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER ); 	//smp initialization
 
 
+	//HID_service_on_android7p0_init();  //hid device on android 7.0
 
-	///////////////////// USER application initialization ///////////////////
+///////////////////// USER application initialization ///////////////////
 	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
 
@@ -716,6 +717,7 @@ void user_init()
 
 
 	advertise_begin_tick = clock_time();
+
 }
 
 
