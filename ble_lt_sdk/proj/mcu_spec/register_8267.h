@@ -87,6 +87,10 @@ enum{
 };
 
 #define reg_spi_inv_clk			REG_ADDR8(0x0b)
+enum{
+	FLD_INVERT_SPI_CLK =        BIT(1),
+	FLD_DAT_DLY_HALF_CLK =      BIT(2),
+};
 
 /****************************************************
  master spi regs struct: begin  addr : 0x0c
@@ -471,13 +475,43 @@ enum{
 	FLD_UART_CTS_I_SELECT =		BIT(8),
 	FLD_UART_CTS_EN = 			BIT(9),
 	FLD_UART_PARITY_EN =		BIT(10),
+    FLD_UART_PARITY_SEL =       BIT(11),
+    FLD_UART_STOP_BIT =         BIT_RNG(12,13),
+    FLD_UART_TTL =              BIT(14),
+    FLD_UART_LOOPBACK =         BIT(15),
 };
-#define reg_uart_ctrl1			REG_ADDR16(0x98)
+
+#define reg_uart_ctrl2         REG_ADDR16(0x98)
+enum {
+    FLD_UART_CTRL2_RTS_TRIG_LVL = BIT_RNG(0,3),
+    FLD_UART_CTRL2_RTS_PARITY = BIT(4),
+    FLD_UART_CTRL2_RTS_MANUAL_VAL = BIT(5),
+    FLD_UART_CTRL2_RTS_MANUAL_EN = BIT(6),
+    FLD_UART_CTRL2_RTS_EN = BIT(7),
+	FLD_UART_CTRL3_RX_IRQ_TRIG_LEVEL = BIT_RNG(8,11),
+	FLD_UART_CTRL3_TX_IRQ_TRIG_LEVEL = BIT_RNG(12,15),
+};
 
 #define reg_uart_rx_timeout		REG_ADDR16(0x9a)
 enum{
 	FLD_UART_TIMEOUT_BW = 		BIT_RNG(0,7),		//  timeout bit width
 	FLD_UART_TIMEOUT_MUL = 		BIT_RNG(8,15),
+};
+#define  FLD_UART_BW_MUL1  0             // timeout is bit_width*1
+#define  FLD_UART_BW_MUL2  BIT(8)        // timeout is bit_width*1
+#define  FLD_UART_BW_MUL3  BIT(9)        // timeout is bit_width*3
+#define  FLD_UART_BW_MUL4  BIT_RNG(8,9)  // timeout is bit_width*4
+
+
+#define reg_uart_status0       REG_ADDR8(0x9d)
+enum{
+	FLD_UART_IRQ_FLAG  =  BIT(3),
+	FLD_UART_RX_ERR_CLR=  BIT(6),
+	FLD_UART_RX_ERR_FLAG= BIT(7),
+};
+#define reg_uart_status1       REG_ADDR8(0x9e)
+enum{
+	FLD_UART_TX_DONE   =  BIT(0),
 };
 
 /****************************************************
@@ -914,7 +948,7 @@ enum{
  dma mac regs struct: begin  addr : 0x500
  *****************************************************/
 #define reg_dma0_addr			REG_ADDR16(0x500)
-#define reg_dma0_ctrl			REG_ADDR16(0x502)
+#define reg_dma0_ctrl           REG_ADDR16(0x502)
 #define reg_dma1_addr			REG_ADDR16(0x504)
 #define reg_dma1_ctrl			REG_ADDR16(0x506)
 #define reg_dma2_addr			REG_ADDR16(0x508)
@@ -1127,37 +1161,36 @@ enum{
 #define reg_gpio_config_func REG_ADDR32(0x5b0)
 #define reg_gpio_config_func0 REG_ADDR8(0x5b0)
 enum{
-	FLD_I2S_REFCLK_DMIC	=	BIT(0),
-	FLD_I2S_BCK_BB_PEAK	=	BIT(1),
-	FLD_I2S_BCK_PWM1	=	BIT(2),
-	FLD_I2S_LCK_UART_RX	=	BIT(3),
-	FLD_I2S_LCK_PWM2	=	BIT(4),
-	FLD_I2S_DO_UART_TX	=	BIT(5),
-	FLD_I2S_DO_PWM3		=	BIT(6),
-	FLD_I2S_DI_DMIC		=	BIT(7),
+	FLD_DMIC_DI_PWM0    =   BIT(0),
+	FLD_SPI_DO_PWM0_N   =   BIT(2),
+	FLD_SPI_DI_PWM1     =   BIT(3),
+	FLD_SPI_CK_PWM1_N   =   BIT(4),
+	FLD_SPI_CN_PWM2_N   =   BIT(5),
+	FLD_NULL_UART_TX    =   BIT(6),
+	FLD_UART_RX_SWM     =   BIT(7),
 };
+
 #define reg_gpio_config_func1 REG_ADDR8(0x5b1)
 enum{
-	FLD_RP_TX_CYC1		=	BIT(0),
-	FLD_RN_BB_RSSI		=	BIT(1),
-	FLD_GP6_BB_SS2		=	BIT(2),
-	FLD_GP7_RXADC_CLK	=	BIT(3),
-	FLD_RP_T0			=	BIT(4),
-	FLD_RN_T1			=	BIT(5),
-	FLD_GP6_TE			=	BIT(6),
-	FLD_GP7_MDC			=	BIT(7),
+	FLD_PWM2_SWS        =   BIT(0),
+	FLD_UART_TX_PWM3    =   BIT(2),
+	FLD_UART_RX_PWM3N   =   BIT(3),
+	FLD_SPI_CN_PWM4     =   BIT(4),
+	FLD_SPI_DO_PWM4N    =   BIT(5),
+	FLD_SPI_DI_PWM5     =   BIT(6),
+	FLD_SPI_CK_PWM5N    =   BIT(7),
 };
-#define reg_gpio_config_func2 REG_ADDR8(0x5b2)
+
+#define reg_gpio_config_func2  REG_ADDR8(0x5b2)
 enum{
-	FLD_GP8_RXADC_DAT	=	BIT(0),
-	FLD_GP9_BB_SS1		=	BIT(1),
-	FLD_GP10_BBSS0		=	BIT(2),
-	FLD_SWS_BB_GAIN4	=	BIT(3),
-	FLD_DMIC_CK_BBCLK_BB	=	BIT(4),
-	FLD_DMIC_CK_REFCLK	=	BIT(5),
-	FLD_UART_TX			=	BIT(6),
-	FLD_UART_RX			=	BIT(7),
+	FLD_I2C_DI_PWM0     =   BIT(0),
+	FLD_I2C_CK_PWM1     =   BIT(1),
+	FLD_UART_TX_PWM2    =   BIT(2),
+	FLD_UART_RX_PWM3    =   BIT(3),
+	FLD_UART_RTS_PWM4   =   BIT(4),
+	FLD_UART_CTS_PWM5   =   BIT(5),
 };
+
 #define reg_gpio_config_func3 REG_ADDR8(0x5b3)
 enum{
 	FLD_CN_BB_GAIN3		=	BIT(0),
@@ -1459,7 +1492,7 @@ static inline u16 config_sdm (u32 adr, int size, int sample_rate, int sdm_fmhz) 
 static inline	void config_dmic (int sample_rate) {		//16K configuration
 	reg_clk_en2 |= FLD_CLK2_DIFIO_EN;
 	reg_gpio_pa_gpio &= ~(BIT(1) | BIT(0));		//dmic clk gpio off
-	reg_gpio_config_func |= FLD_I2S_REFCLK_DMIC;
+	reg_gpio_config_func |= FLD_DMIC_DI_PWM0;
 	reg_dmic_step = FLD_DMIC_CLK_EN | 1; //2;
 	reg_dmic_mod = 94 * 16000 / sample_rate;//188 * 16000 / sample_rate;					// dmic clock 192M (PLL) / 188 * 2 = 2M
 	reg_dfifo_ana_in = FLD_DFIFO_AUD_INPUT_MONO;
