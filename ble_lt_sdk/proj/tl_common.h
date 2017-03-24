@@ -27,6 +27,10 @@
 
 #include "drivers/flash.h"
 
+#if (PRINT_DEBUG_INFO)
+#include "../vendor/common/myprintf.h"
+#endif
+
 //#include "../ble/ble_globals.h"
 
 #ifdef WIN32
