@@ -87,6 +87,10 @@ enum{
 };
 
 #define reg_spi_inv_clk			REG_ADDR8(0x0b)
+enum{
+	FLD_INVERT_SPI_CLK =        BIT(1),
+	FLD_DAT_DLY_HALF_CLK =      BIT(2),
+};
 
 /****************************************************
  master spi regs struct: begin  addr : 0x0c
@@ -470,15 +474,41 @@ enum{
 	FLD_UART_CTS_I_SELECT =		BIT(8),
 	FLD_UART_CTS_EN = 			BIT(9),
 	FLD_UART_PARITY_EN =		BIT(10),
+    FLD_UART_PARITY_SEL =       BIT(11),
+    FLD_UART_STOP_BIT =         BIT_RNG(12,13),
+    FLD_UART_TTL =              BIT(14),
+    FLD_UART_LOOPBACK =         BIT(15),
 };
-#define reg_uart_ctrl1			REG_ADDR16(0x98)
+#define reg_uart_ctrl2			REG_ADDR16(0x98)
+enum {
+    FLD_UART_CTRL2_RTS_TRIG_LVL = BIT_RNG(0,3),
+    FLD_UART_CTRL2_RTS_PARITY = BIT(4),
+    FLD_UART_CTRL2_RTS_MANUAL_VAL = BIT(5),
+    FLD_UART_CTRL2_RTS_MANUAL_EN = BIT(6),
+    FLD_UART_CTRL2_RTS_EN = BIT(7),
+	FLD_UART_CTRL3_RX_IRQ_TRIG_LEVEL = BIT_RNG(8,11),
+	FLD_UART_CTRL3_TX_IRQ_TRIG_LEVEL = BIT_RNG(12,15),
+};
 
 #define reg_uart_rx_timeout		REG_ADDR16(0x9a)
 enum{
 	FLD_UART_TIMEOUT_BW = 		BIT_RNG(0,7),		//  timeout bit width
 	FLD_UART_TIMEOUT_MUL = 		BIT_RNG(8,15),
 };
-
+#define  FLD_UART_BW_MUL1  0             // timeout is bit_width*1
+#define  FLD_UART_BW_MUL2  BIT(8)        // timeout is bit_width*1
+#define  FLD_UART_BW_MUL3  BIT(9)        // timeout is bit_width*3
+#define  FLD_UART_BW_MUL4  BIT_RNG(8,9)  // timeout is bit_width*4
+#define reg_uart_status0       REG_ADDR8(0x9d)
+enum{
+	FLD_UART_IRQ_FLAG  =  BIT(3),
+	FLD_UART_RX_ERR_CLR=  BIT(6),
+	FLD_UART_RX_ERR_FLAG= BIT(7),
+};
+#define reg_uart_status1       REG_ADDR8(0x9e)
+enum{
+	FLD_UART_TX_DONE   =  BIT(0),
+};
 /****************************************************
  swire regs struct: begin  addr : 0xb0
  *****************************************************/
