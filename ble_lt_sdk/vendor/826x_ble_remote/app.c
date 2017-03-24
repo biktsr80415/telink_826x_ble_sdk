@@ -66,7 +66,7 @@ const led_cfg_t led_cfg[] = {
 	    {0,	      100 ,   0xff,	  0x02,  },    //audio off, long off
 	    {500,	  500 ,   2,	  0x04,	 },    //1Hz for 3 seconds
 	    {250,	  250 ,   4,	  0x04,  },    //2Hz for 3 seconds
-	    {125,	  125 ,   200,	  0x08,  },    //4Hz for 50 seconds
+	    {250,	  250 ,   200,	  0x08,  },    //2Hz for 50 seconds
 };
 
 
@@ -125,11 +125,41 @@ u8 		ota_is_working = 0;
 
 	static const u8 kb_map_ble[49] = 	KB_MAP_BLE;  //7*7
 	static const u8 kb_map_ir[49] = 	KB_MAP_IR;   //7*7
-
-2
 #endif
 
 
+
+#if (BLE_REMOTE_OTA_ENABLE)
+	void entry_ota_mode(void)
+	{
+		ota_is_working = 1;
+		device_led_setup(led_cfg[LED_SHINE_OTA]);
+		bls_ota_setTimeout(15 * 1000 * 1000); //set OTA timeout  15 seconds
+	}
+
+
+
+	void LED_show_ota_result(int result)
+	{
+	#if 0
+		irq_disable();
+		WATCHDOG_DISABLE;
+
+		gpio_set_output_en(GPIO_LED, 1);
+
+		if(result == OTA_SUCCESS){  //OTA success
+			gpio_write(GPIO_LED, 1);
+			sleep_us(2000000);  //led on for 2 second
+			gpio_write(GPIO_LED, 0);
+		}
+		else{  //OTA fail
+
+		}
+
+		gpio_set_output_en(GPIO_LED, 0);
+	#endif
+	}
+#endif
 
 #if (BLE_AUDIO_ENABLE)
 	u32 	key_voice_pressTick = 0;
@@ -458,7 +488,8 @@ void key_change_proc(void)
 
 
 
-_attribute_ram_code_ void proc_keyboard (u8 e, u8 *p, int n)
+//_attribute_ram_code_
+void proc_keyboard (u8 e, u8 *p, int n)
 {
 
 	static u32 keyScanTick = 0;
@@ -492,7 +523,8 @@ extern u32	scan_pin_need;
 
 int AA_dbg_deep;
 
-_attribute_ram_code_ void blt_pm_proc(void)
+//_attribute_ram_code_
+void blt_pm_proc(void)
 {
 #if(BLE_REMOTE_PM_ENABLE)
 	if(ui_mic_enable)
@@ -699,6 +731,11 @@ void user_init()
 	////////////////LED initialization /////////////////////////
 	device_led_init(GPIO_LED, 1);
 
+#if (BLE_REMOTE_OTA_ENABLE)
+	////////////////// OTA relative ////////////////////////
+	bls_ota_registerStartCmdCb(entry_ota_mode);
+	bls_ota_registerResultIndicateCb(LED_show_ota_result);
+#endif
 
 
 #if (REMOTE_IR_ENABLE)

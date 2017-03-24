@@ -105,8 +105,7 @@ _attribute_ram_code_ int main (void) {
 	}
 
 
-
-	for (int i=0; i<n_firmware; i+=256)
+	for (int i=4096; i<n_firmware; i+=256)
 	{
 		if ((i & 0xfff) == 0)  //new sector begin Addr, need erase
 		{
@@ -130,6 +129,32 @@ _attribute_ram_code_ int main (void) {
 		}
 
 	}
+
+
+	for (int i=0; i<4096; i+=256)   //first 4K
+	{
+		if ((i & 0xfff) == 0)  //new sector begin Addr, need erase
+		{
+			flash_erase_sector (i);
+		}
+
+		flash_read_page (NEW_FW_ADR + i, 256, buff);  //read data  from 0x20000 ~ 0x30000
+		flash_write_page (i, 256, buff);			  //write data  to  0x00000 ~ 0x10000
+		flash_read_page (i, 256, check_buff);		  //read data to check if write OK
+		for(int j=0;j<256;j++){
+			if(buff[j] != check_buff[j]){  //write data not OK
+
+				#if(DBG_LED_IND)  //for debug : indicate that flash write ERR happens
+					LED_HIGH;
+				#endif
+
+				i &= 0xfff000; //back to sector begin adr, to rewrite
+				i -= 256;
+				break;
+			}
+		}
+	}
+
 
 
 	for (int i=0; i<n_firmware; i+=256)  //erase data on flash 0x20000~0x30000 for next OTA
