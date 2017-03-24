@@ -386,7 +386,7 @@ void uart_io_init(unsigned char uart_io_sel){
 #endif
 }
 
-#if(MCU_CORE_TYPE == MCU_CORE_8267)
+#if 0// (MCU_CORE_TYPE == MCU_CORE_8267)
 /**
  * @brief UART hardware flow control configuration. Configure RTS pin.
  * @param[in]   enable: enable or disable RTS function.
