@@ -6,10 +6,16 @@
  *				Mainly designed for Telink BLT stack debug usages. It supports %x and %d format string
  *				specifiers only. One can easily extend mini_printf.c for additional format strings
  */
-
+#include <stdarg.h>
 #include "../../proj/tl_common.h"  
 #include "myprintf.h"
 #if(PRINT_DEBUG_INFO)
+
+#define			DECIMAL_OUTPUT		10
+#define			OCTAL_OUTPUT		8
+#define			HEX_OUTPUT			16
+
+
 #define va_start(ap,v)    (ap = (char *)((int)&v + sizeof(v)))
 #define va_arg(ap,t)      ((t *)(ap += sizeof(t)))[-1]
 
@@ -53,106 +59,73 @@ _attribute_ram_code_ static void uart_put_char(u8 byte){
 	}
 	//irq_restore(r);
 }
-void printb(unsigned char byte)
-{
-	unsigned char half_byte_high = byte >> 4;
-	unsigned char half_byte_low = byte & 0x0f;
 
-	if (half_byte_high > 9) {                                       //if high-half-byte is 10/11/12/13/14/15 
-        half_byte_high += 'W';                                      //10+'W'='a'/11+'W'='b'/.../15+'W'='f'
+static int puts(char *s){
+	while((*s != '\0')){
+		uart_put_char(*s++);
 	}
-	else {
-		half_byte_high += '0';
-	}
-	uart_put_char(half_byte_high);
-
-	if (half_byte_low > 9) {                                       //if high-half-byte is 10/11/12/13/14/15 
-        half_byte_low += 'W';                                      //10+'W'='a'/11+'W'='b'/.../15+'W'='f'
-	}
-	else {
-		half_byte_low += '0';
-	}
-	uart_put_char(half_byte_low);
 }
 
-static void sysPutNumber(int n, int len)
-{
-    int len_adj = (len > 4 || len < 1) ? 4 : len;
-    int i = 0;
-    int tmp = n;
+static void puti(int num, int base){
+	char re[]="0123456789ABCDEF";
 
-    for (i = len_adj - 1; i >= 0; i--) {
-        tmp = n >> (i*8);
-        printb(tmp);
-    }
+	char buf[50];
+
+	char *addr = &buf[49];
+
+	*addr = '\0';
+
+	do{
+		*--addr = re[num%base];
+		num/=base;
+	}while(num!=0);
+
+	puts(addr);
 }
 
-static char *FormatItem(char *f, int n)
-{
-    char ch;
-    int fieldwidth = 0;
-    int flag = 0;
 
-    while (ch = *f++) {
-        if ((ch >= '0') && (ch <= '9')) {
-            fieldwidth = (fieldwidth * 10) + (ch - '0');
-        }
-        else {
-        	switch (ch) {
-        		case 'x': 
-        		    //this case is the same as follow
-        		case 'X':
-                    flag = 16;
-                    break;
-                default:
-                    flag = -1;
-                    uart_put_char('*');
-                    break;
-        	}
-        }
-        if (flag != 0) {
-            break;
-        }
-    }
-    sysPutNumber(n, fieldwidth);
-    return f;   
-}
-u8 enter_critical_section = 0; //filter function re-enter problem
-void mini_printf(const char *format, ...)
-{
-	if(!enter_critical_section){
-		enter_critical_section = 1;
-		const char *pcStr = format;
-		char *args = 0;
+int Tl_printf(const char *format, ...){
 
-		const char *s = 0;
+	char span;
+	unsigned long j;
+	char *s;
+	//char *msg;
+	va_list arg_ptr;
+	va_start(arg_ptr, format);
 
-		va_start(args,format);
-
-		while(*pcStr) {
-			if (*pcStr == '%') {
-				if ((*(pcStr+1) == 's') || (*(pcStr+1) == 'S')) {
-					s = va_arg(args, const char *);
-					for(; *s; s++)
-						uart_put_char(*s);
-					pcStr += 2;
+	while((span = *(format++))){
+		if(span != '%'){
+			uart_put_char(span);
+		}else{
+			span = *(format++);
+			if(span == 'c'){
+				j = va_arg(arg_ptr,int);//get value of char
+				uart_put_char(j);
+			}else if(span == 'd'){
+				j = va_arg(arg_ptr,int);//get value of char
+				if(j<0){
+					uart_put_char('-');
+					j = -j;
 				}
-				else {
-					pcStr = FormatItem(pcStr + 1, va_arg(args, int));
-				}
-			}
-			else {
-				uart_put_char(*pcStr++);
+				puti(j,DECIMAL_OUTPUT);
+			}else if(span == 's'){
+				s = va_arg(arg_ptr,char *);//get string value
+				puts(s);
+			}else if(span == 'o'){
+				j = va_arg(arg_ptr,unsigned int);//get octal value
+				puti(j,OCTAL_OUTPUT);
+			}else if(span == 'x'){
+					j = va_arg(arg_ptr,unsigned int);//get hex value
+					puti(j,HEX_OUTPUT);
+			}else if(span == 0){
+				break;
+			}else{
+				uart_put_char(span);
 			}
 		}
-		enter_critical_section = 0;
+
 	}
+	va_end(arg_ptr);
 }
 
-void array_printf(u8*data, u8 len){
-     for(int i=0; i<len; i++){
-         uart_put_char(data[i]);
-     }
-
-}
 #endif
