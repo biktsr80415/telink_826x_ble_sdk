@@ -340,7 +340,7 @@ void main_loop ()
 }
 
 ///////////////////////////////////////////
-#define	CLK32M_UART115200		uart_Init(19,13,1,1)
+//#define	CLK32M_UART115200		uart_Init(19,13,1,1)
 
 void user_init()
 {

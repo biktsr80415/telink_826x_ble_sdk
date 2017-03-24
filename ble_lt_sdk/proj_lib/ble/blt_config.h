@@ -4,7 +4,7 @@
 /**
  *  @brief  Definition for Device info
  */
-
+#include "../../proj/mcu/analog.h"
 #define  MAX_DEV_NAME_LEN 				18
 
 #ifndef DEV_NAME

@@ -164,12 +164,14 @@ void uart_DmaModeInit(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn)
 	//3.config dma irq
 	if(dmaTxIrqEn){
 		reg_dma_chn_irq_msk |= FLD_DMA_UART_RX;    //enable uart rx dma interrupt
+		reg_irq_mask |= FLD_IRQ_DMA_EN;
 	}else{
 		reg_dma_chn_irq_msk &= (~FLD_DMA_UART_RX); //disable uart rx dma interrupt
 	}
 
 	if(dmaRxIrqEn){
 		reg_dma_chn_irq_msk |= FLD_DMA_UART_TX;    //enable uart tx dma interrupt
+		reg_irq_mask |= FLD_IRQ_DMA_EN;
 	}else{
 		reg_dma_chn_irq_msk &= (~FLD_DMA_UART_TX); //disable uart tx dma interrupt
 	}
