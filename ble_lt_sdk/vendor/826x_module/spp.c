@@ -220,7 +220,7 @@ int bls_uart_handler (u8 *p, int n)
 	{
 
 	}
-	//change format to 1c ff 07 00 0d 00 01 02 03 04 05
+	//change format to 1c ff 07 00 11 00 01 02 03 04 05
 	else if (cmd == SPP_CMD_SEND_NOTIFY_DATA)
 	{
 		if (cmdLen > 22)
