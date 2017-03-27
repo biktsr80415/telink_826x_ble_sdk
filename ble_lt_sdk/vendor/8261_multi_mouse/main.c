@@ -5,7 +5,7 @@
 #include "../../vendor/common/user_config.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 
 #include "../link_layer/rf_ll.h"
 
@@ -55,7 +55,7 @@ _attribute_ram_code_ void irq_handler(void)
 
     }
     else{
-    	irq_blt_slave_handler ();
+    	irq_blt_sdk_handler ();
     }
 
 
@@ -73,21 +73,15 @@ int main (void) {
 
 	gpio_init();
 
-	write_reg8(0x01,0x11);
 	deep_wakeup_proc();
 
 	SysMode = (analog_read(DEEP_ANA_REG1) & 0xf0) >> 4;
 
-	write_reg8(0x01, 0x22);
-
 	rf_drv_init( SysMode == RF_2M_2P4G_MODE ? XTAL_12M_RF_2m_MODE : XTAL_12M_RF_1m_MODE);
-	write_reg8(0x01, 0x33);
+
 	user_init ();
 
-	write_reg8(0x01, 0x44);
     irq_enable();
-
-    write_reg8(0x01,0x55);
 
 	while (1) {
 #if (MODULE_WATCHDOG_ENABLE)

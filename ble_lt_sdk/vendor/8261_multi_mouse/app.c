@@ -1,8 +1,8 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll.h"
+#include "../../proj_lib/ble/ll/ll_whitelist.h"
 #include "../../proj/drivers/keyboard.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
@@ -437,7 +437,7 @@ void proc_mouse(u8 e, u8 *p, int n)
 
 	//clear x,y
 
-	ble_swith_time_thresh = (bls_ll_getCurrentState() == BLS_LINK_STATE_ADV) ? BLE_ADV_MODE_SWITCH_CNT  : BLE_CON_MODE_SWITCH_CNT;
+	ble_swith_time_thresh = (blc_ll_getCurrentState() == BLS_LINK_STATE_ADV) ? BLE_ADV_MODE_SWITCH_CNT  : BLE_CON_MODE_SWITCH_CNT;
 
 	gpio_write(mouse_status.hw_define->sensor_int, 1);
 	static u32 ValueChange = 0;
@@ -575,7 +575,7 @@ void blt_pm_proc(void)
 		}
 
 		//adv 60s, deepsleep
-		if( bls_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
+		if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
 			clock_time_exceed(advertise_begin_tick , 60 * 1000000)){
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
@@ -587,7 +587,7 @@ void blt_pm_proc(void)
 		    mouse_sensor_sleep_wakeup( &mouse_status.mouse_sensor, &mouse_sleep.sensor_sleep, 0 );
 		}
 		//conn 60s no event(key/voice/led), enter deepsleep
-		else if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
+		else if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
 				clock_time_exceed(latest_user_event_tick, 60 * 1000000) ){
 
 			bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
@@ -611,7 +611,7 @@ void blt_pm_proc(void)
 
 _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
-	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
+	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
 	}
 }
@@ -685,6 +685,157 @@ int tx_to_uart_cb()
 /** BLe mode **/
 void ble_user_init()
 {
+
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
+	gpio_set_func(M_HW_BTN_CPI, AS_GPIO);
+
+////////////////// BLE stack initialization ////////////////////////////////////
+	u32 *pmac = (u32 *) CFG_ADR_MAC;
+	if (*pmac != 0xffffffff)
+	{
+		memcpy (tbl_mac, pmac, 6);
+	}
+	else{
+		tbl_mac[0] = (u8)rand();
+		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
+	}
+
+
+///////////// BLE stack Initialization ////////////////
+////// Controller Initialization  //////////
+	blc_ll_initBasicMCU(tbl_mac);   //mandatory
+
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
+	blc_ll_initPowerManagement_module();        //pm module:      	 optional
+
+
+
+////// Host Initialization  //////////
+	extern void my_att_init ();
+	my_att_init (); //gatt initialization
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
+	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER ); 	//smp initialization
+
+
+//HID_service_on_android7p0_init();  //hid device on android 7.0
+
+///////////////////// USER application initialization ///////////////////
+	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
+	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
+
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
+								 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
+								 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
+	if(status != BLE_SUCCESS){  //adv setting err
+		write_reg8(0x8000, 0x11);  //debug
+		while(1);
+	}
+	bls_ll_setAdvEnable(1);  //adv enable
+	rf_set_power_level_index (RF_POWER_8dBm);
+
+//ble event call back
+	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
+	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
+
+
+#if(KEYSCAN_IRQ_TRIGGER_MODE)
+	reg_irq_src = FLD_IRQ_GPIO_EN;
+#endif
+
+	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_mouse);
+
+
+///////////////////// AUDIO initialization///////////////////
+#if (BLE_AUDIO_ENABLE)
+//buffer_mic set must before audio_init !!!
+	config_mic_buffer ((u32)buffer_mic, TL_MIC_BUFFER_SIZE);
+
+#if (BLE_DMIC_ENABLE)  //Dmic config
+	/////////////// DMIC: PA0-data, PA1-clk, PA3-power ctl
+	gpio_set_func(GPIO_PA0, AS_DMIC);
+	*(volatile unsigned char  *)0x8005b0 |= 0x01;  //PA0 as DMIC_DI
+	gpio_set_func(GPIO_PA1, AS_DMIC);
+
+	gpio_set_func(GPIO_PA3, AS_GPIO);
+	gpio_set_input_en(GPIO_PA3, 1);
+	gpio_set_output_en(GPIO_PA3, 1);
+	gpio_write(GPIO_PA3, 0);
+
+	Audio_Init(1, 0, DMIC, 26, 4, R64|0x10);  //16K
+	Audio_InputSet(1);
+#else  //Amic config
+	//////////////// AMIC: PC3 - bias; PC4/PC5 - input
+	#if TL_MIC_32K_FIR_16K
+		#if (CLOCK_SYS_CLOCK_HZ == 16000000)
+			Audio_Init( 1, 0, AMIC, 47, 4, R2|0x10);
+		#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
+			Audio_Init( 1,0, AMIC,30,16,R2|0x10);
+		#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
+			Audio_Init( 1, 0, AMIC, 65, 15, R3|0x10);
+		#endif
+	#else
+		#if (CLOCK_SYS_CLOCK_HZ == 16000000)
+			Audio_Init( 1,0, AMIC,18,8,R5|0x10);
+		#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
+			Audio_Init( 1,0, AMIC,65,15,R3|0x10);
+		#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
+			Audio_Init( 1,0, AMIC,65,15,R6|0x10);
+		#endif
+	#endif
+#endif
+
+Audio_FineTuneSampleRate(3);//reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
+Audio_InputSet(1);//audio input set, ignore the input parameter
+#endif
+	adc_BatteryCheckInit(2);///add by Q.W
+
+
+
+
+
+	///////////////////// Power Management initialization///////////////////
+#if(BLE_REMOTE_PM_ENABLE)
+	blc_ll_initPowerManagement_module();
+	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &ble_remote_set_sleep_wakeup);
+#else
+	bls_pm_setSuspendMask (SUSPEND_DISABLE);
+#endif
+
+
+////////////////LED initialization /////////////////////////
+	device_led_init(GPIO_LED, 1);
+
+#if (BLE_REMOTE_OTA_ENABLE)
+////////////////// OTA relative ////////////////////////
+	bls_ota_registerStartCmdCb(entry_ota_mode);
+	bls_ota_registerResultIndicateCb(LED_show_ota_result);
+#endif
+
+//////////////// TEST  /////////////////////////
+#if (USER_TEST_BLT_SOFT_TIMER)
+	blt_soft_timer_init();
+	blt_soft_timer_add(&gpio_test0, 23000);
+	blt_soft_timer_add(&gpio_test1, 7000);
+	blt_soft_timer_add(&gpio_test2, 13000);
+	blt_soft_timer_add(&gpio_test3, 27000);
+#endif
+
+
+advertise_begin_tick = clock_time();
+
+
+
+
+
+
+
+
+
+
+
+#if 0
 	rf_customized_param_load();  //load customized freq_offset cap value and tp value
 
 	//for USB debug
@@ -706,7 +857,7 @@ void ble_user_init()
 	}
 
 
-	bls_ll_init (tbl_mac);  	//link layer initialization
+	blc_ll_initBasicMCU(tbl_mac);  	//link layer initialization
 	extern void my_att_init ();
 	my_att_init (); //gatt initialization
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
@@ -824,6 +975,8 @@ void ble_user_init()
 
 	//mark adv begin time
 	advertise_begin_tick = clock_time();
+
+#endif
 }
 
 void user_init(){
@@ -878,8 +1031,6 @@ void user_init(){
 /////////////////////////////////////////////////////////////////////
 u32 tick_loop;
 unsigned short battValue[20];
-extern int putchar();
-extern u8	blt_slave_main_loop (void);
 
 void main_loop ()
 {
@@ -901,7 +1052,7 @@ void main_loop ()
 			blt_soft_timer_process(MAINLOOP_ENTRY);
 		#endif
 
-		blt_slave_main_loop ();
+		blt_sdk_main_loop();;
 
 		////////////////////////////////////// UI entry /////////////////////////////////
 		#if (BLE_AUDIO_ENABLE)
@@ -922,7 +1073,7 @@ void main_loop ()
 #endif
 }
 
-
+//ble_remote_set_sleep_wakeup
 
 
 
