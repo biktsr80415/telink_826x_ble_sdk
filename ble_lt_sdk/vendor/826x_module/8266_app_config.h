@@ -23,6 +23,14 @@ extern "C" {
 #define BLE_MODULE_APPLICATION_ENABLE		1
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
 
+/////////////////// led pin /////////////////////////////////
+#define RED_LED                             GPIO_PA5
+#define WHITE_LED     						GPIO_PB0
+#define GREEN_LED    		    			GPIO_PA1
+#define BLUE_LED                			GPIO_PA6
+#define ON            						1
+#define OFF           						0
+
 /////////////////// PRINT DEBUG INFO ///////////////////////
 /* 826x module's pin simulate as a uart tx, Just for debugging */
 #define PRINT_DEBUG_INFO                    0//open/close myprintf

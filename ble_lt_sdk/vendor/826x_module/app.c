@@ -86,6 +86,20 @@ void	task_connect (void)
 	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
 }
 
+void led_init(void)
+{
+#if 0
+	gpio_set_func(RED_LED, AS_GPIO);
+	gpio_set_input_en(RED_LED,0);
+	gpio_set_output_en(RED_LED,1);
+	gpio_write(RED_LED, ON);
+
+//	gpio_set_func(GREEN_LED, AS_GPIO);
+//	gpio_set_input_en(GREEN_LED,0);
+//	gpio_set_output_en(GREEN_LED,1);
+//	gpio_write(GREEN_LED,ON);
+#endif
+}
 
 u32 tick_wakeup;
 int	mcu_uart_working;
@@ -174,6 +188,7 @@ void user_init()
 	usb_log_init ();
 	usb_dp_pullup_en (1);  //open USB enum
 
+	led_init();
 
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff)

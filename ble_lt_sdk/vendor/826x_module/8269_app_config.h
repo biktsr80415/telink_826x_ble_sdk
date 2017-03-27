@@ -21,6 +21,14 @@ extern "C" {
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 
+/////////////////// led pin /////////////////////////////////
+#define RED_LED                             GPIO_PD5
+#define WHITE_LED     						GPIO_PD6
+#define GREEN_LED    		    			GPIO_PD7
+#define BLUE_LED                			GPIO_PB4
+#define ON            						1
+#define OFF           						0
+
 /////////////////// PRINT DEBUG INFO ///////////////////////
 /* 826x module's pin simulate as a uart tx, Just for debugging */
 #define PRINT_DEBUG_INFO                    0//open/close myprintf

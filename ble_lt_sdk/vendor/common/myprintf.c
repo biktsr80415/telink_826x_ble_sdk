@@ -84,7 +84,7 @@ static void puti(int num, int base){
 }
 
 
-int Tl_printf(const char *format, ...){
+int mini_printf(const char *format, ...){
 
 	char span;
 	unsigned long j;

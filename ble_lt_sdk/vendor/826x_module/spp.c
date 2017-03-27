@@ -130,7 +130,7 @@ int bls_uart_handler (u8 *p, int n)
 		para[0] = status;
 	}
 	// send data: 0b ff 05 00  01 02 03 04 05
-	//change format to ob ff 07 handle(2bytes) 00 01 02 03 04 05
+	//change format to 0b ff 07 handle(2bytes) 00 01 02 03 04 05
 	else if (cmd == 0xFF0B)
 	{
 
@@ -223,7 +223,7 @@ int bls_uart_handler (u8 *p, int n)
 	//change format to 1c ff 07 00 11 00 01 02 03 04 05
 	else if (cmd == SPP_CMD_SEND_NOTIFY_DATA)
 	{
-		if (cmdLen > 22)
+		if (cmdLen > 42)
 		{
 			status = 2;			//data too long
 		}

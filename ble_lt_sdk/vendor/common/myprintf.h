@@ -4,20 +4,20 @@
 #if (PRINT_DEBUG_INFO)
 
 void my_array_printf(char*data, int len);
-int Tl_printf(const char *format, ...);
+int mini_printf(const char *format, ...);
 
-#define printf			Tl_printf
+#define printf			mini_printf
 #define	printfArray		arrayPrint
-//#define	logPrint		Tl_printf
+//#define	logPrint		mini_printf
 //#define	logPrintArray	arrayPrint
 #define	arrayPrint(arrayAddr,len)					\
 {													\
-	Tl_printf("\n*********************************\n");		\
+	mini_printf("\n*********************************\n");		\
 	unsigned char	i = 0;							\
 	do{												\
-		Tl_printf(" %x",((unsigned char *)arrayAddr)[i++]);						\
+		mini_printf(" %x",((unsigned char *)arrayAddr)[i++]);						\
 	}while(i<len);										\
-	Tl_printf("\n*********************************\n");		\
+	mini_printf("\n*********************************\n");		\
 }
 #else
 #define printf
