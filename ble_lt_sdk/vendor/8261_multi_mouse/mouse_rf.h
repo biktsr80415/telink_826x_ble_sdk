@@ -17,7 +17,7 @@
 #define RF_MODE_DATA		4
 //#define RF_MODE_LOSE_SYNC	0x10
 
-#define M_RF_SYNC_PKT_TH_NUM  2000				//2s
+#define M_RF_SYNC_PKT_TH_NUM  200				//2s
 #define M_RF_SYNC_PKT_TX_NUM  ( (M_RF_SYNC_PKT_TH_NUM << 1) + M_RF_SYNC_PKT_TH_NUM )
 
 extern u8* mouse_rf_pkt;

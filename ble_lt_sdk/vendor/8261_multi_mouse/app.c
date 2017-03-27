@@ -1,7 +1,8 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ll/ll.h"
+#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll_whitelist.h"
 #include "../../proj/drivers/keyboard.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
@@ -15,6 +16,9 @@
 #include "../../proj_lib/ble/ble_smp.h"
 
 #include "../../proj/drivers/uart.h"
+#include "../../proj/mcu/putchar.h"
+#include "../../proj/common/printf.h"
+
 
 //#include "mouse_button.h"
 
@@ -102,57 +106,20 @@ enum{
 };
 
 const led_cfg_t led_cpi[] = {
-		{500, 	500, 	1, 		0x04},
-		{500, 	500, 	2, 		0x04},
-		{500, 	500, 	3, 		0x04},
+		{250, 	250, 	1, 		0x04},
+		{250, 	250, 	2, 		0x04},
+		{250, 	250, 	3, 		0x04},
 };
 
 const led_cfg_t led_cfg[] = {
-	    {1000,    0,      1,      0x00,	 },    //power-on, 1s on
+	    {100,     0,      1,      0x00,	 },    //power-on, 1s on
 	    {100,	  0 ,	  0xff,	  0x02,  },    //audio on, long on
 	    {0,	      100 ,   0xff,	  0x02,  },    //audio off, long off
 	    {500,	  500 ,   3,	  0x04,	 },    //1Hz for 3 seconds
 	    {250,	  250 ,   6,	  0x04,  },    //2Hz for 3 seconds
 	    {125,	  125 ,   200,	  0x08,  },    //4Hz for 50 seconds
+	    {250,	  250,    2,      0x08,  },
 };
-
-
-/**
- * @brief     config the irq of uart tx and rx
- * @param[in] rx_irq_en - 1:enable rx irq. 0:disable rx irq
- * @param[in] tx_irq_en - 1:enable tx irq. 0:disable tx irq
- * @return    none
- */
-void UART_NDmaIrqInit(unsigned char rx_irq_en,unsigned char tx_irq_en)
-{
-	if(rx_irq_en){
-		REG_ADDR8(0x96) |= FLD_UART_RX_IRQ_EN;
-	}else{
-		REG_ADDR8(0x96) &= (~FLD_UART_RX_IRQ_EN);
-	}
-
-	if(tx_irq_en){
-		REG_ADDR8(0x96)|= FLD_UART_TX_IRQ_EN;
-	}else{
-		REG_ADDR8(0x96) &= (~FLD_UART_TX_IRQ_EN);
-	}
-	//REG_IRQ_MASK |= FLD_IRQ_UART_EN;
-}
-
-/**
- * @brief     config the number level setting the irq bit of status register 0x9d
- *            ie 0x9d[3].
- *            If the cnt register value(0x9c[0,3]) larger or equal than the value of 0x99[0,3]
- *            or the cnt register value(0x9c[4,7]) less or equal than the value of 0x99[4,7],
- *            it will set the irq bit of status register 0x9d, ie 0x9d[3]
- * @param[in] rx_level - receive level value. ie 0x99[0,3]
- * @param[in] tx_level - transmit level value.ie 0x99[4,7]
- * @return    none
- */
-void UART_NDmaIrqTrigLevel(unsigned char rx_level, unsigned char tx_level)
-{
-	REG_ADDR8(0x99) = rx_level | (tx_level<<4);
-}
 
 
 u32	advertise_begin_tick;
@@ -470,7 +437,7 @@ void proc_mouse(u8 e, u8 *p, int n)
 
 	//clear x,y
 
-	ble_swith_time_thresh = (blc_ll_getCurrentState() == BLS_LINK_STATE_ADV) ? BLE_ADV_MODE_SWITCH_CNT  : BLE_CON_MODE_SWITCH_CNT;
+	ble_swith_time_thresh = (bls_ll_getCurrentState() == BLS_LINK_STATE_ADV) ? BLE_ADV_MODE_SWITCH_CNT  : BLE_CON_MODE_SWITCH_CNT;
 
 	gpio_write(mouse_status.hw_define->sensor_int, 1);
 	static u32 ValueChange = 0;
@@ -499,8 +466,7 @@ void proc_mouse(u8 e, u8 *p, int n)
 #endif
 
 	//start to switch mode to 2.4G, then release button
-	if(switch_mode_start_flg ){
-
+	if(switch_mode_start_flg){
 		bls_att_pushNotifyData (HID_HANDLE_MOUSE_REPORT, mouse_relsease_buff, 4);
 	}
 	else{
@@ -609,7 +575,7 @@ void blt_pm_proc(void)
 		}
 
 		//adv 60s, deepsleep
-		if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
+		if( bls_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
 			clock_time_exceed(advertise_begin_tick , 60 * 1000000)){
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
@@ -621,7 +587,7 @@ void blt_pm_proc(void)
 		    mouse_sensor_sleep_wakeup( &mouse_status.mouse_sensor, &mouse_sleep.sensor_sleep, 0 );
 		}
 		//conn 60s no event(key/voice/led), enter deepsleep
-		else if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
+		else if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
 				clock_time_exceed(latest_user_event_tick, 60 * 1000000) ){
 
 			bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
@@ -645,7 +611,7 @@ void blt_pm_proc(void)
 
 _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
-	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
+	if( bls_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
 	}
 }
@@ -725,7 +691,11 @@ void ble_user_init()
 	//usb_log_init ();
 	//usb_dp_pullup_en (1);  //open USB enum
 
+	gpio_set_func(M_HW_BTN_CPI, AS_GPIO);
 
+
+
+	////////////////// BLE stack initialization ////////////////////////////////////
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff){
 		memcpy (tbl_mac, pmac, 6);
@@ -736,17 +706,7 @@ void ble_user_init()
 	}
 
 
-///////////// BLE stack Initialization ////////////////
-	////// Controller Initialization  //////////
-	blc_ll_initBasicMCU(tbl_mac);   //mandatory
-
-	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
-	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
-	blc_ll_initPowerManagement_module();        //pm module:      	 optional
-
-
-
-	////// Host Initialization  //////////
+	bls_ll_init (tbl_mac);  	//link layer initialization
 	extern void my_att_init ();
 	my_att_init (); //gatt initialization
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
@@ -868,9 +828,22 @@ void ble_user_init()
 
 void user_init(){
 
+#if(SIMULATE_UART_FUNC_EN)
+	gpio_set_output_en(UART_TX_PIN_SIM, 1);
+	gpio_set_input_en(UART_TX_PIN_SIM, 1);
+
+	gpio_write(UART_TX_PIN_SIM, 1);
+#else
+
+	gpio_set_output_en(GPIO_SWS, 0);
+	gpio_write(GPIO_SWS, 1);			//GPIO_SWS PULL UP
+
+#if(DEBUG_DIE_INFO_EN)
+    gpio_set_output_en(GPIO_PC2, 1);
+    gpio_write(GPIO_PC2, 0);
+#endif
 
 	mouse_hw_init();
-
 
 	if(SysMode == RF_2M_2P4G_MODE){
 		normal_user_init();
@@ -894,7 +867,7 @@ void user_init(){
 //		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler
 
 	blc_register_hci_handler(rx_from_uart_cb,tx_to_uart_cb);				//customized uart handler
-
+#endif
 
 #endif
 }
@@ -905,11 +878,19 @@ void user_init(){
 /////////////////////////////////////////////////////////////////////
 u32 tick_loop;
 unsigned short battValue[20];
-
+extern int putchar();
+extern u8	blt_slave_main_loop (void);
 
 void main_loop ()
 {
+
 	tick_loop ++;
+
+#if(SIMULATE_UART_FUNC_EN)
+	SHOW_DBG("This is Telink Ltd., co #%d\n", tick_loop);
+
+	sleep_us(500000);
+#else
 
 	if(SysMode == RF_2M_2P4G_MODE ){
 		mouse_main_loop();
@@ -920,8 +901,7 @@ void main_loop ()
 			blt_soft_timer_process(MAINLOOP_ENTRY);
 		#endif
 
-		blt_sdk_main_loop ();
-
+		blt_slave_main_loop ();
 
 		////////////////////////////////////// UI entry /////////////////////////////////
 		#if (BLE_AUDIO_ENABLE)
@@ -936,8 +916,10 @@ void main_loop ()
 		device_led_process();  //led management
 
 		blt_pm_proc();  //power management
+
 	}
 
+#endif
 }
 
 

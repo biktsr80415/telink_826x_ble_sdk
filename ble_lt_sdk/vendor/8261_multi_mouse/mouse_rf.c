@@ -259,7 +259,7 @@ _attribute_ram_code_ void mouse_rf_process(mouse_status_t *mouse_status)
     mouse_rf_send = (  M_DEVICE_PKT_ASK  || ( mouse_status->mouse_mode <= STATE_PAIRING ));
 	if ( mouse_rf_send ) {
 
-		if( device_send_packet(mouse_rf_pkt, 650, 0, 0) )
+		if( device_send_packet(mouse_rf_pkt, 650, 1, 0) )
 		{	//Send package re-try and Check ACK result
 			mouse_dat_sending = 0;						//km_data_send_ok
 			mouse_status->no_ack = 0;

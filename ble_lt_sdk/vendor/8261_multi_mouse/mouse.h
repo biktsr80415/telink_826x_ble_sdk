@@ -5,9 +5,6 @@
 extern "C" {
 #endif
 
-#ifndef MOUSE_CAVY_RAM
-#define MOUSE_CAVY_RAM				0
-#endif
 
 #ifndef MOUSE_DEEPSLEEP_EN
 #define MOUSE_DEEPSLEEP_EN			1
@@ -37,6 +34,10 @@ extern "C" {
 #define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known 
 
 #define MAX_MOUSE_BUTTON        6
+
+#define BASIC_SUSPEND_TIME		8
+#define LONG_SUSPEND_TIME		100
+
 
 #define		PKT_BUFF_SIZE		48
 

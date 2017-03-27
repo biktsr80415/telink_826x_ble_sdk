@@ -35,7 +35,7 @@ void mouse_button_init(mouse_hw_t *mouse_hw)
 		level = (mouse_hw->gpio_level_button[i] == U8_MAX);  //0xff：pullup   others:pulldown
 		gpio_btn_valid[i] =	level ? 0 : spec_pin;  //1:低有效  0:高有效
 		gpio_btn_all |= spec_pin;
-		gpio_setup_up_down_resistor(spec_pin, level );
+		//gpio_setup_up_down_resistor(spec_pin, level );		//已经10K上拉了
 #endif
 
 
@@ -163,14 +163,14 @@ extern u16 switch_mode_start_flg;
 extern led_cfg_t led_cfg[];
 extern led_cfg_t led_cpi[];
 static u8 test_mode_pending;
-
+#if 0
+_attribute_ram_code_
+#endif
 u32 mouse_button_process(mouse_status_t * mouse_status)
 {   
     u32 button = button_last;
     static u16 btn_lr_cnt = 0;
     static u16 thresh_cnt = 0;
-
-    static u16 btn_switch_mode = 0;
 
     thresh_cnt = (SysMode == RF_1M_BLE_MODE) ? ble_swith_time_thresh : _2P4G_MODE_SWITCH_CNT;
 
@@ -197,8 +197,10 @@ u32 mouse_button_process(mouse_status_t * mouse_status)
     	switch_mode_start_flg = 1;
     }
 
-	if(switch_mode_start_flg && !DEVICE_LED_BUSY){
+	if( (switch_mode_start_flg == 2) && !DEVICE_LED_BUSY){
+		irq_disable();
 		REG_ADDR8(0x6f) = 0x20;
+		while(1);
 	}
 
 
@@ -311,23 +313,34 @@ u32 mouse_button_detect(mouse_status_t  * mouse_status, u32 detect_level)
 
     if ( detect_level )
         return 0;
-    
+
+    static u8 btn_real;
 #if 0
     u32 debouce_len = (mouse_status->mouse_mode == STATE_POWERON) ? 0 : 3;
     btn_real = mouse_button_debounce( btn_cur, button_last, debouce_len );
 #endif
-    static u8 btn_real;
+
     btn_real = btn_cur;
 
     btn_cur = 0;
 
     //mask button event on power-on
-    static u8 btn_power_on_mask = 0x0;
+    static u8 btn_power_on_mask = 0xff;
     if ( !btn_real )
         btn_power_on_mask = 0xff;
-    
-    mouse_status->data->btn = btn_real & btn_power_on_mask;
 
+
+
+    if( switch_mode_start_flg == 1 ){
+    	switch_mode_start_flg = 2;
+    	mouse_status->data->btn = 0;
+    }
+    else{
+
+    	mouse_status->data->btn = btn_real & btn_power_on_mask;
+
+    }
+    
     btn_changed = (button_last != btn_real) ? 1 : 0;
 
     button_last = btn_real;

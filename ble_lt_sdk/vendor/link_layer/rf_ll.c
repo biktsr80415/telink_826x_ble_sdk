@@ -13,6 +13,7 @@
 //#include "../../proj_lib/blt_ll/trace.h"
 
 #include "../common/rf_frame.h"
+#include "../vendor/8261_multi_mouse/mouse.h"
 
 
 #include "rf_ll.h"
@@ -21,14 +22,14 @@ u8		chn_mask = 0x80;
 
 
 #ifndef			CHANNEL_SLOT_TIME
-#define			CHANNEL_SLOT_TIME			1000
+#define			CHANNEL_SLOT_TIME			8000
 #endif
 
 
 #define		PKT_BUFF_SIZE		64
 
-#define		LL_CHANNEL_SYNC_TH				1
-#define		LL_CHANNEL_SEARCH_TH			24
+#define		LL_CHANNEL_SYNC_TH				2
+#define		LL_CHANNEL_SEARCH_TH			60
 #define		LL_CHANNEL_SEARCH_FLAG			BIT(16)
 #define		LL_NEXT_CHANNEL(c)				((c + 6) & 14)
 
@@ -108,9 +109,9 @@ _attribute_ram_code_ void irq_device_rx(void)
 		if (rf_rx_process (raw_pkt) && ll_chn_tick != p->tick) {
 
 			ll_chn_tick = p->tick;			//sync time
-#if 0
+
 			device_sync = 1;
-#endif
+
 			device_ack_received = 1;
 			ll_chn_mask = p->chn;			//update channel
 			ll_chn_rx_tick = clock_time ();
@@ -127,9 +128,8 @@ _attribute_ram_code_ void irq_device_tx(void)
 {
 	tick_last_tx = clock_time ();
 	reg_rf_irq_status = FLD_RF_IRQ_TX;
+
 }
-
-
 
 extern rf_packet_pairing_t	pkt_pairing;
 task_when_rf_func p_task_when_rf = NULL;
@@ -137,9 +137,9 @@ task_when_rf_func p_task_when_rf = NULL;
 _attribute_ram_code_ int	device_send_packet (u8 * p, u32 timeout, int retry, int pairing_link)
 {
 	extern u32  cpu_wakup_last_tick;
-    while ( !clock_time_exceed (cpu_wakup_last_tick, 500) );    //delay to get stable pll clock
+    while ( !clock_time_exceed (cpu_wakup_last_tick, 1000) );    //delay to get stable pll clock
     
-	rf_power_enable (1);
+	//rf_power_enable (1);
 	static	u32 ack_miss_no;
 
 	device_ack_received = 0;
@@ -153,16 +153,32 @@ _attribute_ram_code_ int	device_send_packet (u8 * p, u32 timeout, int retry, int
 		rf_set_channel (device_channel, RF_CHN_TABLE);
 
 		u32 t = clock_time ();
-		rf_send_packet (p, 320, step - 1);
+#if 0
+		write_reg8  (0x800f00, 0x80);				// stop
+		write_reg8(0x8000, 0x11);
+		write_reg8  (0x800f14, step - 1 );				// number of retry
+		write_reg8(0x8000, 0x22);
+		write_reg16 (0x80050c, (u16)((u32)p));
+		write_reg8(0x8000, 0x33);
+		write_reg16 (0x800f0a, 350);
 
+		write_reg8(0x8000, 0x44);
+
+		write_reg16 (0x800f00, 0x3f83);
+		write_reg8(0x8000, 0x55);
+#else
+		rf_send_packet (p, 350, step - 1);
+#endif
 		reg_rf_irq_status = 0xffff;
-
 #if 1
         if ( DO_TASK_WHEN_RF_EN && p_task_when_rf != NULL) {
            (*p_task_when_rf) ();
            p_task_when_rf = NULL;
         }
+
 #endif
+
+
 		while (	!device_ack_received &&
 				!clock_time_exceed (t, timeout*step) &&
 				!(reg_rf_irq_status & (FLD_RF_IRX_RETRY_HIT | FLD_RF_IRX_CMD_DONE)) );
@@ -184,8 +200,7 @@ _attribute_ram_code_ int	device_send_packet (u8 * p, u32 timeout, int retry, int
 			device_channel = get_next_channel_with_mask (ll_chn_mask, device_channel);
 		}
 	}
-
-	rf_power_enable (0);
+	//rf_power_enable (0);
 
 #if 1
 	if (i <= retry) {

@@ -20,6 +20,40 @@ enum{
 #define UART_INIT_EN	0
 
 
+/** Setup printf tool use the uart to show the
+ * 	log information.
+ *
+ * 	UART_TX: Use one gpio to simulate the tx pin
+ *
+ * 	@param: BAUD RATE			//波特率
+ * 	@param: BAUD_INTERVAL		//间隔
+ *
+ *
+ *
+**/
+
+#define SIMULATE_UART_FUNC_EN	0
+
+#if(SIMULATE_UART_FUNC_EN)
+
+#define 	UART_BAUD_RATE_9600 	9600
+#define 	UART_BAUD_RATE_19200	19200
+#define 	UART_BAUD_RATE_38400	38400
+#define 	UART_BAUD_RATE_57600	57600
+
+
+#define	BAUD_RATE			UART_BAUD_RATE_19200
+#define BAUD_BIT_INTERVAL	( CLOCK_SYS_CLOCK_HZ/BAUD_RATE )
+#define UART_TX_PIN_SIM		GPIO_PB7
+#define	PB7_FUNC			AS_GPIO
+
+
+#define SHOW_FUNC_IN(msg, arg...) printf("> %s(%d): " msg "\n", __FUNCTION__,__LINE__, ##arg)
+#define SHOW_FUNC_OUT(msg, arg...) printf("< %s(%d): " msg "\n\n", __FUNCTION__,__LINE__, ##arg)
+#define SHOW_DBG(msg, arg...) printf("%s:%s(%d): " msg "\n", __FILE__, __FUNCTION__,__LINE__, ##arg)
+#endif
+
+
 /*************   CONFIG ADDRESS   ****************/
 
 #define 		CFG_ADDR_MAC			0x1f000
@@ -29,15 +63,18 @@ enum{
 
 #define			BLE_CON_MODE_SWITCH_CNT		400			//7.5ms * 400 = 3s
 #define 		BLE_ADV_MODE_SWITCH_CNT		100			//30ms * 100 = 3s
-#define			_2P4G_MODE_SWITCH_CNT		3000		//3s
+#define			_2P4G_MODE_SWITCH_CNT		370		//3s
 
 
 
 #define			MOUSE_OPTICAL_EN		1			//open mouse_sensor_pix.c
-#define			BLT_2P4_MOUSE_FUNC_EN	1			//Set up as 2.4G mouse
-
+#define			BLT_2P4_MOUSE_FUNC_EN	1
+//Set up as 2.4G mouse
 
 /*************   Mouse Module   ****************/
+
+#define			MOUSE_BUTTON_DEBOUNCE	3
+
 #define 		MOUSE_LED_MODULE_EN		1
 #define 		MOUSE_BTN_MODULE_EN		1
 #define 		MOUSE_WHEEL_MODULE_EN	1
@@ -72,22 +109,20 @@ enum{
 
 	#define PB6_INPUT_ENABLE		1		//SDIO, MUST SET
 
-
-
-
-	//#define PULL_WAKEUP_SRC_PA1		GPIO_PULL_UP_1M
-	//#define PULL_WAKEUP_SRC_PE2		GPIO_PULL_UP_1M
-	//#define PULL_WAKEUP_SRC_PE3		GPIO_PULL_UP_1M
+	#define PULL_WAKEUP_SRC_PA1		GPIO_PULL_UP_1M
+	#define PULL_WAKEUP_SRC_PE2		GPIO_PULL_UP_1M
+	#define PULL_WAKEUP_SRC_PE3		GPIO_PULL_UP_1M
 
 	//BUTTON FB BB CPI
-	//#define PULL_WAKEUP_SRC_PC4		GPIO_PULL_UP_10K
-	//#define PULL_WAKEUP_SRC_PC5		GPIO_PULL_UP_10K
-	//#define PULL_WAKEUP_SRC_PC3		GPIO_PULL_UP_10K
+	#define PULL_WAKEUP_SRC_PC4		GPIO_PULL_UP_10K
+	#define PULL_WAKEUP_SRC_PC5		GPIO_PULL_UP_10K
+	#define PULL_WAKEUP_SRC_PC3		GPIO_PULL_UP_10K					//PC2 - PC5使用1M上拉，进suspend后电压会掉下来
 
 	#define PULL_WAKEUP_SRC_PB1			GPIO_PULL_UP_1M
 	#define PULL_WAKEUP_SRC_PB6			GPIO_PULL_UP_1M
 //	#define PULL_WAKEUP_SRC_PC2			GPIO_PULL_UP_10K				//Motion Pin 1M　PULL UP
 
+#define DEBUG_DIE_INFO_EN		0
 
 #if(UART_INIT_EN)
 	#define PC2_FUNC	AS_UART
@@ -101,7 +136,6 @@ enum{
 #endif
 	#define PE2_FUNC	AS_GPIO
 	#define PE3_FUNC	AS_GPIO
-
 
 #endif
 

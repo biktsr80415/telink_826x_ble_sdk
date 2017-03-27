@@ -17,8 +17,6 @@
 
 void mouse_wheel_init(mouse_hw_t *mouse_hw);
 
-#if(CHIP_8366_A1)
-
 #define WHEEL_TWO_STEP_PROC   1
 
 static inline u32 mouse_wheel_prepare_tick( void ){
@@ -75,4 +73,3 @@ static inline void mouse_wheel_process(mouse_status_t  * mouse_status, u32 wheel
 
 void mouse_wheel_detect(mouse_status_t  * mouse_status);
 
-#endif /* MOUSE_WHEEL_H_ */

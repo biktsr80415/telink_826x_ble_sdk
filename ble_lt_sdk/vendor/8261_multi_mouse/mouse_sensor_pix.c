@@ -667,7 +667,7 @@ static inline void OPTSensor_surface_optimiz_3207( void ){
 // maybe should adjust the value based on the senario of mouse movement
 unsigned int debug_x, debug_y;
 
-
+extern mouse_sleep_t mouse_sleep;
 unsigned int OPTSensor_motion_report( signed char *pBuf, u32 no_overflow ){
 	static unsigned int optical_status = 0;
 	static unsigned int reg_x, reg_y;
@@ -682,7 +682,7 @@ unsigned int OPTSensor_motion_report( signed char *pBuf, u32 no_overflow ){
 
 	debug_no_over = no_overflow;
 	static u8 resync_cnt = 0;
-	if ( (resync_cnt++ & 0x1f) == 0 ){
+	if ( (resync_cnt++ & 0x1f) == 0 ||  mouse_sleep.mode == SLEEP_MODE_LONG_SUSPEND){
 		if (OPTSensor_resync (33)){
             return 0;
 		}
@@ -714,6 +714,8 @@ unsigned int OPTSensor_motion_report( signed char *pBuf, u32 no_overflow ){
 			if(optical_status & MOTION_STATUS_DYOVF)
 				reg_y = ((signed char)reg_y>=0)? 0x81:0x7f;   //y overflow, current<0,0x7f, current>0, 0xff
 		}
+		debug_x = reg_x;
+		debug_y = reg_y;
 
  		pBuf[0] = reg_x;
  		pBuf[1] = reg_y;

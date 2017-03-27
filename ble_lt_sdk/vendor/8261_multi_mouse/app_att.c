@@ -1,5 +1,5 @@
 #include "../../proj/tl_common.h"
-#include "../../proj_lib/ble/ll/ll.h"
+#include "../../proj_lib/ble/ble_ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 
@@ -225,7 +225,7 @@ static const u8 reportMap[] =
     0xC0,         // End Collection
 #endif
 
-
+#if 1
     0x05, 0x01,     // Usage Pg (Generic Desktop)
     0x09, 0x06,     // Usage (Keyboard)
     0xA1, 0x01,     // Collection: (Application)
@@ -271,6 +271,7 @@ static const u8 reportMap[] =
     0x81, 0x00,     // Input: (Data, Array)
 
     0xC0,            // End Collection
+#endif
 };
 
 // HID External Report Reference Descriptor for report map
@@ -308,7 +309,7 @@ static u16 include[3] = {0x0026, 0x0028, SERVICE_UUID_BATTERY};
 // TM : to modify
 const attribute_t my_Attributes[] = {
 #if (HID_MOUSE_ATT_ENABLE)
-	{57,0,0,0,0,0},
+	{51,0,0,0,0,0},
 #else
 	{50,0,0,0,0,0},	// total num of attribute
 #endif
@@ -330,7 +331,7 @@ const attribute_t my_Attributes[] = {
 
 	/////////////////////////////////// 4. HID Service /////////////////////////////////////////////////////////
 	// 000b
-	{27,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_hidServiceUUID), 0},
+	{37,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_hidServiceUUID), 0},
 
 	// 000c - 000e  include battery service
 	{0,ATT_PERMISSIONS_READ,2,sizeof(include),(u8*)(&hidIncludeUUID), 	(u8*)(include), 0},
@@ -357,7 +358,7 @@ const attribute_t my_Attributes[] = {
 	//  Characteristic declaration: Report (Mouse In)
 	{0,ATT_PERMISSIONS_READ,2,1, (u8*)(&my_characterUUID), 		(u8*)(&reportMouseInProp), 0},
 	{0,ATT_PERMISSIONS_READ,2, sizeof(reportMouseIn),(u8*)(&hidReportUUID), 	(u8*)(&reportMouseIn), 0},
-	{0,ATT_PERMISSIONS_READ,2, sizeof(reportMouseInCCC), (u8*)(&clientCharacterCfgUUID), 	(u8*)(reportMouseInCCC), 0},
+	{0,ATT_PERMISSIONS_RDWR,2, sizeof(reportMouseInCCC), (u8*)(&clientCharacterCfgUUID), 	(u8*)(reportMouseInCCC), 0},
 	{0,ATT_PERMISSIONS_READ,2, sizeof(reportRefMouseIn), (u8*)(&reportRefUUID), 	(u8*)(reportRefMouseIn), 0},
 #endif
 

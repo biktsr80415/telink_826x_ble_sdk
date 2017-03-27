@@ -9,9 +9,9 @@
 
 
 #define SYNC_MOST_CNT					2000
-#define THRESH_BASIC_SUSPEND   			2000  //1ms * 1000 = 1 S
+#define THRESH_BASIC_SUSPEND   			250  //1ms * 1000 = 2 S
 #define THRESH_LONG_SUSPEND				300  //300 * 100 ms = 30 S
-#define THRESH_NO_MOTION_LONG_SUSPEND	60  //6000 * 100 ms = 10min
+#define THRESH_NO_MOTION_LONG_SUSPEND	80  //6000 * 100 ms = 10min
 
 
 

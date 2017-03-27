@@ -8,8 +8,6 @@
 #include "../../proj/tl_common.h"
 #include "mouse_wheel.h"
 
-#if(CHIP_8366_A1)
-
 /**************************************************************************
 PE0 -> 0, PE1 -> 1
 PD2 -> 2, PD3 -> 3
@@ -84,86 +82,6 @@ void mouse_wheel_init(mouse_hw_t *mouse_hw)
  }
 
 
-
-
-#else
-
-s8		wheel_cnt = 0;
-
-int		wheel_irq = 0;
-int		wheel_level;
-
-u32 mouse_wheel0;
-u32 mouse_wheel1;
-volatile u32 wheel_src;
-
-
-
-///////////////////////////////////////////////////////////
-// for wheel interrupt
-///////////////////////////////////////////////////////////
-
-void gpio_user_irq_handler(void)
-{
-
-	u8 src0_v,src1_v; //debug
-	int dir,level;
-
-	src0_v = gpio_read(mouse_wheel0) ? 1:0;
-	src1_v = gpio_read(mouse_wheel1) ? 1:0;
-
-	//gpio_clr_interrupt(wheel_src);
-	gpio_clr_interrupt_and_wakeup(wheel_src);
-
-	if(wheel_src == mouse_wheel0){
-		wheel_src = mouse_wheel1;
-		level = !src1_v;
-		dir = -1;
-	}
-	else{
-		wheel_src = mouse_wheel0;
-		level = !src0_v;
-		dir = 1;
-	}
-
-	if(wheel_level ^ level){
-		wheel_cnt += dir;
-	}
-
-	wheel_level = level;
-	//gpio_set_interrupt(wheel_src,wheel_level);
-	gpio_set_interrupt_and_wakeup(wheel_src,wheel_level);
-}
-
-
-
-void mouse_wheel_init(mouse_hw_t *mouse_hw)
-{
-	//////////////////////////////////////////////////////////
-	//setup wheel interrupt
-	//////////////////////////////////////////////////////////
-	//mouse_wheel_pullup_en (1);
-	wheel_cnt = 0;
-	wheel_irq = 0;
-	gpio_setup_up_down_resistor(mouse_hw->wheel[0], 1 );
-	gpio_setup_up_down_resistor(mouse_hw->wheel[1], 1 );
-	mouse_wheel0 = mouse_hw->wheel[0];
-	mouse_wheel1 = mouse_hw->wheel[1];
-
-	wheel_src = mouse_wheel0;
-	wheel_level = !gpio_read (mouse_wheel0);
-	//gpio_set_interrupt(wheel_src,wheel_level);
-	gpio_set_interrupt_and_wakeup(wheel_src,wheel_level);
-
-
-#if(IRQ_GPIO0_ENABLE)
-	reg_irq_mask |= FLD_IRQ_GPIO_RISC2_EN;	//FLD_IRQ_GPIO_RISC2;
-	reg_irq_src = FLD_IRQ_GPIO_RISC2_EN;	//clear GPIO interrupt flag
-#endif
-}
-
-
-#endif
 
 void mouse_wheel_detect(mouse_status_t  * mouse_status)
 {
