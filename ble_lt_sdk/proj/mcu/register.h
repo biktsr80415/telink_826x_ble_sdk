@@ -1,4 +1,5 @@
 #pragma once
+#include "../config/user_config.h"
 
 #if(__TL_LIB_8266__ || MCU_CORE_TYPE == MCU_CORE_8266)
 #include "../mcu_spec/register_8266.h"
