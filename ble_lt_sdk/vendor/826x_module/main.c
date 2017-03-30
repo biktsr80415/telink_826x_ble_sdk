@@ -46,9 +46,8 @@ int main (void) {
 
 	rf_drv_init(CRYSTAL_TYPE);
 
-	ADC_MODULE_CLOSED;
-
 	user_init ();
+	ADC_MODULE_CLOSED;
 
     irq_enable();
 

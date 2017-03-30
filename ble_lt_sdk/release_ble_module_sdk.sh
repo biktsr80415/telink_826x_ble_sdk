@@ -8,6 +8,7 @@ mkdir ../$dir_release
 cp -rf proj proj_lib  ../$dir_release
 
 mkdir ../$dir_release/vendor
+cp -rf vendor/826x_ble_remote ../$dir_release/vendor
 cp -rf vendor/826x_module ../$dir_release/vendor
 cp -rf vendor/826x_ota_boot ../$dir_release/vendor
 cp -rf vendor/8266_host_dongle ../$dir_release/vendor
