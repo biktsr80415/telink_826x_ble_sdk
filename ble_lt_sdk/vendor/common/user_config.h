@@ -43,6 +43,8 @@
 	#include "../826x_ota_boot/app_config.h"
 #elif (__PROJECT_8261_BLE_WEIXIN__)
 	#include "../8261_ble_weixin/app_config.h"
+#elif (__PROJECT_USB_HOST__)
+	#include "../8267_usb_host/app_config.h"
 #else
 	#include "../common/default_config.h"
 #endif
