@@ -27,10 +27,9 @@ cp proj_lib/liblt_8261_mod.a ../$dir_release/proj_lib
 cp proj_lib/liblt_8266_mod.a ../$dir_release/proj_lib
 cp proj_lib/liblt_8267_mod.a ../$dir_release/proj_lib
 cp proj_lib/liblt_8266_32m.a ../$dir_release/proj_lib
-
-
-
-
-
-
+cp proj_lib/liblt_8261.a ../$dir_release/proj_lib
+cp proj_lib/liblt_8266.a ../$dir_release/proj_lib
+cp proj_lib/liblt_8267_32m.a ../$dir_release/proj_lib
+cp proj_lib/liblt_8267_48m.a ../$dir_release/proj_lib
+cp proj_lib/liblt_8267.a ../$dir_release/proj_lib
 
