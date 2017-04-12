@@ -1,9 +1,9 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll_whitelist.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj_lib/ble/blt_config.h"
@@ -146,7 +146,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//闂佽法鍠愰弸濠氬箯缁屾潣dule闂佽法鍠愰弸濠氬箯缁岀剬rt闂佽法鍠愰弸濠氬箯閻ゎ垰娑梺璺ㄥ枑閺嬪骞忛悜鑺ユ櫢闁哄倶鍊栫�褰掓煥閻旇崵绐涢柛姘嚱缁辨繈寮妶鍡楊伓GPIO_WAKEUP_MCU闂佽法鍠愰弸濠氬箯閻戣姤鏅搁梺鏉垮悁缁鳖噣骞忛悜鑺ユ櫢闁哄倶鍊栫�锟介柛娆愮墵閺佹捇寮妶鍡楊伓闂佽法鍠愰弸濠氬箯缁岀劌er闂佽法鍠愰弸濠氬箯閾氬倻鐤勯梺璺ㄥ枑閺嬪骞忛悜鑺ユ櫢闁跨噦鎷�	if(module_uart_data_flg && !module_uart_working){
+	//闂備浇娉曢崰鎰板几婵犳艾绠紒灞炬剑dule闂備浇娉曢崰鎰板几婵犳艾绠紒宀�壃rt闂備浇娉曢崰鎰板几婵犳艾绠柣銈庡灠濞戭亪姊虹捄銊ユ瀾闁哄顭烽獮蹇涙倻閼恒儲娅㈤梺鍝勫�閸婃牜锟借ぐ鎺撶叆闁绘棁宕电粣娑㈡煕濮橆剙鍤辩紒杈ㄧ箞瀵剟濡堕崱妤婁紦GPIO_WAKEUP_MCU闂備浇娉曢崰鎰板几婵犳艾绠柣鎴ｅГ閺呮悂姊洪弶鍨倎缂侀硸鍣ｉ獮蹇涙倻閼恒儲娅㈤梺鍝勫�閸婃牜锟介敓浠嬫煕濞嗘劗澧甸柡浣规崌瀵剟濡堕崱妤婁紦闂備浇娉曢崰鎰板几婵犳艾绠紒宀�妼er闂備浇娉曢崰鎰板几婵犳艾绠柧姘�閻ゅ嫰姊虹捄銊ユ瀾闁哄顭烽獮蹇涙倻閼恒儲娅㈤梺璺ㄥ櫐閹凤拷	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
 		GPIO_WAKEUP_MCU_LOW;
@@ -162,7 +162,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闂佽法鍠愰弸濠氬箯閻ゎ垼娓介梺璺ㄥ枑閺嬪骞忛敓绱綪IO_WAKEUP_MODULE 闂佽法鍠愰弸濠氬箯閻戣姤鏅搁柡鍌樺�鐎氾拷	}
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闂備浇娉曢崰鎰板几婵犳艾绠柣銈庡灱濞撲粙姊虹捄銊ユ瀾闁哄顭烽獮蹇涙晸缁辩丢IO_WAKEUP_MODULE 闂備浇娉曢崰鎰板几婵犳艾绠柣鎴ｅГ閺呮悂鏌￠崒妯猴拷閻庢熬鎷�}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
 	{
@@ -349,7 +349,7 @@ void user_init()
 	blc_register_hci_handler(blc_hci_rx,blc_hci_tx);//customized spi spp handler
 
 	extern void event_handler(u32 h, u8 *para, int n);
-	bls_hci_registerEventHandler(event_handler);		//register event callback
+	blc_hci_registerControllerEventHandler(event_handler);		//register event callback
 	bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 
 	// OTA init
@@ -382,7 +382,7 @@ void main_loop ()
 	tick_loop ++;
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
-	blt_slave_main_loop ();
+	blt_sdk_main_loop ();
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 	//  add spp UI task

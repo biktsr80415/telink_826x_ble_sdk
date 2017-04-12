@@ -129,7 +129,7 @@ u32		token_sof;
  *Start of Frame Packets:
  *  The SOF packet consisting of an 11-bit frame number is sent by the host every 1ms ± 500ns on a full speed bus or every 125 µs ± 0.0625 µs on a high speed bus.
  *      *------------------------------------------------------*
- *      | Sync | PID(8b) | Frame Number(11b) | CRC5(5b) | EOP |
+ *      | Sync | PID(8b) | Frame Number(11b) | CRC5(5b) | EOP  |
  *      *------------------------------------------------------*
  *************************************************************************************************/
 #define	USB_HS_NAK			0x5a
@@ -291,7 +291,7 @@ u16 usb_add_crc5 (unsigned char *pD)
         //dat >>= 1;
      }
     crc5 = ~crc5;
-    pD[1] &= 0x07;
+    pD[1] &= 0x07;//Add by tuyf, otherwise, the calculation of CRC5 would be wrong.
     pD[1] |= (crc5 & BIT(4)) >> 1;
     pD[1] |= (crc5 & BIT(3)) << 1;
     pD[1] |= (crc5 & BIT(2)) << 3;
@@ -355,11 +355,16 @@ int	usb_ctrl_get (u8 * pcmd) {
 		usb_tx_rx(buff_tx, len_tx);
 		len = usb_get_rx_dat ();
 		if (len > 16) {
-			printf("length > 16, break.\n");
+
+			//==================Debug info=======================
+			u8 *p = (u8 *)buff_rx;len = len>>3;
+			printf("get device descriptor. len=%d\n", len);
+			foreach(i, len){printf("%x ",  p[i]);}printf("\n");
+			//===================================================
+
 			break;
 		}
 	}
-    //printf("len=%d\n", len);
 	// skip status phase
 	return len;
 }
@@ -378,6 +383,13 @@ int	usb_ctrl_get_tlk (u8 * pcmd) {
 		len = usb_get_rx_dat ();
 		if (len > 16) {
 			usb_uart (len);
+
+			//==================Debug info=======================
+			u8 *p = (u8 *)buff_rx;len = len>>3;
+			printf("get device descriptor. len=%d\n", len);
+			foreach(i, len){printf("%x ",  p[i]);}printf("\n");
+            //===================================================
+
 			pkt++;
 			// send ACK after DATA
 			enable_ack_after_data (1);
@@ -522,7 +534,7 @@ void user_init ()
 
 	u32		tick = clock_time ();
 
-#if 0
+#if 0//TEST USB CRC5
 	//test CRC5
 	printf("TEST USB CRC5 Func\n");
 	u32 token_sof1 =   0x01D1a580;
@@ -550,19 +562,14 @@ void user_init ()
 			int len;
 
 			if ((m_loop & 0x7f) == 0xf) {
+				//printf("USB set configuration\n");
 				usb_set_configuration ();
 				//get device descriptor command
 #if 0
 				int len = usb_ctrl_get ((u8 *) tbl_get_device_desc);
 				usb_uart (len);
-				u8 *p = (u8 *)buff_rx;
-				printf("get device descriptor. len=%d\n", len);
-				foreach(i, len){printf("%x ",  p[i]);}printf("\n");
 #else
-				int len = usb_ctrl_get_tlk ((u8 *) tbl_get_device_desc);
-				u8 *p = (u8 *)buff_rx;
-				printf("get device descriptor. len=%d\n", len);
-				foreach(i, len){printf("%x ",  p[i]);}printf("\n");
+				//int len = usb_ctrl_get_tlk ((u8 *) tbl_get_device_desc);
 #endif
 			}
 			else if ((m_loop & 0x3) == 0x1) {
@@ -575,9 +582,12 @@ void user_init ()
 					enable_ack_after_data (0);
 					//usb_tx_rx(buff_ack, 17);
 
-					//u8 *p = (u8 *)buff_rx;
-					//printf("read data from end-point 1, device address 0. len=%d\n", len );
-					//foreach(i, len ){printf("%X ",  p[i]);}printf("\n");
+					//==================Debug info=======================
+					u8 *p = (u8 *)buff_rx;len = len>>3;
+					printf("read data from end-point 1, device address 0. len=%d\n", len);
+					foreach(i, len){printf("%x ",  p[i]);}printf("\n");
+					//===================================================
+
 				}
 			}
 			else if ((m_loop & 0x3) == 0x2) {
@@ -590,9 +600,11 @@ void user_init ()
 					enable_ack_after_data (0);
 					//usb_tx_rx(buff_ack, 17);
 
-					//u8 *p = (u8 *)buff_rx;
-					//printf("read data from end-point 2, device address 0. len=%d\n", len );
-					//foreach(i, len ){printf("%X ",  p[i]);}printf("\n");
+					//==================Debug info=======================
+					u8 *p = (u8 *)buff_rx;len = len>>3;
+					printf("read data from end-point 2, device address 0. len=%d\n", len);
+					foreach(i, len){printf("%x ",  p[i]);}printf("\n");
+					//===================================================
 				}
 			}
 			else if ((m_loop & 0x0) == 0x0e) {	//disabled
