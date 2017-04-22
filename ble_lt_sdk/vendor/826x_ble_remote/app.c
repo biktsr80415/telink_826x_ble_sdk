@@ -486,7 +486,35 @@ void key_change_proc(void)
 
 }
 
+u8 bRspMtuFlag =1;
+/****
+ *  when press the audio presskey, send this packet to master.
+ */
+void voice_press_proc(void)
+{
+	key_voice_press = 0;
+	//adc_clk_poweron();
+	//config_adc (FLD_ADC_PGA_C45, FLD_ADC_CHN_D0, SYS_16M_AMIC_16K);
+	ui_enable_mic (1);
 
+	if(bRspMtuFlag && blt_state==BLS_LINK_STATE_CONN){
+		extern u8 pkt_notify_short[36];
+		extern u8 bls_ll_pushTxFifo (u8 *p);
+		bRspMtuFlag = 0;
+
+//		pkt_notify_short[0] = 9;
+		pkt_notify_short[0] = 2;			//first data packet
+		pkt_notify_short[1] = 7;
+		*(u16*)(pkt_notify_short + 2) =  3; //l2cap
+		*(u16*)(pkt_notify_short + 4) = 0x04;	//chanid
+		pkt_notify_short[6]=0x02;
+		pkt_notify_short[7]=0x9e;
+		//pkt_notify_short[11]=24;
+		pkt_notify_short[8]=0x00;
+
+		bls_ll_pushTxFifo (pkt_notify_short);
+	}
+}
 
 //_attribute_ram_code_
 void proc_keyboard (u8 e, u8 *p, int n)
@@ -508,12 +536,17 @@ void proc_keyboard (u8 e, u8 *p, int n)
 		key_change_proc();
 	}
 	
+	//add by Q.W
+	if(blt_state != BLS_LINK_STATE_CONN){ //when the connect disconnect
+		bRspMtuFlag =1;
+	}
 
 	#if (BLE_AUDIO_ENABLE)
 	 //long press voice 1 second
 		if(key_voice_press && !ui_mic_enable && clock_time_exceed(key_voice_pressTick,1000000)){
-			key_voice_press = 0;
-			ui_enable_mic (1);
+//			key_voice_press = 0;  //removed by Q.W
+//			ui_enable_mic (1);    //removed by Q.W
+			voice_press_proc();
 		}
 	#endif
 }
@@ -612,7 +645,7 @@ void user_init()
 		memcpy (tbl_mac, pmac, 6);
 	}
 	else{
-		tbl_mac[0] = (u8)rand();
+//		tbl_mac[0] = (u8)rand();
 		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
 	}
 
@@ -692,27 +725,27 @@ void user_init()
 		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
 		#if TL_MIC_32K_FIR_16K
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				Audio_Init( 1, 0, AMIC, 47, 4, R2|0x10);
+				audio_amic_init( DIFF_MODE, 47, 4, R2);
 			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				Audio_Init( 1,0, AMIC,30,16,R2|0x10);
+				audio_amic_init( DIFF_MODE, 30, 16, R2);
 			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				Audio_Init( 1, 0, AMIC, 65, 15, R3|0x10);
+				audio_amic_init( DIFF_MODE, 65, 15, R3);
 			#endif
 		#else
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				Audio_Init( 1,0, AMIC,18,8,R5|0x10);
+				audio_amic_init( DIFF_MODE, 18, 8, R5);
 			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				Audio_Init( 1,0, AMIC,65,15,R3|0x10);
+				audio_amic_init( DIFF_MODE, 65, 15, R3);
 			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				Audio_Init( 1,0, AMIC,65,15,R6|0x10);
+				audio_amic_init( DIFF_MODE, 65, 15, R6);
 			#endif
 		#endif
 	#endif
 
-	Audio_FineTuneSampleRate(3);//reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
-	Audio_InputSet(1);//audio input set, ignore the input parameter
+	audio_finetune_sample_rate(3);//reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
+	audio_amic_input_set(PGA_CH);//audio input set, ignore the input parameter
 #endif
-	adc_BatteryCheckInit(2);///add by Q.W
+	adc_BatteryCheckInit(Battery_Chn_B7);///add by Q.W
 
 
 

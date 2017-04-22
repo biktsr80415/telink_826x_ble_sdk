@@ -1198,6 +1198,7 @@ enum{
 	FLD_GPIO_WAKEUP_EN		=	BIT(2),
 	FLD_GPIO_INTERRUPT_EN	=	BIT(3),
 };
+#define reg_gpio_config_func5   REG_ADDR8(0x5b6)
 /****************************************************
  timer regs struct: begin  0x620
  *****************************************************/

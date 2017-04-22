@@ -11,6 +11,49 @@
 #ifndef audio_H
 #define audio_H
 
+//down sample rate
+enum audio_deci_t{
+	R1,R2,R3,R4,R5,R6,
+	R7,R8,R16,R32,R64,R128,
+};
+
+enum audio_mode_t{
+	DIFF_MODE,
+	SINGLE_END,
+};
+enum audio_input_t{
+	PGA_CH = 0,
+	AUD_C0,
+	AUD_C1,
+	AUD_C6,
+	AUD_C7,
+	AUD_B0,
+	AUD_B1,
+	AUD_B2,
+	AUD_B3,
+	AUD_B4,
+	AUD_B5,
+	AUD_B6,
+	AUD_B7,
+	AUD_PGAVOM,
+	AUD_PGAVOP,
+};
+enum {
+	AUD_SINGLEEND,
+	AUD_INVERTB_1,
+	AUD_INVERTB_3,
+	AUD_PGAVOPM,
+};
+enum{
+	NO_AUDIO = 0,
+	MONO_AUDIO = BIT(4),
+	STEREO_AUDIO = BIT(5),
+};
+enum{
+	AUD_ADC_DONE_RISING = BIT(6),
+	AUD_ADC_DONE_FALLING = BIT(7),
+};
+
 /************************************************************
 *	@param		m:		audio input mode, '1' diff; '0' single end
 *				b:		battery check mode bit[7], battery input channel bit[5:0]
@@ -30,35 +73,28 @@
 									   *(volatile unsigned char  *)0x8005b0 |= 0x01;\
 								    }while(0)
 
-//down sample rate
-enum AUDIODSR{
-	R1,R2,R3,R4,R5,R6,
-	R7,R8,R16,R32,R64,R128,
-};
+/**
+ * @brief     configure the mic buffer's address and size
+ * @param[in] pbuff - the first address of SRAM buffer to store MIC data.
+ * @param[in] size_buff - the size of pbuff.
+ * @return    none
+ */
+void audio_config_mic_buf(signed short* pbuff,unsigned char size_buff);
+/**
+ * @brief     configure the SDM buffer's address and size
+ * @param[in] pbuff - the first address of buffer SDM read data from.
+ * @param[in] size_buff - the size of pbuff.
+ * @return    none
+ */
+void audio_config_sdm_buf(signed short* pbuff, unsigned char size_buff);
 
-//input channel select
-enum AUDIOINPUTCH{
-	AMIC,
-	DMIC,
-};
-
-
-/***************************************************************
-*	@brief	audio init function, call the adc init function, configure ADC, PGA and filter parameters used for audio sample
-*			and process
-*
-*	@param	mFlag - audio input mode flag, '1' differ mode; '0' single end mode.
-*			bcm_inputCh - battery check mode and input channel selection byte, the largest bit indicates mode, the lower
-*						7 bits indicates input channel
-*			audio_channel - enum variable, indicates the audio input source Analog MIC or Digital MIC
-*			adc_max_m - Misc period set parameter, T_Misc = 2 * adc_max_m
-*			adc_max_l - Left channel period set, T_Left = 16*adc_max_l
-*			d_samp - decimation filter down sample rate
-*
-*	@return	None
+/****
+* brief: audio amic initial function. configure ADC corresponding parameters. set hpf,lpf and decimation ratio.
+* param[in] mode_flag -- '1' differ mode ; '0' signal end mode
+* param[in] misc_sys_tick -- system ticks of adc misc channel.
+* param[in] l_sys_tick -- system tick of adc left channel
 */
-extern void Audio_Init(unsigned char mFlag,unsigned char checkM,enum AUDIOINPUTCH audio_channel,unsigned short adc_max_m, unsigned char adc_max_l,enum AUDIODSR d_samp);
-
+void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, unsigned short left_sys_tick,enum audio_deci_t d_samp);
 
 /************************************************************************************
 *
@@ -68,53 +104,67 @@ extern void Audio_Init(unsigned char mFlag,unsigned char checkM,enum AUDIOINPUTC
 *
 *	@return	none
 */
-extern void Audio_InputSet(unsigned char adc_ch);
+void audio_amic_input_set(enum audio_input_t adc_ch);
 
+/**
+*	@brief		reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
+*	@param[in]	fine_tune - unsigned char fine_tune,range from 0 to 3
+*	@return	    none
+*/
+void audio_finetune_sample_rate(unsigned char fine_tune);
 
+/**
+ *  @brief      tune decimation shift .i.e register 0xb04 in datasheet.
+ *  @param[in]  deci_shift - range from 0 to 5.
+ *  @return     none
+ */
+unsigned char audio_tune_deci_shift(unsigned char deci_shift);
+
+/**
+ *   @brief       tune the HPF shift .i.e register 0xb05 in datasheet.
+ *   @param[in]   hpf_shift - range from 0 to 0x0f
+ *   @return      none
+ */
+ unsigned char audio_tune_hpf_shift(unsigned char hpf_shift);
 /************************************************************************************
 *
-*	@brief	sdm set function, enabl or disable the sdm output, configure SDM output paramaters
+*	@brief	audio input set function, select analog audio input channel, start the filters
 *
-*	@param	audio_out_en:		audio output enable or disable set, '1' enable audio output; '0' disable output
-*			sdm_setp:		SDM clk divider
-*			sdm_clk:			SDM clk, default to be 8Mhz
+*	@param	adc_ch:	if audio input as signle end mode, should identify an analog audio signal input channel, enum variable of ADCINPUTCH
 *
 *	@return	none
 */
-extern void Audio_SDMOutputSet(unsigned char audio_out_en,unsigned short sdm_step,unsigned char sdm_clk);
+extern void audio_amic_input_set(unsigned char adc_ch);
 
-
-/*******************************************************************************************
-*	@brief	set audio volume level
+/**
 *
-*	@param	input_output_select:	select the tune channel, '1' tune ALC volume; '0' tune SDM output volume
-*			volume_set_value:		volume level
+*	@brief	   sdm setting function, enable or disable the sdm output, configure SDM output paramaters
+*
+*	@param[in]	audio_out_en - audio output enable or disable set, '1' enable audio output; '0' disable output
+*	@param[in]	sdm_setp -	  SDM clk divider
+*	@param[in]	sdm_clk -	  SDM clk, default to be 8Mhz
 *
 *	@return	none
 */
-extern void Audio_VolumeSet(unsigned char input_output_select,unsigned char volume_set_value);
+void audio_sdm_output_set(unsigned char audio_out_en,unsigned short sdm_step,unsigned char sdm_clk);
 
-
-/********************************************************
-*
-*	@brief		get the battery value
-*
-*	@param		None
-*
-*	@return		unsigned long - return the sampled value, 7 bits resolution
+/**
+*	@brief	    set audio volume level
+*	@param[in]	input_out_sel - select the tune channel, '1' tune ALC volume; '0' tune SDM output volume
+*	@param[in]	volume_level - volume level
+*	@return	    none
 */
-extern unsigned short Audio_BatteryValueGet(void);
+void audio_volume_tune(unsigned char input_out_sel, unsigned char volume_level);
 
-
-/********************************************************
+/*************************************************************
 *
-*	@brief		reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
+*	@brief	automatically gradual change volume
 *
-*	@param		unsigned char fine_tune,
+*	@param[in]	vol_step - volume change step, the high part is decrease step while the low part is increase step
+*			    gradual_interval - volume increase interval
 *
-*	@return		void
+*	@return	none
 */
-extern void Audio_FineTuneSampleRate(unsigned char fine_tune);
-
+void audio_volume_step_adjust(unsigned char vol_step,unsigned short gradual_interval);
 
 #endif

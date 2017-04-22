@@ -8,37 +8,40 @@
 #include "../tl_common.h"
 
 #include "adc_8267.h"
-#define batt_1per3_vol 0
+
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
-	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269)	)
+	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269))
 
 /**************************************************************************************************
-  Filename:       	adc.c
-  Author:			junjun.xu@telink-semi.com
-  Created Date:	2016/06/05
+  Filename:       adc.c
+  Author:		  qiuwei.chen@telink-semi.com
+  Created Date:	  2017/04/19
 
-  Description:    This file contains the adc driver functions for the Telink 8267. It provided some sample applications like battery check and temperature check
+  Description:    This file contains the adc driver functions for the Telink 8267.
+                  It provided some sample applications like battery check and temperature check
 
 **************************************************************************************************/
 //#include "adc.h"
 
+#define     ADC_DONE_SIGNAL_FALLING   (BIT(7))
+//enable ADC clock
+#define     EN_ADCCLK           (reg_adc_clk_en |= FLD_ADC_MOD_H_CLK)
 
-#define		EN_ADCCLK			(*(volatile unsigned char  *)0x80006b |= 0x80)
+//Select ADC auto mode
+#define     EN_ADC_AUTO         do{\
+	                            	reg_adc_ctrl &= 0x00;\
+	                            	reg_adc_ctrl |= (FLD_ADC_CHNM_AUTO_EN|ADC_DONE_SIGNAL_FALLING);\
+                                }while(0)
 
-//Select ADC mannul mode
-#define		EN_MANUALM			write_reg8(0x800033,0x00)
-
-
-//Start sampling and conversion process for mannual mode
-#define		STARTSAMPLING		write_reg8(0x800035,0x80)
 
 //Read sampling data
-#define		READOUTPUTDATA		read_reg16(0x800038)
+#define		READOUTPUTDATA		read_reg16(0x38)
+//#define		READOUTPUTDATA		reg_adc_dat_byp_outp
 
 /********************************************************
 *
-*	@brief		set ADC reference voltage for the Misc and L channel
+*	@brief		set ADC reference voltage for the Misc
 *
 *	@param		adcCha - enum variable adc channel.
 *				adcRF - enum variable of adc reference voltage.
@@ -110,6 +113,9 @@ void adc_AnaChSet(enum ADCINPUTCH adcInCha){
 	*(volatile unsigned char  *)(0x80002c) |= cnI;
 }
 
+
+
+
 /***************************************************************************
 *
 *	@brief	set IO power supply for the 1/3 voltage division detection, there are two input sources of the
@@ -154,36 +160,59 @@ void adc_AnaModeSet( enum ADCINPUTMODE inM){
 
 /**********************************************************************
 *	@brief	ADC initiate function, set the ADC clock details (4MHz) and start the ADC clock.
-*			ADC clock relys on PLL, if the FHS isn't selected to 192M PLL (probably modified
+*			ADC clock relays on PLL, if the FHS isn't selected to 192M PLL (probably modified
 *			by other parts codes), adc initiation function will returns error.
 *
 *	@param	None
 *
 *	@return	setResult - '1' set success; '0' set error
 */
-unsigned char adc_Init(void ){
+unsigned char adc_Init(enum ADCCLOCK adc_clk){
 
 	unsigned char fhsBL,fhsBH;
 
-	/******set adc clk as 4MHz******/
-	write_reg8(0x800069,0x04); // adc clk step as 4
-	write_reg8(0x80006a,0xc0); // adc clk mode as 192
-
-	fhsBL = read_reg8(0x800070)&0x01;//0x70[0]
-	fhsBH = read_reg8(0x800066)&0x80;//0x66[7]
-	fhsBL = fhsBL|fhsBH;
-	if(fhsBL){//FHS not default set to 192MHz
-		return 0;
+	fhsBH = reg_fhs_sel & 0x01;
+	fhsBL = reg_clk_sel & 0x80;
+	if((fhsBH!=0x00)&&(fhsBL!=0x00)){  //FHS select 192M, or return error.
+		return 0;                      //the FHS is not 192Mhz
 	}
-	write_reg8(0x800070,0x00);// sel adc clk source as 192M pll
-	write_reg8(0x80006b,0x80); // adc clk enable
-	WriteAnalogReg(0x88,0x0f);// select 192M clk output
-	WriteAnalogReg(0x05,0x60);// power on pll
-	WriteAnalogReg(0x06,0xfe);// power on sar
-	write_reg16(0x800030,(0xE2<<2));//set M channel period as (0xE2<<2), L channel's period is 0x06*16 defaultly,so sample frequency is sysclk/(0xE2<<2+0x06*16)
+
+	/******set adc clk as 4MHz; adc_clock = FHS*step/mode******/
+	reg_adc_step_l = adc_clk; //adc clock step is 4
+	reg_adc_mod_l  = 192;  //adc clock mode is 192.
+
+//	WriteAnalogReg(0x88,0x0f);// select 192M clk output
+	WriteAnalogReg(0x05, ReadAnalogReg(0x05) & 0x7f); //power on pll
+	WriteAnalogReg(0x06, ReadAnalogReg(0x06) & 0xfe); //power on sar
+	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
 	EN_ADCCLK;//Enable adc CLK
-	EN_MANUALM;
+	EN_ADC_AUTO;
 	return 1;
+}
+
+/**
+ * @brief     set input channel,set reference voltage, set resolution bits, set sample cycle
+ * @param[in] chl          - enum variable ADCINPUTCH ,acd channel
+ * @param[in] ref_vol      - enum variable ADCRFV
+ * @param[in] resolution   - enum variable ADCRESOLUTION
+ * @param[in] sample_cycle - enum variable ADCST
+ * @return    none
+ */
+void ADC_ParamSetting(enum ADCINPUTCH chn,enum ADCINPUTMODE mode,enum ADCRFV ref_vol,enum ADCRESOLUTION resolution,enum ADCST sample_cycle){
+	/***1.set the analog input pin***/
+	adc_AnaChSet(chn);
+
+	/***2.set ADC mode,signle-end or differential mode***/
+	adc_AnaModeSet(mode);///default is single-end
+
+	/***3.set reference voltage***/
+	adc_RefVoltageSet(ref_vol);
+
+	/***4.set resolution***/
+	adc_ResSet(resolution);
+
+	/***5.set sample cycle**/
+	adc_SampleTimeSet(sample_cycle);
 }
 /********************************************************
 *
@@ -194,19 +223,20 @@ unsigned char adc_Init(void ){
 *
 *	@return		None
 */
-void adc_BatteryCheckInit(unsigned char checkM){
-	/***1.set adc mode and input***/
-#if batt_1per3_vol    ///if 1,internal 1/3 voltage division open.
-	write_reg8(0x80002c,0x12);       //select "1/3 voltage division detection" as single-end input
-
-	/***2.set battery check mode***/
+void adc_BatteryCheckInit(enum BATT_INPUTCHN checkM){
+	/***1.set adc input***/
+#if BATT_ONETHIRD_DIV_INTERNAL    ///if 1,internal 1/3 voltage division open.
+	adc_AnaChSet(OTVDD);   //select "1/3 voltage division detection" as ADC input.
+	/***1.1 select B7 or AVDD as input***/
 	if(!checkM)
 		adc_IOPowerSupplySet(1);
 	else
 		adc_IOPowerSupplySet(2);
 #else
-	write_reg8(0x80002c,0x0c);
+	adc_AnaChSet(B7);
 #endif
+	/***2.conft adc mode***/
+	adc_AnaModeSet(SINGLEEND);
 
 	/***3.set adc reference voltage***/
 	adc_RefVoltageSet(RV_1P428);     //Set reference voltage (V_REF)as  1.428V
@@ -216,9 +246,6 @@ void adc_BatteryCheckInit(unsigned char checkM){
 
 	/***5.set adc sample time***/
 	adc_SampleTimeSet(S_3);          //set sample time
-
-	/***6.enable manual mode***/
-	EN_MANUALM;
 }
 /********************************************************
 *
@@ -232,58 +259,47 @@ unsigned short adc_BatteryValueGet(void){
 
 	unsigned short sampledValue;
 
-	STARTSAMPLING;
+	while(!CHECKADCSTATUS);
 
 	while(CHECKADCSTATUS);
 
-	sampledValue = READOUTPUTDATA&0x3FFF;
+	sampledValue = READOUTPUTDATA & 0x3FFF;
 
 	return sampledValue;
 }
+
 /********************************************************
 *
-*	@brief		Initiate function for the temparture sensor
-*
-*	@param		None
+*	@brief	Initiate function for the temperature sensor.
+*	        temperature adc value = TEMSENSORP_adc_value - TEMSENSORN_adc_value
+*           step 1: adc_TemSensorInit(TEMSENSORP);
+*           step 2: TEMSENSORP_adc_value = adc_SampleValueGet();
+*           step 3: adc_TemSensorInit(TEMSENSORN);
+*           step 4: TEMSENSORN_adc_value = adc_SampleValueGet();
+*           step 5: temperature adc value = TEMSENSORP_adc_value - TEMSENSORN_adc_value
+*	@param	chn -- just select TEMSENSORN or TEMSENSORP
 *
 *	@return		None
 */
 
-void adc_TemSensorInit(void){
+void adc_TemSensorInit(enum ADCINPUTCH chn){
 	/***1.set adc mode and input***/
-	write_reg8(0x80002c,0x0f);  //select TEMSENSORN as single-end input
+	adc_AnaChSet(chn);
 
-	/***2. set adc reference voltage***/
+	/***2.conft adc mode***/
+	adc_AnaModeSet(SINGLEEND);
+
+	/***3. set adc reference voltage***/
 	adc_RefVoltageSet(RV_AVDD);
 
-	/***3.set adc resultion***/
+	/***4.set adc resultion***/
 	adc_ResSet(RES14);
 
-	/***4.set adc sample time***/
+	/***5.set adc sample time***/
 	adc_SampleTimeSet(S_3);
 
-	/***5.enable manual mode***/
-	EN_MANUALM;
-}
-
-/********************************************************
-*
-*	@brief		get the temperature sensor sampled value
-*
-*	@param		None
-*
-*	@return		unsigned short - return the adc sampled value 14bits significants
-*/
-
-unsigned short adc_TemValueGet(void){
-	unsigned short sampledValue;
-	STARTSAMPLING;
-	while(CHECKADCSTATUS);
-	sampledValue = (unsigned short)(READOUTPUTDATA & 0x3FFF);
-	STARTSAMPLING;
-	while(CHECKADCSTATUS);
-	sampledValue = sampledValue - (unsigned short)(READOUTPUTDATA & 0x3FFF);
-	return sampledValue;
+	/***6.enable manual mode***/
+	EN_ADC_AUTO;
 }
 
 /*************************************************************************
@@ -295,10 +311,15 @@ unsigned short adc_TemValueGet(void){
 *	@return	sampled_value:	raw data
 */
 unsigned short adc_SampleValueGet(void){
-	//unsigned short sampledValue;
-	STARTSAMPLING;
+	unsigned short sampledValue;
+
+	while(!CHECKADCSTATUS);
+
 	while(CHECKADCSTATUS);
-	return READOUTPUTDATA;
+
+	sampledValue = READOUTPUTDATA & 0x3FFF;
+
+	return sampledValue;
 }
 
 #endif

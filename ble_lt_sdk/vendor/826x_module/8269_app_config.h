@@ -70,7 +70,8 @@ extern "C" {
 //for example:  #define PA2_INPUT_ENABLE   0
 
 ///////////// avoid ADC module current leakage (when module on suspend status) //////////////////////////////
-#define ADC_MODULE_CLOSED               write_reg8(0x6b,0x00) // adc clk disable
+#define ADC_MODULE_CLOSED               write_reg8(0x6b,read_reg8(0x6b)&0x7f) // adc clk disable
+#define ADC_MODULE_ENABLE               write_reg8(0x6b,read_reg8(0x6b)|0x80) // adc clk open
 
 
 /////////////////// Clock  /////////////////////////////////
