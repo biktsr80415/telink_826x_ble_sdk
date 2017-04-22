@@ -1550,10 +1550,10 @@ usb_cmd:
 
 	.align	4
 USBDAT0:
-	.word	0x00800598
-	.word   0x000000fc
+	.word	0x00800598     @PDx Input reg.
+	.word   0x000000fc     @0b11111100. PD0\PD1 OUTPUT
 	.word   0xffffffff
-	.word   0x00800640
+	.word   0x00800640     @interrupt mask0
 	.word   0x01040000			@GPIO interupt enable: bit24 (global enable); bit18 (gpio_irq enable)
 
 TX_START:

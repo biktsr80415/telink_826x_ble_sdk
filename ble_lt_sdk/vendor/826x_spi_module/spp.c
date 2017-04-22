@@ -8,7 +8,7 @@
 #include "spp.h"
 #include "../../proj/drivers/spi.h"
 #include "../../proj/mcu_spec/gpio_8267.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 /**********************************************************************
  * LOCAL VARIABLES
@@ -318,7 +318,7 @@ void spp_onModuleCmd(u8* p, int n)
 			break;
 	    // get module available data buffer: 0c ff 00  00
 		case HC_GET_BUFFER_NUM:
-			read_buf_num[0] = bls_hci_le_readBufferSize_cmd((u8 *)(read_buf_num));
+			read_buf_num[0] = blc_hci_le_readBufferSize_cmd((u8 *)(read_buf_num));
 			read_buf_num[1] = read_buf_num[2];
 			host_push_status(HC_GET_BUFFER_NUM,2,read_buf_num);
 

@@ -28,6 +28,14 @@ _attribute_ram_code_ void irq_handler(void)
 #endif
 }
 
+//host:        Sync-->IN-->ADDR-->ENDP-->CRC5-->EOP-->IDLE
+//D12:         Sync-->NACK-->EOP-->IDLE
+//host:        Sync-->IN-->ADDR-->ENDP-->CRC5-->EOP-->IDLE
+//D12:         Sync-->NACK-->EOP-->IDLE
+//             ......
+//D12:         Sync-->DATA0/1-->DATA-->CRC16-->EOP-->IDLE
+//             ......
+//host:        Sync-->ACK-->EOP-->IDLE
 int main (void) {
 	//cpu_wakeup_init();
 	REG_ADDR32(0x60) = 0xff000000;
@@ -44,6 +52,7 @@ int main (void) {
 
 	user_init ();
 
+	printf("Hello!!!\n");
 	while (1) {
 #if (MODULE_WATCHDOG_ENABLE)
 		wd_clear(); //clear watch dog

@@ -3,7 +3,7 @@
 #include "../../vendor/common/user_config.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 
 //extern my_fifo_t hci_rx_fifo;
@@ -14,7 +14,7 @@ extern void user_init();
 volatile u8 dbg_irq;
 _attribute_ram_code_ void irq_handler(void)
 {
-	irq_blt_slave_handler ();
+	irq_blt_sdk_handler ();
     unsigned char spi_irq = reg_i2c_irq_status;
     if(spi_irq & BIT(1) )
 	{

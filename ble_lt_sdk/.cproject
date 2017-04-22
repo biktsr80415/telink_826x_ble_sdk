@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+<?fileVersion 4.0.0?>
+
+<cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532" moduleId="org.eclipse.cdt.core.settings" name="8267_ble_remote">
@@ -13,7 +15,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="remote with MIC" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532" name="8267_ble_remote" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="remote with MIC" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532" name="8267_ble_remote" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.732752826" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.38002366" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -74,6 +76,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831" moduleId="org.eclipse.cdt.core.settings" name="8267_module">
@@ -87,7 +90,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831" name="8267_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831" name="8267_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1001914394" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1235290750" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -147,6 +150,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596" moduleId="org.eclipse.cdt.core.settings" name="8267_master">
@@ -160,7 +164,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596" name="8267_master" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596" name="8267_master" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1653350378" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.177170626" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -217,6 +221,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.171831158">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.171831158" moduleId="org.eclipse.cdt.core.settings" name="8267_btusb">
@@ -230,7 +235,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="BT usb class" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.171831158" name="8267_btusb" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="BT usb class" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.171831158" name="8267_btusb" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.171831158." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1006374896" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.79057602" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -287,6 +292,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515" moduleId="org.eclipse.cdt.core.settings" name="8267_master_kma_dongle">
@@ -300,7 +306,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515" name="8267_master_kma_dongle" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515" name="8267_master_kma_dongle" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.506720244" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1541549945" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -361,6 +367,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252" moduleId="org.eclipse.cdt.core.settings" name="8266_master_kma_dongle">
@@ -374,7 +381,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252" name="8266_master_kma_dongle" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252" name="8266_master_kma_dongle" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.463259157" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1799195369" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -431,6 +438,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222" moduleId="org.eclipse.cdt.core.settings" name="8266_module">
@@ -444,7 +452,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222" name="8266_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222" name="8266_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.518631434" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1603550302" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -501,6 +509,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252.1093003109">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252.1093003109" moduleId="org.eclipse.cdt.core.settings" name="8266_host_dongle">
@@ -514,7 +523,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252.1093003109" name="8266_host_dongle" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252.1093003109" name="8266_host_dongle" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252.1093003109." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.230692281" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1199197830" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -571,6 +580,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262" moduleId="org.eclipse.cdt.core.settings" name="8266_ota_boot">
@@ -584,7 +594,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262" name="8266_ota_boot" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262" name="8266_ota_boot" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1558738207" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.95829403" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -639,6 +649,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2002159963">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2002159963" moduleId="org.eclipse.cdt.core.settings" name="8267_hci">
@@ -652,7 +663,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2002159963" name="8267_hci" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2002159963" name="8267_hci" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2002159963." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.246795582" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1112178640" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -709,6 +720,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262.1180231935">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262.1180231935" moduleId="org.eclipse.cdt.core.settings" name="8261_ota_boot">
@@ -722,7 +734,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262.1180231935" name="8261_ota_boot" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262.1180231935" name="8261_ota_boot" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262.1180231935." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1064756266" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.118563738" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -780,6 +792,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2056195849">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2056195849" moduleId="org.eclipse.cdt.core.settings" name="8261_module">
@@ -793,7 +806,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2056195849" name="8261_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2056195849" name="8261_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2056195849." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1311343821" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.843683864" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -853,6 +866,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516" moduleId="org.eclipse.cdt.core.settings" name="8261_ble_remote">
@@ -866,7 +880,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516" name="8261_ble_remote" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516" name="8261_ble_remote" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.2033232868" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1107874137" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -923,6 +937,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1979237871">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1979237871" moduleId="org.eclipse.cdt.core.settings" name="826x_spi_module">
@@ -936,7 +951,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1979237871" name="826x_spi_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1979237871" name="826x_spi_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1979237871." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1512420894" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1411411084" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -946,7 +961,7 @@
 							<builder buildPath="${workspace_loc:/newArchitecture/Release}" id="com.telink.tc32eclipse.target.builder.TC32Win.app.release.1999083294" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="GNU Make Builder" superClass="com.telink.tc32eclipse.target.builder.TC32Win.app.release"/>
 							<tool id="com.telink.tc32eclipse.tool.assembler.TC32Win.app.release.1126034082" name="TC32 CC/Assembler" superClass="com.telink.tc32eclipse.tool.assembler.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.assembler.option.debug.level.1850162871" name="Generate Debugging Info" superClass="com.telink.tc32eclipse.assembler.option.debug.level" value="com.telink.tc32eclipse.assembler.option.debug.level.none" valueType="enumerated"/>
-								<option id="com.telink.tc32eclipse.asm.option.flags.736468087" name="Other GCC Flags" superClass="com.telink.tc32eclipse.asm.option.flags" value="-DMCU_CORE_8267 -D__LOAD_RAM_SIZE__=0x16" valueType="string"/>
+								<option id="com.telink.tc32eclipse.asm.option.flags.736468087" name="Other GCC Flags" superClass="com.telink.tc32eclipse.asm.option.flags" value="-DMCU_CORE_8267_SPI -D__LOAD_RAM_SIZE__=0x16" valueType="string"/>
 								<inputType id="com.telink.tc32eclipse.tool.assembler.input.385424288" superClass="com.telink.tc32eclipse.tool.assembler.input"/>
 							</tool>
 							<tool command="tc32-elf-gcc -ffunction-sections -fdata-sections" id="com.telink.tc32eclipse.tool.compiler.TC32Win.app.release.1793906613" name="TC32 Compiler" superClass="com.telink.tc32eclipse.tool.compiler.TC32Win.app.release">
@@ -1019,6 +1034,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.1580610044">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.1580610044" moduleId="org.eclipse.cdt.core.settings" name="8261_ble_weixin">
@@ -1032,7 +1048,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.1580610044" name="8261_ble_weixin" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.1580610044" name="8261_ble_weixin" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.1580610044." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.313727807" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1655749432" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -1114,6 +1130,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1451313906">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1451313906" moduleId="org.eclipse.cdt.core.settings" name="826x_flyco_module">
@@ -1127,7 +1144,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1451313906" name="826x_flyco_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1451313906" name="826x_flyco_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1451313906." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1827029223" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.794499779" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -1184,6 +1201,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.996088252">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.996088252" moduleId="org.eclipse.cdt.core.settings" name="8267_spi_master">
@@ -1197,7 +1215,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="test for  826x_spi_module" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.996088252" name="8267_spi_master" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="test for  826x_spi_module" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.996088252" name="8267_spi_master" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.996088252." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.628381140" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1384327560" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -1257,6 +1275,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2011573918">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2011573918" moduleId="org.eclipse.cdt.core.settings" name="8269_module">
@@ -1270,7 +1289,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2011573918" name="8269_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2011573918" name="8269_module" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2011573918." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.587266138" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.970134539" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -1357,6 +1376,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1121091753">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1121091753" moduleId="org.eclipse.cdt.core.settings" name="826x_profile_test">
@@ -1370,7 +1390,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1121091753" name="826x_profile_test" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1121091753" name="826x_profile_test" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1121091753." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.406583370" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1570226991" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -1430,6 +1450,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.265923153">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.265923153" moduleId="org.eclipse.cdt.core.settings" name="8261_multi_mouse">
@@ -1443,7 +1464,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="(2P4G/BLE)" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.265923153" name="8261_multi_mouse" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="(2P4G/BLE)" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.265923153" name="8261_multi_mouse" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.265923153." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1214581449" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1527254376" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -1505,6 +1526,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.138598443">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.138598443" moduleId="org.eclipse.cdt.core.settings" name="8267_usb_host">
@@ -1518,7 +1540,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.138598443" name="8267_usb_host" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.138598443" name="8267_usb_host" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.138598443." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.325137201" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1117573505" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -1576,6 +1598,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
