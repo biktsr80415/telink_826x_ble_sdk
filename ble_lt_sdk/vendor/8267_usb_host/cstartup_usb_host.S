@@ -1519,8 +1519,8 @@ usb_cmd:
 	tmov	r4, r12
 	tpush	{r4}
 	tpush	{r2}
-
-	tloadr	r5, [r0, #0]
+                         @usb_cmd（参数：r0, r1, r2...)
+	tloadr	r5, [r0, #0] @r0位tx_data数据首地址,将待发送数据存放到r5~r14寄存器中，最大32Byte数据
 	tloadr	r6, [r0, #4]
 	tloadr	r7, [r0, #8]
 	tloadr	r3, [r0, #12]
@@ -1536,30 +1536,30 @@ usb_cmd:
 	tloadr	r3, [r0, #32]
 	tmov	r14, r3
 
-	tloadr	r0, USBDAT0 + 0
+	tloadr	r0, USBDAT0 + 0  @PDx Input reg.
 	tmov	r3, #2
 	tstorerb	r3, [r0, #3] @OUTPUT [1:0]
 	tloadr	r3, USBDAT0 + 4
-	tstorerb	r3, [r0, #2] @OEN [1:0]
+	tstorerb	r3, [r0, #2] @OEN [1:0]   0:output 1:input
 
 	tloadr	r2, USBDAT0 + 8
-	tloadr	r3, USBDAT0 + 12
-	tloadr	r4, USBDAT0 + 16
+	tloadr	r3, USBDAT0 + 12 @interrupt mask0
+	tloadr	r4, USBDAT0 + 16 @GPIO interupt enable: bit24 (global enable); bit18 (gpio_irq enable)
 
 	tj	TX_START	
 
 	.align	4
 USBDAT0:
-	.word	0x00800598     @PDx Input reg.
-	.word   0x000000fc     @0b11111100. PD0\PD1 OUTPUT
-	.word   0xffffffff
-	.word   0x00800640     @interrupt mask0
-	.word   0x01040000			@GPIO interupt enable: bit24 (global enable); bit18 (gpio_irq enable)
+	.word	0x00800598     @PDx Input reg.                   +0
+	.word   0x000000fc     @0b11111100. PD0\PD1 OUTPUT       +4
+	.word   0xffffffff                                      @+8
+	.word   0x00800640     @interrupt mask0                  +12
+	.word   0x01040000	   @GPIO interupt enable: bit24 (global enable); bit18 (gpio_irq enable)
 
 TX_START:
 	tnop
 	tnop
-	tsub	r1, #1
+	tsub	r1, #1 @usb_cmd（参数：r0, r1, r2...)中长度参数：n
 	tstorerb	r5, [r0, #3]
 	tjeq	TX_R0
 	tshftr     r5, r5, #2

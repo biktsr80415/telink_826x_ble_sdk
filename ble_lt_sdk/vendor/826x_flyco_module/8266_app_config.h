@@ -49,7 +49,7 @@ extern "C" {
     #define FLYCO_BLE_STATE_HIGH                      gpio_write (BLE_STA_OUT, 1) //BLE state HIGH
     #define FLYCO_BLE_STATE_LOW                       gpio_write (BLE_STA_OUT, 0) //BLE state LOW
 /////////////////// heartbeat for FLYCO app//////////////////////////
-    #define HEARTBEAT_FLYCO           				  1 //close heart beat
+    #define HEARTBEAT_FLYCO           				  0 //close heart beat
 /////////////////// flyco OTA enable ////////////////////////////////
     #define FLYCO_OTA_ENABLE                          1
     #define FLYCO_OTA_WORK_UART_DISABLE_FLG           0

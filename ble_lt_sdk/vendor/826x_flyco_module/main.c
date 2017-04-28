@@ -3,7 +3,7 @@
 #include "../../vendor/common/user_config.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 
 extern my_fifo_t hci_rx_fifo;
@@ -11,7 +11,7 @@ extern void user_init();
 
 _attribute_ram_code_ void irq_handler(void)
 {
-	irq_blt_slave_handler ();  //ble irq proc
+	irq_blt_sdk_handler ();  //ble irq proc
 
 #if (HCI_ACCESS==HCI_USE_UART)
 	unsigned char irqS = reg_dma_rx_rdy0;

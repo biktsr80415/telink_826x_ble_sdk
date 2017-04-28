@@ -1,9 +1,9 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll_whitelist.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj_lib/ble/blt_config.h"
@@ -327,7 +327,7 @@ void user_init()
 
     ///////////////////////// register event callback ///////////////////////////
 	extern int ble_event_handler(u32 h, u8 *para, int n);
-	bls_hci_registerEventHandler(ble_event_handler); //register event callback
+	blc_hci_registerControllerEventHandler(ble_event_handler); //register event callback
 	bls_hci_mod_setEventMask_cmd(0x0018);//enable conn\terminate events,event list see ble_ll.h
 
     rf_set_power_level_index (rfpower);
@@ -389,7 +389,7 @@ void main_loop ()
 	tick_loop ++;
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
-	blt_slave_main_loop ();
+	blt_sdk_main_loop ();
 
 //	if(blc_ll_getCurrentState() == BLS_LINK_STATE_IDLE){//Idle state
 //		cpu_sleep_wakeup(0, PM_WAKEUP_TIMER, clock_time() + 10 * CLOCK_SYS_CLOCK_1MS);

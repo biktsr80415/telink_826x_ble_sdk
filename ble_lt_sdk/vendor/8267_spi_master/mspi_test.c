@@ -4,7 +4,7 @@
 #include "../../proj/drivers/keyboard.h"
 #include "../../proj/drivers/flash.h"
 #include "mspi_test.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 
 extern u8 spi_read_buff[64];// to store data from sspi 826x
 
