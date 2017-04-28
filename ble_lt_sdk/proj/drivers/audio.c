@@ -9,9 +9,12 @@
 
 **************************************************************************************************/
 
+
 #include "../../proj/tl_common.h"
 #include "audio.h"
 #include "pga.h"
+
+#if( (CHIP_TYPE == MCU_CORE_8261) ||  (CHIP_TYPE == MCU_CORE_8267) ||  (CHIP_TYPE == MCU_CORE_8269) )
 
 #define SET_PFM(v)     write_reg16(0x800030,(v<<2)&0x0fff)
 #define SET_PFL(v)     write_reg16(0x800032,v)
@@ -356,4 +359,4 @@ void audio_volume_step_adjust(unsigned char vol_step,unsigned short gradual_inte
 	reg_aud_tick_interval &= 0xc000;
 	reg_aud_tick_interval |= (gradual_interval&0x3fff);
 }
-
+#endif
