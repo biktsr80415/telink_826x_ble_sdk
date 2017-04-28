@@ -12,96 +12,163 @@
 
 #if ( MODULE_ADC_ENABLE)
 #include "../../proj_lib/rf_drv.h"
-static inline void adc_set_clk_freq(u8 mhz){
+
+u8 adc_clk_step_l  = 0;
+u8 adc_chn_m_input = 0;
+
+#define		EN_MANUALM			(reg_adc_ctrl = 0x20)
+
+static inline void adc_SetClkFreq(u8 mhz){
 	reg_adc_step_l = mhz*4;
 	reg_adc_mod = MASK_VAL(FLD_ADC_MOD, 192*4, FLD_ADC_CLK_EN, 1);
 }
 
-
-static inline void adc_set_l_chn(u8 chn, u8 mic_en){
-	reg_adc_pga_sel_l = chn >> 8;	//C0, C1, C2 & C3
-	reg_adc_chn_l_sel = chn | FLD_ADC_DATA_SIGNED;
-	if(mic_en){
-		analog_write (raga_pga_gain0, 0x50);
-		analog_write (raga_pga_gain1, 0x22);
-
-		reg_clk_en2 |= FLD_CLK2_DIFIO_EN;
-		reg_dfifo_ana_in = FLD_DFIFO_AUD_INPUT_MONO | FLD_DFIFO_MIC_ADC_IN;
-		reg_dfifo_scale = 5;				// down scale by 6,  96K / 6 == 16K
-		reg_aud_hpf_alc = 11;				// volume setting
-		reg_aud_alc_vol = 2;
-
-	}else{
-		analog_write (raga_pga_gain0, 0x53);
-		analog_write (raga_pga_gain1, 0x00);
-	}
-
-}
-
-static inline void adc_set_period(void){
+static inline void adc_SetPeriod(void){
 	reg_adc_period_chn0 = 77;
 	reg_adc_period_chn12 = 8;
 }
 
-void adc_clk_en(int en){
+void adc_ClkEn(int en){
 	if (en) {
-		// Eanble the clock
-		reg_adc_clk_en |= BIT(7);
-
-		// Enable ADC LDO
-		analog_write(0x06,(analog_read(0x06)&0xfe));
+		reg_adc_clk_en |= BIT(7);                    // Eanble the clock
+		analog_write(0x06,(analog_read(0x06)&0xfe)); // Enable ADC LDO
 	} else {
-	    // Disable ADC clock
-	    reg_adc_clk_en &= ~ BIT(7);
-
-	    // Disable ADC LDO
-		analog_write(0x06,(analog_read(0x06)&0xfe));
+	    reg_adc_clk_en &= ~ BIT(7);                  // Disable ADC clock
+		analog_write(0x06,(analog_read(0x06)|0x01)); // Disable ADC LDO
 	}
-
 	adc_clk_poweron ();
 }
-u8 adc_clk_step_l = 0;
-u8	adc_chn_m_input = 0;
 
-void adc_init()
-{
-	// pin selection
-	reg_adc_chn_m_sel = ADC_CHNM_ANA_INPUT;
-	adc_chn_m_input = ADC_CHNM_ANA_INPUT;
+/********************************************************
+*
+*	@brief		set ADC reference voltage for the Misc and L channel
+*
+*	@param		adcCha - enum variable adc channel.
+*				adcRF - enum variable of adc reference voltage.
+*
+*	@return		None
+*/
+void adc_RefVoltageSet(ADC_REFVOL_t adcRF){
+	unsigned char st;
 
-    // Set sample rate and cycle, default to 14bit
-	reg_adc_samp_res = MASK_VAL(FLD_ADC_CHNM_SAMP_CYCLE, ADC_SAMPLING_CYCLE_6
-		, FLD_ADC_CHNM_SAMP_RESOL, ADC_SAMPLING_RES_14BIT
-		, FLD_ADC_CHNLR_SAMP_CYCLE, ADC_SAMPLING_CYCLE_9);
+	st = (unsigned char)adcRF;
+	*(volatile unsigned char  *)0x80002b &= 0xFC;
 
-    // Set Reference voltage
-  	reg_adc_ref = ADC_CHNM_REF_SRC;		// ref: 0 1.3v  04 AVDD
-
-	// Set ALL manual mode
-	reg_adc_ctrl = 0x20;
-
-	// Setting clk
-	adc_set_clk_freq(4);
-	adc_clk_step_l = 4;
-
-	// Enable ADC
-	adc_clk_en(1);
+	*(volatile unsigned char  *)0x80002b |= st;
 }
 
+/********************************************************
+*
+*	@brief		set ADC resolution for channel Misc
+*
+*	@param		adcRes - enum variable adc resolution.
+*
+*	@return		None
+*/
+void adc_ResSet(ADC_RESOLUTION_t adcRes){
+	unsigned char resN;
+	resN = (unsigned char )adcRes;
+	*(volatile unsigned char  *)0x80003c &= 0xC7;
+	*(volatile unsigned char  *)0x80003c |= (resN<<3);
+}
+
+/********************************************************
+*
+*	@brief		set ADC sample time(the number of adc clocks for each sample)
+*
+*	@param		adcCha - enum variable adc channel.
+*				adcST - enum variable of adc sample time.
+*
+*	@return		None
+*/
+
+void adc_SampleTimeSet(ADC_SAMPCYC_t adcST){
+
+	unsigned char st;
+	st = (unsigned char)adcST;
+
+	*(volatile unsigned char  *)(0x80003c) &= 0xF8;
+
+	*(volatile unsigned char  *)(0x80003c) |= st;
+}
+
+/********************************************************
+*
+*	@brief		set ADC analog input channel
+*
+*	@param		adcCha - enum variable adc channel.
+*				adcInCha - enum variable of adc input channel.
+*
+*	@return		None
+*/
+void adc_AnaChSet(ADC_INPUTCHN_t adcInCha){
+	unsigned char cnI;
+
+	cnI = (unsigned char)adcInCha;
+
+	*(volatile unsigned char  *)(0x80002c) &= 0xE0;
+	*(volatile unsigned char  *)(0x80002c) |= cnI;
+}
+
+/********************************************************
+*
+*	@brief		set ADC input channel mode - signle-end or differential mode
+*
+*	@param		adcCha - enum variable adc channel.
+*				inM - enum variable of ADCINPUTMODE.
+*
+*	@return		None
+*/
+void adc_AnaModeSet(ADC_INPUTMODE_t inM){
+	unsigned char cnM;
+
+	cnM = (unsigned char)inM;
+	*(volatile unsigned char  *)(0x80002c) &= 0x1F;
+	*(volatile unsigned char  *)(0x80002c) |= (cnM<<5);
+}
+
+/*****
+ * @brief init adc module. such as adc clock, input channel, resolution, reference voltage and so on.
+ *        notice: adc clock: when the reference voltage is AVDD, the adc clock must be lower than 5Mhz.
+ *        when the reference voltage is 1.4, the adc clock must be lower than 4Mhz.
+ * @param[in] adc_clock    - enum ADC_CLK_t, set adc clock.
+ * @param[in] chn          - enum ADC_INPUTCHN_t ,acd channel
+ * @param[in] mode         - enum ADC_INPUTMODE_t
+ * @param[in] ref_vol      - enum ADC_REFVOL_t, adc reference voltage.
+ * @param[in] resolution   - enum ADC_RESOLUTION_t
+ * @param[in] sample_cycle - enum ADC_SAMPCYC_t
+ * @return    none
+ */
+void adc_init(ADC_CLK_t adc_clock, ADC_INPUTCHN_t chn, ADC_INPUTMODE_t mode, ADC_REFVOL_t ref_vol, ADC_RESOLUTION_t resolution, ADC_SAMPCYC_t sample_cycle)
+{
+	/**set adc clock**/
+	adc_SetClkFreq(adc_clock);
+
+	/**select the input channel**/
+	adc_AnaChSet(chn);
+	/**set the adc's mode**/
+	adc_AnaModeSet(mode);
+	/**set the reference voltage**/
+	adc_RefVoltageSet(ref_vol);
+	/**set resolution**/
+	adc_ResSet(resolution);
+	/**set sample cycle**/
+	adc_SampleTimeSet(sample_cycle);
+
+	adc_ClkEn(1);    // enable ADC clock
+	EN_MANUALM;      // enable manual mode
+}
 
 u16 adc_get(void)
 {
-	// Set a run signal
-	reg_adc_chn1_outp = FLD_ADC_CHN_MANU_START;
+	reg_adc_chn1_outp = FLD_ADC_CHN_MANU_START;  // Set a run signal,start to run adc
 
-	// wait for data
-	sleep_us(5);
+	sleep_us(5);   // wait for data
 
-	// read data
-	return (reg_adc_dat_byp_outp & 0x3FFF);
+	return (reg_adc_dat_byp_outp & 0x3FFF);// read data
 }
 
-/*between start and end must > 200us
+/* between start and end must > 200us
  * Ωˆ  ”√”⁄8266 A2–æ∆¨
  * power down step£∫
  * 	1, change input to GND

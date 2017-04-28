@@ -12,7 +12,7 @@
 
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
-	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269)	)
+	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269))
 
 #ifndef 	adc_new_H
 #define 	adc_new_H
@@ -21,6 +21,8 @@
 #include "../common/compatibility.h"
 #include "../common/utility.h"
 
+//1:enable internal 1/3 voltage division. 0: disable internal 1/3 voltage division
+#define BATT_ONETHIRD_DIV_INTERNAL 1
 
 #define battery2audio() (*(volatile unsigned char*)(0x800033)=0x15)
 #define audio2battery() (*(volatile unsigned char*)(0x800033)=0x00)
@@ -83,7 +85,15 @@ enum ADCINPUTMODE{
 	INVERTB_3,
 	PGAVOPM,
 };
-
+//adc clock
+enum ADCCLOCK {
+	ADC_CLK_4M = 4,
+	ADC_CLK_5M = 5,
+};
+enum BATT_INPUTCHN {
+	Battery_Chn_VCC,
+	Battery_Chn_B7,
+};
 
 //set period for Misc
 #define		SET_P(v)			write_reg16(0x800030,(v<<2)&0x0FFF)
@@ -172,7 +182,16 @@ extern void adc_RefVoltageSet(enum ADCRFV adcRF);
 *
 *	@return	setResult - '1' set success; '0' set error
 */
-extern unsigned char adc_Init(void );
+unsigned char adc_Init(enum ADCCLOCK adc_clk);
+/**
+ * @brief     set input channel,set reference voltage, set resolution bits, set sample cycle
+ * @param[in] chl          - enum variable ADCINPUTCH ,acd channel
+ * @param[in] ref_vol      - enum variable ADCRFV
+ * @param[in] resolution   - enum variable ADCRESOLUTION
+ * @param[in] sample_cycle - enum variable ADCST
+ * @return    none
+ */
+extern void ADC_ParamSetting(enum ADCINPUTCH chn,enum ADCINPUTMODE mode,enum ADCRFV ref_vol,enum ADCRESOLUTION resolution,enum ADCST sample_cycle);
 /********************************************************
 *
 *	@brief		Initiate function for the battery check function
@@ -201,16 +220,7 @@ extern unsigned short adc_BatteryValueGet(void);
 *
 *	@return		None
 */
-extern void adc_TemSensorInit(void);
-/********************************************************
-*
-*	@brief		get the temperature sensor sampled value
-*
-*	@param		None
-*
-*	@return		unsigned short - return the adc sampled value 14bits significants
-*/
-extern unsigned short adc_TemValueGet(void);
+void adc_TemSensorInit(enum ADCINPUTCH chn);
 
 /*************************************************************************
 *

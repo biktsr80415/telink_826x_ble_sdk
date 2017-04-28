@@ -1036,6 +1036,11 @@ enum{
 	FLD_AUD_ENABLE	 =			BIT(0),
 	FLD_AUD_SDM_PLAY_EN = 		BIT(1),
 	FLD_AUD_SHAPPING_EN =		BIT(2),
+	FLD_AUD_PN__SHAPPING_BYPASS =   BIT(2),
+	FLD_AUD_SHAPING_EN =            BIT(3),
+	FLD_AUD_PN2_GENERATOR_EN =      BIT(4),
+	FLD_AUD_PN1_GENERATOR_EN =      BIT(5),
+	FLD_AUD_CONST_VAL_INPUT_EN =    BIT(6),
 };
 
 #define reg_aud_vol_ctrl		REG_ADDR8(0x561)
@@ -1445,10 +1450,13 @@ enum {
 	FLD_AUD_IN_HPF_SFT	=	BIT_RNG(0,3),
 	FLD_AUD_IN_HPF_BYPASS	=	BIT(4),
 	FLD_AUD_IN_ALC_BYPASS	=	BIT(5),
+	FLD_AUD_IN_LPF_BYPASS   =   BIT(6),
 	FLD_AUD_IN_USB_SET		=  0x3b,
 };
 
 #define reg_aud_alc_vol			REG_ADDR8(0xb06)
+#define reg_aud_vol_step        REG_ADDR8(0xb0b)
+#define reg_aud_tick_interval   REG_ADDR16(0xb0c)
 
 #define reg_audio_wr_ptr		REG_ADDR16(0xb10)
 #define reg_mic_ptr				reg_audio_wr_ptr

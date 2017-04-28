@@ -27,9 +27,9 @@ typedef enum {
  *  @brief  Define the length of stop bit
  */
 typedef enum {
-    STOP_BIT_ONE = 0,
+    STOP_BIT_ONE          = 0,
     STOP_BIT_ONE_DOT_FIVE = BIT(12),
-    STOP_BIT_TWO = BIT(13),
+    STOP_BIT_TWO          = BIT(13),
 } UART_StopBitTypeDef;
 
 enum UARTIRQSOURCE{
@@ -47,28 +47,44 @@ enum{
  *  @brief  Define UART RTS mode
  */
 enum {
-    UART_RTS_MODE_AUTO = 0,
+    UART_RTS_MODE_AUTO   = 0,
     UART_RTS_MODE_MANUAL,
 };
+//there are three group of pins of uart function in 8267
+#define UART_GPIO_8267_PA6_PA7      1
+#define UART_GPIO_8267_PC2_PC3      2
+#define UART_GPIO_8267_PB2_PB3      3
 
-#define CLK32M_UART9600         do{\
-									uart_Init(237,13,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(1,1);\
-								}while(0)
-#define CLK32M_UART115200       do{\
-									uart_Init(19,13,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(1,1);\
-								}while(0)
-#define CLK16M_UART115200       do{\
-									uart_Init(9,13,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(1,1);\
-								}while(0)
-#define CLK16M_UART9600         do{\
-									uart_Init(103,15,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(1,1);\
-								}while(0)
+//not dma mode,1: occur uart irq; 0:not uart irq
+#define GET_UART_IRQ_NOT_DMA       ((reg_uart_status0&FLD_UART_IRQ_FLAG) ? 1:0)
 
-//UART_TX/UART_RX gpio pin config
+/***
+ *  define macro to simple the initial code
+ */
+#define     CLK32M_UART9600        do{\
+									    uart_Init(237,13,PARITY_NONE,STOP_BIT_ONE);\
+									    uart_DmaModeInit(1,1);\
+								   }while(0)
+
+#define    CLK32M_UART115200       do{\
+									    uart_Init(19,13,PARITY_NONE,STOP_BIT_ONE);\
+									    uart_DmaModeInit(1,1);\
+								   }while(0)
+
+#define    CLK16M_UART115200       do{\
+									    uart_Init(9,13,PARITY_NONE,STOP_BIT_ONE);\
+									    uart_DmaModeInit(1,1);\
+								   }while(0)
+
+#define    CLK16M_UART9600         do{\
+									    uart_Init(103,15,PARITY_NONE,STOP_BIT_ONE);\
+									    uart_DmaModeInit(1,1);\
+								   }while(0)
+
+
+/****
+ * UART_TX and UART_RX gpio pin config
+ */
 #define    UART_GPIO_CFG_PA6_PA7()  do{\
 										reg_gpio_pa_gpio &= 0x3f;\
 										reg_gpio_config_func0 |= 0x80;\
@@ -82,11 +98,6 @@ enum {
 										reg_gpio_config_func2 |= 0x0c;\
 									}while(0)
 
-#define UART_GPIO_8267_PA6_PA7      1
-#define UART_GPIO_8267_PC2_PC3      2
-#define UART_GPIO_8267_PB2_PB3      3
-
-#define GET_UART_IRQ_NOT_DMA       ((reg_uart_status0&FLD_UART_IRQ_FLAG) ? 1:0)  //not dma mode,1: occur uart irq; 0:not uart irq
 /**********************************************************
 *
 *	@brief	reset uart module
@@ -152,7 +163,7 @@ extern void uart_DmaModeInit(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn)
  * @return    none
  * @notice    suggust closing tx irq.
  */
-extern void uart_NotDmaModeInit(unsigned char rx_level,unsigned char tx_level,unsigned char rx_irq_en,unsigned char tx_irq_en);
+extern void uart_notDmaModeInit(unsigned char rx_level,unsigned char tx_level,unsigned char rx_irq_en,unsigned char tx_irq_en);
 
 /********
  * @ brief   in not dma mode, receive the data.
@@ -161,7 +172,7 @@ extern void uart_NotDmaModeInit(unsigned char rx_level,unsigned char tx_level,un
  * @ param[in] none
  * @ return    the data received from the uart.
  */
-extern unsigned char uart_NotDmaModeRevData(void);
+extern unsigned char uart_notDmaModeRevData(void);
 
 /**
  * @brief     uart send data function with not DMA method.
@@ -170,7 +181,7 @@ extern unsigned char uart_NotDmaModeRevData(void);
  * @param[in] uartData - the data to be send.
  * @return    1: send success ; 0: uart busy
  */
-extern unsigned char UART_NotDmaModeSendByte(unsigned char uartData);
+extern unsigned char UART_notDmaModeSendByte(unsigned char uartData);
 
 /********************************************************************************
 *	@brief	uart send data function, this  function tell the DMA to get data from the RAM and start
@@ -183,6 +194,8 @@ extern unsigned char UART_NotDmaModeSendByte(unsigned char uartData);
 extern unsigned char uart_Send(unsigned char* addr);
 
 extern unsigned char uart_Send_kma(unsigned char* addr);
+
+extern void uart_io_init(unsigned char uart_io_sel);
 /********************************************************************
 *
 *	@brief	uart receive function, call this function to get the UART data
@@ -218,10 +231,27 @@ extern void uart_RecBuffInit(unsigned char *recAddr, unsigned short recBuffLen);
 
 extern void uart_BuffInit(unsigned char *recAddr, unsigned short recBuffLen, unsigned char *txAddr);
 
-void uart_clr_tx_busy_flag();
+extern void uart_clr_tx_busy_flag();
 
-void uart_set_tx_done_delay (u32 t);		//for 8266 only
+extern void uart_set_tx_done_delay (u32 t);		//for 8266 only
 
-unsigned char uart_tx_is_busy(void);
+extern unsigned char uart_tx_is_busy(void);
 
 #endif
+/***************************
+ *  uart demo in dma mode
+ *  step 1. CLK16M_UART115200;
+ *  or
+ *  step 1. uart_Init(9,13,PARITY_NONE,STOP_BIT_ONE); // initial bautrate, parity and stop bit
+		    uart_DmaModeInit(1,1);                    // decide whether or not to enable tx interrupt or rx interrupt
+ *  step 2. uart_io_init(); //if chip is 8266,parameter is none; if 8267, parameter is UART_GPIO_CFG_PA6_PA7, UART_GPIO_CFG_PB2_PB3 or UART_GPIO_CFG_PC2_PC3
+ *  step 3. uart_IRQSourceGet(); // if enable interrupt.
+ *
+ *  uart demo in not dma mode
+ *  step 1. uart_Init(9,13,PARITY_NONE,STOP_BIT_ONE);
+ *          uart_notDmaModeInit(1,0,1,1); //rx_level is 1, tx_level is 0 and enable rx irq and tx irq.
+ *  step 2. uart_io_init(); //if chip is 8266,parameter is none; if 8267, parameter is UART_GPIO_CFG_PA6_PA7, UART_GPIO_CFG_PB2_PB3 or UART_GPIO_CFG_PC2_PC3
+ *  step 3. GET_UART_IRQ_NOT_DMA; //whether or not occur receive interrupt.
+ *  step 4. uart_notDmaModeRevData(void);  // return one byte received data.
+ *  step 5. UART_notDmaModeSendByte(data); // send one byte data.
+ */
