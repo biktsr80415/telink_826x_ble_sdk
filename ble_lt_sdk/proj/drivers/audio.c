@@ -349,9 +349,6 @@ void audio_volume_step_adjust(unsigned char vol_step,unsigned short gradual_inte
 {
 	reg_aud_vol_step = vol_step;
 	BM_CLR(reg_aud_tick_interval,FLD_AUD_ALC_VOL_TICK_L|FLD_AUD_ALC_VOL_TICK_H);
-//	unsigned char gradual_interval_low = (gradual_interval&0xff);
-//	unsigned char gradual_interval_hig = ((gradual_interval>>8)&0x3f);
-//	reg_aud_tick_interval |= MASK_VAL(FLD_AUD_ALC_VOL_TICK_L,gradual_interval_low,FLD_AUD_ALC_VOL_TICK_H,gradual_interval_hig);
 	reg_aud_tick_interval |= MASK_VAL(FLD_AUD_ALC_VOL_TICK_L,(gradual_interval&0xff),FLD_AUD_ALC_VOL_TICK_H,((gradual_interval>>8)&0x3f));
 }
 
