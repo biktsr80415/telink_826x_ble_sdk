@@ -296,10 +296,18 @@ void user_init()
 	bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
 #endif
 
+#if (BLE_MODULE_BATT_CHECK_EN)
+	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_B7, 0, SINGLEEND, RV_1P428, RES14, S_3);
+	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
+		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
+	#endif
+#endif
+
 	ui_advertise_begin_tick = clock_time();
 }
 
-
+extern void battery_power_check(void);
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
@@ -314,7 +322,71 @@ void main_loop ()
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////
+#if (BLE_MODULE_BATT_CHECK_EN)
+	battery_power_check();
+#endif
 	//  add spp UI task
 	app_power_management ();
 
 }
+
+/***
+ * the function can filter the not good data from the adc.
+ * remove the maximum data and minimum data from the adc data.
+ * then average the rest data to calculate the voltage of battery.
+ **/
+unsigned short filter_data(unsigned short* pData,unsigned char len)
+{
+	unsigned char index = 0,loop = 0;
+	unsigned short temData = 0;
+	//bubble sort,user can use your algorithm.it is just an example.
+	for(loop = 0;loop <(len-1); loop++){
+		for(index = 0;index <(len-loop-1); index++){
+			if(pData[index]>pData[index+1]){
+				temData = pData[index];
+				pData[index] = pData[index+1];
+				pData[index+1] = temData;
+			}
+		}
+	}
+
+	//remove the maximum and minimum data, then average the rest data.
+	unsigned int data_sum = 0;
+	unsigned char s_index = 0;
+	for(s_index=1;s_index <(len-1);s_index++){
+		data_sum += pData[s_index];
+	}
+	return (data_sum/(len-2));
+}
+
+/****
+ * the function is used to check the voltage of battery.
+ * when the battery voltage is less than 1.96v,
+ * let the chip enter deep sleep mode.
+ **/
+void battery_power_check(void)
+{
+	int adc_idx = 0;
+	static unsigned short adcValue[16] = {0};
+
+	ADC_MODULE_ENABLE; //open adc's clock to start adc convertion.
+	for(adc_idx=0;adc_idx<16;adc_idx++){
+		adcValue[adc_idx] = adc_SampleValueGet1();
+	}
+	ADC_MODULE_CLOSED; //close the adc clock to save power
+
+	unsigned short average_data;
+	average_data = filter_data(adcValue,16);
+	unsigned int tem_batteryVol; //2^14 - 1 = 16383;
+#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+	tem_batteryVol = 3*(1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
+#elif(MCU_CORE_TYPE == MCU_CORE_8266)
+	tem_batteryVol = ((1300*average_data)>>14);
+#endif
+	printf("%x:\n\r",tem_batteryVol);
+	if(tem_batteryVol < 1900){
+		//enter into deepsleep mode
+	}
+}
+
+

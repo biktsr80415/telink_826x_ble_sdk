@@ -70,8 +70,8 @@ extern "C" {
 
 
 ///////////// avoid ADC module current leakage (when module on suspend status) //////////////////////////////
-#define ADC_MODULE_CLOSED               write_reg8(0x6b,read_reg8(0x6b)&0x7f) // adc clk disable
-#define ADC_MODULE_ENABLE               write_reg8(0x6b,read_reg8(0x6b)|0x80) // adc clk open
+#define ADC_MODULE_CLOSED               BM_CLR(reg_adc_mod, FLD_ADC_CLK_EN)  // adc clk disable
+#define ADC_MODULE_ENABLE               BM_SET(reg_adc_mod, FLD_ADC_CLK_EN) // adc clk open
 
 /////////////////// Clock  /////////////////////////////////
 #define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC

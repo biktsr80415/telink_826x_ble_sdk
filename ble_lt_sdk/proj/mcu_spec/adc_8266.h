@@ -24,10 +24,9 @@ extern "C" {
  */
 
 #include "../common/types.h"
-//#include "../mcu_spec/anareg_8886.h"
 
-#define ADC_REF_1_3V             0x00		//!< ADC Reference:1.3v
-#define ADC_REF_AVDD             0x04		//!< ADC Reference:AVDD
+//#define ADC_REF_1_3V             0x00		//!< ADC Reference:1.3v
+//#define ADC_REF_AVDD             0x04		//!< ADC Reference:AVDD
 /*****
  *  adc reference voltage
  */
@@ -106,27 +105,23 @@ typedef enum {
 	ADC_CLK_5M = 5,
 }ADC_CLK_t;
 
-/** @addtogroup  HAL_ADC_DONE_SIGNAL ADC Done Signal
- *  @{
+/***
+ * addtogroup  HAL_ADC_DONE_SIGNAL ADC Done Signal
  */
 enum{
 	ADC_DONE_SIGNAL_COUNTER,
 	ADC_DONE_SIGNAL_RISING,
 	ADC_DONE_SIGNAL_FALLING,
 };
-/** @} end of group HAL_ADC_DONE_SIGNAL */
 
-
-/** @addtogroup  HAL_ADC_AUDIO_MODE ADC Audio Mode
- *  @{
+/***
+ * addtogroup  HAL_ADC_AUDIO_MODE ADC Audio Mode
  */
 enum{
 	ADC_AUDIO_MODE_NONE,		//!< ADC Audio Mode Uselessly
 	ADC_AUDIO_MODE_MONO,		//!< ADC Audio Mono Mode
 	ADC_AUDIO_MODE_STEREO,		//!< ADC Audio Stereo Mode,8266 not supported this mode.
 };
-/** @} end of group HAL_ADC_AUDIO_MODE */
-
 
 /*****
  * @brief init adc module. such as adc clock, input channel, resolution, reference voltage and so on.
@@ -140,7 +135,7 @@ enum{
  * @param[in] sample_cycle - enum ADC_SAMPCYC_t
  * @return    none
  */
-void adc_init(ADC_CLK_t adc_clock,ADC_INPUTCHN_t chn,ADC_INPUTMODE_t mode,ADC_REFVOL_t ref_vol,ADC_RESOLUTION_t resolution,ADC_SAMPCYC_t sample_cycle);
+void adc_Init(ADC_CLK_t adc_clock,ADC_INPUTCHN_t chn,ADC_INPUTMODE_t mode,ADC_REFVOL_t ref_vol,ADC_RESOLUTION_t resolution,ADC_SAMPCYC_t sample_cycle);
 /**
  * @brief  		Start ADC and get the channel misc converter result
  *
@@ -148,10 +143,9 @@ void adc_init(ADC_CLK_t adc_clock,ADC_INPUTCHN_t chn,ADC_INPUTMODE_t mode,ADC_RE
  *
  * @return  	ADC Result
  */
-u16 adc_get(void);
+u16 adc_SampleValueGet(void);
 
 void adc_power_down(void);
-
 void adc_power_down_start(void);
 void adc_power_down_end(void);
 void adc_setting_recover(void);

@@ -34,6 +34,10 @@ extern u8 reg_simu_buffer[];
 #define reg_i2c_set				REG_ADDR32(0x00)
 #define reg_i2c_speed			REG_ADDR8(0x00)
 #define reg_i2c_id				REG_ADDR8(0x01)
+enum{
+	FLD_I2C_WRITE_READ_BIT  =  BIT(0),
+	FLD_I2C_ID              =  BIT_RNG(1,7),
+};
 #define reg_i2c_status			REG_ADDR8(0x02)
 enum{
 	FLD_I2C_CMD_BUSY		= 	BIT(0),
@@ -88,8 +92,8 @@ enum{
 
 #define reg_spi_inv_clk			REG_ADDR8(0x0b)
 enum{
-	FLD_INVERT_SPI_CLK =        BIT(1),
-	FLD_DAT_DLY_HALF_CLK =      BIT(2),
+	FLD_INVERT_SPI_CLK =        BIT(0),
+	FLD_DAT_DLY_HALF_CLK =      BIT(1),
 };
 
 /****************************************************

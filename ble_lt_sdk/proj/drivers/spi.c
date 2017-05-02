@@ -3,6 +3,8 @@
 
 #if(MCU_CORE_TYPE != MCU_CORE_8263)
 
+#define SPI_BUSY_FLAG     ((reg_spi_ctrl & FLD_SPI_BUSY)?1:0)
+
 /****
 * @brief: spi bus can drive more than one spi slave. so we can use cs line to select spi slave that response master.
 *         the telink's chip can use normal gpio to as cs function, not only the CN pin of spi hardware module.
@@ -16,8 +18,8 @@ void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin)
 {
 	#if(MCU_CORE_TYPE == MCU_CORE_8266)
 		//disable the other function and the gpio will be spi.
-		reg_gpio_config_func4 &= (~BIT_RNG(6,7));     //disable E6/E7 keyscan function
-		reg_gpio_config_func5 &= (~BIT(5));           //disable E6/F0 as uart function
+		BM_CLR(reg_gpio_config_func4, (GPIO_PE6|GPIO_PE7)&0xff);  //disable E6/E7 keyscan function
+		BM_CLR(reg_gpio_config_func5, BIT(5));        //disable E6/F0 as uart function
 		gpio_set_func(GPIO_PE7,AS_SPI);               //disable E7 as gpio
 		gpio_set_func(GPIO_PF0|GPIO_PF1,AS_SPI);      //disable F0/F1 as gpio
 		gpio_set_input_en(GPIO_PE6|GPIO_PE7,1);       //enable input
@@ -26,15 +28,15 @@ void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin)
 		if(data_clk_pin == SPI_PIN_GROUPB)
 		{
 			gpio_set_func(GPIO_PB5|GPIO_PB6|GPIO_PB7,AS_SPI); //disable gpio function
-			reg_gpio_config_func1 |= (FLD_SPI_DO_PWM4N|FLD_SPI_DI_PWM5|FLD_SPI_CK_PWM5N); //enable B4/B5/B6 spi function
-			reg_gpio_config_func0 &= (~BIT_RNG(2,5));        //disable A2/A3/A4/A5 as spi function
+			reg_gpio_config_func1 |= MASK_VAL(FLD_SPI_DO_PWM4N, 1, FLD_SPI_DI_PWM5, 1, FLD_SPI_CK_PWM5N, 1);//enable B4/B5/B6 spi function
+			BM_CLR(reg_gpio_config_func0, FLD_SPI_DO_PWM0_N|FLD_SPI_DI_PWM1|FLD_SPI_CK_PWM1_N|FLD_SPI_CN_PWM2_N); //disable A2/A3/A4/A5 as spi function
 			gpio_set_input_en(GPIO_PB5|GPIO_PB6|GPIO_PB7,1); //enable input function
 		}
 		else if(data_clk_pin == SPI_PIN_GROUPA)
 		{
 			gpio_set_func(GPIO_PA2|GPIO_PA3|GPIO_PA4,AS_SPI); //disable gpio function
-			reg_gpio_config_func0 |= (FLD_SPI_DO_PWM0_N|FLD_SPI_DI_PWM1|FLD_SPI_CK_PWM1_N);//enable spi function
-			reg_gpio_config_func1 &= (~BIT_RNG(4,7)); //disable B4/B5/B6/B7 as spi function.
+			reg_gpio_config_func0 |= MASK_VAL(FLD_SPI_DO_PWM0_N, 1, FLD_SPI_DI_PWM1, 1, FLD_SPI_CK_PWM1_N, 1);//enable spi function
+			BM_CLR(reg_gpio_config_func1, FLD_SPI_CN_PWM4|FLD_SPI_DO_PWM4N|FLD_SPI_DI_PWM5|FLD_SPI_CK_PWM5N);//disable B4/B5/B6/B7 as spi function.
 			gpio_set_func(GPIO_PB4|GPIO_PB5|GPIO_PB6|GPIO_PB7,AS_GPIO); //enable B4/B5/B6/B7 gpio function,or they will be pwm function
 			gpio_set_input_en(GPIO_PA2|GPIO_PA3|GPIO_PA4,1); //enable input
 		}
@@ -44,7 +46,7 @@ void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin)
 	gpio_write(cs_pin,1);         // output high level in idle status.
 	gpio_set_output_en(cs_pin,1); //enable output
 	
-	reg_spi_sp |= FLD_SPI_ENABLE; //enable spi function. because i2c and spi share part of the hardware in the chip.
+	BM_SET(reg_spi_sp, FLD_SPI_ENABLE);  //enable spi function. because i2c and spi share part of the hardware in the chip.
 }
 /**
  * @brief     This function configures the clock and working mode for SPI interface
@@ -56,12 +58,15 @@ void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin)
 void spi_master_init(unsigned char div_clk, enum spi_mode_t spi_mode)
 {
 	/***set the spi clock. spi_clk = system_clock/((div_clk+1)*2)***/
-	reg_spi_sp &= (~FLD_MASTER_SPI_CLK);     //clear the spi clock division bits
-	reg_spi_sp |= (div_clk&0x7f);            //set the clock div bits
-	reg_spi_ctrl |= FLD_SPI_MASTER_MODE_EN;  //enable spi master mode
+	BM_CLR(reg_spi_sp, FLD_MASTER_SPI_CLK);  //clear the spi clock division bits
+	reg_spi_sp |= MASK_VAL(FLD_MASTER_SPI_CLK, div_clk&0x7f); //set the clock div bits
+
+	BM_SET(reg_spi_ctrl, FLD_SPI_MASTER_MODE_EN);  //enable spi master mode
+
 	/***config the spi woking mode.For spi mode spec, pls refer to datasheet***/
-	reg_spi_inv_clk &= (~BIT_RNG(0,1));      //clear the mode bits
-	reg_spi_inv_clk |= (spi_mode&0x03);      //set the mode
+	BM_CLR(reg_spi_inv_clk, FLD_INVERT_SPI_CLK|FLD_DAT_DLY_HALF_CLK);//clear the mode bits
+
+	BM_SET(reg_spi_inv_clk, spi_mode&0x03);  //set the mode
 }
 
 /*****
@@ -80,23 +85,26 @@ void spi_slave_init(enum spi_pin_t spi_grp, enum spi_mode_t spi_mode)
 	#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 		if(spi_grp == SPI_PIN_GROUPB){
 			gpio_set_func(GPIO_PB4|GPIO_PB5|GPIO_PB6|GPIO_PB7,AS_SPI); //disable gpio function
-			reg_gpio_config_func1 |= (FLD_SPI_CN_PWM4|FLD_SPI_DO_PWM4N|FLD_SPI_DI_PWM5|FLD_SPI_CK_PWM5N); //enable B4/B5/B6 spi function
-			reg_gpio_config_func0 &= (~BIT_RNG(2,5));                 //disable A2/A3/A4/A5 as spi function
+			//enable B4/B5/B6 spi function
+			reg_gpio_config_func1 |= MASK_VAL(FLD_SPI_CN_PWM4, 1, FLD_SPI_DO_PWM4N, 1, FLD_SPI_DI_PWM5, 1, FLD_SPI_CK_PWM5N, 1);
+			BM_CLR(reg_gpio_config_func0, (GPIO_PA2|GPIO_PA3|GPIO_PA4|GPIO_PA5)&0xff);  //disable A2/A3/A4/A5 as spi function
 			gpio_set_input_en(GPIO_PB4|GPIO_PB5|GPIO_PB6|GPIO_PB7,1); //enable input
 		}
 		else if(spi_grp == SPI_PIN_GROUPA){
 			gpio_set_func(GPIO_PA2|GPIO_PA3|GPIO_PA4|GPIO_PA5,AS_SPI); //disable gpio function
-			reg_gpio_config_func0 |= (FLD_SPI_DO_PWM0_N|FLD_SPI_DI_PWM1|FLD_SPI_CK_PWM1_N|FLD_SPI_CN_PWM2_N);//enable spi function
-			reg_gpio_config_func1 &= (~BIT_RNG(4,7)); //disable B4/B5/B6 as spi function.
+			//enable spi function
+			reg_gpio_config_func0 |= MASK_VAL(FLD_SPI_DO_PWM0_N, 1, FLD_SPI_DI_PWM1, 1, FLD_SPI_CK_PWM1_N, 1, FLD_SPI_CN_PWM2_N, 1);
+			BM_CLR(reg_gpio_config_func1, (GPIO_PB4|GPIO_PB5|GPIO_PB6|GPIO_PB7)&0xff);  //disable B4/B5/B6 as spi function.
 			gpio_set_func(GPIO_PB4|GPIO_PB5|GPIO_PB6|GPIO_PB7,AS_GPIO); //enable B4/B5/B6/B7 gpio function,or they will be pwm function
 			gpio_set_input_en(GPIO_PA2|GPIO_PA3|GPIO_PA4,1); //enable input
 		}
 	#endif
 	/***enable slave***/
-	reg_spi_ctrl &= (~FLD_SPI_MASTER_MODE_EN);  //disable spi master mode, ie enable spi slave mode
+	BM_CLR(reg_spi_ctrl, FLD_SPI_MASTER_MODE_EN);  //disable spi master mode, .i.e enable spi slave mode
+
 	/***config the spi woking mode.For spi mode spec, pls refer to datasheet***/
-	reg_spi_inv_clk &= (~BIT_RNG(0,1));      //clear the mode bits
-	reg_spi_inv_clk |= (spi_mode&0x03);      //set the mode
+	BM_CLR(reg_spi_inv_clk, FLD_INVERT_SPI_CLK|FLD_DAT_DLY_HALF_CLK); //clear the mode bits
+	BM_SET(reg_spi_inv_clk, reg_spi_inv_clk);                         //set the mode
 }
 
 /**
@@ -118,17 +126,17 @@ void spi_write(unsigned char* addr_cmd, unsigned char addr_cmd_len, unsigned cha
 	int i = 0;
 	/***pull down cs line and enable write***/
 	gpio_write(cs_pin, 0); //pull down cs line and select the slave to handle.
-	reg_spi_ctrl &= (~FLD_SPI_DATA_OUT_DIS); //enable output
-	reg_spi_ctrl &= (~FLD_SPI_RD);           //enable write
+	BM_CLR(reg_spi_ctrl, FLD_SPI_DATA_OUT_DIS); //enable output
+	BM_CLR(reg_spi_ctrl, FLD_SPI_RD);           //enable write
 	/***write cmd,refer to datasheet, cmd_0x00 is write; cmd_0x80 is read***/
 	for(i=0;i<addr_cmd_len;i++){
 		reg_spi_data = addr_cmd[i];
-		while(reg_spi_ctrl & FLD_SPI_BUSY);
+		while(SPI_BUSY_FLAG);
 	}
 	/***write data to slave****/
 	for(i=0;i<buf_len;i++){
 		reg_spi_data = pbuf[i];
-		while(reg_spi_ctrl & FLD_SPI_BUSY); //wait data sending
+		while(SPI_BUSY_FLAG); //wait data sending
 	}
 	/***pull up cs line to release the slave***/
 	gpio_write(cs_pin, 1);
@@ -151,23 +159,23 @@ void spi_read(unsigned char* addr_cmd, unsigned char addr_cmd_len, unsigned char
 	unsigned char temp_spi_data = 0;
 	/***pull down cs line and enable write***/
 	gpio_write(cs_pin, 0); //pull down cs line and select the slave to handle.
-	reg_spi_ctrl &= (~FLD_SPI_DATA_OUT_DIS); //enable output
-	reg_spi_ctrl &= (~FLD_SPI_RD);           //enable write
+	BM_CLR(reg_spi_ctrl, FLD_SPI_DATA_OUT_DIS); //enable output
+	BM_CLR(reg_spi_ctrl, FLD_SPI_RD);           //enable write
 	
 	/***write cmd,refer to datasheet, cmd_0x00 is write; cmd_0x80 is read***/
 	for(i=0;i<addr_cmd_len;i++){
 		reg_spi_data = addr_cmd[i];
-		while(reg_spi_ctrl & FLD_SPI_BUSY);
+		while(SPI_BUSY_FLAG);
 	}
 	
-	reg_spi_ctrl |= (FLD_SPI_RD|FLD_SPI_DATA_OUT_DIS); //enable read and disable output
+	reg_spi_ctrl |= MASK_VAL(FLD_SPI_RD, 1, FLD_SPI_DATA_OUT_DIS, 1);  //enable read and disable output
 	temp_spi_data = reg_spi_data;
-	while(reg_spi_ctrl & FLD_SPI_BUSY);
+	while(SPI_BUSY_FLAG);
 	
 	/***read the data.when read register reg_sip_data(0x08),the scl will generate 8 clock cycles to get the data from slave***/
 	for(i=0;i<buf_len;i++){
 		pbuf[i] = reg_spi_data;
-		while(reg_spi_ctrl & FLD_SPI_BUSY);
+		while(SPI_BUSY_FLAG);
 	}
 	/***pull up cs line to release the slave***/
 	gpio_write(cs_pin, 1);

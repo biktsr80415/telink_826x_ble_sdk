@@ -21,9 +21,6 @@
 #include "../common/compatibility.h"
 #include "../common/utility.h"
 
-//1:enable internal 1/3 voltage division. 0: disable internal 1/3 voltage division
-#define BATT_ONETHIRD_DIV_INTERNAL 1
-
 #define battery2audio() (*(volatile unsigned char*)(0x800033)=0x15)
 #define audio2battery() (*(volatile unsigned char*)(0x800033)=0x00)
 
@@ -33,6 +30,7 @@ enum ADCRFV{
 	RV_AVDD,
 	RV_1P224,
 };
+
 //ADC resolution
 enum ADCRESOLUTION{
 	RES7,
@@ -78,6 +76,7 @@ enum ADCINPUTCH{
 	AVSS,
 	OTVDD,//1/3 voltage division detection
 };
+
 //ADC channel input mode
 enum ADCINPUTMODE{
 	SINGLEEND,
@@ -85,142 +84,82 @@ enum ADCINPUTMODE{
 	INVERTB_3,
 	PGAVOPM,
 };
+
 //adc clock
 enum ADCCLOCK {
 	ADC_CLK_4M = 4,
 	ADC_CLK_5M = 5,
 };
-enum BATT_INPUTCHN {
+
+//if select interval 1/3 voltage division
+enum ONETHIRD_INPUTCHN {
 	Battery_Chn_VCC,
 	Battery_Chn_B7,
 };
 
-//set period for Misc
-#define		SET_P(v)			write_reg16(0x800030,(v<<2)&0x0FFF)
-
-
-//Check adc status, busy return 1
-#define		CHECKADCSTATUS		(((*(volatile unsigned char  *)0x80003a) & 0x01) ? 1:0)
-
-
-/********************************************************
-*
-*	@brief		set ADC resolution for channel Misc
-*
-*	@param		adcRes - enum variable adc resolution.
-*
-*	@return		None
-*/
-extern void adc_ResSet(enum ADCRESOLUTION adcRes);
-
-
-/********************************************************
-*
-*	@brief		set ADC input channel
-*
-*	@param		adcCha - enum variable adc channel.
-*				adcInCha - enum variable of adc input channel.
-*
-*	@return		None
-*/
-extern void adc_AnaChSet( enum ADCINPUTCH adcInCha);
-
-
-
-/***************************************************************************
-*
-*	@brief	This function must be called when the input channel selected to 1/3 volatage division.
-*			Set IO power supply for the 1/3 voltage division detection, there are two input sources of the
-*			IO input battery voltage, one through the VDDH and the other through the  ANA_B<7> pin.
-*
-*	@param	IOp - input power source '1' is the VDDH; '2' is the ANA_B<7>.
-*
-*	@return	'1' set success; '0' set error
-*/
-// extern unsigned char adc_IOPowerSupplySet(unsigned char IOp);
-
-/********************************************************
-*
-*	@brief		set ADC input channel mode - signle-end or differential mode
-*
-*	@param		adcCha - enum variable adc channel.
-*				inM - enum variable of ADCINPUTMODE.
-*
-*	@return		None
-*/
-extern void adc_AnaModeSet( enum ADCINPUTMODE inM);
-
-/********************************************************
-*
-*	@brief		set ADC sample time(the number of adc clocks for each sample)
-*
-*	@param		adcCha - enum variable adc channel.
-*				adcST - enum variable of adc sample time.
-*
-*	@return		None
-*/
-extern void adc_SampleTimeSet(enum ADCST adcST);
-
-/********************************************************
-*
-*	@brief		set ADC reference voltage for the Misc and L channel
-*
-*	@param		adcCha - enum variable adc channel.
-*				adcRF - enum variable of adc reference voltage.
-*
-*	@return		None
-*/
-extern void adc_RefVoltageSet(enum ADCRFV adcRF);
-
 
 /**********************************************************************
-*	@brief	ADC initiate function, set the ADC clock details (3MHz) and start the ADC clock.
-*			ADC clock relys on PLL, if the FHS isn't selected to 192M PLL (probably modified
+* @brief	1.ADC initiate function, set the ADC clock details (4MHz) and start the ADC clock.
+*	        set input channel,set reference voltage, set resolution bits, set sample cycle
+*			2.ADC clock relays on PLL, if the FHS isn't selected to 192M PLL (probably modified
 *			by other parts codes), adc initiation function will returns error.
 *
-*	@param	None
+* @param[in] chn          - enum variable ADCINPUTCH ,acd channel
+* @param[in] mode         - enum variable ADCINPUTMODE, select adc mode.
+* @param[in] ref_vol      - enum variable ADCRFV,select reference voltage.
+* @param[in] resolution   - enum variable ADCRESOLUTION, select resolution
+* @param[in] sample_cycle - enum variable ADCST, select sample cycle
 *
-*	@return	setResult - '1' set success; '0' set error
+* @return none
 */
-unsigned char adc_Init(enum ADCCLOCK adc_clk);
-/**
- * @brief     set input channel,set reference voltage, set resolution bits, set sample cycle
- * @param[in] chl          - enum variable ADCINPUTCH ,acd channel
- * @param[in] ref_vol      - enum variable ADCRFV
- * @param[in] resolution   - enum variable ADCRESOLUTION
- * @param[in] sample_cycle - enum variable ADCST
- * @return    none
- */
-extern void ADC_ParamSetting(enum ADCINPUTCH chn,enum ADCINPUTMODE mode,enum ADCRFV ref_vol,enum ADCRESOLUTION resolution,enum ADCST sample_cycle);
-/********************************************************
-*
-*	@brief		Initiate function for the battery check function
-*
-*	@param		checkM - Battery check mode, '0' for battery dircetly connected to chip,
-*				'1' for battery connected to chip via boost DCDC
-*
-*	@return		None
-*/
-extern void adc_BatteryCheckInit(unsigned char checkM);
-/********************************************************
-*
-*	@brief		get the battery value
-*
-*	@param		None
-*
-*	@return		unsigned long - return the sampling value multiplex 3
-*/
-extern unsigned short adc_BatteryValueGet(void);
+void adc_Init(enum ADCCLOCK adc_clk,enum ADCINPUTCH chn,enum ADCINPUTMODE mode,enum ADCRFV ref_vol,\
+		      enum ADCRESOLUTION resolution,enum ADCST sample_cycle);
 
 /********************************************************
 *
-*	@brief		Initiate function for the temparture sensor
+*	@brief		Initiate function for the battery check function. initial adc clock and select the input channel.
 *
-*	@param		None
+*	            NOTICE: the parameter "div_en" indicate whether or not open internal 1/3 voltage division.
+*	            if "div_en" is 1, .i.e enable internal 1/3 voltage division, the parameter oneThirdChn is valid while
+*	            the parameter notOneThirdChn is invalid.
+*	            if "div_en" is 0, .i.e disable internal 1/3 voltage division,the parameter oneThirdChn is invalid while
+*	            the parameter notOneThirdChn is valid.
+*
+*	@param[in]  adc_clk -- set the clock of adc module.
+*	@param[in]  div_en  -- whether or not open internal 1/3 voltage division.
+*	@param[in]  oneThirdChn-- ONETHIRD_INPUTCHN variable. this parameter is valid when "div_en" is 1.
+*	@param[in]  notOneThirdChn -- ADCINPUTCH variable.    this parameter is valid when "div_en" is 0.
+*   @param[in] mode         - enum variable ADCINPUTMODE, select adc mode.
+*   @param[in] ref_vol      - enum variable ADCRFV,select reference voltage.
+*   @param[in] resolution   - enum variable ADCRESOLUTION, select resolution
+*   @param[in] sample_cycle - enum variable ADCST, select sample cycle
 *
 *	@return		None
 */
-void adc_TemSensorInit(enum ADCINPUTCH chn);
+void adc_BatteryCheckInit(enum ADCCLOCK adc_clk,unsigned char div_en,enum ONETHIRD_INPUTCHN oneThirdChn,enum ADCINPUTCH notOneThirdChn,\
+		                  enum ADCINPUTMODE mode,enum ADCRFV ref_vol,enum ADCRESOLUTION resolution,enum ADCST sample_cycle);
+
+
+/********************************************************
+*
+*	@brief	Initiate function for the temperature sensor.
+*	        temperature adc value = TEMSENSORP_adc_value - TEMSENSORN_adc_value
+*           step 1: adc_TemSensorInit(...TEMSENSORP...);
+*           step 2: TEMSENSORP_adc_value = adc_SampleValueGet();
+*           step 3: adc_TemSensorInit(...TEMSENSORN...);
+*           step 4: TEMSENSORN_adc_value = adc_SampleValueGet();
+*           step 5: temperature adc value = TEMSENSORP_adc_value - TEMSENSORN_adc_value
+*	@param[in]	adc_clk -- set the clock of adc module.
+*	@param[in]  chn -- enum variable ADCINPUTCH ,select channel,in fact only two selection:one is TEMSENSORN,the other is TEMSENSORP
+*	@param[in]  mode         - enum variable ADCINPUTMODE, select adc mode.
+*   @param[in]  ref_vol      - enum variable ADCRFV,select reference voltage.
+*   @param[in]  resolution   - enum variable ADCRESOLUTION, select resolution
+*   @param[in]  sample_cycle - enum variable ADCST, select sample cycle
+*
+*	@return		None
+*/
+void adc_TemSensorInit(enum ADCCLOCK adc_clk,enum ADCINPUTCH chn,enum ADCINPUTMODE mode,enum ADCRFV ref_vol,\
+	      enum ADCRESOLUTION resolution,enum ADCST sample_cycle);
 
 /*************************************************************************
 *
@@ -231,7 +170,17 @@ void adc_TemSensorInit(enum ADCINPUTCH chn);
 *
 *	@return	sampled_value:	raw data
 */
-extern unsigned short adc_SampleValueGet(void);
+unsigned short adc_SampleValueGet1(void);
+
+/********************************************************
+*
+*	@brief		get the battery value
+*
+*	@param		None
+*
+*	@return		unsigned long - return the sampling value multiplex 3
+*/
+unsigned short adc_BatteryValueGet(void);
 
 #endif
 

@@ -46,12 +46,16 @@ enum {
 };
 enum{
 	NO_AUDIO = 0,
-	MONO_AUDIO = BIT(4),
-	STEREO_AUDIO = BIT(5),
+	MONO_AUDIO,
+	STEREO_AUDIO,
 };
 enum{
-	AUD_ADC_DONE_RISING = BIT(6),
-	AUD_ADC_DONE_FALLING = BIT(7),
+	AUD_VOLUME_MANUAL,
+	AUD_VOLUME_AUTO,
+};
+enum{
+	AUD_ADC_DONE_RISING,
+	AUD_ADC_DONE_FALLING,
 };
 
 /************************************************************
@@ -94,7 +98,7 @@ void audio_config_sdm_buf(signed short* pbuff, unsigned char size_buff);
 * param[in] misc_sys_tick -- system ticks of adc misc channel.
 * param[in] l_sys_tick -- system tick of adc left channel
 */
-void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, unsigned short left_sys_tick,enum audio_deci_t d_samp);
+void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, unsigned short left_sys_tick,enum audio_deci_t d_samp,unsigned char fhs_source);
 
 /************************************************************************************
 *
@@ -105,6 +109,17 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
 *	@return	none
 */
 void audio_amic_input_set(enum audio_input_t adc_ch);
+
+/**
+ * @brief     audio DMIC init function, config the speed of DMIC and downsample audio data to required speed.
+ *            actually audio data is dmic_speed/d_samp.
+ * @param[in] dmic_speed - set the DMIC speed. such as 1 indicate 1M and 2 indicate 2M.
+ * @param[in] d_samp - set the decimation. ie div_speed.
+ * @param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
+ *
+ * @return    none.
+ */
+void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned char fhs_source);
 
 /**
 *	@brief		reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
@@ -126,27 +141,19 @@ unsigned char audio_tune_deci_shift(unsigned char deci_shift);
  *   @return      none
  */
  unsigned char audio_tune_hpf_shift(unsigned char hpf_shift);
-/************************************************************************************
-*
-*	@brief	audio input set function, select analog audio input channel, start the filters
-*
-*	@param	adc_ch:	if audio input as signle end mode, should identify an analog audio signal input channel, enum variable of ADCINPUTCH
-*
-*	@return	none
-*/
-extern void audio_amic_input_set(unsigned char adc_ch);
 
-/**
-*
-*	@brief	   sdm setting function, enable or disable the sdm output, configure SDM output paramaters
-*
-*	@param[in]	audio_out_en - audio output enable or disable set, '1' enable audio output; '0' disable output
-*	@param[in]	sdm_setp -	  SDM clk divider
-*	@param[in]	sdm_clk -	  SDM clk, default to be 8Mhz
-*
-*	@return	none
-*/
-void audio_sdm_output_set(unsigned char audio_out_en,unsigned short sdm_step,unsigned char sdm_clk);
+ /**
+ *
+ *	@brief	   sdm setting function, enable or disable the sdm output, configure SDM output paramaters
+ *
+ *	@param[in]	audio_out_en - audio output enable or disable set, '1' enable audio output; '0' disable output
+ *	@param[in]	sample_rate - audio sampling rate, such as 16K,32k etc.
+ *	@param[in]	sdm_clk -	  SDM clock, default to be 8Mhz
+ *	@param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
+ *
+ *	@return	none
+ */
+void audio_sdm_output_set(unsigned char audio_out_en,int sample_rate,unsigned char sdm_clk,unsigned char fhs_source);
 
 /**
 *	@brief	    set audio volume level

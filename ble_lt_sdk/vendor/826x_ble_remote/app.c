@@ -725,19 +725,19 @@ void user_init()
 		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
 		#if TL_MIC_32K_FIR_16K
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 47, 4, R2);
+				audio_amic_init( DIFF_MODE, 47, 4, R2,CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 30, 16, R2);
+				audio_amic_init( DIFF_MODE, 30, 16, R2,CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R3);
+				audio_amic_init( DIFF_MODE, 65, 15, R3,CLOCK_SYS_TYPE);
 			#endif
 		#else
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 18, 8, R5);
+				audio_amic_init( DIFF_MODE, 18, 8, R5,CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R3);
+				audio_amic_init( DIFF_MODE, 65, 15, R3,CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R6);
+				audio_amic_init( DIFF_MODE, 65, 15, R6,CLOCK_SYS_TYPE);
 			#endif
 		#endif
 	#endif
@@ -745,7 +745,7 @@ void user_init()
 	audio_finetune_sample_rate(3);//reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
 	audio_amic_input_set(PGA_CH);//audio input set, ignore the input parameter
 #endif
-	adc_BatteryCheckInit(Battery_Chn_B7);///add by Q.W
+	adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_B7, 0, SINGLEEND, RV_1P428, RES14, S_3); //setting the parameter based on actual situation
 
 
 
@@ -760,6 +760,13 @@ void user_init()
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 #endif
 
+#if(BLE_REMOTE_BATT_CHECK_EN)
+	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_B7, 0, SINGLEEND, RV_1P428, RES14, S_3);
+	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
+		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
+	#endif
+#endif
 
 	////////////////LED initialization /////////////////////////
 	device_led_init(GPIO_LED, 1);

@@ -34,6 +34,10 @@ extern u8 reg_simu_buffer[];
 #define reg_i2c_set				REG_ADDR32(0x00)
 #define reg_i2c_speed			REG_ADDR8(0x00)
 #define reg_i2c_id				REG_ADDR8(0x01)
+enum{
+	FLD_I2C_WRITE_READ_BIT  =  BIT(0),
+	FLD_I2C_ID              =  BIT_RNG(1,7),
+};
 #define reg_i2c_status			REG_ADDR8(0x02)
 enum{
 	FLD_I2C_CMD_BUSY		= 	BIT(0),
@@ -88,8 +92,8 @@ enum{
 
 #define reg_spi_inv_clk			REG_ADDR8(0x0b)
 enum{
-	FLD_INVERT_SPI_CLK =        BIT(1),
-	FLD_DAT_DLY_HALF_CLK =      BIT(2),
+	FLD_INVERT_SPI_CLK =        BIT(0),
+	FLD_DAT_DLY_HALF_CLK =      BIT(1),
 };
 
 /****************************************************
@@ -158,11 +162,14 @@ enum{
 /////////// adc select [4:0] channel; [6:5] mode; [7] signed
 #define reg_adc_chn_m_sel		REG_ADDR8(0x2c)
 #define reg_adc_chn_l_sel		REG_ADDR8(0x2d)
-#define reg_adc_chn_r_sel		REG_ADDR8(0x2e)
 enum{
 	FLD_ADC_CHN_SEL = 			BIT_RNG(0,4),
-	FLD_ADC_DIFF_CHN_SEL = 		BIT_RNG(5,7),	// datasheet  12.1
+	FLD_ADC_DIFF_CHN_SEL = 		BIT_RNG(5,6),	// datasheet  12.1
+	FLD_ADC_DATA_FORMAT  =      BIT(7),
 };
+
+#define reg_adc_chn_r_sel		REG_ADDR8(0x2e)
+
 
 enum{
 	FLD_ADC_CHN_D0				= 0x01,
@@ -205,11 +212,15 @@ enum{
 
 };
 
-#define reg_adc_ref				REG_ADDR8(0x2b)
-
 #define reg_adc_res_lr			REG_ADDR8(0x2f)
+enum {
+	FLD_ADC_RESOLUTION_SEL   =  BIT_RNG(0,2),
+};
 #define reg_adc_res_m			REG_ADDR8(0x3c)
 #define reg_adc_tsamp_lr		REG_ADDR8(0x3d)
+enum {
+	FLD_ADC_SAMPLE_TIME         = BIT_RNG(0,2),
+};
 
 enum{
 	FLD_ADC_VREF_1P3V			= 0x15,
@@ -219,7 +230,18 @@ enum{
 
 
 #define reg_adc_period_chn0		REG_ADDR16(0x30)
+enum {
+	FLD_ADC_PHASE_TICK    =    BIT_RNG(0,1),
+	FLD_ADC_CHNM_PERIODL  =    BIT_RNG(2,7),
+	FLD_ADC_CHNM_PEIRODH  =    BIT_RNG(8,15),
+	FLD_ADC_CHNM_PERIOD   =    BIT_RNG(2,15),
+};
+
+
 #define reg_adc_period_chn12	REG_ADDR8(0x32)
+enum {
+	FLD_ADC_CHNLR_PERIOD  =    BIT_RNG(0,15),
+};
 
 #define reg_adc_ctrl			REG_ADDR8(0x33)
 enum{
@@ -240,6 +262,9 @@ enum{
 #define reg_adc_dat_byp_outp	REG_ADDR16(0x38)
 
 #define reg_adc_chn0_input		REG_ADDR16(0x3a)
+enum {
+	FLD_ADC_BUSY_FLAG       =   BIT(0),
+};
 
 #define reg_adc_samp_res		REG_ADDR16(0x3c)
 enum{
@@ -1033,13 +1058,13 @@ enum{
  *****************************************************/
 #define reg_aud_ctrl			REG_ADDR8(0x560)
 enum{
-	FLD_AUD_ENABLE	 =			BIT(0),
-	FLD_AUD_SDM_PLAY_EN = 		BIT(1),
-	FLD_AUD_SHAPPING_EN =		BIT(2),
-	FLD_AUD_PN__SHAPPING_BYPASS =   BIT(2),
-	FLD_AUD_SHAPING_EN =            BIT(3),
-	FLD_AUD_PN2_GENERATOR_EN =      BIT(4),
-	FLD_AUD_PN1_GENERATOR_EN =      BIT(5),
+	FLD_AUD_ENABLE	           =	BIT(0),
+	FLD_AUD_SDM_PLAY_EN        =    BIT(1),
+	FLD_AUD_SHAPPING_EN        =    BIT(2),
+	FLD_AUD_PN_SHAPPING_BYPASS =    BIT(2),
+	FLD_AUD_SHAPING_EN         =    BIT(3),
+	FLD_AUD_PN2_GENERATOR_EN   =    BIT(4),
+	FLD_AUD_PN1_GENERATOR_EN   =    BIT(5),
 	FLD_AUD_CONST_VAL_INPUT_EN =    BIT(6),
 };
 
@@ -1427,10 +1452,11 @@ enum{
 #define reg_dfifo_ana_in		REG_ADDR8(0xb03)
 enum{
 	FLD_DFIFO_MIC0_RISING_EDGE = BIT(0),
-	FLD_DFIFO_MIC_ADC_IN 	= BIT(1),
-
-	FLD_DFIFO_AUD_INPUT_MONO =	BIT(4) | BIT(5),
-//	FLD_DFIFO_AUD_INPUT_BYPASS = BIT(5),
+	FLD_DFIFO_MIC_ADC_IN 	   = BIT(1),
+	FLD_DFIFO_EN               = BIT(4),
+	FLD_DFIFO_WPTR_EN          = BIT(5),
+	FLD_DFIFO_WPTR_CLR         = BIT(6),
+	FLD_DFIFO_AUD_INPUT_MONO   = BIT(4) | BIT(5),
 };
 enum{
 	REG_AUD_INPUT_SEL_USB = 0,
@@ -1442,7 +1468,7 @@ enum{
 #define reg_dfifo_scale			REG_ADDR8(0xb04)
 enum{
 	FLD_DFIFO2_DEC_CIC =		BIT_RNG(0,3),
-	FLD_DFIFO0_DEC_SCALE =		BIT_RNG(4,7),
+	FLD_DFIFO0_DEC_SCALE =		BIT_RNG(4,6),
 };
 
 #define reg_aud_hpf_alc			REG_ADDR8(0xb05)
@@ -1455,8 +1481,16 @@ enum {
 };
 
 #define reg_aud_alc_vol			REG_ADDR8(0xb06)
+enum {
+	FLD_AUD_MANUAL_VOLUME     =   BIT_RNG(0,5),
+	FLD_AUD_VOLUME_CTRL_MODE  =   BIT(6),
+};
 #define reg_aud_vol_step        REG_ADDR8(0xb0b)
 #define reg_aud_tick_interval   REG_ADDR16(0xb0c)
+enum {
+	FLD_AUD_ALC_VOL_TICK_L    = BIT_RNG(0,7),
+	FLD_AUD_ALC_VOL_TICK_H    = BIT_RNG(8,13),
+};
 
 #define reg_audio_wr_ptr		REG_ADDR16(0xb10)
 #define reg_mic_ptr				reg_audio_wr_ptr

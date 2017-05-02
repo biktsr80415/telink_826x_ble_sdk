@@ -48,15 +48,13 @@ void adc_ClkEn(int en){
 *
 *	@return		None
 */
-void adc_RefVoltageSet(ADC_REFVOL_t adcRF){
-	unsigned char st;
+static inline void adc_RefVoltageSet(ADC_REFVOL_t adcRF){
+	unsigned char ref_vol;
 
-	st = (unsigned char)adcRF;
-	*(volatile unsigned char  *)0x80002b &= 0xFC;
-
-	*(volatile unsigned char  *)0x80002b |= st;
+	ref_vol = (unsigned char)adcRF;
+	BM_CLR(reg_adc_ref,FLD_ADC_REF_M);
+	reg_adc_ref |= MASK_VAL(FLD_ADC_REF_M,ref_vol);
 }
-
 /********************************************************
 *
 *	@brief		set ADC resolution for channel Misc
@@ -65,13 +63,12 @@ void adc_RefVoltageSet(ADC_REFVOL_t adcRF){
 *
 *	@return		None
 */
-void adc_ResSet(ADC_RESOLUTION_t adcRes){
+static inline void adc_ResSet(ADC_RESOLUTION_t adcRes){
 	unsigned char resN;
 	resN = (unsigned char )adcRes;
-	*(volatile unsigned char  *)0x80003c &= 0xC7;
-	*(volatile unsigned char  *)0x80003c |= (resN<<3);
+	BM_CLR(reg_adc_samp_res,FLD_ADC_CHNM_SAMP_RESOL);
+	reg_adc_samp_res |= MASK_VAL(FLD_ADC_CHNM_SAMP_RESOL,resN);
 }
-
 /********************************************************
 *
 *	@brief		set ADC sample time(the number of adc clocks for each sample)
@@ -82,16 +79,13 @@ void adc_ResSet(ADC_RESOLUTION_t adcRes){
 *	@return		None
 */
 
-void adc_SampleTimeSet(ADC_SAMPCYC_t adcST){
+static inline void adc_SampleTimeSet( ADC_SAMPCYC_t adcST){
 
 	unsigned char st;
 	st = (unsigned char)adcST;
-
-	*(volatile unsigned char  *)(0x80003c) &= 0xF8;
-
-	*(volatile unsigned char  *)(0x80003c) |= st;
+	BM_CLR(reg_adc_samp_res,FLD_ADC_CHNM_SAMP_CYCLE);
+	reg_adc_samp_res |= MASK_VAL(FLD_ADC_CHNM_SAMP_CYCLE,st);
 }
-
 /********************************************************
 *
 *	@brief		set ADC analog input channel
@@ -101,15 +95,13 @@ void adc_SampleTimeSet(ADC_SAMPCYC_t adcST){
 *
 *	@return		None
 */
-void adc_AnaChSet(ADC_INPUTCHN_t adcInCha){
+static inline void adc_AnaChSet(ADC_INPUTCHN_t adcInCha){
 	unsigned char cnI;
 
 	cnI = (unsigned char)adcInCha;
-
-	*(volatile unsigned char  *)(0x80002c) &= 0xE0;
-	*(volatile unsigned char  *)(0x80002c) |= cnI;
+	BM_CLR(reg_adc_chn_m_sel,FLD_ADC_CHN_SEL);
+	reg_adc_chn_m_sel |= MASK_VAL(FLD_ADC_CHN_SEL,cnI);
 }
-
 /********************************************************
 *
 *	@brief		set ADC input channel mode - signle-end or differential mode
@@ -119,14 +111,14 @@ void adc_AnaChSet(ADC_INPUTCHN_t adcInCha){
 *
 *	@return		None
 */
-void adc_AnaModeSet(ADC_INPUTMODE_t inM){
+
+static inline void adc_AnaModeSet( ADC_INPUTMODE_t inM){
 	unsigned char cnM;
 
 	cnM = (unsigned char)inM;
-	*(volatile unsigned char  *)(0x80002c) &= 0x1F;
-	*(volatile unsigned char  *)(0x80002c) |= (cnM<<5);
+	BM_CLR(reg_adc_chn_m_sel,FLD_ADC_DIFF_CHN_SEL);
+	reg_adc_chn_m_sel |= MASK_VAL(FLD_ADC_DIFF_CHN_SEL,cnM);
 }
-
 /*****
  * @brief init adc module. such as adc clock, input channel, resolution, reference voltage and so on.
  *        notice: adc clock: when the reference voltage is AVDD, the adc clock must be lower than 5Mhz.
@@ -139,7 +131,7 @@ void adc_AnaModeSet(ADC_INPUTMODE_t inM){
  * @param[in] sample_cycle - enum ADC_SAMPCYC_t
  * @return    none
  */
-void adc_init(ADC_CLK_t adc_clock, ADC_INPUTCHN_t chn, ADC_INPUTMODE_t mode, ADC_REFVOL_t ref_vol, ADC_RESOLUTION_t resolution, ADC_SAMPCYC_t sample_cycle)
+void adc_Init(ADC_CLK_t adc_clock, ADC_INPUTCHN_t chn, ADC_INPUTMODE_t mode, ADC_REFVOL_t ref_vol, ADC_RESOLUTION_t resolution, ADC_SAMPCYC_t sample_cycle)
 {
 	/**set adc clock**/
 	adc_SetClkFreq(adc_clock);
@@ -159,7 +151,7 @@ void adc_init(ADC_CLK_t adc_clock, ADC_INPUTCHN_t chn, ADC_INPUTMODE_t mode, ADC
 	EN_MANUALM;      // enable manual mode
 }
 
-u16 adc_get(void)
+u16 adc_SampleValueGet(void)  //adc_get
 {
 	reg_adc_chn1_outp = FLD_ADC_CHN_MANU_START;  // Set a run signal,start to run adc
 
@@ -219,16 +211,6 @@ void adc_setting_recover(void){
 
 #endif
 }
-
-/*
-void adc_example(void)
-{
-    adc_init(GPIO_PC2, ADC_REF_1_3V);
-    ......
-    u16 result = adc_get();
-    printf("voltage = %dmv\r\n", ((result*1300)>>14)); // Here >>14 means ( result * 1300 / 0x3fff)
-}
-*/
 
 #endif
 #endif

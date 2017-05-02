@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 
-
+#define BLE_REMOTE_BATT_CHECK_EN        1
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			1
 #define BLE_REMOTE_SECURITY_ENABLE      1
