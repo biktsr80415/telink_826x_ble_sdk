@@ -34,8 +34,8 @@ int main (void) {
 	blt_set_masetr_role();  //as master
 	cpu_wakeup_init();
 
-	clock_init();
 	set_tick_per_us (32);
+	clock_init();
 
 	gpio_init();
 
