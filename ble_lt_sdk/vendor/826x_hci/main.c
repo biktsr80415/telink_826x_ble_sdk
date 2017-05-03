@@ -28,6 +28,9 @@ _attribute_ram_code_ void irq_handler(void)
     if(irqS & FLD_DMA_UART_TX)	//tx
     {
     	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
+#if __PROJECT_8266_HCI__
+		uart_clr_tx_busy_flag();
+#endif
     }
 #endif
 }
@@ -35,7 +38,7 @@ _attribute_ram_code_ void irq_handler(void)
 int main (void) {
 	cpu_wakeup_init();
 
-	set_tick_per_us(CLOCK_SYS_CLOCK_HZ/1000000);
+	set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
 	clock_init();
 
 	gpio_init();

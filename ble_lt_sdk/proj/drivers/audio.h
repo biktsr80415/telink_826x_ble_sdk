@@ -8,6 +8,10 @@
 
 **************************************************************************************************/
 
+#if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
+	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
+	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269))
+
 #ifndef audio_H
 #define audio_H
 
@@ -54,8 +58,8 @@ enum{
 	AUD_VOLUME_AUTO,
 };
 enum{
-	AUD_ADC_DONE_RISING,
-	AUD_ADC_DONE_FALLING,
+	AUD_ADC_DONE_RISING = 1,
+	AUD_ADC_DONE_FALLING = 2,
 };
 
 /************************************************************
@@ -174,4 +178,5 @@ void audio_volume_tune(unsigned char input_out_sel, unsigned char volume_level);
 */
 void audio_volume_step_adjust(unsigned char vol_step,unsigned short gradual_interval);
 
+#endif
 #endif

@@ -3,63 +3,88 @@
 #include "battery.h"
 #include "adc.h"
 
-#if(MODULE_BATT_ENABLE)
+#include "../../proj_lib/pm.h"
+#if(BATT_CHECK_ENABLE)
 
-STATIC_ASSERT(ADC_CHN0_REF_SRC == ADC_REF_SRC_INTERNAL);	// if fail, pls change the core voltage 1300, //  we have  only  max 14 bits resolution
-#define batt_conv_adc_mv(adc) ((adc - 188) >> 2)		//  通过回归分析得到
-#define batt_conv_mv_adc(mv)  ((mv << 2)  + 188)		//  通过回归分析得到
 
-static u8 avdd_val[]={0x81, 0x8f, 0x9c, 0xaa, 0xb7, 0xc4};
-void batt_trim_rdiv_3v(u8 vol_value){		//  to adjust  core voltage
-	int i;
-	char ana_data;
-	static char ana_data_last = 0;
-	for(i = 0;(i < 6) && (vol_value > avdd_val[i]); ++i);
-	
-	ana_data = 6 - i;
-	if(ana_data != ana_data_last){
-		analog_write(0x08,(ana_data & 0x01)? (analog_read(0x08) | 0x80) : (analog_read(0x08) & (~0x80)));
-		analog_write(0x09, analog_read(0x09) & (~0x03) | (ana_data>>1));
-		ana_data_last = ana_data;
-	}
-}
 
-int batt_get_value(void){
-	static int batt_val = 0;
-	int val = adc_get_value();
-	batt_val = val + ((val - batt_val) >> 4);
-	return batt_val;
-}
 
-batt_stat_t batt_stat;
-// return  1 if status changes, return 0 if no changes
-int batt_check(void){
-	if(gpio_read(GPIO_USB_DET)){
-		batt_stat.batt_volt_stat = BATT_STAT_CHARGING;
-	}else{
-        int batt_adc = batt_get_value();
-		if(batt_adc > batt_conv_mv_adc(BATT_FULL_VOLT)){
-		    batt_stat.batt_volt_stat = BATT_STAT_FULL;
+
+
+/***
+ * the function can filter the not good data from the adc.
+ * remove the maximum data and minimum data from the adc data.
+ * then average the rest data to calculate the voltage of battery.
+ **/
+unsigned short filter_data(unsigned short* pData,unsigned char len)
+{
+	unsigned char index = 0,loop = 0;
+	unsigned short temData = 0;
+	//bubble sort,user can use your algorithm.it is just an example.
+	for(loop = 0;loop <(len-1); loop++){
+		for(index = 0;index <(len-loop-1); index++){
+			if(pData[index]>pData[index+1]){
+				temData = pData[index];
+				pData[index] = pData[index+1];
+				pData[index+1] = temData;
+			}
 		}
-        else if(batt_adc > batt_conv_mv_adc(BATT_LOW_VOLT)){
-		    batt_stat.batt_volt_stat = BATT_STAT_NORMAL;
-        }else if(batt_adc > batt_conv_mv_adc(BATT_NO_PWR_VOLT)){
-		    batt_stat.batt_volt_stat = BATT_STAT_LOW;
-        }else{
-		    batt_stat.batt_volt_stat = BATT_STAT_NO_PWR;
-        }
-
-		batt_trim_rdiv_3v((batt_adc >> 6));
-    }
-	
-	if(batt_stat.batt_last_volt_stat != batt_stat.batt_volt_stat){
-		batt_stat.batt_last_volt_stat = batt_stat.batt_volt_stat;
-		return 1;
 	}
-	return 0;
+
+	//remove the maximum and minimum data, then average the rest data.
+	unsigned int data_sum = 0;
+	unsigned char s_index = 0;
+	for(s_index=1;s_index <(len-1);s_index++){
+		data_sum += pData[s_index];
+	}
+	return (data_sum/(len-2));
 }
 
-void batt_init(void){}
+
+/****
+ * the function is used to check the voltage of battery.
+ * when the battery voltage is less than 1.96v,
+ * let the chip enter deep sleep mode.
+ **/
+#define  BATT_CHECK_CNT  8
+void battery_power_check(void)
+{
+	static u32 battCheckTick = 0;
+	if(clock_time_exceed(battCheckTick, 100000)){
+		battCheckTick = clock_time();
+	}
+	else{
+		return;
+	}
+
+
+
+	int adc_idx = 0;
+	unsigned short adcValue[BATT_CHECK_CNT] = {0};
+
+	for(adc_idx=0;adc_idx<BATT_CHECK_CNT;adc_idx++){
+		adcValue[adc_idx] = adc_SampleValueGet();
+	}
+
+	unsigned short average_data;
+	average_data = filter_data(adcValue,BATT_CHECK_CNT);
+
+
+	unsigned int tem_batteryVol;         //2^14 - 1 = 16383;
+#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+	tem_batteryVol = 3*(1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
+#elif(MCU_CORE_TYPE == MCU_CORE_8266)
+	tem_batteryVol = ((1300*average_data)>>14);
+#endif
+
+	if(tem_batteryVol < 1900){  //when battery voltage is lower than 1.9v, chip will enter deep sleep mode
+		cpu_sleep_wakeup(1, PM_WAKEUP_PAD, 0);
+	}
+}
+
+
+
+
 
 #endif
 

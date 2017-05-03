@@ -42,7 +42,6 @@ extern const u8 my_OtaUUID[16];
 
 #define OTA_STEP_IDLE						0
 #define	OTA_STEP_UPDATE_CONN				1
-#define	OTA_STEP_UPDATE_CONN				2
 
 
 
@@ -118,7 +117,6 @@ u8 adr_index_max_l;
 u8 adr_index_max_h;
 
 
-#if 1
 void host_button_trigger_ota_start(int button0_press_flag, int button1_press_flag)
 {
 	if(blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
@@ -131,29 +129,11 @@ void host_button_trigger_ota_start(int button0_press_flag, int button1_press_fla
 	}
 }
 
-#else
-
-void host_button_trigger_ota_start(int button0_press_flag, u32 button0_press_tick)
-{
-	if(button0_press_flag && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
-		if(clock_time_exceed(button0_press_tick, 5500000)){
-			master_ota_cmd = 1;
-		}
-		else if(clock_time_exceed(button0_press_tick, 2500000)){
-			master_ota_cmd = 2;
-		}
-	}
-}
-
-#endif
 
 
 
 void host_ota_update_conn_complete( u16 interval, u16 latency, u16 timeout )
 {
-	write_reg16(0x8002, interval);
-	write_reg16(0x8004, latency);
-	write_reg16(0x8006, timeout);
 	if(host_ota_update_pending == 2 && interval == 8 && latency == 0 && timeout == 200){
 		host_ota_update_pending = 0;
 
@@ -350,6 +330,8 @@ void proc_ota (void)
 
 					p->crc_16 = crc16((u8 *)&(p->adr_index), 18);
 
+					att_req_write_cmd (dat, slave_ota_handle, (u8 *)p, 20);
+
 				}
 				else{  //OTA data finish, send OTA end, do not need CRC
 					p->adr_index = CMD_OTA_END;
@@ -362,10 +344,12 @@ void proc_ota (void)
 					p->data[3] = ~adr_index_max_h;
 
 					memset(p->data + 4, 0, 12);
+
+					att_req_write_cmd (dat, slave_ota_handle, (u8 *)p, 6);
 				}
 
 
-				att_req_write_cmd (dat, slave_ota_handle, (u8 *)p, 20);
+
 				if( blm_push_fifo (BLM_CONN_HANDLE, dat) ){
 
 					ota_adr += 16;

@@ -8,6 +8,7 @@
 #include "../../proj/mcu/pwm.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj/drivers/adc.h"
+#include "../../proj/drivers/battery.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
 
@@ -16,8 +17,8 @@
 #include "../../proj/drivers/uart.h"
 #endif
 
-//涓�釜杩炴帴闂撮殧涓婃姤6涓寘鏃讹細
-//MYFIFO_INIT(hci_rx_fifo, 176, 2);//6涓暟鎹寘  1*20+5*27 =155 鐣�B缁橠MA澶村拰1B灏�+涓插彛甯уご6B锛�6瀛楄妭瀵归綈鍙�76鍙婁互涓�
+//一个连接间隔上报6个包时：
+//MYFIFO_INIT(hci_rx_fifo, 176, 2);//6个数据包  1*20+5*27 =155 留4B给DMA头和1B尾 +串口帧头6B，16字节对齐取176及以上
 MYFIFO_INIT(hci_rx_fifo, 72, 2);
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
@@ -113,8 +114,8 @@ u32 module_wakeup_module_tick;
 
 int app_module_busy ()
 {
-	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcu鐢℅PIO_WAKEUP_MODULE鎸囩ず 鏄惁澶勪簬uart鏁版嵁鏀跺彂鐘�
-	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module鑷繁妫�煡uart rx鍜宼x鏄惁閮藉鐞嗗畬姣�
+	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcu用GPIO_WAKEUP_MODULE指示 是否处于uart数据收发状
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module自己检查uart rx和tx是否都处理完毕
 	module_task_busy = mcu_uart_working || module_uart_working;
 	return module_task_busy;
 }
@@ -146,7 +147,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//褰搈odule鐨剈art鏁版嵁鍙戦�瀹屾瘯鍚庯紝灏咷PIO_WAKEUP_MCU鎷変綆鎴栨偓娴�鍙栧喅浜巙ser鎬庝箞璁捐)
+	//当module的uart数据发送完毕后，将GPIO_WAKEUP_MCU拉低或悬浮(取决于user怎么设计)
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
@@ -163,7 +164,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闇�琚�GPIO_WAKEUP_MODULE 鍞ら啋
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //需要被 GPIO_WAKEUP_MODULE 唤醒
 	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
@@ -287,7 +288,7 @@ void user_init()
 
 
 #if (BLE_MODULE_PM_ENABLE)
-	//mcu 鍙互閫氳繃鎷夐珮GPIO_WAKEUP_MODULE灏�module浠庝綆浣庡姛鑰楀敜閱�
+	//mcu 可以通过拉高GPIO_WAKEUP_MODULE将 module从低低功耗唤醒
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 
@@ -296,9 +297,9 @@ void user_init()
 	bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
 #endif
 
-#if (BLE_MODULE_BATT_CHECK_EN)
+#if (BATT_CHECK_ENABLE)
 	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_B7, 0, SINGLEEND, RV_1P428, RES14, S_3);
+		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
 	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
 		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
 	#endif
@@ -321,68 +322,10 @@ void main_loop ()
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////
-#if (BLE_MODULE_BATT_CHECK_EN)
+#if (BATT_CHECK_ENABLE)
 	battery_power_check();
 #endif
 	//  add spp UI task
 	app_power_management ();
 
-}
-/***
- * the function can filter the not good data from the adc.
- * remove the maximum data and minimum data from the adc data.
- * then average the rest data to calculate the voltage of battery.
- **/
-unsigned short filter_data(unsigned short* pData,unsigned char len)
-{
-	unsigned char index = 0,loop = 0;
-	unsigned short temData = 0;
-	//bubble sort,user can use your algorithm.it is just an example.
-	for(loop = 0;loop <(len-1); loop++){
-		for(index = 0;index <(len-loop-1); index++){
-			if(pData[index]>pData[index+1]){
-				temData = pData[index];
-				pData[index] = pData[index+1];
-				pData[index+1] = temData;
-			}
-		}
-	}
-
-	//remove the maximum and minimum data, then average the rest data.
-	unsigned int data_sum = 0;
-	unsigned char s_index = 0;
-	for(s_index=1;s_index <(len-1);s_index++){
-		data_sum += pData[s_index];
-	}
-	return (data_sum/(len-2));
-}
-
-/****
- * the function is used to check the voltage of battery.
- * when the battery voltage is less than 1.96v,
- * let the chip enter deep sleep mode.
- **/
-void battery_power_check(void)
-{
-	int adc_idx = 0;
-	static unsigned short adcValue[16] = {0};
-
-	ADC_MODULE_ENABLE; //open adc's clock to start adc convertion.
-	for(adc_idx=0;adc_idx<16;adc_idx++){
-		adcValue[adc_idx] = adc_SampleValueGet();
-	}
-	ADC_MODULE_CLOSED; //close the adc clock to save power
-
-	unsigned short average_data;
-	average_data = filter_data(adcValue,16);
-	unsigned int tem_batteryVol; //2^14 - 1 = 16383;
-#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-	tem_batteryVol = (1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
-#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-	tem_batteryVol = ((1300*average_data)>>14);
-#endif
-	printf("%x:\n\r",tem_batteryVol);
-	if(tem_batteryVol < 1900){
-		//enter into deepsleep mode
-	}
 }

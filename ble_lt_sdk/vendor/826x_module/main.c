@@ -39,7 +39,7 @@ _attribute_ram_code_ void irq_handler(void)
 int main (void) {
 	cpu_wakeup_init();
 
-	set_tick_per_us(CLOCK_SYS_CLOCK_HZ/1000000);
+	set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
 	clock_init();
 
 	gpio_init();
@@ -47,7 +47,6 @@ int main (void) {
 	rf_drv_init(CRYSTAL_TYPE);
 
 	user_init ();
-	ADC_MODULE_CLOSED;
 
     irq_enable();
 

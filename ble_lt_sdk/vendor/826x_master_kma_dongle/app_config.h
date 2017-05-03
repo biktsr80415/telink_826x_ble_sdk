@@ -47,6 +47,9 @@ extern "C" {
 
 
 
+#define LL_MASTER_SINGLE_CONNECTION			1
+
+
 
 #if(APPLICATION_DONGLE)
 	#define	USB_PRINTER_ENABLE 		1

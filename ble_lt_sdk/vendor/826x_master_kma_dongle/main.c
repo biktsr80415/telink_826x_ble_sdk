@@ -67,7 +67,6 @@ int main (void) {
 	cpu_wakeup_init();
 
 	set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
-
 	clock_init();
 
 	gpio_init();

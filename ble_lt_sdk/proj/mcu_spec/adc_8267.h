@@ -19,9 +19,8 @@
 #include "../common/compatibility.h"
 #include "../common/utility.h"
 
-#define battery2audio() (*(volatile unsigned char*)(0x800033)=0x15)
-#define audio2battery() (*(volatile unsigned char*)(0x800033)=0x00)
-
+#define battery2audio() (reg_adc_ctrl = MASK_VAL(FLD_ADC_AUD_MODE, MONO_AUDIO, FLD_ADC_AUD_DATAPATH_EN, 1, FLD_ADC_CHNL_AUTO_EN, 1))
+#define audio2battery() (reg_adc_ctrl = MASK_VAL(FLD_ADC_CHNM_AUTO_EN, 1, FLD_ADC_AUD_DATAPATH_EN, 1))
 //ADC reference voltage
 enum ADCRFV{
 	RV_1P428,

@@ -18,12 +18,13 @@ extern "C" {
 
 
 
-#define BLE_MODULE_BATT_CHECK_EN   1
+
 /////////////////// MODULE /////////////////////////////////
 #define BLE_MODULE_PM_ENABLE				1
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
+#define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
 
 /////////////////// led pin /////////////////////////////////
 #define RED_LED                             GPIO_PA5

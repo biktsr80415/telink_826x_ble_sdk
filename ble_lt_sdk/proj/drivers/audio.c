@@ -12,6 +12,7 @@
 #include "../../proj/tl_common.h"
 #include "audio.h"
 #include "pga.h"
+#include "../mcu_spec/adc_8267.h"
 
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
@@ -64,7 +65,8 @@ void audio_config_sdm_buf(signed short* pbuff, unsigned char size_buff)
 */
 void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, unsigned short left_sys_tick,enum audio_deci_t d_samp,unsigned char fhs_source)
 {
-	unsigned char fhsBL, fhsBH,adc_mode,tmp_shift;
+	unsigned char tmp_shift;
+	unsigned char adc_mode;
 
 	reg_clk_en2 |= FLD_CLK2_DIFIO_EN; //enable dfifo clock
 
@@ -88,15 +90,15 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
 
 	/***set resolution,reference voltage,sample cycle***/
 	BM_CLR(reg_adc_ref,FLD_ADC_REF_L);
-	reg_adc_ref      |= MASK_VAL(FLD_ADC_REF_L,RV_1P428);       //1.set reference voltage
+	reg_adc_ref      |= MASK_VAL(FLD_ADC_REF_L,RV_AVDD);       //1.set reference voltage
 	BM_CLR(reg_adc_res_lr,FLD_ADC_RESOLUTION_SEL);
 	reg_adc_res_lr   |= MASK_VAL(FLD_ADC_RESOLUTION_SEL,RES14); //2.set resolution
 	BM_CLR(reg_adc_tsamp_lr,FLD_ADC_SAMPLE_TIME);
 	reg_adc_tsamp_lr |= MASK_VAL(FLD_ADC_SAMPLE_TIME,S_3);      //3.set sample cycle
 	
 	if(mode_flag == DIFF_MODE){        //different mode 
-		BM_CLR(reg_adc_chn_l_sel,FLD_ADC_CHN_SEL|FLD_ADC_DIFF_CHN_SEL);
-		reg_adc_chn_l_sel |= MASK_VAL(FLD_ADC_CHN_SEL,AUD_PGAVOM,FLD_ADC_DIFF_CHN_SEL,AUD_PGAVOPM);
+		BM_CLR(reg_adc_chn_l_sel,FLD_ADC_CHN_SEL|FLD_ADC_DIFF_CHN_SEL|FLD_ADC_DATA_FORMAT);
+		reg_adc_chn_l_sel |= MASK_VAL(FLD_ADC_CHN_SEL,AUD_PGAVOM,FLD_ADC_DIFF_CHN_SEL,AUD_PGAVOPM,FLD_ADC_DATA_FORMAT,1);
 	}
 	else{ //adc is single end mode
 		BM_CLR(reg_adc_chn_l_sel,FLD_ADC_DIFF_CHN_SEL);
@@ -152,14 +154,13 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
  */
 void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned char fhs_source)
 {
-	unsigned char tmp_shift = 0;
-	unsigned char fhsBL,fhsBH,adc_mode;
+	unsigned char adc_mode;
 	reg_clk_en2 |= FLD_CLK2_DIFIO_EN; //enable dfifo clock.
 
 	/***judge which clock is the source of FHS. three selection: 1--PLL 2--RC32M 3--16Mhz crystal oscillator***/
 	switch(fhs_source){
 	case CLOCK_TYPE_PLL:
-		adc_mode = 192; //FHS is 192Mhz
+		adc_mode = 192 - 4; //FHS is 192Mhz
 		break;
 	case CLOCK_TYPE_OSC:
 		adc_mode = 32;  //FHS is RC_32Mhz
@@ -184,12 +185,22 @@ void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned
 	reg_dfifo_ana_in |= MASK_VAL(FLD_DFIFO_MIC_ADC_IN,AUD_DMIC,FLD_DFIFO_AUD_INPUT_MONO,3); //select AMIC,enable dfifo and wptr
 
 	/***************decimation/down sample[3:0]Decimation rate [6:4]decimation shift select(0~5)***/
-	reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x05);
+	switch(d_samp){
+	case R32:
+		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x02);
+		break;
+	case R64:
+		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x05);
+		break;
+	default:
+		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x05);
+		break;
+	}
 	/***************HPF setting[3:0]HPF shift [4]bypass HPF [5]bypass ALC [6]bypass LPF*************/
 	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_SFT);
 	reg_aud_hpf_alc |= MASK_VAL(FLD_AUD_IN_HPF_SFT,0x05);//different pcb may set different value.
 	/***************ALC Volume[5:0]manual volume [6]0:manual 1:auto*********************************/
-	reg_aud_alc_vol = 0x24;
+	reg_aud_alc_vol = 0x30;  //0x24
 
 	/*************enable HPF ,ALC and disable LPF***/
 	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_BYPASS|FLD_AUD_IN_ALC_BYPASS|FLD_AUD_IN_LPF_BYPASS);//open hpf,alc,lpf
@@ -273,8 +284,7 @@ unsigned char audio_tune_deci_shift(unsigned char deci_shift)
  */
 void audio_sdm_output_set(unsigned char audio_out_en,int sample_rate,unsigned char sdm_clk,unsigned char fhs_source)
 {
-	unsigned char fhsBL,fhsBH,adc_mode;
-
+	unsigned char adc_mode;
 	if(audio_out_en){
 		/***enable SDM pins(sdm_n,sdm_p)***/
 		gpio_set_func(GPIO_SDMP,AS_SDM);  //disable gpio function

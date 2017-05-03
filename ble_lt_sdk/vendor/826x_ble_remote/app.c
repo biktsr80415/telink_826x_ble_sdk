@@ -10,6 +10,7 @@
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj/drivers/audio.h"
 #include "../../proj/drivers/adc.h"
+#include "../../proj/drivers/battery.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
 
@@ -172,12 +173,12 @@ u8 		ota_is_working = 0;
 
 
 		if(en){  //audio on
-			lowBattDet_enable = 1;
+			lowBattDet_enable = 0;
 			battery2audio();////switch auto mode
 		}
 		else{  //audio off
 			audio2battery();////switch manual mode
-			lowBattDet_enable = 0;
+			lowBattDet_enable = 1;
 		}
 	}
 
@@ -720,16 +721,21 @@ void user_init()
 	#if (BLE_DMIC_ENABLE)  //Dmic config
 		/////////////// DMIC: PA0-data, PA1-clk, PA3-power ctl
 		gpio_set_func(GPIO_PA0, AS_DMIC);
-		*(volatile unsigned char  *)0x8005b0 |= 0x01;  //PA0 as DMIC_DI
 		gpio_set_func(GPIO_PA1, AS_DMIC);
+
+		BM_SET(reg_gpio_config_func0, FLD_DMIC_DI_PWM0);//PA0 as DMIC_DI
+		gpio_set_input_en(GPIO_PA0 , 1);                //PA0 as input
 
 		gpio_set_func(GPIO_PA3, AS_GPIO);
 		gpio_set_input_en(GPIO_PA3, 1);
 		gpio_set_output_en(GPIO_PA3, 1);
 		gpio_write(GPIO_PA3, 0);
 
-		Audio_Init(1, 0, DMIC, 26, 4, R64|0x10);  //16K
-		Audio_InputSet(1);
+		#if TL_MIC_32K_FIR_16K
+			audio_dmic_init(1, R32, CLOCK_SYS_TYPE);  //1 indicate 1M; 32K
+		#else
+			audio_dmic_init(1, R64, CLOCK_SYS_TYPE);  //1 indicate 1M; 16K
+		#endif
 	#else  //Amic config
 		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
 		#if TL_MIC_32K_FIR_16K
@@ -742,7 +748,7 @@ void user_init()
 			#endif
 		#else
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 18, 8, R5, CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 65, 15, R2, CLOCK_SYS_TYPE);  // 18 8  34 4
 			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
 				audio_amic_init( DIFF_MODE, 65, 15, R3, CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
@@ -754,9 +760,9 @@ void user_init()
 	#endif//end of BLE_DMIC_ENABLE
 #endif
 
-#if(BLE_REMOTE_BATT_CHECK_EN)
+#if(BATT_CHECK_ENABLE)
 	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_B7, 0, SINGLEEND, RV_1P428, RES14, S_3);
+		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
 	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
 		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
 	#endif
@@ -805,7 +811,6 @@ void user_init()
 
 }
 
-extern void battery_power_check(void);
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
@@ -834,9 +839,11 @@ void main_loop (void)
 		}
 	#endif
 
-#if (BLE_REMOTE_BATT_CHECK_EN)
-	battery_power_check();
-#endif
+	#if (BATT_CHECK_ENABLE)
+		if(lowBattDet_enable){
+			battery_power_check();
+		}
+	#endif
 	//lowBatt_alarmFlag =  //low battery detect
 
 	proc_keyboard (0,0, 0);
@@ -846,64 +853,5 @@ void main_loop (void)
 	blt_pm_proc();
 }
 
-/***
- * the function can filter the not good data from the adc.
- * remove the maximum data and minimum data from the adc data.
- * then average the rest data to calculate the voltage of battery.
- **/
-unsigned short filter_data(unsigned short* pData,unsigned char len)
-{
-	unsigned char index = 0,loop = 0;
-	unsigned short temData = 0;
-	//bubble sort,user can use your algorithm.it is just an example.
-	for(loop = 0;loop <(len-1); loop++){
-		for(index = 0;index <(len-loop-1); index++){
-			if(pData[index]>pData[index+1]){
-				temData = pData[index];
-				pData[index] = pData[index+1];
-				pData[index+1] = temData;
-			}
-		}
-	}
-
-	//remove the maximum and minimum data, then average the rest data.
-	unsigned int data_sum = 0;
-	unsigned char s_index = 0;
-	for(s_index=1;s_index <(len-1);s_index++){
-		data_sum += pData[s_index];
-	}
-	return (data_sum/(len-2));
-}
-
-
-/****
- * the function is used to check the voltage of battery.
- * when the battery voltage is less than 1.96v,
- * let the chip enter deep sleep mode.
- **/
-void battery_power_check(void)
-{
-	int adc_idx = 0;
-	static unsigned short adcValue[16] = {0};
-
-	ADC_MODULE_ENABLE; //open adc's clock to start adc convertion.
-	for(adc_idx=0;adc_idx<16;adc_idx++){
-		adcValue[adc_idx] = adc_SampleValueGet();
-	}
-	ADC_MODULE_CLOSED; //close the adc clock to save power
-
-	unsigned short average_data;
-	average_data = filter_data(adcValue,16);
-	unsigned int tem_batteryVol; //2^14 - 1 = 16383;
-#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-	tem_batteryVol = (1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
-#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-	tem_batteryVol = ((1300*average_data)>>14);
-#endif
-	printf("%x:\n\r",tem_batteryVol);
-	if(tem_batteryVol < 1900){
-		//enter into deepsleep mode
-	}
-}
 
 #endif  //end of __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__
