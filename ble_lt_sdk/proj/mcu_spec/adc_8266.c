@@ -7,10 +7,10 @@
 
 
 #include "../tl_common.h"
+#include "adc_8266.h"
 
 #if(__TL_LIB_8266__ || (MCU_CORE_TYPE == MCU_CORE_8266))
 
-#if ( MODULE_ADC_ENABLE)
 #include "../../proj_lib/rf_drv.h"
 
 u8 adc_clk_step_l  = 0;
@@ -30,10 +30,10 @@ static inline void adc_SetPeriod(void){
 
 void adc_ClkEn(int en){
 	if (en) {
-		reg_adc_clk_en |= BIT(7);                    // Eanble the clock
+		BM_SET(reg_adc_mod, FLD_ADC_CLK_EN);         // Eanble the clock
 		analog_write(0x06,(analog_read(0x06)&0xfe)); // Enable ADC LDO
 	} else {
-	    reg_adc_clk_en &= ~ BIT(7);                  // Disable ADC clock
+	    BM_CLR(reg_adc_mod, FLD_ADC_CLK_EN);         // Disable ADC clock
 		analog_write(0x06,(analog_read(0x06)|0x01)); // Disable ADC LDO
 	}
 	adc_clk_poweron ();
@@ -212,6 +212,5 @@ void adc_setting_recover(void){
 #endif
 }
 
-#endif
 #endif
 

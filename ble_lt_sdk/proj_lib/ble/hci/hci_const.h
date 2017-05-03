@@ -49,6 +49,8 @@
 #define HCI_SUB_EVT_LE_ENHANCED_CONNECTION_COMPLETE                  0x0A
 #define HCI_SUB_EVT_LE_DIRECT_ADVERTISE_REPORT		                 0x0B   //core_4.2
 
+#define HCI_SUB_EVT_LE_CREATE_CONNECTION_TIMEOUT 	                 0x1f   //telink private
+#define HCI_SUB_EVT_LE_CONNECTION_ESTABLISH					         0x20   //telink private
 
 
 
@@ -72,20 +74,24 @@
 
 
 // LE Event mask - last octet
-#define HCI_LE_EVT_MASK_NONE                                         0x000
-#define HCI_LE_EVT_MASK_CONNECTION_COMPLETE                          0x001
-#define HCI_LE_EVT_MASK_ADVERTISING_REPORT                           0x002
-#define HCI_LE_EVT_MASK_CONNECTION_UPDATE_COMPLETE                   0x004
-#define HCI_LE_EVT_MASK_READ_REMOTE_FEATURE                          0x008
-#define HCI_LE_EVT_MASK_LONG_TERM_KEY_REQUEST                        0x010
-#define HCI_LE_EVT_MASK_REMOTE_CONNECTION_PARAM_REQUEST              0x020
-#define HCI_LE_EVT_MASK_DATA_LENGTH_CHANGE                        	 0x040
-#define HCI_LE_EVT_MASK_READ_LOCAL_P256_PUBLIC_KEY_COMPLETE          0x080
-#define HCI_LE_EVT_MASK_GENERATE_DHKEY_COMPLETE                      0x100
-#define HCI_LE_EVT_MASK_ENHANCED_CONNECTION_COMPLETE                 0x200
-#define HCI_LE_EVT_MASK_DIRECT_ADVERTISING_REPORT                    0x400
+#define HCI_LE_EVT_MASK_NONE                                         0x00000000
+#define HCI_LE_EVT_MASK_CONNECTION_COMPLETE                          0x00000001
+#define HCI_LE_EVT_MASK_ADVERTISING_REPORT                           0x00000002
+#define HCI_LE_EVT_MASK_CONNECTION_UPDATE_COMPLETE                   0x00000004
+#define HCI_LE_EVT_MASK_READ_REMOTE_FEATURES_COMPLETE                0x00000008
+#define HCI_LE_EVT_MASK_LONG_TERM_KEY_REQUEST                        0x00000010
+#define HCI_LE_EVT_MASK_REMOTE_CONNECTION_PARAM_REQUEST              0x00000020
+#define HCI_LE_EVT_MASK_DATA_LENGTH_CHANGE                        	 0x00000040
+#define HCI_LE_EVT_MASK_READ_LOCAL_P256_PUBLIC_KEY_COMPLETE          0x00000080
+#define HCI_LE_EVT_MASK_GENERATE_DHKEY_COMPLETE                      0x00000100
+#define HCI_LE_EVT_MASK_ENHANCED_CONNECTION_COMPLETE                 0x00000200
+#define HCI_LE_EVT_MASK_DIRECT_ADVERTISING_REPORT                    0x00000400
 
-#define HCI_LE_EVT_MASK_DEFAULT                                      0
+#define HCI_LE_EVT_MASK_CREATE_CONNECTION_TIMEOUT                    0x40000000  //telink private
+#define HCI_LE_EVT_MASK_CONNECTION_ESTABLISH                         0x80000000  //telink private
+
+
+#define HCI_LE_EVT_MASK_DEFAULT                                      HCI_LE_EVT_MASK_NONE
 
 
 

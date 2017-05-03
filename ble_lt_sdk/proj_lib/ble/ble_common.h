@@ -70,6 +70,8 @@ typedef enum {
 #define 		ADV_INTERVAL_20MS                           32
 #define 		ADV_INTERVAL_30MS                           48
 #define 		ADV_INTERVAL_100MS                          160
+#define 		ADV_INTERVAL_400MS                          640
+#define 		ADV_INTERVAL_1S                          	1600
 #define 		ADV_INTERVAL_1_28_S                         0x0800
 #define 		ADV_INTERVAL_10_24S                         16384
 
@@ -85,7 +87,22 @@ typedef enum {
 #define 		SCAN_INTERVAL_300MS                          480
 
 
+#define 		CONN_INTERVAL_7P5MS                          6
+#define 		CONN_INTERVAL_10MS                           8
+#define 		CONN_INTERVAL_15MS                           12
+#define 		CONN_INTERVAL_18P75MS                        15
+#define 		CONN_INTERVAL_20MS                           16
+#define 		CONN_INTERVAL_30MS                           24
+#define 		CONN_INTERVAL_48P75MS                        39
+#define 		CONN_INTERVAL_50MS                           40
+#define 		CONN_INTERVAL_100MS                          80
 
+
+#define 		CONN_TIMEOUT_500MS							 50
+#define 		CONN_TIMEOUT_1S							 	 100
+#define 		CONN_TIMEOUT_4S							 	 400
+#define 		CONN_TIMEOUT_10S							 1000
+#define 		CONN_TIMEOUT_20S							 2000
 
 
 /*********************************************************************
@@ -226,6 +243,8 @@ typedef enum {
     SERVICE_ERR_START,
     SERVICE_ERR_INVALID_PARAMETER,
 	SERVICE_ERR_NOTI_NOT_PERMITTED,
+	SERVICE_DISCOVERY_TIEMOUT,
+
     
     SMP_EER_MUX_EXCCED = 0xA0,                          //!< The AUTOPEND pending all is turned on
     SMP_EER_INVALID_PACKET_LEN,                         //!< The AUTOPEND pending all is turned off 
@@ -355,6 +374,17 @@ typedef enum{
   ADV_TYPE_NONCONNECTABLE_UNDIRECTED          = 0x03 , // ADV_NONCONN_IND
   ADV_TYPE_CONNECTABLE_DIRECTED_LOW_DUTY      = 0x04,  // ADV_INDIRECT_IND (low duty cycle)
 }advertising_type;
+
+
+
+// Advertise report event type
+typedef enum {
+	ADV_REPORT_EVENT_TYPE_ADV_IND = 0x00,
+	ADV_REPORT_EVENT_TYPE_DIRECT_IND = 0x01,
+	ADV_REPORT_EVENT_TYPE_SCAN_IND = 0x02,
+	ADV_REPORT_EVENT_TYPE_NONCONN_IND = 0x03,
+	ADV_REPORT_EVENT_TYPE_SCAN_RSP = 0x04,
+} advReportEventType_t;
 
 
 typedef struct {
@@ -529,6 +559,29 @@ typedef struct{
 	u16	chanId;
 }rf_packet_l2cap_head_t;
 
+
+typedef struct{
+	rf_data_head_t	header;
+	u8  rf_len;
+	u16	l2capLen;
+	u16	chanId;
+	u8  opcode;
+	u8 data[1];
+}rf_packet_l2cap_t;
+
+
+typedef struct{
+	rf_data_head_t	header;
+	u8  rf_len;
+	u16	l2capLen;
+	u16	chanId;
+	u8  opcode;
+	u8  handle0;
+	u8  handle1;
+	u8	dat[20];
+}rf_packet_att_t;
+
+
 typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
 	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
@@ -552,6 +605,18 @@ typedef struct{
 	u16 latency;
 	u16 timeout;
 }rf_packet_l2cap_connParaUpReq_t;
+
+
+typedef struct{
+	u8	llid;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
+	u8  rf_len;				//LEN(5)_RFU(3)
+	u16	l2capLen;
+	u16	chanId;
+	u8  opcode;
+	u8	id;
+	u16 data_len;
+	u16 result;
+}rf_packet_l2cap_connParaUpRsp_t;
 
 typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
@@ -649,6 +714,17 @@ typedef struct{
 	u8 	value[22];
 }rf_packet_att_readRsp_t;
 
+
+typedef struct{
+	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
+	u8  rf_len;				//LEN(5)_RFU(3)
+	u16	l2capLen;
+	u16	chanId;
+	u8  opcode;
+	u8  datalen;
+	u8  data[1];			// character_handle / property / value_handle / value
+}rf_pkt_att_readByTypeRsp_t;
+
 typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
 	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
@@ -732,6 +808,15 @@ typedef struct{
 	u8  opcode;
 	u8 mtu[2];
 }rf_packet_att_mtu_t;
+
+typedef struct{
+	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
+	u8  rf_len;				//LEN(5)_RFU(3)
+	u16	l2capLen;
+	u16	chanId;
+	u8  opcode;
+	u8 mtu[2];
+}rf_packet_att_mtu_exchange_t;
 
 typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number
@@ -1070,11 +1155,8 @@ int blt_get_smp_key(u8* rand,u8 *ediv, u8 *ltk);
 
 
 
-#if (MCU_CORE_TYPE == MCU_CORE_8263)
-void	blt_brx_sleep (u32 app_wakeup_tick);
-#else
 void	blt_brx_sleep ();
-#endif
+
 
 /////////////////////////////////// master  config  ///////////////////////////////////////
 #define FAST_PARING_ENCRYPTION_ENABLE			0
@@ -1095,9 +1177,6 @@ void	blt_brx_sleep ();
 #define PAIR_LENGTH_RAND_EDIV	 				10
 #define PAIR_LENGTH_LTK			 				16
 
-typedef struct {
-	u8 address[6];
-} macAddr_t;
 
 #define FAST_PAIR_IDLE			0
 #define FAST_PAIR_GET_RAND		1
@@ -1105,17 +1184,16 @@ typedef struct {
 #define FAST_PAIR_GET_LTK		3
 #define FAST_PAIR_OVER			4
 
-typedef struct {
-	u8 curNum;
-	u8 curIndex;
-	u8 fast_pair_enc;
-	u8 rsvd2;
-	u8 smpKey_exist[4];  //PAIR_SLAVE_MAX_NUM not bigger than 4
-	u32 bond_flash_idx[PAIR_SLAVE_MAX_NUM];  //mark paired slave mac address in flash
-	macAddr_t bond_device[PAIR_SLAVE_MAX_NUM];
-} salveMac_t;
+//typedef struct {
+//	u8 curNum;
+//	u8 curIndex;
+//	u8 fast_pair_enc;
+//	u8 rsvd2;
+//	u8 smpKey_exist[4];  //PAIR_SLAVE_MAX_NUM not bigger than 4
+//	u32 bond_flash_idx[PAIR_SLAVE_MAX_NUM];  //mark paired slave mac address in flash
+//	macAddr_t bond_device[PAIR_SLAVE_MAX_NUM];
+//} salveMac_t;
 
-extern salveMac_t tbl_slaveMac;
 
 
 
@@ -1146,7 +1224,7 @@ typedef struct {
 typedef struct {
 	u8	subcode;
 	u8	nreport;
-	u8	type;
+	u8	event_type;
 	u8	adr_type;
 	u8	mac[6];
 	u8	len;

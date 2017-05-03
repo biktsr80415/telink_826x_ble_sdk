@@ -789,6 +789,8 @@ enum{
 #define reg_rf_irq_status		REG_ADDR16(0xf20)
 #define reg_rf_fsm_timeout		REG_ADDR32(0xf2c)
 
+#define		CLEAR_ALL_RFIRQ_STATUS   ( reg_rf_irq_status = 0xffff )
+
 enum{
 	FLD_RF_IRQ_RX = 			BIT(0),
 	FLD_RF_IRQ_TX =				BIT(1),
@@ -1224,6 +1226,8 @@ enum{
 	FLD_CLR_WD =				BIT(27),
 };
 #define WATCHDOG_TIMEOUT_COEFF	18		//  check register definiton, 0x622
+
+#define WATCHDOG_DISABLE	( reg_tmr_ctrl &= ~FLD_TMR_WD_EN )
 
 #define reg_tmr_sta				REG_ADDR8(0x623)
 enum{

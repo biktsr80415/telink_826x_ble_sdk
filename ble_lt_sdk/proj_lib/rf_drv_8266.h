@@ -286,6 +286,7 @@ static inline void rf_start_brx  (void* addr, u32 tick)
 void 	rf_drv_init (int xtal_type);
 void	rf_power_down ();
 void	rf_set_channel (signed char chn, unsigned short set);
+void 	rf_set_tx_rx_off (void);
 void	rf_set_rxmode (void);
 void	rf_set_txmode (void);
 void	rf_send_packet (void* addr, u16 rx_waittime, u8 retry);
@@ -410,13 +411,29 @@ static inline void rf_set_12M_Crystal_1m_mode(void)
 }
 
 
-
 static inline void rf_set_12M_Crystal_2m_mode(void)
 {
 	write_reg8 (0x8004eb, 0xe0);
 	analog_write(0x99, 0xb1);
 	analog_write(0x82, 0x20);
 	analog_write(0x9e, 0xad);
+}
+
+static inline void rf_set_16M_Crystal_1m_mode(void)
+{
+	write_reg8 (0x8004eb, 0x60);
+	analog_write(0x99, 0x31);
+	analog_write(0x82, 0x34);
+	analog_write(0x9e, 0x41);
+}
+
+
+static inline void rf_set_16M_Crystal_2m_mode(void)
+{
+	write_reg8 (0x8004eb, 0x60);
+	analog_write(0x99, 0x31);
+	analog_write(0x82, 0x34);
+	analog_write(0x9e, 0x82);
 }
 
 #endif

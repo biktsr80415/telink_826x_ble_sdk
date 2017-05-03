@@ -5,6 +5,8 @@
  *  @brief  Definition for Device info
  */
 #include "../../proj/mcu/analog.h"
+#include "../rf_drv.h"
+
 #define  MAX_DEV_NAME_LEN 				18
 
 #ifndef DEV_NAME
@@ -100,23 +102,14 @@ static inline void blc_app_loadCustomizedParameters(void)
 #endif
 
 
-#ifndef BLE_STACK_SIMPLIFY_4_RAMCODE_ENABLE
-#define BLE_STACK_SIMPLIFY_4_RAMCODE_ENABLE				0
-#endif
-
 
 
 //for 8261 128k flash
 #if (BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE)
-	#define		BLS_SEND_BT_STD_EVENT_ENABLE					0
 	#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
 #endif
 
 
-//for 8269 32k ramcode
-#if (BLE_STACK_SIMPLIFY_4_RAMCODE_ENABLE)
-	#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
-#endif
 
 
 
@@ -159,7 +152,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 #if (BLE_MODULE_LIB_ENABLE || BLE_MODULE_APPLICATION_ENABLE)  //for ble module
 	#define		BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE		1
 	#define		BLS_SEND_TLK_MODULE_EVENT_ENABLE				1
-	#define		BLS_SEND_BT_STD_EVENT_ENABLE					0
 	#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
 #endif
 
@@ -174,9 +166,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 #define 	BLS_SEND_TLK_MODULE_EVENT_ENABLE				0
 #endif
 
-#ifndef		BLS_SEND_BT_STD_EVENT_ENABLE
-#define 	BLS_SEND_BT_STD_EVENT_ENABLE					1
-#endif
 
 
 #ifndef		BLS_ADV_INTERVAL_CHECK_ENABLE

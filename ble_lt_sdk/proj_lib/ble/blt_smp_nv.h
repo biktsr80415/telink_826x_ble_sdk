@@ -22,6 +22,9 @@ extern 			int				SMP_PARAM_NV_ADDR_START;
 #define			SMP_NV_SUCCESS							0
 #define			SMP_NV_FAIL								1
 
+#define 		SMP_GET_DEVICE_INFO						BIT(0)
+#define 		SMP_SET_DEVICE_INFO 					BIT(1)
+
 
 
 void bls_smp_configParingSecurityInfoStorageAddr (int addr);

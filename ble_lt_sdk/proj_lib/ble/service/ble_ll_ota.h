@@ -19,6 +19,14 @@
 #define CMD_OTA_END							0xff02
 
 
+typedef struct{
+	u8  ota_start_flag;
+	u8  ota_master;
+}ota_service_t;
+
+extern ota_service_t blcOta;
+
+
 extern int blt_ota_start_flag;
 extern u32 blt_ota_start_tick;
 extern u32 blt_ota_timeout_us;
@@ -44,6 +52,8 @@ enum{
  	OTA_DATA_UNCOMPLETE,  //lost last one or more OTA PDU
  	OTA_TIMEOUT, 		  //
 };
+
+void blc_ota_setDeviceAsOtaMaster(void);
 
 void bls_ota_procTimeout(void);
 

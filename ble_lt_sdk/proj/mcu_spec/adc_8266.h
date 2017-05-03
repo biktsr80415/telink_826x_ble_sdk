@@ -5,13 +5,11 @@
  *      Author: Telink
  */
 
-#ifndef ADC_8266_H_
-#define ADC_8266_H_
-
 #if(__TL_LIB_8266__ || (MCU_CORE_TYPE == MCU_CORE_8266))
 
-
-#pragma once
+#ifndef ADC_8266_H_
+#define ADC_8266_H_
+#include "../config/user_config.h"
 
 /* Enable C linkage for C++ Compilers: */
 #if defined(__cplusplus)
@@ -25,19 +23,18 @@ extern "C" {
 
 #include "../common/types.h"
 
-//#define ADC_REF_1_3V             0x00		//!< ADC Reference:1.3v
-//#define ADC_REF_AVDD             0x04		//!< ADC Reference:AVDD
 /*****
  *  adc reference voltage
  */
-typedef enum {
+typedef enum{
 	ADC_REF_VOL_1V3  = 0x00, //!< ADC Reference:1.3v
 	ADC_REF_VOL_AVDD = 0x01, //!< ADC Reference:AVDD
-}ADC_REFVOL_t;
+} ADC_REFVOL_t;
+
 /****
  *  adc resolution
  */
-typedef enum {
+typedef enum{
 	ADC_SAMPLING_RES_7BIT  = 0,		//!<ADC Sample Resolution Bits:adc_res_bits = 7
 	ADC_SAMPLING_RES_9BIT  = 1,		//!<ADC Sample Resolution Bits:adc_res_bits = 9
 	ADC_SAMPLING_RES_10BIT = 2,		//!<ADC Sample Resolution Bits:adc_res_bits = 10
@@ -45,12 +42,12 @@ typedef enum {
 	ADC_SAMPLING_RES_12BIT = 4,		//!<ADC Sample Resolution Bits:adc_res_bits = 12
 	ADC_SAMPLING_RES_13BIT = 5,		//!<ADC Sample Resolution Bits:adc_res_bits = 13
 	ADC_SAMPLING_RES_14BIT = 7,		//!<ADC Sample Resolution Bits:adc_res_bits = 14
-}ADC_RESOLUTION_t;
+} ADC_RESOLUTION_t;
 
 /*****
  * adc sample cycle
  */
-typedef enum {
+typedef enum{
 	ADC_SAMPLING_CYCLE_3   = 0,		//!<Adc Sampling Cycle:3
 	ADC_SAMPLING_CYCLE_6   = 1,		//!<Adc Sampling Cycle:6
 	ADC_SAMPLING_CYCLE_9   = 2,		//!<Adc Sampling Cycle:9
@@ -59,12 +56,12 @@ typedef enum {
 	ADC_SAMPLING_CYCLE_24  = 5,		//!<Adc Sampling Cycle:24
 	ADC_SAMPLING_CYCLE_48  = 6,		//!<Adc Sampling Cycle:48
 	ADC_SAMPLING_CYCLE_144 = 7,		//!<Adc Sampling Cycle:144
-}ADC_SAMPCYC_t;
+} ADC_SAMPCYC_t;
 
 /****
  *  ADC analog input channel selection
  */
-typedef enum {
+typedef enum{
 	ADC_CHN_D0				= 0x01,
 	ADC_CHN_D1				= 0x02,
 	ADC_CHN_D2				= 0x03,
@@ -85,28 +82,28 @@ typedef enum {
 	ADC_CHN_TEMP_NEG		= 0x10,
 	ADC_CHN_VBUS			= 0x11,
 	ADC_CHN_GND				= 0x12,
-}ADC_INPUTCHN_t;
+} ADC_INPUTCHN_t;
 /***
  * adc mode
  */
-typedef enum {
+typedef enum{
 	SINGLEEND,
 	INVERTD_5,
 	INVERTC_3,
 	CHN_PGA_L,
-}ADC_INPUTMODE_t;
+} ADC_INPUTMODE_t;
 
 /****
  * adc clock must be lower than 5Mhz if the reference voltage is selected as AVDD and
  * must be lower than 4Mhz when reference voltage is selected as 1.4v.
  */
-typedef enum {
+typedef enum{
 	ADC_CLK_4M = 4,
 	ADC_CLK_5M = 5,
-}ADC_CLK_t;
+} ADC_CLK_t;
 
 /***
- * addtogroup  HAL_ADC_DONE_SIGNAL ADC Done Signal
+ * ADC Done Signal
  */
 enum{
 	ADC_DONE_SIGNAL_COUNTER,
@@ -115,13 +112,13 @@ enum{
 };
 
 /***
- * addtogroup  HAL_ADC_AUDIO_MODE ADC Audio Mode
+ * Audio Mode
  */
-enum{
-	ADC_AUDIO_MODE_NONE,		//!< ADC Audio Mode Uselessly
-	ADC_AUDIO_MODE_MONO,		//!< ADC Audio Mono Mode
-	ADC_AUDIO_MODE_STEREO,		//!< ADC Audio Stereo Mode,8266 not supported this mode.
-};
+//enum{
+//	ADC_AUDIO_MODE_NONE,		//!< ADC Audio Mode Uselessly
+//	ADC_AUDIO_MODE_MONO,		//!< ADC Audio Mono Mode
+//	ADC_AUDIO_MODE_STEREO,		//!< ADC Audio Stereo Mode,8266 not supported this mode.
+//};
 
 /*****
  * @brief init adc module. such as adc clock, input channel, resolution, reference voltage and so on.
@@ -135,7 +132,9 @@ enum{
  * @param[in] sample_cycle - enum ADC_SAMPCYC_t
  * @return    none
  */
-void adc_Init(ADC_CLK_t adc_clock,ADC_INPUTCHN_t chn,ADC_INPUTMODE_t mode,ADC_REFVOL_t ref_vol,ADC_RESOLUTION_t resolution,ADC_SAMPCYC_t sample_cycle);
+void adc_Init(ADC_CLK_t adc_clock,ADC_INPUTCHN_t chn,ADC_INPUTMODE_t mode,ADC_REFVOL_t ref_vol,\
+		      ADC_RESOLUTION_t resolution,ADC_SAMPCYC_t sample_cycle);
+
 /**
  * @brief  		Start ADC and get the channel misc converter result
  *
@@ -145,12 +144,13 @@ void adc_Init(ADC_CLK_t adc_clock,ADC_INPUTCHN_t chn,ADC_INPUTMODE_t mode,ADC_RE
  */
 u16 adc_SampleValueGet(void);
 
+/******
+ *
+ */
 void adc_power_down(void);
 void adc_power_down_start(void);
 void adc_power_down_end(void);
 void adc_setting_recover(void);
-
-/** @} end of group HAL_ADC_Module */
 
 /* Disable C linkage for C++ Compilers: */
 #if defined(__cplusplus)
@@ -158,7 +158,5 @@ void adc_setting_recover(void);
 #endif
 
 
-
-#endif
-
 #endif /* ADC_8266_H_ */
+#endif /*#if(__TL_LIB_8266__ || (MCU_CORE_TYPE == MCU_CORE_8266))*/

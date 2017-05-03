@@ -342,6 +342,7 @@ static inline void rf_start_brx  (void* addr, u32 tick)
 void 	rf_drv_init (int xtal_type);
 void	rf_power_down ();
 void	rf_set_channel (signed char chn, unsigned short set);
+void rf_set_tx_rx_off (void);
 void	rf_set_rxmode (void);
 void	rf_set_txmode (void);
 void	rf_send_packet (void* addr, u16 rx_waittime, u8 retry);

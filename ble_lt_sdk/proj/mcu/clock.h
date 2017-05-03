@@ -32,22 +32,28 @@ enum{
 	CLOCK_HS_16M_OSC = 	3,
 };
 
-enum{
-	CLOCK_PLL_CLOCK = 192000000,
-
-	CLOCK_SYS_CLOCK_1S = CLOCK_SYS_CLOCK_HZ,
-	CLOCK_SYS_CLOCK_1MS = (CLOCK_SYS_CLOCK_1S / 1000),
-	CLOCK_SYS_CLOCK_1US = (CLOCK_SYS_CLOCK_1S / 1000000),
-	CLOCK_SYS_CLOCK_4S = CLOCK_SYS_CLOCK_1S << 2,
-	CLOCK_MAX_MS = (U32_MAX / CLOCK_SYS_CLOCK_1MS),
-	CLOCK_MAX_US = (U32_MAX / CLOCK_SYS_CLOCK_1US),
-};
 
 
-#ifdef	USE_SYS_TICK_PER_US  //for 55nm chip
+
+#ifdef	USE_SYS_TICK_PER_US
 	extern	u32 sys_tick_per_us;
+
+	#define 	CLOCK_PLL_CLOCK		   		192000000
+	#define	    CLOCK_SYS_CLOCK_1S   		(sys_tick_per_us * 1000000)
+	#define		CLOCK_SYS_CLOCK_1MS  		(sys_tick_per_us * 1000)
+	#define		CLOCK_SYS_CLOCK_1US	  		sys_tick_per_us
+
 #else
 	#define 	sys_tick_per_us		CLOCK_SYS_CLOCK_1US
+
+	enum{
+		CLOCK_PLL_CLOCK = 192000000,
+
+		CLOCK_SYS_CLOCK_1S = CLOCK_SYS_CLOCK_HZ,
+		CLOCK_SYS_CLOCK_1MS = (CLOCK_SYS_CLOCK_1S / 1000),
+		CLOCK_SYS_CLOCK_1US = (CLOCK_SYS_CLOCK_1S / 1000000),
+	};
+
 #endif
 
 void 	set_tick_per_us (u32 t);
@@ -86,10 +92,7 @@ enum{
 void clock_init();
 _attribute_ram_code_ void sleep_us (u32 microsec);		//  use register counter to delay 
 
-static inline void delay(int us){						// use no register counter to delay 
-	for(volatile int i = 0; i < us * CLOCK_SYS_CLOCK_HZ / (1000*1000); ++i){
-	}
-}
+
 
 //  delay precisely
 #define		CLOCK_DLY_1_CYC    _ASM_NOP_

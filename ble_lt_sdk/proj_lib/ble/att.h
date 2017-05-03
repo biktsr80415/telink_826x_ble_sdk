@@ -435,11 +435,27 @@ int 		l2cap_att_client_handler (u16 conn, u8 *p);
 extern u8	blt_indicate_handle;
 
 // att
-ble_sts_t	bls_att_pushNotifyData (u16 handle, u8 *p, int len);
-ble_sts_t	bls_att_pushIndicateData (u16 handle, u8 *p, int len);
+ble_sts_t	bls_att_pushNotifyData (u16 attHandle, u8 *p, int len);
+ble_sts_t	bls_att_pushIndicateData (u16 attHandle, u8 *p, int len);
 void		bls_att_setAttributeTable (u8 *p);
 
 void 		bls_att_registerHandleValueConfirmCb (att_handleValueConfirm_callback_t cb);
 
 ble_sts_t 	bls_att_setDeviceName(u8* pName,u8 len);
+ble_sts_t	blc_att_requestMtuSizeExchange (u16 connHandle, u16 mtu_size);
+
+
+int 		att_register_idle_func (void *p);
+
+
+
+
+
+
+void 		att_req_read_by_type (u8 *p, u16 start_attHandle, u16 end_attHandle, u8 *uuid, int uuid_len);
+void 		att_req_write_cmd (u8 *p, u16 attHandle, u8 *buf, int len);
+
+
+
+
 

@@ -167,9 +167,7 @@ enum{
 	FLD_ADC_DIFF_CHN_SEL = 		BIT_RNG(5,6),	// datasheet  12.1
 	FLD_ADC_DATA_FORMAT  =      BIT(7),
 };
-
 #define reg_adc_chn_r_sel		REG_ADDR8(0x2e)
-
 
 enum{
 	FLD_ADC_CHN_D0				= 0x01,
@@ -236,8 +234,6 @@ enum {
 	FLD_ADC_CHNM_PEIRODH  =    BIT_RNG(8,15),
 	FLD_ADC_CHNM_PERIOD   =    BIT_RNG(2,15),
 };
-
-
 #define reg_adc_period_chn12	REG_ADDR8(0x32)
 enum {
 	FLD_ADC_CHNLR_PERIOD  =    BIT_RNG(0,15),
@@ -815,6 +811,8 @@ enum{
 #define reg_rf_irq_status		REG_ADDR16(0xf20)
 #define reg_rf_fsm_timeout		REG_ADDR32(0xf2c)
 
+#define		CLEAR_ALL_RFIRQ_STATUS   ( reg_rf_irq_status = 0xffff )
+
 enum{
 	FLD_RF_IRQ_RX = 			BIT(0),
 	FLD_RF_IRQ_TX =				BIT(1),
@@ -973,7 +971,7 @@ enum{
  dma mac regs struct: begin  addr : 0x500
  *****************************************************/
 #define reg_dma0_addr			REG_ADDR16(0x500)
-#define reg_dma0_ctrl           REG_ADDR16(0x502)
+#define reg_dma0_ctrl			REG_ADDR16(0x502)
 #define reg_dma1_addr			REG_ADDR16(0x504)
 #define reg_dma1_ctrl			REG_ADDR16(0x506)
 #define reg_dma2_addr			REG_ADDR16(0x508)
@@ -1058,9 +1056,9 @@ enum{
  *****************************************************/
 #define reg_aud_ctrl			REG_ADDR8(0x560)
 enum{
-	FLD_AUD_ENABLE	           =	BIT(0),
-	FLD_AUD_SDM_PLAY_EN        =    BIT(1),
-	FLD_AUD_SHAPPING_EN        =    BIT(2),
+	FLD_AUD_ENABLE	 =			BIT(0),
+	FLD_AUD_SDM_PLAY_EN = 		BIT(1),
+	FLD_AUD_SHAPPING_EN =		BIT(2),
 	FLD_AUD_PN_SHAPPING_BYPASS =    BIT(2),
 	FLD_AUD_SHAPING_EN         =    BIT(3),
 	FLD_AUD_PN2_GENERATOR_EN   =    BIT(4),
@@ -1395,8 +1393,8 @@ static inline void pwm_set(int id, u16 max_tick, u16 cmp_tick){
 	reg_pwm_cycle(id) = MASK_VAL(FLD_PWM_CMP, cmp_tick, FLD_PWM_MAX, max_tick);
 }
 
-static inline void pwmm_clk(int pwm_clk){
-	reg_pwm_clk = (int)CLOCK_SYS_CLOCK_HZ /pwm_clk - 1;
+static inline void pwmm_clk(int system_clock_hz, int pwm_clk){
+	reg_pwm_clk = (int)system_clock_hz /pwm_clk - 1;
 }
 
 static inline void pwmm_set_duty(int id, u16 max_tick, u16 cmp_tick){
@@ -1452,11 +1450,12 @@ enum{
 #define reg_dfifo_ana_in		REG_ADDR8(0xb03)
 enum{
 	FLD_DFIFO_MIC0_RISING_EDGE = BIT(0),
-	FLD_DFIFO_MIC_ADC_IN 	   = BIT(1),
+	FLD_DFIFO_MIC_ADC_IN 	= BIT(1),
 	FLD_DFIFO_EN               = BIT(4),
 	FLD_DFIFO_WPTR_EN          = BIT(5),
 	FLD_DFIFO_WPTR_CLR         = BIT(6),
-	FLD_DFIFO_AUD_INPUT_MONO   = BIT(4) | BIT(5),
+	FLD_DFIFO_AUD_INPUT_MONO =	BIT(4) | BIT(5),
+//	FLD_DFIFO_AUD_INPUT_BYPASS = BIT(5),
 };
 enum{
 	REG_AUD_INPUT_SEL_USB = 0,

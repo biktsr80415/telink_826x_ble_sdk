@@ -10,15 +10,6 @@
 
 
 
-
-
-#define			BLT_TX_FIFO_NUM				16
-
-
-#define			BLM_TX_FIFO_NUM				4
-#define			BLM_TX_FIFO_SIZE			40
-
-
 #define			BLE_DATA_CHANNEL_EN				1
 #define			SYS_LINK_ADV_INTERVAL			500000
 #define			BLE_MASTER_CONNECTION_REQ		1
@@ -38,7 +29,11 @@
 #define  BLM_MID_WINSIZE		2500
 
 
-#if(LL_MASTER_MULTI_CONNECTION)
+#if (LL_MASTER_MULTI_CONNECTION)
+
+#define			BLM_TX_FIFO_NUM				4
+#define			BLM_TX_FIFO_SIZE			40
+
 
 
 typedef struct {
@@ -110,10 +105,15 @@ typedef struct {
 
 } st_ll_conn_master_t;
 
+u8 * blm_l2cap_packet_pack (u16 conn, u8 * raw_pkt);
+
+#else
 
 
-#else  //LL_MASTER_SINGLE_CONNECTION
+#define			BLM_TX_FIFO_NUM				8
+#define 		STACK_FIFO_NUM				2  //user 6, stack 2
 
+#define			BLM_TX_FIFO_SIZE			40
 
 typedef struct {
 	u32		tx_fifo[BLM_TX_FIFO_NUM][BLM_TX_FIFO_SIZE>>2];
@@ -168,6 +168,10 @@ typedef struct {
 	u32		conn_Req_noAck_timeout;
 	u8		conn_Req_waitAck_enable;
 	u8		conn_terminate_reason;
+	u8		slave_terminate_conn_flag;
+	u8	 	master_terminate_conn_flag;
+	u8		rscd11;
+	u8		rsvd22;
 	u8		conn_terminate_pending;   // terminate_pending = master_terminate || slave_terminate
 	u8		remote_version;
 
@@ -187,24 +191,21 @@ typedef struct {
 
 
 
-
+rf_packet_l2cap_t * blm_l2cap_packet_pack (u16 conn, u8 * raw_pkt);
 
 
 /******************************* User Interface  ************************************/
 void blc_ll_initMasterRoleSingleConn_module(void);
 
 
+bool blm_ll_isRfStateMachineBusy(void);
+
+u8   blm_ll_getTxFifoNumber (u16 connHandle);
+bool blm_ll_isTxFifoAvailableForApp(u16 connHandle);
 
 
 
-
-/************************* Stack Interface, user can not use!!! ***************************/
-
-
-
-
-
-#endif
+#endif   //end of LL_MASTER_SINGLE_CONNECTION
 
 
 
@@ -225,7 +226,10 @@ u16 blm_att_discoveryHandleOfUUID (u8 *l2cap_data, u8 *uuid128);
 
 //------------	master function -----------------------------------
 u8 blm_fifo_num (u16 h);
-u8 blm_push_fifo (int h, u8 *p);
+
+
+bool 	  blm_push_fifo (int h, u8 *p);
+
 
 ble_sts_t blm_ll_connectWhiteList (int en);
 ble_sts_t blm_ll_disconnect (u16 handle, u8 reason);
@@ -246,7 +250,7 @@ ble_sts_t blm_ll_createConnection (u16 scan_interval, u16 scan_window, u8 policy
 
 ble_sts_t blm_ll_createConnectionCancel ();
 
-ble_sts_t blm_ll_updateConnection (u16 handle,
+ble_sts_t blm_ll_updateConnection (u16 connHandle,
 							  u16 conn_min, u16 conn_max, u16 conn_latency, u16 timeout,
 							  u16 ce_min, u16 ce_max );
 
@@ -258,7 +262,6 @@ void blm_ll_startDistributeKey (u8 connhandle );
 
 
 int blm_l2cap_packet_receive (u16 conn, u8 * raw_pkt);
-u8 * blm_l2cap_packet_pack (u16 conn, u8 * raw_pkt);
 
 ble_sts_t	blm_hci_receiveHostACLData(u16 connHandle, u8 PB_Flag, u8 BC_Flag, u8 *pData );
 

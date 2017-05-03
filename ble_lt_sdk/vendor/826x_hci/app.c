@@ -1,9 +1,8 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
 #include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj/mcu/pwm.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
@@ -22,22 +21,16 @@ MYFIFO_INIT(blt_rxfifo, 64, 8);
 
 MYFIFO_INIT(blt_txfifo, 40, 16);
 //////////////////////////////////////////////////////////////////////////////
-//	Initialization: MAC address, Adv Packet, Response Packet
+//	Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
-u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
-
-u8	tbl_advData[] = {
+const u8	tbl_advData[] = {
 	 0x05, 0x09, 't', 'M', 'o', 'd',
 	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
 };
 
-u8	tbl_scanRsp [] = {
+const u8	tbl_scanRsp [] = {
 		 0x07, 0x09, 't', 'M', 'o', 'd', 'u', 'l',	//scan name " tmodul"
 	};
-
-
-u32	ui_advertise_begin_tick;
-
 
 
 void	task_connect (void)
@@ -45,20 +38,6 @@ void	task_connect (void)
 	bls_l2cap_requestConnParamUpdate (12, 32, 99, 400);  //interval=10ms latency=99 timeout=4s
 }
 
-
-void rf_customized_param_load(void)
-{
-	  //flash 0x77000 customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
-	 if( (*(unsigned char*) CUST_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) CUST_CAP_INFO_ADDR)&0x1f) );
-	 }
-
-	 //flash 0x77040 customize TP0, flash 0x77041 customize TP1
-	 if( ((*(unsigned char*) (CUST_TP_INFO_ADDR)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+1)) != 0xff) ){
-		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
-	 }
-}
 
 u32 tick_wakeup;
 int	mcu_uart_working;
@@ -98,7 +77,6 @@ void app_power_management ()
 {
 	// pullup GPIO_WAKEUP_MODULE: exit from suspend
 	// pulldown GPIO_WAKEUP_MODULE: enter suspend
-
 #if (BLE_MODULE_PM_ENABLE)
 
 	if (!app_module_busy() && !tick_wakeup)
@@ -131,8 +109,6 @@ int blc_rx_from_uart (void)
 		blc_hci_handler(&p[4], rx_len - 4);
 		my_fifo_pop(&hci_rx_fifo);
 	}
-
-
 	return 0;
 }
 
@@ -152,10 +128,9 @@ int blc_hci_tx_to_uart ()
 	return 0;
 }
 
-
 void user_init()
 {
-	rf_customized_param_load();  //load customized freq_offset cap value and tp value
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
 	REG_ADDR8(0x74) = 0x53;
 	REG_ADDR16(0x7e) = 0x08d1;
@@ -166,6 +141,7 @@ void user_init()
 
 
 	////////////////// BLE stack initialization ////////////////////////////////////
+	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 	u32 *pmac = (u32 *) (CFG_ADR_MAC + 10);
 	if (*pmac != 0xffffffff)
 	{
@@ -177,21 +153,21 @@ void user_init()
         tbl_mac[0] = (u8)rand();
     }
 
+	///////////// Controller Link Layer Initialization ////////////////
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU(tbl_mac);   //mandatory
 
 	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
-	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
-	blc_ll_initPowerManagement_module();        //pm module:      	 optional
+	blc_ll_initSlaveRole_module();			//slave module: 	 mandatory for BLE slave,
 
 	//l2cap initialization
-	blc_l2cap_register_handler (bls_hci_sendACLData2Host); 		//send l2cap 2 uart
-	bls_hci_registerEventHandler(blc_hci_send_data);		//register event callback
+	blc_l2cap_register_handler (blc_hci_sendACLData2Host); 		//send l2cap 2 uart
+	blc_hci_registerControllerEventHandler(blc_hci_send_data);		//register event callback
 
 	///////////////////// USER application initialization ///////////////////
 #if 0
-	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
-	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
+	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
+	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
 
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
@@ -202,10 +178,7 @@ void user_init()
 #endif
 	rf_set_power_level_index (RF_POWER_8dBm);
 
-	bls_pm_setSuspendMask (SUSPEND_DISABLE);//(SUSPEND_ADV | SUSPEND_CONN)
-
-
-	////////////////// SPP initialization ///////////////////////////////////
+	////////////////// HCI interface initialization ///////////////////////////////////
 	#if (HCI_ACCESS==HCI_USE_USB)
 		usb_bulk_drv_init (0);
 		blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
@@ -224,15 +197,15 @@ void user_init()
 #endif
 		CLK16M_UART115200;
 		uart_BuffInit(hci_rx_fifo_b, hci_rx_fifo.size, hci_tx_fifo_b);
-#if 0
+#if 0	//uart flow control
 //		uart_RTSCfg(1, UART_RTS_MODE_MANUAL, 5, 0);	 //no receiving limits required for now
 //		uart_RTSLvlSet(1);
-		uart_CTSCfg(1, 0);
+//		uart_CTSCfg(1, 0);
 #endif
 		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler
 	#endif
 
-
+	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);//(SUSPEND_DISABLE);//
 #if (BLE_MODULE_PM_ENABLE)
 	//mcu 可以通过拉高GPIO_WAKEUP_MODULE将 module从低低功耗唤醒
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
@@ -240,8 +213,6 @@ void user_init()
 
 	bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
 #endif
-
-	ui_advertise_begin_tick = clock_time();
 }
 
 
@@ -255,11 +226,9 @@ void main_loop ()
 	tick_loop ++;
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
-	blt_slave_main_loop ();
-
+	blt_sdk_main_loop();
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 	//  add spp UI task
 	app_power_management ();
-
 }

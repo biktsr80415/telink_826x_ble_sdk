@@ -87,14 +87,25 @@ typedef int (*l2cap_handler_t) (u16 conn, u8 * p);
 extern l2cap_handler_t	blc_l2cap_handler;
 
 
+typedef enum{
+	CONN_PARAM_UPDATE_ACCEPT = 0x0000,
+	CONN_PARAM_UPDATE_REJECT = 0x0001,
+}conn_para_up_rsp;
+
+
+
 
 /******************************* User Interface  ************************************/
-//Slave
-void		bls_l2cap_requestConnParamUpdate (u16 min_interval, u16 max_interval, u16 latency, u16 timeout);
+void		bls_l2cap_requestConnParamUpdate (u16 min_interval, u16 max_interval, u16 latency, u16 timeout);  //Slave
 
 void		blc_l2cap_register_handler (void *p);
-int 		blc_l2cap_packet_receive (u16 handle, u8 * p);
+int 		blc_l2cap_packet_receive (u16 connHandle, u8 * p);
 int 		blc_l2cap_send_data (u16 cid, u8 *p, int n);
+
+
+
+
+void 		blc_l2cap_SendConnParamUpdateResponse(u16 connHandle, int result);
 
 
 

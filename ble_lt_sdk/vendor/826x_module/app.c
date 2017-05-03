@@ -16,8 +16,8 @@
 #include "../../proj/drivers/uart.h"
 #endif
 
-//一个连接间隔上报6个包时：
-//MYFIFO_INIT(hci_rx_fifo, 176, 2);//6个数据包  1*20+5*27 =155 留4B给DMA头和1B尾 +串口帧头6B，16字节对齐取176及以上
+//涓�釜杩炴帴闂撮殧涓婃姤6涓寘鏃讹細
+//MYFIFO_INIT(hci_rx_fifo, 176, 2);//6涓暟鎹寘  1*20+5*27 =155 鐣�B缁橠MA澶村拰1B灏�+涓插彛甯уご6B锛�6瀛楄妭瀵归綈鍙�76鍙婁互涓�
 MYFIFO_INIT(hci_rx_fifo, 72, 2);
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
@@ -26,16 +26,14 @@ MYFIFO_INIT(blt_rxfifo, 64, 8);
 //MYFIFO_INIT(blt_txfifo, 40, 16);
 MYFIFO_INIT(blt_txfifo, 80, 8);
 //////////////////////////////////////////////////////////////////////////////
-//	Initialization: MAC address, Adv Packet, Response Packet
+//	Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
-u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
-
-u8	tbl_advData[] = {
+const u8	tbl_advData[] = {
 	 0x05, 0x09, 't', 'M', 'o', 'd',
 	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
 };
 
-u8	tbl_scanRsp [] = {
+const u8	tbl_scanRsp [] = {
 		 0x07, 0x09, 't', 'M', 'o', 'd', 'u', 'l',	//scan name " tmodul"
 	};
 
@@ -115,8 +113,8 @@ u32 module_wakeup_module_tick;
 
 int app_module_busy ()
 {
-	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcu用GPIO_WAKEUP_MODULE指示 是否处于uart数据收发状
-	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module自己检查uart rx和tx是否都处理完毕
+	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcu鐢℅PIO_WAKEUP_MODULE鎸囩ず 鏄惁澶勪簬uart鏁版嵁鏀跺彂鐘�
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module鑷繁妫�煡uart rx鍜宼x鏄惁閮藉鐞嗗畬姣�
 	module_task_busy = mcu_uart_working || module_uart_working;
 	return module_task_busy;
 }
@@ -148,7 +146,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//当module的uart数据发送完毕后，将GPIO_WAKEUP_MCU拉低或悬浮(取决于user怎么设计)
+	//褰搈odule鐨剈art鏁版嵁鍙戦�瀹屾瘯鍚庯紝灏咷PIO_WAKEUP_MCU鎷変綆鎴栨偓娴�鍙栧喅浜巙ser鎬庝箞璁捐)
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
@@ -165,7 +163,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //需要被 GPIO_WAKEUP_MODULE 唤醒
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闇�琚�GPIO_WAKEUP_MODULE 鍞ら啋
 	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
@@ -190,6 +188,8 @@ void user_init()
 
 	led_init();
 
+
+	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff)
 	{
@@ -224,8 +224,8 @@ void user_init()
 
 	///////////////////// USER application initialization ///////////////////
 
-	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
-	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
+	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
+	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
 
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16, \
@@ -287,7 +287,7 @@ void user_init()
 
 
 #if (BLE_MODULE_PM_ENABLE)
-	//mcu 可以通过拉高GPIO_WAKEUP_MODULE将 module从低低功耗唤醒
+	//mcu 鍙互閫氳繃鎷夐珮GPIO_WAKEUP_MODULE灏�module浠庝綆浣庡姛鑰楀敜閱�
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 
@@ -303,7 +303,6 @@ void user_init()
 		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
 	#endif
 #endif
-
 	ui_advertise_begin_tick = clock_time();
 }
 
@@ -329,7 +328,6 @@ void main_loop ()
 	app_power_management ();
 
 }
-
 /***
  * the function can filter the not good data from the adc.
  * remove the maximum data and minimum data from the adc data.
@@ -371,7 +369,7 @@ void battery_power_check(void)
 
 	ADC_MODULE_ENABLE; //open adc's clock to start adc convertion.
 	for(adc_idx=0;adc_idx<16;adc_idx++){
-		adcValue[adc_idx] = adc_SampleValueGet1();
+		adcValue[adc_idx] = adc_SampleValueGet();
 	}
 	ADC_MODULE_CLOSED; //close the adc clock to save power
 
@@ -379,7 +377,7 @@ void battery_power_check(void)
 	average_data = filter_data(adcValue,16);
 	unsigned int tem_batteryVol; //2^14 - 1 = 16383;
 #if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-	tem_batteryVol = 3*(1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
+	tem_batteryVol = (1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
 #elif(MCU_CORE_TYPE == MCU_CORE_8266)
 	tem_batteryVol = ((1300*average_data)>>14);
 #endif
@@ -388,5 +386,3 @@ void battery_power_check(void)
 		//enter into deepsleep mode
 	}
 }
-
-

@@ -17,10 +17,8 @@ extern "C" {
 #define HCI_ACCESS		HCI_USE_UART//HCI_USE_USB
 
 
-#define MODULE_ADC_ENABLE   1
 
 #define BLE_MODULE_BATT_CHECK_EN   1
-
 /////////////////// MODULE /////////////////////////////////
 #define BLE_MODULE_PM_ENABLE				1
 #define TELIK_SPP_SERVICE_ENABLE			1
@@ -88,7 +86,6 @@ extern "C" {
 /////////////////// watchdog  //////////////////////////////
 #define MODULE_WATCHDOG_ENABLE		0
 #define WATCHDOG_INIT_TIMEOUT		500  //ms
-
 
 
 #if 0

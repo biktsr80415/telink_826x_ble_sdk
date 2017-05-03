@@ -41,8 +41,8 @@
 #define 	SCAN_FP_ALLOW_ADV_WL_DIRECT_ADV_MACTH		0x03  //and direct adv address match initiator's resolvable private MAC
 
 
-#define 	INITIATE_FP_ADV_ANY        					0x00
-#define 	INITIATE_FP_ADV_WL         					0x01
+#define 	INITIATE_FP_ADV_SPECIFY        				0x00  //adv specified by host
+#define 	INITIATE_FP_ADV_WL         					0x01  //adv in whitelist
 
 
 typedef u8 irk_key_t[16];

@@ -31,14 +31,21 @@ extern st_ll_scan_t  blts;
 #define			BLUETOOTH_VER_4_0				6
 #define			BLUETOOTH_VER_4_1				7
 #define			BLUETOOTH_VER_4_2				8
+
 #define			BLUETOOTH_VER					BLUETOOTH_VER_4_2
-#define			BLUETOOTH_VER_SUBVER			0x4103
+
+#if (BLUETOOTH_VER == BLUETOOTH_VER_4_2)
+	#define			BLUETOOTH_VER_SUBVER			0x22BB
+#else
+	#define			BLUETOOTH_VER_SUBVER			0x4103
+#endif
 
 void blt_set_bluetooth_version (u8 v);
 
 
 /////////////////////////////////////////////////////////////////////////////
 #define		CLOCK_SYS_CLOCK_1250US			(1250 * sys_tick_per_us)
+#define		CLOCK_SYS_CLOCK_10MS			(10000 * sys_tick_per_us)
 #define		FLG_RF_CONN_DONE	(FLD_RF_IRQ_CMD_DONE | FLD_RF_IRQ_FSM_TIMEOUT | FLD_RF_IRQ_FIRST_TIMEOUT | FLD_RF_IRQ_RX_TIMEOUT)
 
 
@@ -48,6 +55,8 @@ void blt_set_bluetooth_version (u8 v);
 
 #define					BLM_CONN_HANDLE				BIT(7)
 #define					BLS_CONN_HANDLE				BIT(6)
+
+#define					HANDLE_STK_FLAG				BIT(15)
 /////////////////////////////////////////////////////////////////////////////
 #define					LL_CONNECTION_UPDATE_REQ	0x00
 #define					LL_CHANNEL_MAP_REQ			0x01
@@ -98,7 +107,6 @@ void blt_set_bluetooth_version (u8 v);
 
 #define					LL_PAUSE_ENC_REQ			0x0a
 #define					LL_PAUSE_ENC_RSP			0x0b
-#define					LL_REJECT_IND				0x0d
 
 
 
@@ -125,11 +133,6 @@ void blt_set_bluetooth_version (u8 v);
 #define				BLE_STATE_BRX_E			7
 
 #define				BLE_STATE_SLOT			8
-
-
-
-#define			BLS_FLAG_ADV_IN_SLAVE_MODE				BIT(6)
-#define			BLS_FLAG_SCAN_ENABLE					BIT(0)
 
 
 
@@ -188,6 +191,8 @@ ll_data_extension_t  bltData;
 ////////////////// Telink defined Event Callback  ////////////////////////
 typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 
+#define 		BLT_EV_MAX_NUM						20
+
 #define			BLT_EV_FLAG_ADV						0
 #define			BLT_EV_FLAG_ADV_DURATION_TIMEOUT	1
 #define			BLT_EV_FLAG_SCAN_RSP				2
@@ -206,7 +211,6 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_SUSPEND_EXIT			15
 #define			BLT_EV_FLAG_READ_P256_KEY			16
 #define			BLT_EV_FLAG_GENERATE_DHKEY			17
-#define			BLT_EV_FLAG_ADV_REPORT				18
 
 
 
@@ -314,7 +318,13 @@ int blm_send_acl_to_btusb (u16 conn, u8 *p);
 
 static inline u8  blc_ll_getTxFifoNumber (void)
 {
-	return  ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 7 )  +  ( (blt_txfifo.wptr - blt_txfifo.rptr) & 15 ) ;
+	return  ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 )  +  ( (blt_txfifo.wptr - blt_txfifo.rptr) & 31 ) ;
+}
+
+
+static inline u8  blc_ll_getTxHardWareFifoNumber (void)
+{
+	return  ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 );
 }
 
 

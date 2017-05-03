@@ -54,10 +54,10 @@ typedef enum hci_type_e {
 
 // hci event
 extern u32		hci_eventMask;
-extern u16		hci_le_eventMask;
+extern u32		hci_le_eventMask;
 extern u32		hci_tlk_module_eventMask;
-ble_sts_t 		blc_hci_setEventMask_cmd(u16 evtMask);      //eventMask: BT/EDR
-ble_sts_t 		blc_hci_le_setEventMask_cmd(u16 evtMask);   //eventMask: LE
+ble_sts_t 		blc_hci_setEventMask_cmd(u32 evtMask);      //eventMask: BT/EDR
+ble_sts_t 		blc_hci_le_setEventMask_cmd(u32 evtMask);   //eventMask: LE
 ble_sts_t 		bls_hci_mod_setEventMask_cmd(u32 evtMask);  //eventMask: module special
 
 
@@ -84,4 +84,8 @@ void blc_register_hci_handler (void *prx, void *ptx);
 int blc_hci_rx_from_usb (void);
 int blc_hci_tx_to_usb (void);
 int blc_hci_tx_to_btusb (void);
+
+int blc_hci_handler (u8 *p, int n);
+int blm_hci_handler (u8 *p, int n);
+int blc_hci_send_event (u32 h, u8 *para, int n);
 

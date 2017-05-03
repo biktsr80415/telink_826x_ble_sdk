@@ -4,14 +4,13 @@
  *  Created on: 2015-12-10
  *      Author: Telink
  */
-
 #include "../tl_common.h"
-
-#include "adc_8267.h"
-
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
 	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269))
+
+
+#include "adc_8267.h"
 
 /**************************************************************************************************
   Filename:       adc.c
@@ -194,7 +193,7 @@ void adc_Init(enum ADCCLOCK adc_clk,enum ADCINPUTCH chn,enum ADCINPUTMODE mode,e
 	adc_SampleTimeSet(sample_cycle);
 
 	/***7.set misc channel sample and convert period***/
-	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
+//	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
 
 	/***enable adc auto mode***/
 	EN_ADC_AUTO;
@@ -252,7 +251,7 @@ void adc_BatteryCheckInit(enum ADCCLOCK adc_clk,unsigned char div_en,enum ONETHI
 	adc_SampleTimeSet(sample_cycle);          //set sample time
 
 	/***7.set misc channel sample and convert period***/
-	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
+//	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
 
 	/***enable adc auto mode***/
 	EN_ADC_AUTO;
@@ -298,7 +297,7 @@ void adc_TemSensorInit(enum ADCCLOCK adc_clk,enum ADCINPUTCH chn,enum ADCINPUTMO
 	adc_SampleTimeSet(sample_cycle);
 
 	/***6.set misc channel sample and convert period***/
-	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
+//	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
 
 	/***7.enable manual mode***/
 	EN_ADC_AUTO;
@@ -312,7 +311,7 @@ void adc_TemSensorInit(enum ADCCLOCK adc_clk,enum ADCINPUTCH chn,enum ADCINPUTMO
 *
 *	@return	sampled_value:	raw data
 */
-unsigned short adc_SampleValueGet1(void){
+unsigned short adc_SampleValueGet(void){
 	unsigned short sampledValue;
 
 	while(!CHECKADCSTATUS);

@@ -19,6 +19,16 @@
 
 
 
+
+#define 		BLC_ADV_DISABLE						0
+#define 		BLC_ADV_ENABLE						1
+
+
+#define			BLS_FLAG_ADV_IN_SLAVE_MODE			BIT(6)
+
+#define 		BLC_FLAG_STK_ADV					BIT(24)
+
+
 typedef struct {
 	u8		adv_en;
 	u8		adv_chn_mask;
@@ -27,7 +37,7 @@ typedef struct {
 
 	u8 		adv_filterPolicy;
 	u8		adv_rcvdReq;  //scanReq & connReq
-	u8		rsvd2;
+	u8		adv_extension_mask;
 	s8		T_SCAN_RSP_INTVL;
 
 	u16		advInt_rand;
@@ -37,6 +47,7 @@ typedef struct {
 	u32		adv_duration_us;
 	u32		adv_begin_tick;
 }st_ll_adv_t;
+
 
 
 
@@ -64,7 +75,7 @@ void 		blc_ll_initAdvertising_module(u8 *public_adr);;
 
 ble_sts_t	bls_ll_setAdvData(u8 *data, u8 len);
 ble_sts_t 	bls_ll_setScanRspData(u8 *data, u8 len);
-ble_sts_t   bls_ll_setAdvEnable(u8 en);
+ble_sts_t   bls_ll_setAdvEnable(int adv_enable);
 
 ble_sts_t   bls_ll_setAdvParam( u16 intervalMin, u16 intervalMax, u8 advType, 	   u8 ownAddrType,  \
 							     u8 peerAddrType, u8 *peerAddr,   u8 adv_channelMap, u8 advFilterPolicy);
@@ -82,6 +93,13 @@ void 		blc_ll_setAdvCustomedChannel (u8 chn0, u8 chn1, u8 chn2);
 
 void 		bls_ll_adjustScanRspTiming( s8 t_us );
 
+
+
+
+ble_sts_t   blc_ll_addAdvertisingInConnSlaveRole(void);
+ble_sts_t   blc_ll_removeAdvertisingFromConnSLaveRole(void);
+ble_sts_t 	blc_ll_setAdvParamInConnSlaveRole( u8 *adv_data, u8 advData_len, u8 *scanRsp_data, u8 scanRspData_len,
+											 u8 advType,   u8 ownAddrType, u8 adv_channelMap, u8 advFilterPolicy);
 
 
 /************************* Stack Interface, user can not use!!! ***************************/

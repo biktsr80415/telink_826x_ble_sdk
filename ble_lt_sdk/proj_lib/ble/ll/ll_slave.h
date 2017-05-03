@@ -102,9 +102,6 @@ void		bls_ll_restoreConnBrxEvent(void);
 
 
 
-// ble irq & ble loop
-void 		irq_blt_slave_handler(void);
-int			blt_slave_main_loop (void);
 
 
 //ble module event
@@ -114,7 +111,7 @@ ble_sts_t 	bls_hci_mod_setEventMask_cmd(u32 evtMask);  //eventMask: module speci
 
 
 /************************* Stack Interface, user can not use!!! ***************************/
-bool		bls_ll_pushTxFifo (u8 *p);
+bool		bls_ll_pushTxFifo (int hanlde, u8 *p);
 ble_sts_t  	bls_hci_reset(void);
 
 ble_sts_t	bls_hci_receiveHostACLData(u16 connHandle, u8 PB_Flag, u8 BC_Flag, u8 *pData );

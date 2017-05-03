@@ -219,7 +219,8 @@ void cpu_set_gpio_wakeup (int pin, int pol, int en);
 int cpu_sleep_wakeup (int deepsleep, int wakeup_src, u32 wakeup_tick);
 
 
-extern const u16 wakeup_src_pin[];
+
+void blc_pm_disableFlashShutdown_when_suspend(void);
 
 
 #endif

@@ -8,14 +8,12 @@
 
 **************************************************************************************************/
 
-
-
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
 	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269))
 
-#ifndef 	adc_new_H
-#define 	adc_new_H
+#ifndef 	ADC_8267_H_
+#define 	ADC_8267_H_
 
 #include "../mcu/register.h"
 #include "../common/compatibility.h"
@@ -170,7 +168,7 @@ void adc_TemSensorInit(enum ADCCLOCK adc_clk,enum ADCINPUTCH chn,enum ADCINPUTMO
 *
 *	@return	sampled_value:	raw data
 */
-unsigned short adc_SampleValueGet1(void);
+unsigned short adc_SampleValueGet(void);
 
 /********************************************************
 *

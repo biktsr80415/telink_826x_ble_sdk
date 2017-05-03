@@ -742,14 +742,14 @@ void usb_handle_irq(void) {
 		extern void usbmouse_report_frame(void);
 		extern void usbmouse_release_check(void);
 		usbmouse_report_frame();
-		usbmouse_release_check();
+		//usbmouse_release_check();
 	#endif
 
 	#if(USB_KEYBOARD_ENABLE)
 		extern void usbkb_report_frame(void);
 		extern void usbkb_release_check(void);
 		usbkb_report_frame();
-		usbkb_release_check();
+		//usbkb_release_check();
 	#endif
 #endif
 }

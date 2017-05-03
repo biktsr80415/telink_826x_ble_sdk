@@ -28,9 +28,9 @@
 
 typedef struct {
 	u8		suspend_mask;
-	u8		wakeup_src;
 	u8		advMcuStall_en;
-	u8		conn_no_suspend;
+	u16		wakeup_src;
+
 
 	u32 	appWakeup_tick;
 
@@ -44,6 +44,7 @@ typedef struct {
 	u16		valid_latency;
 	u16 	latency_use;
 
+	u8		conn_no_suspend;
 	u8 		timer_wakeup;
 
 }st_ll_pm_t;
@@ -64,7 +65,7 @@ void 		blc_ll_initPowerManagement_module(void);
 
 void		bls_pm_setSuspendMask (u8 mask);
 u8 			bls_pm_getSuspendMask (void);
-void 		bls_pm_setWakeupSource(u8 source);
+void 		bls_pm_setWakeupSource(u16 source);
 u32 		bls_pm_getSystemWakeupTick(void);
 
 void 		bls_pm_setManualLatency(u16 latency); //manual set latency to save power

@@ -2,7 +2,7 @@
 #include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 
-#if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8266_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
+#if (__PROJECT_8261_FEATURE_TEST__ || __PROJECT_8266_FEATURE_TEST__ || __PROJECT_8267_FEATURE_TEST__ || __PROJECT_8269_FEATURE_TEST__)
 
 typedef struct
 {

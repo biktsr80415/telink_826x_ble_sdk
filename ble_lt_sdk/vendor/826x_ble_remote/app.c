@@ -13,7 +13,7 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
 
-#if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
+#if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8266_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
 
 #define  USER_TEST_BLT_SOFT_TIMER					0  //test soft timer
@@ -32,21 +32,18 @@ MYFIFO_INIT(blt_txfifo, 40, 16);
 #define			HID_HANDLE_KEYBOARD_REPORT			29
 #define			AUDIO_HANDLE_MIC					47
 
-u16 BattValue[10] = {0};
 
 //////////////////////////////////////////////////////////////////////////////
-//	Initialization: MAC address, Adv Packet, Response Packet
+//	 Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
-u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
-
-u8	tbl_advData[] = {
+const u8	tbl_advData[] = {
 	 0x05, 0x09, 't', 'h', 'i', 'd',
 	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
 	 0x03, 0x19, 0x80, 0x01, 					// 384, Generic Remote Control, Generic category
 	 0x05, 0x02, 0x12, 0x18, 0x0F, 0x18,		// incomplete list of service class UUIDs (0x1812, 0x180F)
 };
 
-u8	tbl_scanRsp [] = {
+const u8	tbl_scanRsp [] = {
 		 0x08, 0x09, 't', 'R', 'e', 'm', 'o', 't', 'e',
 	};
 
@@ -70,17 +67,16 @@ const led_cfg_t led_cfg[] = {
 };
 
 
-
-extern kb_data_t	kb_event;
-
 u32		advertise_begin_tick;
 
 u8		ui_mic_enable = 0;
 u8 		key_voice_press = 0;
+
 int 	lowBattDet_enable = 0;
+int		lowBatt_alarmFlag = 0;
 
 
-
+int     ui_mtu_size_exchange_req = 0;
 
 
 //////////////////// key type ///////////////////////
@@ -141,23 +137,23 @@ u8 		ota_is_working = 0;
 
 	void LED_show_ota_result(int result)
 	{
-	#if 0
-		irq_disable();
-		WATCHDOG_DISABLE;
+		#if 0
+			irq_disable();
+			WATCHDOG_DISABLE;
 
-		gpio_set_output_en(GPIO_LED, 1);
+			gpio_set_output_en(GPIO_LED, 1);
 
-		if(result == OTA_SUCCESS){  //OTA success
-			gpio_write(GPIO_LED, 1);
-			sleep_us(2000000);  //led on for 2 second
-			gpio_write(GPIO_LED, 0);
-		}
-		else{  //OTA fail
+			if(result == OTA_SUCCESS){  //OTA success
+				gpio_write(GPIO_LED, 1);
+				sleep_us(2000000);  //led on for 2 second
+				gpio_write(GPIO_LED, 0);
+			}
+			else{  //OTA fail
 
-		}
+			}
 
-		gpio_set_output_en(GPIO_LED, 0);
-	#endif
+			gpio_set_output_en(GPIO_LED, 0);
+		#endif
 	}
 #endif
 
@@ -185,6 +181,17 @@ u8 		ota_is_working = 0;
 		}
 	}
 
+	void voice_press_proc(void)
+	{
+		key_voice_press = 0;
+		ui_enable_mic (1);
+		if(ui_mtu_size_exchange_req && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
+			ui_mtu_size_exchange_req = 0;
+			blc_att_requestMtuSizeExchange(BLS_CONN_HANDLE, 0x009e);
+		}
+	}
+
+
 	void	task_audio (void)
 	{
 		static u32 audioProcTick = 0;
@@ -201,7 +208,7 @@ u8 		ota_is_working = 0;
 		proc_mic_encoder ();
 
 		//////////////////////////////////////////////////////////////////
-		if (blc_ll_getTxFifoNumber() < 11)
+		if (blc_ll_getTxFifoNumber() < 10)
 		{
 			int *p = mic_encoder_data_buffer ();
 			if (p)					//around 3.2 ms @16MHz clock
@@ -306,6 +313,8 @@ void	task_connect (u8 e, u8 *p, int n)
 	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);  //interval=10ms latency=99 timeout=4s
 
 	latest_user_event_tick = clock_time();
+
+	ui_mtu_size_exchange_req = 1;
 }
 
 
@@ -321,7 +330,7 @@ void deep_wakeup_proc(void)
 	//press, hold this data to the cache, when connection established OK, send to master
 	//deepsleep_wakeup_fast_keyscan
 	if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG){
-		if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON,1) && kb_event.cnt){
+		if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON, 1) && kb_event.cnt){
 			deepback_key_state = DEEPBACK_KEY_CACHE;
 			key_not_released = 1;
 			memcpy(&kb_event_cache,&kb_event,sizeof(kb_event));
@@ -338,14 +347,13 @@ void deepback_pre_proc(int *det_key)
 {
 #if (DEEPBACK_FAST_KEYSCAN_ENABLE)
 	// to handle deepback key cache
-	extern u32 blt_conn_start_tick; //ble connect establish time
-	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLT_LINK_STATE_CONN \
-			&& clock_time_exceed(blt_conn_start_tick,25000)){
+	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN \
+			&& clock_time_exceed(bls_ll_getConnectionCreateTime(), 25000)){
 
 		memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
 		*det_key = 1;
 
-		if(key_not_released || kb_event_cache.keycode[0] == VK_M){  //no need manual release
+		if(key_not_released || kb_event_cache.keycode[0] == VOICE){  //no need manual release
 			deepback_key_state = DEEPBACK_KEY_IDLE;
 		}
 		else{  //need manual release
@@ -358,6 +366,7 @@ void deepback_pre_proc(int *det_key)
 
 void deepback_post_proc(void)
 {
+#if (DEEPBACK_FAST_KEYSCAN_ENABLE)
 	//manual key release
 	if(deepback_key_state == DEEPBACK_KEY_WAIT_RELEASE && clock_time_exceed(deepback_key_tick,150000)){
 		key_not_released = 0;
@@ -366,6 +375,7 @@ void deepback_post_proc(void)
 		bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
 		deepback_key_state = DEEPBACK_KEY_IDLE;
 	}
+#endif
 }
 
 
@@ -486,69 +496,64 @@ void key_change_proc(void)
 
 }
 
-u8 bRspMtuFlag =1;
-/****
- *  when press the audio presskey, send this packet to master.
- */
-void voice_press_proc(void)
-{
-	key_voice_press = 0;
-	//adc_clk_poweron();
-	//config_adc (FLD_ADC_PGA_C45, FLD_ADC_CHN_D0, SYS_16M_AMIC_16K);
-	ui_enable_mic (1);
 
-	if(bRspMtuFlag && blt_state==BLS_LINK_STATE_CONN){
-		extern u8 pkt_notify_short[36];
-		extern u8 bls_ll_pushTxFifo (u8 *p);
-		bRspMtuFlag = 0;
 
-//		pkt_notify_short[0] = 9;
-		pkt_notify_short[0] = 2;			//first data packet
-		pkt_notify_short[1] = 7;
-		*(u16*)(pkt_notify_short + 2) =  3; //l2cap
-		*(u16*)(pkt_notify_short + 4) = 0x04;	//chanid
-		pkt_notify_short[6]=0x02;
-		pkt_notify_short[7]=0x9e;
-		//pkt_notify_short[11]=24;
-		pkt_notify_short[8]=0x00;
+#define GPIO_WAKEUP_KEYPROC_CNT				3
 
-		bls_ll_pushTxFifo (pkt_notify_short);
-	}
-}
-
-//_attribute_ram_code_
 void proc_keyboard (u8 e, u8 *p, int n)
 {
-
+	static int gpioWakeup_keyProc_cnt = 0;
 	static u32 keyScanTick = 0;
-	if(e == BLT_EV_FLAG_GPIO_EARLY_WAKEUP || clock_time_exceed(keyScanTick, 8000)){
+
+	//when key press gpio wakeup suspend, proc keyscan at least GPIO_WAKEUP_KEYPROC_CNT times
+	//regardless of 8000 us interval
+	if(e == BLT_EV_FLAG_GPIO_EARLY_WAKEUP){
+		gpioWakeup_keyProc_cnt = GPIO_WAKEUP_KEYPROC_CNT;
+	}
+	else if(gpioWakeup_keyProc_cnt){
+		gpioWakeup_keyProc_cnt --;
+	}
+
+
+	if(gpioWakeup_keyProc_cnt || clock_time_exceed(keyScanTick, 8000)){
 		keyScanTick = clock_time();
 	}
 	else{
 		return;
 	}
 
+
+
+
 	kb_event.keycode[0] = 0;
 	int det_key = kb_scan_key (0, 1);
+
+
+#if(DEEPBACK_FAST_KEYSCAN_ENABLE)
+	if(deepback_key_state != DEEPBACK_KEY_IDLE){
+		deepback_pre_proc(&det_key);
+	}
+#endif
 
 
 	if (det_key){
 		key_change_proc();
 	}
 	
-	//add by Q.W
-	if(blt_state != BLS_LINK_STATE_CONN){ //when the connect disconnect
-		bRspMtuFlag =1;
-	}
 
-	#if (BLE_AUDIO_ENABLE)
+#if (BLE_AUDIO_ENABLE)
 	 //long press voice 1 second
 		if(key_voice_press && !ui_mic_enable && clock_time_exceed(key_voice_pressTick,1000000)){
-//			key_voice_press = 0;  //removed by Q.W
-//			ui_enable_mic (1);    //removed by Q.W
 			voice_press_proc();
 		}
-	#endif
+#endif
+
+
+#if(DEEPBACK_FAST_KEYSCAN_ENABLE)
+	if(deepback_key_state != DEEPBACK_KEY_IDLE){
+		deepback_post_proc();
+	}
+#endif
 }
 
 
@@ -559,6 +564,7 @@ int AA_dbg_deep;
 //_attribute_ram_code_
 void blt_pm_proc(void)
 {
+
 #if(BLE_REMOTE_PM_ENABLE)
 	if(ui_mic_enable)
 	{
@@ -594,7 +600,9 @@ void blt_pm_proc(void)
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //when terminate, link layer change back to adc state
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
 			analog_write(DEEP_ANA_REG0, CONN_DEEP_FLG);
-			analog_write(DEEP_ANA_REG1, user_key_mode);
+			#if (REMOTE_IR_ENABLE)
+				analog_write(DEEP_ANA_REG1, user_key_mode);
+			#endif
 		}
 
 		//adv 60s, deepsleep
@@ -603,7 +611,9 @@ void blt_pm_proc(void)
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
 			analog_write(DEEP_ANA_REG0, ADV_DEEP_FLG);
-			analog_write(DEEP_ANA_REG1, user_key_mode);
+			#if (REMOTE_IR_ENABLE)
+				analog_write(DEEP_ANA_REG1, user_key_mode);
+			#endif
 		}
 		//conn 60s no event(key/voice/led), enter deepsleep
 		else if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && !user_task_flg && \
@@ -638,19 +648,18 @@ void user_init()
 	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
 
-	////////////////// BLE stack initialization ////////////////////////////////////
+////////////////// BLE stack initialization ////////////////////////////////////
+	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff)
 	{
 		memcpy (tbl_mac, pmac, 6);
 	}
 	else{
-//		tbl_mac[0] = (u8)rand();
+		tbl_mac[0] = (u8)rand();
 		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
 	}
 
-
-///////////// BLE stack Initialization ////////////////
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU(tbl_mac);   //mandatory
 
@@ -670,8 +679,8 @@ void user_init()
 	//HID_service_on_android7p0_init();  //hid device on android 7.0
 
 ///////////////////// USER application initialization ///////////////////
-	bls_ll_setAdvData( tbl_advData, sizeof(tbl_advData) );
-	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
+	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
+	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 									 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
@@ -725,27 +734,33 @@ void user_init()
 		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
 		#if TL_MIC_32K_FIR_16K
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 47, 4, R2,CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 47, 4, R2, CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 30, 16, R2,CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 30, 16, R2, CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R3,CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 65, 15, R3, CLOCK_SYS_TYPE);
 			#endif
 		#else
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 18, 8, R5,CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 18, 8, R5, CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R3,CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 65, 15, R3, CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R6,CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 65, 15, R6, CLOCK_SYS_TYPE);
 			#endif
 		#endif
-	#endif
-
 	audio_finetune_sample_rate(3);//reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
 	audio_amic_input_set(PGA_CH);//audio input set, ignore the input parameter
+	#endif//end of BLE_DMIC_ENABLE
 #endif
-	adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_B7, 0, SINGLEEND, RV_1P428, RES14, S_3); //setting the parameter based on actual situation
+
+#if(BLE_REMOTE_BATT_CHECK_EN)
+	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_B7, 0, SINGLEEND, RV_1P428, RES14, S_3);
+	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
+		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
+	#endif
+#endif
 
 
 
@@ -760,13 +775,6 @@ void user_init()
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 #endif
 
-#if(BLE_REMOTE_BATT_CHECK_EN)
-	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_B7, 0, SINGLEEND, RV_1P428, RES14, S_3);
-	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
-	#endif
-#endif
 
 	////////////////LED initialization /////////////////////////
 	device_led_init(GPIO_LED, 1);
@@ -797,7 +805,7 @@ void user_init()
 
 }
 
-
+extern void battery_power_check(void);
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
@@ -826,6 +834,11 @@ void main_loop (void)
 		}
 	#endif
 
+#if (BLE_REMOTE_BATT_CHECK_EN)
+	battery_power_check();
+#endif
+	//lowBatt_alarmFlag =  //low battery detect
+
 	proc_keyboard (0,0, 0);
 
 	device_led_process();
@@ -833,7 +846,64 @@ void main_loop (void)
 	blt_pm_proc();
 }
 
+/***
+ * the function can filter the not good data from the adc.
+ * remove the maximum data and minimum data from the adc data.
+ * then average the rest data to calculate the voltage of battery.
+ **/
+unsigned short filter_data(unsigned short* pData,unsigned char len)
+{
+	unsigned char index = 0,loop = 0;
+	unsigned short temData = 0;
+	//bubble sort,user can use your algorithm.it is just an example.
+	for(loop = 0;loop <(len-1); loop++){
+		for(index = 0;index <(len-loop-1); index++){
+			if(pData[index]>pData[index+1]){
+				temData = pData[index];
+				pData[index] = pData[index+1];
+				pData[index+1] = temData;
+			}
+		}
+	}
+
+	//remove the maximum and minimum data, then average the rest data.
+	unsigned int data_sum = 0;
+	unsigned char s_index = 0;
+	for(s_index=1;s_index <(len-1);s_index++){
+		data_sum += pData[s_index];
+	}
+	return (data_sum/(len-2));
+}
 
 
+/****
+ * the function is used to check the voltage of battery.
+ * when the battery voltage is less than 1.96v,
+ * let the chip enter deep sleep mode.
+ **/
+void battery_power_check(void)
+{
+	int adc_idx = 0;
+	static unsigned short adcValue[16] = {0};
+
+	ADC_MODULE_ENABLE; //open adc's clock to start adc convertion.
+	for(adc_idx=0;adc_idx<16;adc_idx++){
+		adcValue[adc_idx] = adc_SampleValueGet();
+	}
+	ADC_MODULE_CLOSED; //close the adc clock to save power
+
+	unsigned short average_data;
+	average_data = filter_data(adcValue,16);
+	unsigned int tem_batteryVol; //2^14 - 1 = 16383;
+#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+	tem_batteryVol = (1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
+#elif(MCU_CORE_TYPE == MCU_CORE_8266)
+	tem_batteryVol = ((1300*average_data)>>14);
+#endif
+	printf("%x:\n\r",tem_batteryVol);
+	if(tem_batteryVol < 1900){
+		//enter into deepsleep mode
+	}
+}
 
 #endif  //end of __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__

@@ -4,24 +4,13 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
-#if __PROJECT_8269_HCI__
-#define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
-#define	__LOG_RT_ENABLE__		0
-//#define	__DEBUG_PRINT__			0
-//////////// product  Information  //////////////////////////////
-#define ID_VENDOR				0x248a			// for report
-#define ID_PRODUCT_BASE			0x880C
-#define STRING_VENDOR			L"Telink"
-#define STRING_PRODUCT			L"BLE HCI"
-#define STRING_SERIAL			L"TLSR8269"
-
-#define CHIP_TYPE				CHIP_TYPE_8269		// 8866-24, 8566-32
-#define APPLICATION_DONGLE		0					// or else APPLICATION_DEVICE
-#define	FLOW_NO_OS				1
-
-#define		RF_FAST_MODE_1M		1
-
-//////////////////////CAN NOT CHANGE CONFIG ABOVE ////////////////////////////
+#if		(__PROJECT_8261_HCI__)
+	#define CHIP_TYPE				CHIP_TYPE_8261
+#elif   (__PROJECT_8267_HCI__)
+	#define CHIP_TYPE				CHIP_TYPE_8267
+#elif   (__PROJECT_8269_HCI__)
+	#define CHIP_TYPE				CHIP_TYPE_8269
+#endif
 
 
 /////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
@@ -31,7 +20,6 @@ extern "C" {
 
 /////////////////// Configure /////////////////////////////////
 #define BLE_MODULE_PM_ENABLE				0
-
 
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
 #define GPIO_WAKEUP_MODULE					GPIO_PC6   //mcu wakeup module
@@ -96,9 +84,7 @@ extern "C" {
 /////////////open SWS digital pullup to prevent MCU err, this is must ////////////
 #define PB0_DATA_OUT					1
 
-#endif
 /////////////////// set default   ////////////////
-
 #include "../common/default_config.h"
 
 /* Disable C linkage for C++ Compilers: */
