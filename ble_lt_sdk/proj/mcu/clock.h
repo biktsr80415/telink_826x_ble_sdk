@@ -44,7 +44,6 @@ enum{
 	#define		CLOCK_SYS_CLOCK_1US	  		sys_tick_per_us
 
 #else
-	#define 	sys_tick_per_us		CLOCK_SYS_CLOCK_1US
 
 	enum{
 		CLOCK_PLL_CLOCK = 192000000,
@@ -53,6 +52,8 @@ enum{
 		CLOCK_SYS_CLOCK_1MS = (CLOCK_SYS_CLOCK_1S / 1000),
 		CLOCK_SYS_CLOCK_1US = (CLOCK_SYS_CLOCK_1S / 1000000),
 	};
+
+	#define 	sys_tick_per_us		CLOCK_SYS_CLOCK_1US
 
 #endif
 
