@@ -28,9 +28,6 @@ _attribute_ram_code_ void irq_handler(void)
     if(irqS & FLD_DMA_UART_TX)	//tx
     {
     	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
-#if __PROJECT_8266_HCI__
-		uart_clr_tx_busy_flag();
-#endif
     }
 #endif
 }
