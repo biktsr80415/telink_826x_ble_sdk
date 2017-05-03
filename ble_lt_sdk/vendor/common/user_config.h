@@ -7,8 +7,8 @@
 	#include "../8267_master/app_config.h"
 #elif (__PROJECT_8267_BTUSB__)
 	#include "../8267_btusb/app_config.h"
-#elif (__PROJECT_8267_HCI__)
-	#include "../826x_hci/8267_app_config.h"
+#elif (__PROJECT_8261_HCI__|__PROJECT_8267_HCI__|__PROJECT_8269_HCI__)
+	#include "../826x_hci/app_config.h"
 #elif (__PROJECT_8269_HCI__)
 	#include "../826x_hci/8269_app_config.h"
 #elif (__PROJECT_8267_MODULE__)
