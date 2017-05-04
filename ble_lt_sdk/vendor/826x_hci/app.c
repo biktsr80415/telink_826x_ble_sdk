@@ -184,24 +184,15 @@ void user_init()
 		blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
 	#else	//uart
 		//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
-		//todo:uart init here
-#if __PROJECT_8266_HCI__
-		gpio_set_func(GPIO_UTX, AS_UART);
-		gpio_set_func(GPIO_URX, AS_UART);
-		gpio_set_input_en(GPIO_UTX, 1);
-		gpio_set_input_en(GPIO_URX, 1);
-		gpio_write (GPIO_UTX, 1);			//pull-high RX to avoid mis-trig by floating signal
-		gpio_write (GPIO_URX, 1);			//pull-high RX to avoid mis-trig by floating signal
-#else
+		gpio_set_input_en(GPIO_PB2, 1);
+		gpio_set_input_en(GPIO_PB3, 1);
+		gpio_setup_up_down_resistor(GPIO_PB2, PM_PIN_PULLUP_1M);
+		gpio_setup_up_down_resistor(GPIO_PB3, PM_PIN_PULLUP_1M);
 		uart_io_init(UART_GPIO_8267_PB2_PB3);
-#endif
+
+		reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX; //clear uart rx/tx status
 		CLK16M_UART115200;
 		uart_BuffInit(hci_rx_fifo_b, hci_rx_fifo.size, hci_tx_fifo_b);
-#if 0	//uart flow control
-//		uart_RTSCfg(1, UART_RTS_MODE_MANUAL, 5, 0);	 //no receiving limits required for now
-//		uart_RTSLvlSet(1);
-//		uart_CTSCfg(1, 0);
-#endif
 		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler
 	#endif
 
