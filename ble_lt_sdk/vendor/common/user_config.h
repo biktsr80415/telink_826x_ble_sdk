@@ -11,20 +11,14 @@
 	#include "../826x_hci/app_config.h"
 #elif (__PROJECT_8269_HCI__)
 	#include "../826x_hci/8269_app_config.h"
-#elif (__PROJECT_8267_MODULE__)
-	#include "../826x_module/8267_app_config.h"
-#elif (__PROJECT_8269_MODULE__)
-	#include "../826x_module/8269_app_config.h"
+#elif (__PROJECT_8261_MODULE__ || __PROJECT_8267_MODULE__ || __PROJECT_8269_MODULE__ || __PROJECT_8266_MODULE__)
+	#include "../826x_module/app_config.h"
 #elif (__PROJECT_826X_PROFILE_TEST__)
 	#include "../826x_profile_test/8267_app_config.h"
 #elif (__PROJECT_826X_SPI_MODULE__)
 	#include "../826x_spi_module/8267_app_config.h"
 #elif (__PROJECT_8267_SPI_MASTER__)
     #include "../8267_spi_master/app_config.h"
-#elif (__PROJECT_8266_MODULE__)
-	#include "../826x_module/8266_app_config.h"
-#elif (__PROJECT_8261_MODULE__)
-	#include "../826x_module/8261_app_config.h"
 #elif (__PROJECT_8261_MULTI_MOUSE__)
 	#include "../8261_multi_mouse/app_config.h"
 #elif (__PROJECT_8266_FLYCO_MODULE__)

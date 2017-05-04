@@ -83,20 +83,25 @@ void show_ota_result(int result)
 void	task_connect (void)
 {
 	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
+#if 1
+	gpio_write(RED_LED, ON);
+#else
+	gpio_write(GREEN_LED,ON);
+#endif
 }
 
 void led_init(void)
 {
-#if 0
+#if 1
 	gpio_set_func(RED_LED, AS_GPIO);
 	gpio_set_input_en(RED_LED,0);
 	gpio_set_output_en(RED_LED,1);
-	gpio_write(RED_LED, ON);
-
-//	gpio_set_func(GREEN_LED, AS_GPIO);
-//	gpio_set_input_en(GREEN_LED,0);
-//	gpio_set_output_en(GREEN_LED,1);
-//	gpio_write(GREEN_LED,ON);
+	gpio_write(RED_LED, OFF);
+#else
+	gpio_set_func(GREEN_LED, AS_GPIO);
+	gpio_set_input_en(GREEN_LED,0);
+	gpio_set_output_en(GREEN_LED,1);
+	gpio_write(GREEN_LED,OFF);
 #endif
 }
 
