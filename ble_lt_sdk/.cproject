@@ -2086,7 +2086,7 @@
 							</tool>
 							<tool command="tc32-elf-ld --gc-sections" id="com.telink.tc32eclipse.tool.linker.TC32Win.app.release.1659345383" name="TC32 C Linker" superClass="com.telink.tc32eclipse.tool.linker.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.linker.option.libs.492408969" name="Libraries (-l)" superClass="com.telink.tc32eclipse.linker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="lt_8269"/>
+									<listOptionValue builtIn="false" value="lt_8267"/>
 								</option>
 								<option id="com.telink.tc32eclipse.linker.option.libpath.136784885" name="Libraries Path (-L)" superClass="com.telink.tc32eclipse.linker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj_lib}&quot;"/>
