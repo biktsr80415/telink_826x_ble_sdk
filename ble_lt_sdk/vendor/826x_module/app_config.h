@@ -71,15 +71,15 @@ extern "C" {
 
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
 #if	(__PROJECT_8261_MODULE__ || __PROJECT_8267_MODULE__ || __PROJECT_8269_MODULE__)
-#define GPIO_WAKEUP_MODULE					GPIO_PA6   //mcu wakeup module
-#define	PA6_FUNC							AS_GPIO
-#define PA6_INPUT_ENABLE					1
-#define	PA6_OUTPUT_ENABLE					0
-#define	PA6_DATA_OUT						0
-#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PA6, PM_PIN_PULLUP_10K);
-#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PA6, PM_PIN_PULLDOWN_100K);
+#define GPIO_WAKEUP_MODULE					GPIO_PB5   //mcu wakeup module //TL_P4N for 8267/8269 EVK board(C1T80A30_V1.0)
+#define	PB5_FUNC							AS_GPIO
+#define PB5_INPUT_ENABLE					1
+#define	PB5_OUTPUT_ENABLE					0
+#define	PB5_DATA_OUT						0
+#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PB5, PM_PIN_PULLUP_10K);
+#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PB5, PM_PIN_PULLDOWN_100K);
 
-#define GPIO_WAKEUP_MCU						GPIO_PB1   //module wakeup mcu
+#define GPIO_WAKEUP_MCU						GPIO_PB1   //module wakeup mcu  //TL_P2N for 8267/8269 EVK board(C1T80A30_V1.0)
 #define	PB1_FUNC							AS_GPIO
 #define PB1_INPUT_ENABLE					1
 #define	PB1_OUTPUT_ENABLE					1
@@ -88,7 +88,7 @@ extern "C" {
 #define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PB1, 1); gpio_write(GPIO_PB1, 0);}while(0)
 #define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PB1, 0); gpio_write(GPIO_PB1, 0);}while(0)
 #else//__PROJECT_8266_MODULE__
-#define GPIO_WAKEUP_MODULE					GPIO_PC5   //mcu wakeup module
+#define GPIO_WAKEUP_MODULE					GPIO_PC5   //mcu wakeup module //G3 for 8266 EVK board(C1T53A20_V2.0)
 #define	PC5_FUNC							AS_GPIO
 #define PC5_INPUT_ENABLE					1
 #define	PC5_OUTPUT_ENABLE					0
@@ -96,7 +96,7 @@ extern "C" {
 #define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLUP_10K);
 #define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLDOWN_100K);
 
-#define GPIO_WAKEUP_MCU						GPIO_PC3   //module wakeup mcu
+#define GPIO_WAKEUP_MCU						GPIO_PC3   //module wakeup mcu //G2 for 8266 EVK board(C1T53A20_V2.0)
 #define	PC3_FUNC							AS_GPIO
 #define PC3_INPUT_ENABLE					1
 #define	PC3_OUTPUT_ENABLE					1
