@@ -316,7 +316,7 @@
 							<builder buildPath="${workspace_loc:/newArchitecture/Release}" id="com.telink.tc32eclipse.target.builder.TC32Win.app.release.1223962984" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="GNU Make Builder" superClass="com.telink.tc32eclipse.target.builder.TC32Win.app.release"/>
 							<tool id="com.telink.tc32eclipse.tool.assembler.TC32Win.app.release.1946534546" name="TC32 CC/Assembler" superClass="com.telink.tc32eclipse.tool.assembler.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.assembler.option.debug.level.605555600" name="Generate Debugging Info" superClass="com.telink.tc32eclipse.assembler.option.debug.level" value="com.telink.tc32eclipse.assembler.option.debug.level.none" valueType="enumerated"/>
-								<option id="com.telink.tc32eclipse.asm.option.flags.1036362747" name="Other GCC Flags" superClass="com.telink.tc32eclipse.asm.option.flags" value="-DMCU_CORE_8269" valueType="string"/>
+								<option id="com.telink.tc32eclipse.asm.option.flags.1036362747" name="Other GCC Flags" superClass="com.telink.tc32eclipse.asm.option.flags" value="-DMCU_CORE_8267" valueType="string"/>
 								<inputType id="com.telink.tc32eclipse.tool.assembler.input.650119137" superClass="com.telink.tc32eclipse.tool.assembler.input"/>
 							</tool>
 							<tool command="tc32-elf-gcc -ffunction-sections -fdata-sections" id="com.telink.tc32eclipse.tool.compiler.TC32Win.app.release.1216700574" name="TC32 Compiler" superClass="com.telink.tc32eclipse.tool.compiler.TC32Win.app.release">
@@ -328,7 +328,7 @@
 								<option id="com.telink.tc32eclipse.compiler.option.optimize.packstruct.1636919242" name="Pack structs (-fpack-struct)" superClass="com.telink.tc32eclipse.compiler.option.optimize.packstruct" value="true" valueType="boolean"/>
 								<option id="com.telink.tc32eclipse.compiler.option.optimize.shortenums.1763138111" name="Short enums (-fshort-enums)" superClass="com.telink.tc32eclipse.compiler.option.optimize.shortenums" value="true" valueType="boolean"/>
 								<option id="com.telink.tc32eclipse.compiler.option.def.1892059570" name="Define Syms (-D)" superClass="com.telink.tc32eclipse.compiler.option.def" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__PROJECT_8269_MASTER_KMA_DONGLE__=1"/>
+									<listOptionValue builtIn="false" value="__PROJECT_8267_MASTER_KMA_DONGLE__=1"/>
 								</option>
 								<option id="com.telink.tc32eclipse.compiler.option.incpath.1129153417" name="Include Paths (-I)" superClass="com.telink.tc32eclipse.compiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="../proj/mcu_spec"/>
@@ -350,10 +350,10 @@
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.archiver.TC32Win.base.1542293186" name="TC32 Archiver" superClass="com.telink.tc32eclipse.tool.archiver.TC32Win.base"/>
 							<tool id="com.telink.tc32eclipse.tool.objdump.TC32Win.app.release.1585392495" name="TC32 Create Extended Listing" superClass="com.telink.tc32eclipse.tool.objdump.TC32Win.app.release">
-								<option id="com.telink.tc32eclipse.objdump.option.output.1052796397" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8269_master_kma_dongle.lst" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objdump.option.output.1052796397" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8267_master_kma_dongle.lst" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.release.1258792138" name="TC32 Create Flash image" superClass="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.release">
-								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1543239275" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8269_master_kma_dongle.bin" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1543239275" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8267_master_kma_dongle.bin" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.size.TC32Win.app.release.391206959" name="Print Size" superClass="com.telink.tc32eclipse.tool.size.TC32Win.app.release"/>
 						</toolChain>
@@ -1922,7 +1922,7 @@
 							<builder buildPath="${workspace_loc:/newArchitecture/Release}" id="com.telink.tc32eclipse.target.builder.TC32Win.app.release.315012002" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="GNU Make Builder" superClass="com.telink.tc32eclipse.target.builder.TC32Win.app.release"/>
 							<tool id="com.telink.tc32eclipse.tool.assembler.TC32Win.app.release.214359835" name="TC32 CC/Assembler" superClass="com.telink.tc32eclipse.tool.assembler.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.assembler.option.debug.level.255870822" name="Generate Debugging Info" superClass="com.telink.tc32eclipse.assembler.option.debug.level" value="com.telink.tc32eclipse.assembler.option.debug.level.none" valueType="enumerated"/>
-								<option id="com.telink.tc32eclipse.asm.option.flags.1361658805" name="Other GCC Flags" superClass="com.telink.tc32eclipse.asm.option.flags" value="-DMCU_CORE_8267" valueType="string"/>
+								<option id="com.telink.tc32eclipse.asm.option.flags.1361658805" name="Other GCC Flags" superClass="com.telink.tc32eclipse.asm.option.flags" value="-DMCU_CORE_8269" valueType="string"/>
 								<inputType id="com.telink.tc32eclipse.tool.assembler.input.44788516" superClass="com.telink.tc32eclipse.tool.assembler.input"/>
 							</tool>
 							<tool command="tc32-elf-gcc -ffunction-sections -fdata-sections" id="com.telink.tc32eclipse.tool.compiler.TC32Win.app.release.407577053" name="TC32 Compiler" superClass="com.telink.tc32eclipse.tool.compiler.TC32Win.app.release">
@@ -1934,7 +1934,7 @@
 								<option id="com.telink.tc32eclipse.compiler.option.optimize.packstruct.1468488934" name="Pack structs (-fpack-struct)" superClass="com.telink.tc32eclipse.compiler.option.optimize.packstruct" value="true" valueType="boolean"/>
 								<option id="com.telink.tc32eclipse.compiler.option.optimize.shortenums.2080268113" name="Short enums (-fshort-enums)" superClass="com.telink.tc32eclipse.compiler.option.optimize.shortenums" value="true" valueType="boolean"/>
 								<option id="com.telink.tc32eclipse.compiler.option.def.1521666591" name="Define Syms (-D)" superClass="com.telink.tc32eclipse.compiler.option.def" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__PROJECT_8267_MASTER_KMA_DONGLE__=1"/>
+									<listOptionValue builtIn="false" value="__PROJECT_8269_MASTER_KMA_DONGLE__=1"/>
 								</option>
 								<option id="com.telink.tc32eclipse.compiler.option.incpath.1141398426" name="Include Paths (-I)" superClass="com.telink.tc32eclipse.compiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="../proj/mcu_spec"/>
@@ -1956,10 +1956,10 @@
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.archiver.TC32Win.base.128241746" name="TC32 Archiver" superClass="com.telink.tc32eclipse.tool.archiver.TC32Win.base"/>
 							<tool id="com.telink.tc32eclipse.tool.objdump.TC32Win.app.release.1433599321" name="TC32 Create Extended Listing" superClass="com.telink.tc32eclipse.tool.objdump.TC32Win.app.release">
-								<option id="com.telink.tc32eclipse.objdump.option.output.910053324" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8267_master_kma_dongle.lst" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objdump.option.output.910053324" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8269_master_kma_dongle.lst" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.release.1064733062" name="TC32 Create Flash image" superClass="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.release">
-								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1228861974" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8267_master_kma_dongle.bin" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1228861974" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8269_master_kma_dongle.bin" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.size.TC32Win.app.release.146410779" name="Print Size" superClass="com.telink.tc32eclipse.tool.size.TC32Win.app.release"/>
 						</toolChain>
