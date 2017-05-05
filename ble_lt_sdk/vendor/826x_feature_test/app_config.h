@@ -17,7 +17,22 @@ extern "C" {
 #endif
 
 
-
+/////////////////// PRINT DEBUG INFO ///////////////////////
+/* 826x module's pin simulate as a uart tx, Just for debugging */
+#define PRINT_DEBUG_INFO                    1//open/close myprintf
+#if PRINT_DEBUG_INFO
+//defination debug printf pin
+#define PRINT_BAUD_RATE             		1000000 //1M baud rate,should Not bigger than 1M, when system clock is 16M.
+#if	(__PROJECT_8261_FEATURE_TEST__ || __PROJECT_8267_FEATURE_TEST__ || __PROJECT_8269_FEATURE_TEST__)
+#define DEBUG_INFO_TX_PIN           		GPIO_PC6//G0 for 8267/8269 EVK board(C1T80A30_V1.0)
+//#define PC6_OUTPUT_ENABLE	        		1       //mini_printf function contain this
+#define PULL_WAKEUP_SRC_PC6         		PM_PIN_PULLUP_1M
+#else//__PROJECT_8266_FEATURE_TEST__
+#define DEBUG_INFO_TX_PIN           		GPIO_PD3//G9 for 8266 EVK board(C1T53A20_V2.0)
+//#define PD3_OUTPUT_ENABLE	        		1       //mini_printf function contain this
+#define PULL_WAKEUP_SRC_PD3         		PM_PIN_PULLUP_1M
+#endif
+#endif
 
 /////////////////// TEST FEATURE SELECTION /////////////////////////////////
 #define	TEST_ADVERTISING_ONLY							1
@@ -29,7 +44,7 @@ extern "C" {
 #define TEST_POWER_ADV									10
 
 
-#define FEATURE_TEST_MODE								TEST_ADVERTISING_IN_CONN_SLAVE_ROLE
+#define FEATURE_TEST_MODE								TEST_SCANNING_IN_ADV_AND_CONN_SLAVE_ROLE
 
 
 

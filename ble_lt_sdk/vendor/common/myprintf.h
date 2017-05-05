@@ -5,6 +5,7 @@
 
 void my_array_printf(char*data, int len);
 int mini_printf(const char *format, ...);
+void PrintHex(u8 x);
 
 #define printf			mini_printf
 #define	printfArray		arrayPrint
@@ -22,6 +23,7 @@ int mini_printf(const char *format, ...);
 #else
 #define printf
 #define	printfArray
+#define	PrintHex
 #endif
 
 //#define debugBuffer (*(volatile unsigned char (*)[40])(0x8095d8))
