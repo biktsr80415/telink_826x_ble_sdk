@@ -306,7 +306,7 @@ const u8  my_OtaName[] = {'O', 'T', 'A'};
 
 
 // Include attribute (Battery service)
-static u16 include[3] = {0x0026, 0x0028, SERVICE_UUID_BATTERY};
+static u16 include[3] = {0x002A, 0x002C, SERVICE_UUID_BATTERY};
 
 
 // TM : to modify

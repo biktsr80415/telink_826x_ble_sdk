@@ -12,6 +12,7 @@
 #define  DBG_LED_IND 		0   //for led DEBUG ota boot bin running statas
 
 
+
 #if(__PROJECT_8266_OTA_BOOT__)   //8266
 	#ifndef			NEW_FW_SIZE
 	#define			NEW_FW_SIZE			128    //128k
@@ -105,6 +106,7 @@ _attribute_ram_code_ int main (void) {
 	}
 
 
+
 	for (int i=4096; i<n_firmware; i+=256)
 	{
 		if ((i & 0xfff) == 0)  //new sector begin Addr, need erase
@@ -121,6 +123,7 @@ _attribute_ram_code_ int main (void) {
 				#if(DBG_LED_IND)  //for debug : indicate that flash write ERR happens
 					LED_HIGH;
 				#endif
+
 
 				i &= 0xfff000; //back to sector begin adr, to rewrite
 				i -= 256;
@@ -148,6 +151,7 @@ _attribute_ram_code_ int main (void) {
 					LED_HIGH;
 				#endif
 
+
 				i &= 0xfff000; //back to sector begin adr, to rewrite
 				i -= 256;
 				break;
@@ -157,12 +161,9 @@ _attribute_ram_code_ int main (void) {
 
 
 
-	for (int i=0; i<n_firmware; i+=256)  //erase data on flash 0x20000~0x30000 for next OTA
+	for (int i = (n_firmware-1)&0x1f000; i>=0; i-=4096)  //erase data on flash for next OTA
 	{
-		if ((i & 0xfff) == 0)  //sector
-		{
-			flash_erase_sector (NEW_FW_ADR + i);
-		}
+		flash_erase_sector (NEW_FW_ADR + i);
 	}
 
 
@@ -182,8 +183,7 @@ _attribute_ram_code_ int main (void) {
 #endif
 
 
-	//REG_ADDR8(0x602) = 0x84;				//reboot
-	REG_ADDR8(0x6f) = 0x20;  //reboot
+	REG_ADDR8(0x6f) = 0x20;   //mcu reboot
 	while (1);
 }
 
