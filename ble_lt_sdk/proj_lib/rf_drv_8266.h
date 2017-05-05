@@ -1,6 +1,8 @@
 #ifndef _RF_DRV_H_
 #define _RF_DRV_H_
 
+#include "../proj/common/utility.h"
+#include "../proj/common/bit.h"
 ////////////External Crystal Type///////////////////
 enum{
 	XTAL_12M_RF_1m_MODE   = BIT(0),
