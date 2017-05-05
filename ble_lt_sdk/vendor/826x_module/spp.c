@@ -12,7 +12,7 @@ extern my_fifo_t hci_rx_fifo;
 extern my_fifo_t hci_tx_fifo;
 extern void app_suspend_exit ();
 ///////////the code below is just for demonstration of the event callback only////////////
-void event_handler(u32 h, u8 *para, int n)
+int event_handler(u32 h, u8 *para, int n)
 {
 	if((h&HCI_FLAG_EVENT_TLK_MODULE)!= 0)			//module event
 	{

@@ -282,7 +282,7 @@ void user_init()
 		extern int tx_to_uart_cb (void);
 		blc_register_hci_handler(rx_from_uart_cb,tx_to_uart_cb);				//customized uart handler
 	#endif
-	extern void event_handler(u32 h, u8 *para, int n);
+	extern int event_handler(u32 h, u8 *para, int n);
 	blc_hci_registerControllerEventHandler(event_handler);		//register event callback
 	bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 

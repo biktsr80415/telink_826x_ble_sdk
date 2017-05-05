@@ -71,7 +71,7 @@ extern "C" {
 
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
 #if	(__PROJECT_8261_MODULE__ || __PROJECT_8267_MODULE__ || __PROJECT_8269_MODULE__)
-#define GPIO_WAKEUP_MODULE					GPIO_PB5   //mcu wakeup module //TL_P4N for 8267/8269 EVK board(C1T80A30_V1.0)
+#define GPIO_WAKEUP_MODULE					GPIO_PB5   //mcu wakeup module //P4N for 8267/8269 EVK board(C1T80A30_V1.0)
 #define	PB5_FUNC							AS_GPIO
 #define PB5_INPUT_ENABLE					1
 #define	PB5_OUTPUT_ENABLE					0
@@ -79,7 +79,7 @@ extern "C" {
 #define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PB5, PM_PIN_PULLUP_10K);
 #define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PB5, PM_PIN_PULLDOWN_100K);
 
-#define GPIO_WAKEUP_MCU						GPIO_PB1   //module wakeup mcu  //TL_P2N for 8267/8269 EVK board(C1T80A30_V1.0)
+#define GPIO_WAKEUP_MCU						GPIO_PB1   //module wakeup mcu  //P2N for 8267/8269 EVK board(C1T80A30_V1.0)
 #define	PB1_FUNC							AS_GPIO
 #define PB1_INPUT_ENABLE					1
 #define	PB1_OUTPUT_ENABLE					1
