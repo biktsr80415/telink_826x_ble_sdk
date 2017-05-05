@@ -347,7 +347,7 @@ smp_keyDistribution_t blc_smp_expectDistributeKey (u8 LTK_distributeEn, u8 IRK_d
  * Return : BLE_SUCCESS  - exist peer device.
  * 			Others - not exist peer device.
  */
-int bls_smp_getPeerAddrInfo (addr_info_t* peer_addr_info);
+//int bls_smp_getPeerAddrInfo (addr_info_t* peer_addr_info);
 
 /************************* Stack Interface, user can not use!!! ***************************/
 
