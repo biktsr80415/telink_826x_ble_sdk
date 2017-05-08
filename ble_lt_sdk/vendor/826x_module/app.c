@@ -287,6 +287,7 @@ void user_init()
 	bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
 
 	// OTA init
+	bls_ota_clearNewFwDataArea(); //must
 	bls_ota_registerStartCmdCb(entry_ota_mode);
 	bls_ota_registerResultIndicateCb(show_ota_result);
 
