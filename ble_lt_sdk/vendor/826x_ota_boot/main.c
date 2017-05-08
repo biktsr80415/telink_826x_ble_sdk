@@ -162,15 +162,12 @@ _attribute_ram_code_ int main (void) {
 	buff[0] = 0;
 	flash_write_page (OTA_FLG_ADR, 1, buff);	//clear OTA flag
 
-	//给应用固件去做擦除OTA firmware区域的动作，先清OTA_flg，避免在擦除OTA new firmware的过程中，断电或其他异常，
-	//导致OTA new firmware损坏，然而OTA flg仍然为0xa5,进入boot，将损坏的OTA new firmware搬运到FLASH0地址区域!
-#if 0
 
+#if 1
 	for (int i = (n_firmware-1)&0x1f000; i>=0; i-=4096)  //erase data on flash for next OTA
 	{
 		flash_erase_sector (NEW_FW_ADR + i);
 	}
-
 #endif
 
 
