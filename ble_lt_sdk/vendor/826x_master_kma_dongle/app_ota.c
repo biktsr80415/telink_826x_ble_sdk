@@ -29,6 +29,8 @@ extern void host_att_set_current_readByTypeReq_uuid(u8 *uuid, u8 uuid_len);
 extern const u8 my_OtaUUID[16];
 
 
+int master_ota_test_mode = 0;
+
 #if(KMA_DONGLE_OTA_ENABLE)
 
 
@@ -74,7 +76,7 @@ u32 ota_adr = 0;
 
 u32 ota_mode_begin_tick;
 
-int master_ota_test_mode = 0;
+
 
 int master_ota_cmd;
 u32 led_indicate_begin_tick;
