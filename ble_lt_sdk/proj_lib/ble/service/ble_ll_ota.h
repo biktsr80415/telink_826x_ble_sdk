@@ -21,7 +21,6 @@
 
 typedef struct{
 	u8  ota_start_flag;
-	u8  ota_master;
 }ota_service_t;
 
 extern ota_service_t blcOta;
@@ -53,8 +52,6 @@ enum{
  	OTA_TIMEOUT, 		  //
 };
 
-void blc_ota_setDeviceAsOtaMaster(void);
-
 void bls_ota_procTimeout(void);
 
 //user interface
@@ -75,5 +72,9 @@ void bls_ota_setFirmwareSizeAndOffset(int firmware_size_k, u32 ota_offset);
 
 //only valid for 8261/8266
 void bls_ota_setBootFlagAddr(u32 bootFlag_addr);
+
+void bls_ota_clearNewFwDataArea(void);
+
+unsigned short crc16 (unsigned char *pD, int len);
 
 #endif /* BLE_LL_OTA_H_ */

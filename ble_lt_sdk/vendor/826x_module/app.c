@@ -57,17 +57,17 @@ void show_ota_result(int result)
 #if 0
 	if(result == OTA_SUCCESS){
 		for(int i=0; i< 8;i++){  //4Hz shine for  4 second
-			gpio_write(GPIO_LED, 0);
+			gpio_write(BLUE_LED, 0);
 			sleep_us(125000);
-			gpio_write(GPIO_LED, 1);
+			gpio_write(BLUE_LED, 1);
 			sleep_us(125000);
 		}
 	}
 	else{
 		for(int i=0; i< 8;i++){  //1Hz shine for  4 second
-			gpio_write(GPIO_LED, 0);
+			gpio_write(BLUE_LED, 0);
 			sleep_us(500000);
-			gpio_write(GPIO_LED, 1);
+			gpio_write(BLUE_LED, 1);
 			sleep_us(500000);
 		}
 
@@ -75,7 +75,7 @@ void show_ota_result(int result)
 	}
 
 
-	gpio_write(GPIO_LED, 0);
+	gpio_write(BLUE_LED, 0);
 #endif
 }
 
@@ -83,7 +83,7 @@ void show_ota_result(int result)
 void	task_connect (void)
 {
 	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
-#if 1
+#if 0
 	gpio_write(RED_LED, ON);
 #else
 	gpio_write(GREEN_LED,ON);
@@ -92,7 +92,7 @@ void	task_connect (void)
 
 void led_init(void)
 {
-#if 1
+#if 0
 	gpio_set_func(RED_LED, AS_GPIO);
 	gpio_set_input_en(RED_LED,0);
 	gpio_set_output_en(RED_LED,1);

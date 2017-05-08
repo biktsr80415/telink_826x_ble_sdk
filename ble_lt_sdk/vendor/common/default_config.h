@@ -6,9 +6,6 @@
 extern "C" {
 #endif
 
-#ifndef _USER_CONFIG_DEFINED_
-#define _USER_CONFIG_DEFINED_		1	// must define this macro to make others known 
-#endif
 
 #include "../../proj/mcu/config.h"
 
@@ -120,8 +117,8 @@ extern "C" {
 #define MODULE_LED_ENABLE		0
 #endif
 
-#ifndef MODULE_BATT_ENABLE				// battery check
-#define MODULE_BATT_ENABLE		0
+#ifndef BATT_CHECK_ENABLE				// battery check
+#define BATT_CHECK_ENABLE		0
 #endif
 
 #ifndef MODULE_DMIC_ENABLE
@@ -646,7 +643,7 @@ enum{
 #define ADC_CHN2_REF_SRC	ADC_REF_SRC_INTERNAL
 #endif
 
-#include "../../proj/drivers/adc.h"
+//#include "../../proj/drivers/adc.h"
 #ifndef ADC_CLK_CFG
 #define ADC_CLK_CFG		ADC_PLL240M_6M
 #endif

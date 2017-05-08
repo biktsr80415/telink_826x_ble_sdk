@@ -29,7 +29,7 @@ extern "C" {
 #define TEST_POWER_ADV									10
 
 
-#define FEATURE_TEST_MODE								TEST_SCANNING_IN_ADV_AND_CONN_SLAVE_ROLE
+#define FEATURE_TEST_MODE								TEST_ADVERTISING_IN_CONN_SLAVE_ROLE
 
 
 
@@ -67,9 +67,9 @@ extern "C" {
 
 
 
-#define SIHUI_DEBUG_GPIO				0
+#define DEBUG_GPIO_ENABLE							0
 
-#if(SIHUI_DEBUG_GPIO)
+#if(DEBUG_GPIO_ENABLE)
 	#if (__PROJECT_8266_FEATURE_TEST__)
 		//ch0-ch7: B0 A5 E5 F0 F1 E7 E6 E4
 		#define PB0_INPUT_ENABLE					0
@@ -182,7 +182,7 @@ extern "C" {
 	#define DBG_CHN7_LOW
 	#define DBG_CHN7_HIGH
 	#define DBG_CHN7_TOGGLE
-#endif  //end of SIHUI_DEBUG_GPIO
+#endif  //end of DEBUG_GPIO_ENABLE
 
 
 
@@ -204,8 +204,6 @@ extern "C" {
 #define PULL_WAKEUP_SRC_PD3         		PM_PIN_PULLUP_1M
 #endif
 #endif
-
-
 
 
 

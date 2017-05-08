@@ -3,11 +3,8 @@
 
 ////////////////////////////////////////////////////////////////////
 // corrseponding to my_Attributes[]
-#if VIN_TEST_MODE 
-#define MAX_ATT_FUNC				74
-#else
 #define	MAX_ATT_FUNC                  (65+7+1)  //
-#endif 
+
 
 #define HID_HANDLE_CONSUME_CONTROL_IN (7+7)     //14
 #define HID_HANDLE_KEYBOARD_REPORT    (18+7)    //25

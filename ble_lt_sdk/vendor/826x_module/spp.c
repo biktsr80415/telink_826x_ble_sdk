@@ -37,7 +37,7 @@ int event_handler(u32 h, u8 *para, int n)
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
 				printf("terminate event occured!\n\r");
-#if 1
+#if 0
 				gpio_write(RED_LED, OFF);
 #else
 				gpio_write(GREEN_LED,OFF);
