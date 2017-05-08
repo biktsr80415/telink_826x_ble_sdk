@@ -99,7 +99,9 @@ int app_event_callback (u32 h, u8 *p, int n)
 				event_adv_report_t *pa = (event_adv_report_t *)p;
 				s8 rssi = pa->data[pa->len];
 
-				printf("LE advertising report:\n");foreach(i, pa->len + 11){PrintHex(p[i]);}printf("\n");
+				#if (PRINT_DEBUG_INFO)
+					printf("LE advertising report:\n");foreach(i, pa->len + 11){PrintHex(p[i]);}printf("\n");
+				#endif
 
 				#if (DBG_ADV_REPORT_ON_RAM)
 					if(pa->len > 31){
@@ -325,9 +327,6 @@ void user_init()
 	blc_ll_setAdvParamInConnSlaveRole(  (u8 *)tbl_advData_test, sizeof(tbl_advData_test), \
 										(u8 *)tbl_scanRsp_test, sizeof(tbl_scanRsp_test), \
 										ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
-    //adjust scanRsp timing
-	bls_ll_adjustScanRspTiming(-6);//16M sysclk情况下  //SCAN_RSP pkt 和 SCAN_REQ pkt 有326us 到327us之前的间隔,标准为326us    150+22*8 = 326
-                                                     //SCA_REQ pkt和前一个ADV_IND pkt之间隔383us            ,标准为382us    150+29*8 = 382
 
 	//ble event call back
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);

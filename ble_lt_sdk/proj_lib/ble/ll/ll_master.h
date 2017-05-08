@@ -29,6 +29,10 @@
 #define  BLM_MID_WINSIZE		2500
 
 
+#define CONN_REQ_WAIT_ACK_NUM				6
+
+
+
 #if (LL_MASTER_MULTI_CONNECTION)
 
 #define			BLM_TX_FIFO_NUM				4

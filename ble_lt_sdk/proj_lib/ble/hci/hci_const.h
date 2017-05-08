@@ -49,7 +49,6 @@
 #define HCI_SUB_EVT_LE_ENHANCED_CONNECTION_COMPLETE                  0x0A
 #define HCI_SUB_EVT_LE_DIRECT_ADVERTISE_REPORT		                 0x0B   //core_4.2
 
-#define HCI_SUB_EVT_LE_CREATE_CONNECTION_TIMEOUT 	                 0x1f   //telink private
 #define HCI_SUB_EVT_LE_CONNECTION_ESTABLISH					         0x20   //telink private
 
 
@@ -87,7 +86,6 @@
 #define HCI_LE_EVT_MASK_ENHANCED_CONNECTION_COMPLETE                 0x00000200
 #define HCI_LE_EVT_MASK_DIRECT_ADVERTISING_REPORT                    0x00000400
 
-#define HCI_LE_EVT_MASK_CREATE_CONNECTION_TIMEOUT                    0x40000000  //telink private
 #define HCI_LE_EVT_MASK_CONNECTION_ESTABLISH                         0x80000000  //telink private
 
 

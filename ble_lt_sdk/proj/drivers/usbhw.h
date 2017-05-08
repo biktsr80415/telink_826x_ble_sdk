@@ -18,6 +18,10 @@ enum {
 	USB_EDP_PRINTER_OUT = 5,	// default hw buf len = 64
 	USB_EDP_SPEAKER = 6,		// default hw buf len = 16
 	USB_EDP_MIC = 7,			// default hw buf len = 16
+#if(USB_GAMEPAD_ENABLE)
+	USB_EDP_GAMEPAD_IN = 3,		// default hw buf len = 64
+	USB_EDP_GAMEPAD_OUT = 5,		// default hw buf len = 64
+#endif
 	USB_EDP_MS_IN = USB_EDP_PRINTER_IN,		// mass storage
 	USB_EDP_MS_OUT = USB_EDP_PRINTER_OUT,
 	USB_EDP_SOMATIC_IN = USB_EDP_AUDIO_IN,		//  when USB_SOMATIC_ENABLE, USB_EDP_PRINTER_OUT disable
@@ -32,6 +36,9 @@ enum {
 	USB_HID_MOUSE       	= 1,
 	USB_HID_KB_MEDIA    	= 3,// media
 	USB_HID_KB_SYS      	= 4,// system : power,sleep,wakeup
+#if(USB_GAMEPAD_ENABLE)
+	USB_HID_GAMEPAD			= 5,// somatic sensor,  may have many report ids
+#endif
 	USB_HID_SOMATIC			= 5,// somatic sensor,  may have many report ids
 };
 

@@ -39,17 +39,25 @@
 
 
 
+#define TR_T_master_irq				30
+#define TR_T_master_rx				31
+#define TR_T_master_tx				32
+#define TR_T_master_sysTimer		33
+#define TR_T_master_connDone		34
 
-#define TR_T_master_rx				28
-#define TR_T_master_tx				29
-#define TR_T_master_btx				30
-#define TR_T_master_start			31
-#define TR_T_master_update			32
-#define TR_T_master_update_req		33
+#define TR_T_master_adv_report		35
+
+#define TR_T_master_createConn		40
+#define TR_T_master_init			41
+#define TR_T_master_connnect		42
+#define TR_T_master_terminate		43
+#define TR_T_master_btx				44
+#define TR_T_master_scan			45
+
+#define TR_T_master_update			50
+#define TR_T_master_update_req		51
 
 
-#define TR_T_irq_st					37
-#define TR_T_master_scan			38
 
 
 #define TR_24_ll_chn            	0
@@ -57,8 +65,9 @@
 
 
 
-#define TR_24_slot_idx				9
-#define TR_24_scan_chn				10
+#define TR_24_slot_idx				5
+#define TR_24_scan_chn				6
+#define TR_24_master_state			7
 
 
 #endif

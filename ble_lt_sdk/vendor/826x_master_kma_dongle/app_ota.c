@@ -74,6 +74,8 @@ u32 ota_adr = 0;
 
 u32 ota_mode_begin_tick;
 
+int master_ota_test_mode = 0;
+
 int master_ota_cmd;
 u32 led_indicate_begin_tick;
 u32 led_indicate_gpio;
@@ -170,9 +172,6 @@ void proc_ota (void)
 
 
 
-
-
-    extern int master_ota_test_mode;
     if(master_ota_test_mode == 1)
     {
     	if(led_step==0 && clock_time_exceed(ota_mode_begin_tick, OTA_INTERVAL_US)){

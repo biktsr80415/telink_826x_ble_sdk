@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+<?fileVersion 4.0.0?>
+
+<cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532" moduleId="org.eclipse.cdt.core.settings" name="8267_ble_remote">
@@ -13,7 +15,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="remote with MIC" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532" name="8267_ble_remote" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="remote with MIC" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532" name="8267_ble_remote" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.732752826" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.38002366" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -74,6 +76,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831" moduleId="org.eclipse.cdt.core.settings" name="8267_module">
@@ -147,6 +150,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596" moduleId="org.eclipse.cdt.core.settings" name="8267_master">
@@ -217,6 +221,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.171831158">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.171831158" moduleId="org.eclipse.cdt.core.settings" name="8267_btusb">
@@ -287,6 +292,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515" moduleId="org.eclipse.cdt.core.settings" name="8267_master_kma_dongle">
@@ -361,6 +367,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252" moduleId="org.eclipse.cdt.core.settings" name="8266_master_kma_dongle">
@@ -374,7 +381,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252" name="8266_master_kma_dongle" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252" name="8266_master_kma_dongle" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.463259157" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.1799195369" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -431,6 +438,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222" moduleId="org.eclipse.cdt.core.settings" name="8266_module">
@@ -501,6 +509,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252.1093003109">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1185024252.1093003109" moduleId="org.eclipse.cdt.core.settings" name="8266_host_dongle">
@@ -571,6 +580,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262" moduleId="org.eclipse.cdt.core.settings" name="8266_ota_boot">
@@ -639,6 +649,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2002159963">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2002159963" moduleId="org.eclipse.cdt.core.settings" name="8267_hci">
@@ -709,6 +720,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262.1180231935">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1137412262.1180231935" moduleId="org.eclipse.cdt.core.settings" name="8261_ota_boot">
@@ -780,6 +792,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2056195849">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2056195849" moduleId="org.eclipse.cdt.core.settings" name="8261_module">
@@ -853,6 +866,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516" moduleId="org.eclipse.cdt.core.settings" name="8261_ble_remote">
@@ -923,6 +937,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1979237871">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1979237871" moduleId="org.eclipse.cdt.core.settings" name="826x_spi_module">
@@ -1019,6 +1034,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.1580610044">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.1580610044" moduleId="org.eclipse.cdt.core.settings" name="8261_ble_weixin">
@@ -1114,6 +1130,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1451313906">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.485265222.1451313906" moduleId="org.eclipse.cdt.core.settings" name="826x_flyco_module">
@@ -1184,6 +1201,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.996088252">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.996088252" moduleId="org.eclipse.cdt.core.settings" name="8267_spi_master">
@@ -1257,6 +1275,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2011573918">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2011573918" moduleId="org.eclipse.cdt.core.settings" name="8269_module">
@@ -1357,6 +1376,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1121091753">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.1121091753" moduleId="org.eclipse.cdt.core.settings" name="826x_profile_test">
@@ -1430,6 +1450,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.265923153">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1308101516.265923153" moduleId="org.eclipse.cdt.core.settings" name="8261_multi_mouse">
@@ -1505,6 +1526,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.138598443">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.138598443" moduleId="org.eclipse.cdt.core.settings" name="8267_usb_host">
@@ -1576,6 +1598,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1263135518">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1263135518" moduleId="org.eclipse.cdt.core.settings" name="8267_feature_test">
@@ -1589,7 +1612,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1263135518" name="8267_feature_test" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1263135518" name="8267_feature_test" parent="com.telink.tc32eclipse.configuration.app.release" prebuildStep="&quot;${workspace_loc:/${ProjName}}/getver.sh&quot;">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.1263135518." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.release.1808143371" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.release">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release.376286115" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.release"/>
@@ -1650,6 +1673,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.962125608">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.962125608" moduleId="org.eclipse.cdt.core.settings" name="8266_ble_remote">
@@ -1724,6 +1748,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.962125608.120220118">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.962125608.120220118" moduleId="org.eclipse.cdt.core.settings" name="8269_ble_remogte">
@@ -1798,6 +1823,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1953461846">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.1953461846" moduleId="org.eclipse.cdt.core.settings" name="8261_master_kma_dongle">
@@ -1872,6 +1898,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.612358916">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.1137462375.770425654.169232596.1027949515.612358916" moduleId="org.eclipse.cdt.core.settings" name="8269_master_kma_dongle">
@@ -1946,6 +1973,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2002159963.10786580">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.telink.tc32eclipse.configuration.app.release.1121156933.1715305487.2075187956.1454992863.132969007.501524205.1380164055.987396901.2076157562.1809959923.346019507.306240912.530308564.1621834744.2015687532.580051831.2002159963.10786580" moduleId="org.eclipse.cdt.core.settings" name="8261_hci">

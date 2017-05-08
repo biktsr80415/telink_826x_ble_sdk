@@ -787,6 +787,7 @@ void user_init()
 
 #if (BLE_REMOTE_OTA_ENABLE)
 	////////////////// OTA relative ////////////////////////
+	bls_ota_clearNewFwDataArea(); //must
 	bls_ota_registerStartCmdCb(entry_ota_mode);
 	bls_ota_registerResultIndicateCb(LED_show_ota_result);
 #endif

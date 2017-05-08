@@ -189,9 +189,9 @@ extern "C" {
 
 
 
-#define SIHUI_DEBUG_GPIO				0
+#define DEBUG_GPIO_ENABLE							0
 
-#if(SIHUI_DEBUG_GPIO)
+#if(DEBUG_GPIO_ENABLE)
 	#if (__PROJECT_8266_MASTER_KMA_DONGLE__)
 		//ch0-ch7: B0 A5 E5 F0 F1 E7 E6 E4
 		#define PB0_INPUT_ENABLE					0
@@ -304,7 +304,7 @@ extern "C" {
 	#define DBG_CHN7_LOW
 	#define DBG_CHN7_HIGH
 	#define DBG_CHN7_TOGGLE
-#endif  //end of SIHUI_DEBUG_GPIO
+#endif  //end of DEBUG_GPIO_ENABLE
 
 
 

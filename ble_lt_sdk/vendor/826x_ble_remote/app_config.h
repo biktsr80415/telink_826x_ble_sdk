@@ -322,9 +322,9 @@ extern "C" {
 
 
 //////////////////////// DEBUG GPIO ///////////////////////////
-#define  SIHUI_GPIO_DEBUG					0
+#define  DEBUG_GPIO_ENABLE					0
 
-#if(SIHUI_GPIO_DEBUG)
+#if(DEBUG_GPIO_ENABLE)
 
 	//8261/8267/8269 hardware: C59T80A5_V1.1
 	#if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
@@ -410,7 +410,7 @@ extern "C" {
 #define DBG_CHN5_HIGH
 #define DBG_CHN5_TOGGLE
 
-#endif  //end of SIHUI_DEBUG_GPIO
+#endif  //end of DEBUG_GPIO_ENABLE
 
 
 

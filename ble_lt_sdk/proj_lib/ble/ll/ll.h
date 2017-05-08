@@ -122,17 +122,13 @@ void blt_set_bluetooth_version (u8 v);
 
 
 
-#define				BLE_STATE_IDLE			0
-#define				BLE_STATE_ADV			1
-#define				BLE_STATE_SCAN			2
-#define				BLE_STATE_INIT			3
+
 
 #define				BLE_STATE_BTX_S			4
 #define				BLE_STATE_BTX_E			5
 #define				BLE_STATE_BRX_S			6
 #define				BLE_STATE_BRX_E			7
 
-#define				BLE_STATE_SLOT			8
 
 
 
