@@ -1,9 +1,9 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/ll_whitelist.h"
+#include "../../proj_lib/ble/ll/ll_whitelist.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj_lib/ble/blt_config.h"
@@ -22,13 +22,7 @@ MYFIFO_INIT(blt_rxfifo, 64, 8);
 //MYFIFO_INIT(blt_txfifo, 40, 16);
 MYFIFO_INIT(blt_txfifo, 80, 8);
 
-#if UART_PROCESS_ANOTHER
-extern u8 uart_wb_wptr;
-extern u8 uart_wb_rptr;
-#define UART_TX_BUSY			( (uart_wb_rptr != uart_wb_wptr) || uart_tx_is_busy() )
-#else
 #define UART_TX_BUSY			( (hci_tx_fifo.rptr != hci_tx_fifo.wptr) || uart_tx_is_busy() )
-#endif
 #define UART_RX_BUSY			( hci_rx_fifo.rptr != hci_rx_fifo.wptr)
 
 u8 	ui_ota_is_working = 0;
@@ -60,8 +54,18 @@ extern int devname1_index;
 extern int devname2_index;
 extern int identified_index;
 extern int baudrate_index;
-//gatt device name init
-extern  u8 ble_devName[MAX_DEV_NAME_LEN];
+extern  u8 ble_devName[MAX_DEV_NAME_LEN];//gatt device name init
+
+extern void flyco_ble_OtaEraseNewFwSection(void);
+extern void flyco_ble_setOtaResIndicateCb(ota_resIndicateCb_t cb);
+extern void flyco_send_ota_result(int errorcode);
+extern void flyco_ble_OtaEraseNewFwSection(void);
+extern void flyco_ble_setOtaVersionCb(ota_versionCb_t cb);
+extern void flyco_ble_setOtaStartCb(ota_startCb_t cb);
+extern u32 flyco_blt_ota_timeout_us;
+extern u32 flyco_blt_ota_start_tick;
+extern ota_resIndicateCb_t flyco_otaResIndicateCb;
+extern void flyco_start_reboot(void);
 
 //flyco ota
 #if FLYCO_OTA_ENABLE
@@ -69,7 +73,7 @@ void entry_ota_mode(void)
 {
 	ui_ota_is_working = 1;
 	extern void flyco_ble_setOtaTimeout(u32 timeout_us);
-	flyco_ble_setOtaTimeout(60 * 1000000); //set OTA timeout  60 S
+	flyco_ble_setOtaTimeout(50 * 1000000); //set OTA timeout  50 S
 }
 void send_ota_fw_num(void){
 	extern u8 flyco_version[4];
@@ -95,39 +99,50 @@ void blt_pm_proc(void)
 #if(BLE_PM_ENABLE)
 	if(ui_ota_is_working){
 		bls_pm_setSuspendMask (SUSPEND_DISABLE);
-		extern u32 flyco_blt_ota_timeout_us;
-		extern u32 flyco_blt_ota_start_tick;
-		extern ota_resIndicateCb_t flyco_otaResIndicateCb;
-		extern void flyco_start_reboot(void);
-
 		//OTA timeout process!!!
 		if(clock_time_exceed(flyco_blt_ota_start_tick , flyco_blt_ota_timeout_us)){  //OTA timeout
 
 			if(flyco_otaResIndicateCb){
 				flyco_otaResIndicateCb(OTA_TIMEOUT);   //OTA fail indicate
 			}
-			sleep_us(60000);//wait for ota fail result sent
+
+			sleep_us(2*bls_ll_getConnectionInterval()*(1250 * sys_tick_per_us));//wait for ota fail result sent
+
+			extern int flyco_ota_adr_index;
+			if(flyco_ota_adr_index>=0){
+				irq_disable();
+				for(int i=0;i<=flyco_ota_adr_index;i+=256){  //4K/16 = 256
+					extern u32 new_firmware_address;
+					flash_erase_sector(new_firmware_address + (i<<4));
+				}
+			}
 			flyco_start_reboot();
 		}
 	}
 	else{//ota not work
 
-		//Once ble connected,waiting for 400ms,than open uart data send to Master or as a CMD!
-		if(ble_connected_flg && clock_time_exceed(ble_connected_tick, 400000)){//After 400ms,turn on uart module
+		//Once ble connected,waiting for 100ms,than open uart data send to Master or as a CMD!
+		if(ble_connected_flg && clock_time_exceed(ble_connected_tick, 100000)){//After 100ms,turn on uart module
 			ble_connected_flg = 0;
-			UART_ENABLE;
+			//UART_ENABLE;
+			gpio_set_input_en(GPIO_UTX, 1);
+			gpio_set_input_en(GPIO_URX, 1);
 		}
 
 		//Once ble terminate,turn on suspend
-		if(uart_task_terminate_flg && !(UART_TX_BUSY || UART_RX_BUSY)){//terminate is true
+		if(uart_task_terminate_flg && (!(UART_TX_BUSY || UART_RX_BUSY))){//terminate is true
 			uart_task_terminate_flg = 0;
 			FLYCO_BLE_STATE_LOW;
+
+			//9600baudrate:1.2B/ms , 20Byte should use 18ms
+			sleep_us(20000);//Add for the last uart tx fifo send, duling UART sending data, suspend will interrupt UART send data timing!
+
 			bls_pm_setSuspendMask (SUSPEND_ADV);
 			bls_pm_setWakeupSource(PM_WAKEUP_CORE);//setting suspend wakeup source
-			UART_DISABLE;
+			//UART_DISABLE;
+			gpio_set_input_en(GPIO_UTX, 0);
+			gpio_set_input_en(GPIO_URX, 0);
 		}
-
-		uart_ErrorCLR();//clear error state of uart rx, maybe used when application detected UART not work
 	}
 #else
 	if(ui_ota_is_working){
@@ -143,7 +158,17 @@ void blt_pm_proc(void)
 			if(flyco_otaResIndicateCb){
 				flyco_otaResIndicateCb(OTA_TIMEOUT);   //OTA fail indicate
 			}
-			sleep_us(60000);//wait for ota fail result sent
+
+			sleep_us(2*bls_ll_getConnectionInterval()*(1250 * sys_tick_per_us));//wait for ota fail result sent
+
+			extern int flyco_ota_adr_index;
+			if(flyco_ota_adr_index>=0){
+				irq_disable();
+				for(int i=0;i<=flyco_ota_adr_index;i+=256){  //4K/16 = 256
+					extern u32 new_firmware_address;
+					flash_erase_sector(new_firmware_address + (i<<4));
+				}
+			}
 			flyco_start_reboot();
 		}
 	}
@@ -187,10 +212,7 @@ void blt_system_power_optimize(void)  //to lower system power
 }
 
 
-//////////////////////////////////////////////////////////////////////////////
-//	Initialization: MAC address, Adv Packet, Response Packet
-//////////////////////////////////////////////////////////////////////////////
-u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
+
 u32	ui_advertise_begin_tick;
 
 void user_init()
@@ -202,15 +224,8 @@ void user_init()
 
 	//////////////////////// ota callback register //////////////////////////
 #if FLYCO_OTA_ENABLE
-	extern void flyco_ble_OtaEraseNewFwSection(void);
-	extern void flyco_ble_setOtaResIndicateCb(ota_resIndicateCb_t cb);
-	extern void flyco_send_ota_result(int errorcode);
-	extern void flyco_ble_OtaEraseNewFwSection(void);
-	extern void flyco_ble_setOtaVersionCb(ota_versionCb_t cb);
-	extern void flyco_ble_setOtaStartCb(ota_startCb_t cb);
 	//detect if should erase ota flash area!!!
 	flyco_ble_OtaEraseNewFwSection();//bls_ota_setFirmwareSizeAndOffset(40, 0x40000);//setting ota new fw area
-	//OTA register callback function
 	flyco_ble_setOtaResIndicateCb(&flyco_send_ota_result);//ota process result show
 	flyco_ble_setOtaStartCb(entry_ota_mode);              //1 min ota timeout process
 	flyco_ble_setOtaVersionCb(send_ota_fw_num);           //ota fw_num show
@@ -220,6 +235,12 @@ void user_init()
 	gpio_set_func(BLE_STA_OUT, AS_GPIO);
 	gpio_set_output_en(BLE_STA_OUT, 1);
 	gpio_write(BLE_STA_OUT,0);//LOW
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	//	Initialization: MAC address, Adv Packet, Response Packet
+	//////////////////////////////////////////////////////////////////////////////
+	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 
 	////////////////// BLE stack initialization ////////////////////////////////////
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
@@ -235,7 +256,7 @@ void user_init()
 			  0x12, 0x19, //Telink OTA service
 		//https://www.bluetooth.com/specifications/assigned-numbers/Company-Identifiers [529]
 		0x0B, //length
-		0xff, 0x02, 0x11,  //Telink Semiconductor Co. Ltd. [Company ID] UUID:0x0211
+		0xff, 0x11, 0x02,  //Telink Semiconductor Co. Ltd. [Company ID] UUID:0x0211
 		tbl_mac[5],tbl_mac[4],tbl_mac[3],tbl_mac[2],tbl_mac[1],tbl_mac[0],
 		0x70,0x05, //Device Module Number:7005
 	};
@@ -327,12 +348,12 @@ void user_init()
 
     ///////////////////////// register event callback ///////////////////////////
 	extern int ble_event_handler(u32 h, u8 *para, int n);
-	bls_hci_registerEventHandler(ble_event_handler); //register event callback
+	blc_hci_registerControllerEventHandler(ble_event_handler); //register event callback
 	bls_hci_mod_setEventMask_cmd(0x0018);//enable conn\terminate events,event list see ble_ll.h
 
     rf_set_power_level_index (rfpower);
 	bls_ll_setAdvEnable(1);  //adv enable
-
+    printf("Adv enable.\n");
 ///////////////// wakeup source configuration ////////////////////////////
 #if BLE_PM_ENABLE
 	gpio_set_wakeup(BRTS_WAKEUP_MODULE, 1, 1);  	                 //drive pin core(gpio) high wakeup suspend
@@ -350,7 +371,9 @@ void user_init()
 	gpio_set_func(GPIO_UTX, AS_UART);
 	gpio_set_func(GPIO_URX, AS_UART);
 #if BLE_PM_ENABLE
-	UART_DISABLE;
+	//UART_DISABLE;
+	gpio_set_input_en(GPIO_UTX, 0);
+	gpio_set_input_en(GPIO_URX, 0);
 #endif
 	gpio_set_input_en(GPIO_UTX, 1);
 	gpio_set_input_en(GPIO_URX, 1);
@@ -389,15 +412,9 @@ void main_loop ()
 	tick_loop ++;
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
-	blt_slave_main_loop ();
+	blt_sdk_main_loop ();
 
-//	if(blc_ll_getCurrentState() == BLS_LINK_STATE_IDLE){//Idle state
-//		cpu_sleep_wakeup(0, PM_WAKEUP_TIMER, clock_time() + 10 * CLOCK_SYS_CLOCK_1MS);
-//	}
-//	else{//ble Adv & Conn state
-		blt_pm_proc();
-//	}
-
+	blt_pm_proc();
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 	blt_user_timerCb_proc();

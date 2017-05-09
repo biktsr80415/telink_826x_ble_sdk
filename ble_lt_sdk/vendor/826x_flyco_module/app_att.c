@@ -1,5 +1,5 @@
 #include "../../proj/tl_common.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "spp.h"
@@ -51,6 +51,12 @@ gap_periConnectParams_t my_periConnParameters = {20, 40, 0, 1000};
 
 extern u8  ble_devName[MAX_DEV_NAME_LEN];
 
+const u16 my_gattServiceUUID 		 = SERVICE_UUID_GENERIC_ATTRIBUTE;
+const u8  serviceChangedProp 		 = CHAR_PROP_INDICATE;
+const u16 serviceChangeUIID			 = GATT_UUID_SERVICE_CHANGE;
+u16 serviceChangeVal[2] 			 = {0};
+static u8 indCharCfg[6] 			 = {0x0b, 0x00, 0x02, 0x29};
+
 //////////////////////////Ota ///////////////////////////////
 const u16 my_OtaServiceUUID = 0x1912;
 const u16 my_OtaUUID		= 0x2B12;
@@ -63,7 +69,7 @@ u8	 	my_OtaData 		    = 0x00;
 
 //const u8  my_OtaName[]      = {'O', 'T', 'A'};
 
-u8 ota_hdl = 16;//ATT TABLE OTA index:18,Handle value
+u8 ota_hdl = 20;//ATT TABLE OTA index:20,Handle value
 
 /////////////////////////////////////////spp/////////////////////////////////////
 #if (TELIK_SPP_SERVICE_ENABLE)
@@ -87,8 +93,8 @@ u8  SppDataClient2ServerData[ATT_MTU_SIZE - 3];
 //const u8 TelinkSPPS2CDescriptor[]             = "FLYCO: S2C";
 //const u8 TelinkSPPC2SDescriptor[]             = "FLYCO: C2S";
 
-u8 spp_s2c_hdl = 10;//ATT TABLE OTA index:10,Handle value
-u8 spp_c2s_hdl = 13;//ATT TABLE OTA index:14,Handle value
+u8 spp_s2c_hdl = 14;//ATT TABLE index:14,Handle value
+u8 spp_c2s_hdl = 17;//ATT TABLE index:17,Handle value
 
 
 //Master write callback function
@@ -112,7 +118,7 @@ int module_onReceiveMasterData(rf_packet_att_write_t *p)
 extern int flyco_otaRead(void * p);
 extern int flyco_otaWrite(void * p);
 const attribute_t my_Attributes[] = {
-	{16,0,0,0,0,0},	// total num of attribute
+	{20,0,0,0,0,0},	// total num of attribute
 
 	// 0001 - 0007  gap
 	{7,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
@@ -123,7 +129,13 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_periConnParamChar), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_periConnParameters),(u8*)(&my_periConnParamUUID), 	(u8*)(&my_periConnParameters), 0},
 
-    // 0008 - 000F  spp Service
+	// 0008 - 000b gatt
+	{4,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gattServiceUUID), 0},
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&serviceChangedProp), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof (serviceChangeVal), (u8*)(&serviceChangeUIID), 	(u8*)(&serviceChangeVal), 0},
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof (indCharCfg),(u8*)(&clientCharacterCfgUUID), (u8*)(indCharCfg), 0},
+
+    // 000C - 0011  spp Service
 	{6,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&TelinkSppServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataServer2ClientProp), 0},//prop
 	// serice to client
@@ -132,10 +144,10 @@ const attribute_t my_Attributes[] = {
 	//{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPS2CDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPS2CDescriptor)},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataClient2ServerProp), 0},//prop
 	//client to service
-	{0,ATT_PERMISSIONS_RDWR,2,sizeof(SppDataClient2ServerData),(u8*)(&TelinkSppDataClient2ServiceUUID), (u8*)(SppDataClient2ServerData), &module_onReceiveMasterData},	//value
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof(SppDataClient2ServerData),(u8*)(&TelinkSppDataClient2ServiceUUID), (u8*)(SppDataClient2ServerData), (att_readwrite_callback_t)&module_onReceiveMasterData},	//value
 	//{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPC2SDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPC2SDescriptor)},
 
-	// 0010 - 0013  ota Service
+	// 0012 - 0014  ota Service
 	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_OtaServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				 //prop
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &flyco_otaWrite, &flyco_otaRead},//value

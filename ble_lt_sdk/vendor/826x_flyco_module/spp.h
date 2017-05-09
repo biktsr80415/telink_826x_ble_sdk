@@ -15,9 +15,12 @@
 //#define IS_FLYCO_SPP_DATA(p)          (!((p[0] == 0x46) && (p[1] == 0x4c) && (p[2] == 0x59) && (p[3] == 0x43) && (p[4] == 0x4F)))
 #define IS_FLYCO_SPP_DATA(p)          (((p[0] == 0xA5) || (p[0] == 0x5A)) && p[15] == 0xAA)
 
-// ACK FLYCO_spp cmd
+//ACK//0x66,0x65,0x69,0x6b,0x65
 #define IS_FLYCO_SPP_CMD_ACK(p)        ((p[0] == 0x66) && (p[1] == 0x65) && (p[2] == 0x69) && (p[3] == 0x6b) && (p[4] == 0x65))
 
+//OTA error CODE send to MCU UART
+#define IS_OTA_ERROR_CODE2MCU(p)      ((p[0] == 0x08) && (p[1] == 0xaa) && (p[2] == 0xbb) && (p[3] == 0xcc) &&  \
+		                               (p[4] == 0x46) && (p[5] == 0x4c) && (p[6] == 0x59) && (p[7] == 0x43) && (p[8] == 0x4F))
 // Definition for FLYCO SPP command header
 #define FLYCO_SPP_CMD_FIELD		\
 	u8 signature[5];            \
@@ -65,9 +68,9 @@ enum {
     FLYCO_SPP_CMD_MODULE_GET_SERVICE_NOTIFY_UUID,
     FLYCO_SPP_CMD_MODULE_GET_DEVNAME2 = 0x1A,
     FLYCO_SPP_CMD_MODULE_SET_DEVNAME2,
-    FLYCO_SPP_CMD_MODULE_OTA_START_REQ = 0x1C,
-    FLYCO_SPP_CMD_MODULE_OTA_START,
-    FLYCO_SPP_CMD_MODULE_OTA_FAILED = 0x1E,
+    FLYCO_SPP_CMD_MODULE_OTA_START_REQ = 0x1C,//
+    FLYCO_SPP_CMD_MODULE_OTA_START,//
+    FLYCO_SPP_CMD_MODULE_OTA_FAILED = 0x1E,//
     FLYCO_SPP_CMD_MODULE_MAX,
 };
 

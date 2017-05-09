@@ -3,7 +3,7 @@
 #include "../../proj/drivers/uart.h"
 #include "../../proj_lib/ble/ble_common.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "spp.h"
 
@@ -35,10 +35,8 @@ extern u8  devName2[20];
 
 flyco_spp_AppCallbacks_t *flyco_spp_cbs;
 
-u8 devNameT[26] = {0};//Temporary storage device name, data structure:[12锛欴evName1锛�锛欴evName2]
+u8 devNameT[26] = {0};//Temporary storage device name, data structure:[12閿涙evName1閿涳拷閿涙evName2]
 u8 set_devname1_flg = 0;//Set devname1 flag
-
-#define	UART_SEND    uart_Send_kma
 
 //flyco cmd timer callback used variable
 u32 spp_cmd_restart_tick;
@@ -71,7 +69,7 @@ u8 ble_connected_1st_flg;
 //read user data in FLASH
 void flyco_load_para_addr(u32 addr, int* index, u8* p, u8 len){
 	int idx=0;
-	for (idx=0; idx < 4*1024; idx += 32)//4K per sector
+	for (idx=0; idx < 4*1024; idx+=32)//4K per sector
 	{
 		if (*(u16 *)(addr+idx) == U16_MAX)	//end
 		{
@@ -109,7 +107,7 @@ void flyco_erase_para(u32 addr, int* index){
 	*index = idx;
 	////////////////////above get index in flash//////
 
-	if(*index>= 4032){//4064-32
+	if(*index >= 4032){//4064-32
 		nv_manage_t p;
 		p.curNum = 0x01;
 		memcpy (p.data, (u32*)(addr+ *index + 2), 30);
@@ -198,7 +196,7 @@ int ble_event_handler(u32 h, u8 *para, int n)
                 ble_connected_tick = clock_time();
                 extern void	task_connect (void);
                 //task_connect();//connection parameters request!!!
-
+                printf("Connected.\n");
 #if(BLE_PM_ENABLE)
                 ble_connected_flg = 1;
 				bls_pm_setSuspendMask (SUSPEND_DISABLE);
@@ -219,13 +217,10 @@ int ble_event_handler(u32 h, u8 *para, int n)
 					ui_ota_is_working = 0;
 
 					//OTA fail,send error code to the UART,notice MCU!
-					u8 ota_error[12] = {0,0,0,0,0x46,0x4c,0x59,0x43,0x4f,0x1e,0x00,0x1e};
-					uart_data_t* pp = (uart_data_t*)ota_error;
-					memcpy(pp->data, ota_error+4, sizeof(ota_error)-4);
-					pp->len = 8;
-					uart_Send_kma((u8 *)pp);
+					u8 ota_error[12] = {0x08,0xaa,0xbb,0xcc,0x46,0x4c,0x59,0x43,0x4f,0x1e,0x00,0x1e};
+					flyco_uart_push_fifo(sizeof(ota_error), ota_error);
 				}
-
+				 printf("Terminate.\n");
 #if(BLE_PM_ENABLE)
 				uart_task_terminate_flg = 1;
 				ble_connected_flg = 0;
@@ -246,32 +241,11 @@ int ble_event_handler(u32 h, u8 *para, int n)
 }
 
 /////////////////////////////////////spp process ///////////////////////////////////////////////////
-#if UART_PROCESS_ANOTHER
-#define		UART_WB_NUM			8
-u8			uart_wb[UART_WB_NUM][64];
-u8			uart_wb_wptr = 0;
-u8			uart_wb_rptr = 0;
-u8			uart_rb[256];
-#else
-	extern my_fifo_t hci_tx_fifo;//statement in app.c
-#endif
-	extern my_fifo_t hci_rx_fifo;//statement in app.c
+extern my_fifo_t hci_tx_fifo;//statement in app.c
+extern my_fifo_t hci_rx_fifo;//statement in app.c
 
 int	flyco_uart_push_fifo (int n, u8 *p)
 {
-#if UART_PROCESS_ANOTHER
-	int num = (uart_wb_wptr - uart_wb_rptr) & 31;
-	if (num >= UART_WB_NUM)
-	{
-		return -1;
-	}
-	u8 *pw = uart_wb[uart_wb_wptr++ & (UART_WB_NUM - 1)];
-	if (n)
-	{
-		memcpy (pw, p, n);
-	}
-	return 0;
-#else
 	u8 *pw = my_fifo_wptr (&hci_tx_fifo);
 	if (!pw || n >= hci_tx_fifo.size)
 	{
@@ -286,8 +260,6 @@ int	flyco_uart_push_fifo (int n, u8 *p)
 	}
 	my_fifo_next (&hci_tx_fifo);
 	return 0;
-#endif
-
 }
 
 #if DEBUG_FOR_TEST
@@ -295,12 +267,13 @@ volatile u8 rx_len_cnt;
 #endif
 int flyco_rx_from_uart (void)//UART data send to Master,we will handle the data as CMD or DATA
 {
-	if(my_fifo_get(&hci_rx_fifo) == 0)//rx buff empty
+	u8* p = my_fifo_get(&hci_rx_fifo);
+
+	if(!p)//rx buff empty
 	{
 		return 0;
 	}
 
-	u8* p = my_fifo_get(&hci_rx_fifo);
 	u32 rx_len = p[0]; //usually <= 255 so 1 byte should be sufficient
 
 	if (rx_len)//uart rx data struct: 4bytes(length)+data(strlen(data)=length)
@@ -318,19 +291,8 @@ int flyco_rx_from_uart (void)//UART data send to Master,we will handle the data 
 	return 0;
 }
 
-int flyco_tx_to_uart ()//Master data send to UART,we will handle the data as CMD or DATA
+int flyco_tx_to_uart ()//data send to UART,we will handle the data as CMD or DATA
 {
-#if UART_PROCESS_ANOTHER
-	if (uart_wb_rptr != uart_wb_wptr && !uart_tx_is_busy ())
-	{
-		u8 *p = uart_wb[uart_wb_rptr & (UART_WB_NUM-1)];
-
-		flyco_module_masterCmdHandler(p+4, p[3]);
-
-		uart_wb_rptr++;
-	}
-    return 0;
-#else
 	u8 *p = my_fifo_get (&hci_tx_fifo);
 
 	extern unsigned char uart_tx_is_busy();
@@ -340,9 +302,6 @@ int flyco_tx_to_uart ()//Master data send to UART,we will handle the data as CMD
 		my_fifo_pop (&hci_tx_fifo);
 	}
 	return 0;
-#endif
-
-
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -381,13 +340,15 @@ void flyco_module_uartCmdHandler(unsigned char* p, u32 len){
 
 	if(IS_FLYCO_SPP_DATA(p)){//DATA
 		if(len == 16){//flyco data length = 16!!!
+#if DEBUG_FOR_TEST
 			notify_flg = bls_att_pushNotifyData(spp_s2c_hdl, p, len);
 
-#if DEBUG_FOR_TEST
 			if(notify_flg == BLE_SUCCESS)//Debug
-				notify_cnt++;
+				printf("push notify data succeed.\n");
 			else
-				notify_cnt1++;
+				printf("push notify data failed:%d.\n", notify_flg);
+#else
+			bls_att_pushNotifyData(spp_s2c_hdl, p, len);
 #endif
 		}
 	}
@@ -413,11 +374,26 @@ void flyco_module_masterCmdHandler(u8 *p, u32 len){
 		}
 	}
 	else if(IS_FLYCO_SPP_CMD_ACK(p)){//from uart CMD, and ack this CMD
-		memcpy(&T_txdata_buf.data, p, len);
+		memcpy(T_txdata_buf.data, p, len);
 		T_txdata_buf.len = len;
 
-		UART_SEND((u8 *)(&T_txdata_buf));
+		uart_Send_kma((u8 *)(&T_txdata_buf));
 	}
+
+#if 1//Add for flyco
+	else if(IS_OTA_ERROR_CODE2MCU(p)){//OTA ERROR CODE
+		memcpy(T_txdata_buf.data, p+4, len-4);
+		T_txdata_buf.len = len-4;
+#if DEBUG_FOR_TEST
+        printf("Are U OK?\n");
+		//0x08,0xaa,0xbb,0xcc,0x46,0x4c,0x59,0x43,0x4f,0x1e,0x00,0x1e
+		if(!memcmp(T_txdata_buf.data, p+4, len-4)){
+			printf("OK./n");
+		}
+#endif
+		uart_Send_kma((u8 *)(&T_txdata_buf));
+	}
+#endif
 }
 /*********************************************************************
  * @fn      flyco_spp_onModuleCmd
@@ -435,7 +411,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 
 			u8 rp[6],tmp_mac [6];
 			if(pp->len == 0){
-				bls_ll_readBDAddr(tmp_mac);
+				blc_ll_readBDAddr(tmp_mac);
 				reverse_data(tmp_mac,BLE_ADDR_LEN,rp);
 				flyco_spp_module_rsp2cmd(pp->cmdID, rp, BLE_ADDR_LEN);
 			}
@@ -455,7 +431,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 				if(blc_ll_getCurrentState() != BLS_LINK_STATE_CONN)
 					rssi = 0x80;//If not connected, according to FLYCO cmd provision rssi=0x80;
 				else
-					rssi = bls_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB鈮SSI鈮�dB
+					rssi = blc_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB閳槃SSI閳拷dB
 
 				//if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
 					//flyco_spp_module_rsp2cmd(pp->cmdID, &rssi, 1);
@@ -549,7 +525,8 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 				    set_devname1_flg = 0;
 					u8 devNameTmp1[20], devNameTmp2[20];
 
-					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1锛� 1 1 1 1 space Null锛�					memcpy(devNameTmp2, devNameT + 13, 7);
+					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1锛� 1 1 1 1 space Null锛�
+					memcpy(devNameTmp2, devNameT + 13, 7);
 
 					nv_write(NV_FLYCO_ITEM_DEV_NAME1, devNameTmp1, 20);
 					nv_write(NV_FLYCO_ITEM_DEV_NAME2, devNameTmp2, 20);
@@ -663,7 +640,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				//The first value of the broadcast array is the total length of the broadcast data!
-				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data锛欶LYCO
+				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data閿涙LYCO
 				if(advTem[0]){
 					memcpy(advData, advTem, 20);
 				}
@@ -766,7 +743,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_SET_ADV_TIMEOUT:{//Adv time set, boot or wake up after the parameter effect!
 			if(pp->len == 1){
 				flyco_spp_cmd_adv_timeout_t *p = (flyco_spp_cmd_adv_timeout_t *)pp;
-				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit锛歶s, enlarge 1000锛宼imeout unit:s
+				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit閿涙s, enlarge 1000閿涘imeout unit:s
 				nv_write(NV_FLYCO_ITEM_ADV_TIMEOUT, (u8 *)&adv_timeout, 4);
 				//bls_ll_setAdvDuration(adv_timeout, adv_timeout == 0 ? 0 : 1);
 				if(adv_timeout == 0)bls_ll_setAdvEnable(1);
@@ -895,8 +872,11 @@ void flyco_spp_received_master_rsp2cmd(u8 cmdid, u8 *payload, u8 len){
 	pEvt->data[len] = cmdid + dataSum + pEvt->len;//check
 	memcpy(pEvt->data, payload, len);
 
+#if DEBUG_FOR_TEST
 	notify_flg = bls_att_pushNotifyData(spp_s2c_hdl, (u8 *)pEvt, (pEvt->len) + 8);//5(signature)+1(cmdid)+1(length)+len(data length)+1(chk)
-
+#else
+	bls_att_pushNotifyData(spp_s2c_hdl, (u8 *)pEvt, (pEvt->len) + 8);//5(signature)+1(cmdid)+1(length)+len(data length)+1(chk)
+#endif
 }
 
 /*********************************************************************
@@ -909,10 +889,10 @@ void flyco_spp_received_master_rsp2cmd(u8 cmdid, u8 *payload, u8 len){
  * @return  None
  */
 void flyco_spp_dataReceivedMasterHandler(u8 *data, u32 len) {
-	memcpy(&T_txdata_buf.data, data, len);
+	memcpy(T_txdata_buf.data, data, len);
 	T_txdata_buf.len = len;
 
-	UART_SEND((u8 *)(&T_txdata_buf));
+	uart_Send_kma((u8 *)(&T_txdata_buf));
 }
 
 /*********************************************************************
@@ -946,7 +926,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 
 			u8 rp[6],tmp_mac [6];
 			if(pp->len == 0){
-				bls_ll_readBDAddr(tmp_mac);
+				blc_ll_readBDAddr(tmp_mac);
 				reverse_data(tmp_mac,BLE_ADDR_LEN,rp);
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, rp, BLE_ADDR_LEN);
 			}
@@ -967,7 +947,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 				if(blc_ll_getCurrentState() != BLS_LINK_STATE_CONN)
 					rssi = 0x80;//If not connected, according to FLYCO cmd provision rssi=0x80;
 				else
-					rssi = bls_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB鈮SSI鈮�dB
+					rssi = blc_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB閳槃SSI閳拷dB
 				//if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
 					//flyco_spp_received_master_rsp2cmd(pp->cmdID, &rssi, 1);
 			}
@@ -1061,7 +1041,8 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 				    set_devname1_flg = 0;
 					u8 devNameTmp1[20], devNameTmp2[20];
 
-					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1锛� 1 1 1 1 space Null锛�					memcpy(devNameTmp2, devNameT + 13, 7);
+					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1锛� 1 1 1 1 space Null锛�
+					memcpy(devNameTmp2, devNameT + 13, 7);
 
 					nv_write(NV_FLYCO_ITEM_DEV_NAME1, devNameTmp1, 20);
 					nv_write(NV_FLYCO_ITEM_DEV_NAME2, devNameTmp2, 20);
@@ -1175,7 +1156,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				//The first value of the broadcast array is the total length of the broadcast data!
-				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data锛欶LYCO
+				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data閿涙LYCO
 				if(advTem[0]){
 					memcpy(advData,advTem, 20);
 				}
@@ -1276,7 +1257,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_SET_ADV_TIMEOUT:{//Adv time set, boot or wake up after the parameter effect!
 			if(pp->len == 1){
 				flyco_spp_cmd_adv_timeout_t *p = (flyco_spp_cmd_adv_timeout_t *)pp;
-				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit锛歶s, enlarge 1000锛宼imeout unit:s
+				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit閿涙s, enlarge 1000閿涘imeout unit:s
 				nv_write(NV_FLYCO_ITEM_ADV_TIMEOUT, (u8 *)&adv_timeout, 4);
 				//bls_ll_setAdvDuration(adv_timeout, adv_timeout == 0 ? 0 : 1);
 				if(adv_timeout == 0)bls_ll_setAdvEnable(1);
@@ -1315,7 +1296,39 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 		}
 		break;
 
-		case FLYCO_SPP_CMD_MODULE_OTA_FAILED:{//OTA failed,notify
+		case FLYCO_SPP_CMD_MODULE_OTA_START_REQ:{
+
+//            extern u8 flyco_ota_check_boot_validation(void);
+//            extern void fly_send_ota_start_req_rsp(void);
+//            if(flyco_ota_check_boot_validation() == 0) {//Start OTA only if 8266_ota_boot.bin has been burned in 0x68000*/
+//				fly_send_ota_start_req_rsp();
+//			  }
+
+            if(pp->len == 0){
+            	flyco_spp_received_master_rsp2cmd(pp->cmdID, NULL, 0);
+            }
+		}
+		break;
+
+		case FLYCO_SPP_CMD_MODULE_OTA_START:{
+//			extern u8 flyco_ota_check_boot_validation(void);
+//			extern int flyco_blt_ota_start_flag;
+//			extern u32 flyco_blt_ota_start_tick;
+//			extern int flyco_ota_adr_index;
+//		    extern ota_startCb_t flyco_otaStartCb;
+//			extern u8 err_flg;
+//			if(flyco_ota_check_boot_validation() == 0){//==OTA_SUCCESS
+//				flyco_blt_ota_start_flag = 1;   //set flag
+//				flyco_blt_ota_start_tick = clock_time();  //mark time
+//				flyco_ota_adr_index = -1;
+//
+//				if(flyco_otaStartCb){
+//					flyco_otaStartCb();
+//				}
+//			}
+//			else{
+//				err_flg = 8;//OTA_BOOT_BIN_NOT_EXIST;
+//			}
 
 			if(pp->len == 0){
 				flyco_spp_received_master_rsp2cmd(pp->cmdID, NULL, 0);
@@ -1361,7 +1374,7 @@ void blt_user_timerCb_proc(void){
 	//restart spp cmd
 	if(spp_cmd_restart_flg && clock_time_exceed(spp_cmd_restart_tick , 10000)){  //spp cmd ack restart timeout
 		spp_cmd_restart_flg =0;
-		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 5000 * sys_tick_per_us);
+		cpu_reboot();//cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 5000 * sys_tick_per_us);
 	}
     //disconnect spp cmd
 	if(spp_cmd_disconnect_flg && (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN) && clock_time_exceed(spp_cmd_disconnect_tick , 40000)){  //spp cmd ack disconnect timeout
@@ -1370,7 +1383,8 @@ void blt_user_timerCb_proc(void){
 			spp_cmd_disconnect_master_flg =0;
 		}
 		else{//Slave disconnect
-			bls_ll_setAdvEnable(0);//Add 涓嶅箍鎾�		}
+			bls_ll_setAdvEnable(0);//Add 娑撳秴绠嶉幘锟�
+		}
 
 		bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
 	}

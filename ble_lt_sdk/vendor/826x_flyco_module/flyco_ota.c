@@ -11,7 +11,7 @@
 #include "../../proj/drivers/uart.h"
 #include "../../proj_lib/ble/ble_common.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ble_ll.h"
+#include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj/mcu/watchdog_i.h"
 #include "../../proj_lib/ble/blt_config.h"
@@ -97,7 +97,7 @@ int flyco_otaRead(void * p);
 void flyco_start_reboot(void);
 
 int flyco_ota_adr_index = -1;
-
+u32 new_firmware_address = NEW_FW_ADR;
 int flyco_blt_ota_start_flag;
 u32 flyco_blt_ota_start_tick;
 u32 flyco_blt_ota_timeout_us = 25000000;  //default 25 second
@@ -132,7 +132,7 @@ void flyco_ble_setOtaTimeout(u32 timeout_us)
 void flyco_start_reboot(void)
 {
 	irq_disable ();
-	cpu_sleep_wakeup (1, PM_WAKEUP_TIMER, clock_time() + 5*CLOCK_SYS_CLOCK_1MS);//cpu_reboot();
+	cpu_reboot();//cpu_sleep_wakeup (1, PM_WAKEUP_TIMER, clock_time() + 5*CLOCK_SYS_CLOCK_1MS);//
 }
 
 
@@ -148,20 +148,19 @@ void flyco_ota_save_data(u32 adr, u8 * data){
 }
 
 extern u8 ui_ota_is_working;
+int	flyco_uart_push_fifo (int n, u8 *p);
 void flyco_send_ota_result(int errorcode){
 	if(errorcode){//error
 		ui_ota_is_working = 0;
 
 		//OTA fail,send error code to the UART,notice MCU!
-		u8 ota_error[12] = {0,0,0,0,0x46,0x4c,0x59,0x43,0x4f,0x1e,0x00,0x1e};
-		uart_data_t* pp = (uart_data_t*)ota_error;
-		memcpy(pp->data, ota_error+4, sizeof(ota_error)-4);
-		pp->len = 8;
-		uart_Send_kma((u8 *)pp);
+		u8 ota_error[12] = {0x08,0xaa,0xbb,0xcc,0x46,0x4c,0x59,0x43,0x4f,0x1e,0x00,0x1e};
+		flyco_uart_push_fifo(sizeof(ota_error), ota_error);
 	}
 	u8 result[4] = {
 			U16_LO(CMD_OTA_RESULT),U16_HI(CMD_OTA_RESULT),
-			U16_LO(errorcode),U16_HI(errorcode)};
+			U16_LO(errorcode),U16_HI(errorcode)
+	};
 
 	bls_att_pushNotifyData(ota_hdl, result, sizeof(result));
 }
@@ -264,7 +263,8 @@ int flyco_otaWrite(void * p)
 				flyco_otaResIndicateCb(OTA_SUCCESS);  //OTA successed indicate
 			}
 
-			sleep_us(60000);//wait for ota fail result sent
+			sleep_us(2*bls_ll_getConnectionInterval()*(1250 * sys_tick_per_us));//wait for ota fail result sent
+
 			flyco_ota_set_flag ();
 			flyco_start_reboot();
 		}
@@ -311,10 +311,15 @@ int flyco_otaWrite(void * p)
 		if(flyco_otaResIndicateCb){
 			flyco_otaResIndicateCb(err_flg);   //OTA fail indicate
 		}
-		sleep_us(60000);//wait for ota fail result sent
+
+		sleep_us(2*bls_ll_getConnectionInterval()*(1250 * sys_tick_per_us));//wait for ota fail result sent
+
 		if(flyco_ota_adr_index>=0){
 			irq_disable();
 			for(int i=0;i<=flyco_ota_adr_index;i+=256){  //4K/16 = 256
+#if MODULE_WATCHDOG_ENABLE
+				wd_clear();  //in case of watchdog timeout
+#endif
 				flash_erase_sector(NEW_FW_ADR + (i<<4));
 			}
 		}
