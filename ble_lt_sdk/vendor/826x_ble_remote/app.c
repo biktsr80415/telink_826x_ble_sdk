@@ -740,26 +740,29 @@ void user_init()
 		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
 		#if TL_MIC_32K_FIR_16K
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 47,  4, R2, CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 26,  9, R2, CLOCK_SYS_TYPE);
+				audio_finetune_sample_rate(2);  //reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
 			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 30, 16, R2, CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 33, 15, R2, CLOCK_SYS_TYPE);
+				audio_finetune_sample_rate(3);
 			#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R2, CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 45, 20, R2, CLOCK_SYS_TYPE); // 16 , 15
 			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
 				audio_amic_init( DIFF_MODE, 65, 15, R3, CLOCK_SYS_TYPE);
 			#endif
 		#else
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R2, CLOCK_SYS_TYPE);  // 18 8  34 4
+				audio_amic_init( DIFF_MODE, 26,  9, R4, CLOCK_SYS_TYPE);
+				audio_finetune_sample_rate(2);
 			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R3, CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 33, 15, R4, CLOCK_SYS_TYPE);
+				audio_finetune_sample_rate(3);
 			#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R4, CLOCK_SYS_TYPE);
+				audio_amic_init( DIFF_MODE, 45, 20, R4, CLOCK_SYS_TYPE);
 			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
 				audio_amic_init( DIFF_MODE, 65, 15, R6, CLOCK_SYS_TYPE);
 			#endif
 		#endif
-	audio_finetune_sample_rate(3);//reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
 	audio_amic_input_set(PGA_CH);//audio input set, ignore the input parameter
 	#endif//end of BLE_DMIC_ENABLE
 #endif
