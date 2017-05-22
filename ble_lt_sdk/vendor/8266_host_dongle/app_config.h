@@ -60,12 +60,6 @@ extern "C" {
 #define HCI_ACCESS		HCI_USE_USB
 
 /////////////////////HCI UART variables///////////////////////////////////////
-#include "../../proj_lib/ble/blt_config.h"
-unsigned char rx_uart_r_index;
-unsigned char rx_uart_w_index;
-uart_data_t T_txdata_buf;
-uart_data_t T_rxdata_user;
-uart_data_t T_rxdata_buf[2];   // data max 252, user must copy rxdata to other Ram,but not use directly
 
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			1
