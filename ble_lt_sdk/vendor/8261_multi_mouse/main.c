@@ -6,6 +6,7 @@
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/ll/ll.h"
+#include "mouse.h"
 
 #include "../link_layer/rf_ll.h"
 
@@ -13,8 +14,8 @@
 
 int uart_rx_irq_en = 0;
 
-extern int SysMode;
-extern my_fifo_t hci_rx_fifo;
+extern u8 SysMode;
+extern u8 adv_type_det;
 
 extern void user_init();
 extern void deep_wakeup_proc(void);
@@ -45,7 +46,6 @@ _attribute_ram_code_ void irq_handler(void)
 
         src_rf = reg_rf_irq_status;
 		if(src_rf & FLD_RF_IRQ_RX){
-
 			irq_device_rx();
 		}
 
@@ -68,15 +68,15 @@ int main (void) {
 
 	cpu_wakeup_init();
 
-	set_tick_per_us(CLOCK_SYS_CLOCK_HZ/1000000);
 	clock_init();
-
+	//set_tick_per_us(CLOCK_SYS_CLOCK_HZ/1000000);
 
 	gpio_init();
 
 	deep_wakeup_proc();
 
-	SysMode = (analog_read(DEEP_ANA_REG1) & 0xf0) >> 4;
+	SysMode = (analog_read(DEEP_ANA_REG1) & BIT(4)) >> 4;
+	adv_type_det = (analog_read(DEEP_ANA_REG1) & BIT(5)) >> 5;
 
 	rf_drv_init( SysMode == RF_2M_2P4G_MODE ? XTAL_12M_RF_2m_MODE : XTAL_12M_RF_1m_MODE);
 
@@ -91,7 +91,6 @@ int main (void) {
 		main_loop ();
 	}
 }
-
 
 
 #endif

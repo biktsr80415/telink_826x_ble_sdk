@@ -5,6 +5,7 @@
 #include "../common/rf_frame.h"
 #include "../common/blt_led.h"
 #include "../link_layer/rf_ll.h"
+#include "../common/emi.h"
 
 
 #include "mouse_info.h"
@@ -18,6 +19,7 @@
 #include "mouse_custom.h"
 #include "trace.h"
 #include "mouse_pm.h"
+#include "drv_mouse_pmw3610.h"
 
 #include "../../proj/drivers/uart.h"
 
@@ -33,24 +35,28 @@
 
 mouse_status_t   mouse_status;
 
-mouse_led_t      mouse_led;
-
 mouse_hw_t       mouse_hw;
 
 mouse_data_t     mouse_data;
 
 extern mouse_sleep_t mouse_sleep;
-
+void mouse_pair_and_sync_process(mouse_status_t * mouse_status);
 
 void platform_init( mouse_status_t *pStatus )
 {
 	mouse_hw_t *pHW = pStatus->hw_define;
-
 	mouse_button_init(pHW);			/*********** Button Init ****************/
     mouse_wheel_init(pHW);			/*********** Wheel Init ****************/
-
 #if(MOUSE_SENSOR_MODULE_EN)
+
+#if(TELINK_MOUSE_DEMO)
 	mouse_sensor_hw_init(pHW, &pStatus->mouse_sensor, (pStatus->mouse_mode == STATE_POWERON));
+#else
+	drv_mouse_sensor_init();
+#endif
+
+
+
 #endif
 
 #if MOUSE_SW_CUS
@@ -63,17 +69,13 @@ void platform_init( mouse_status_t *pStatus )
 #endif
 
 
-
-
 }
 u32 cpu_wakup_last_tick;
-extern int SysMode;
+extern u8 SysMode;
 
 int mouse_hw_init(void)
 {
 	mouse_status.hw_define = &mouse_hw;
-	mouse_status.led_define = &mouse_led;
-
 	mouse_status.data = &mouse_data;
 	mouse_status.no_ack = 1;    //no_ack == 0, wakeup sensor from deep-sleep every time
 
@@ -88,15 +90,21 @@ int mouse_hw_init(void)
 
 #if ( !MOUSE_NO_HW_SIM )
 	platform_init(&mouse_status);
+
 #endif
 
 
 
 #if(MOUSE_SENSOR_MODULE_EN)
+
+#if(TELINK_MOUSE_DEMO)
 	mouse_sensor_init(&mouse_status.mouse_sensor, &mouse_status.cpi);
-//    if ( mouse_status.mouse_sensor & SENSOR_MODE_WORKING ){
-//        cpu_set_gpio_wakeup(mouse_status.hw_define->sensor_int, 0, 1);  //PAD wakeup enable when wakeup sensor
-//    }
+    if ( mouse_status.mouse_sensor & SENSOR_MODE_WORKING ){
+        cpu_set_gpio_wakeup(mouse_status.hw_define->sensor_int, 0, 1);  //PAD wakeup enable when wakeup sensor
+    	gpio_set_wakeup(mouse_status.hw_define->sensor_int,0,1);  	   //drive pin core(gpio) high wakeup suspend
+    }
+#else
+#endif
 
 #endif
 
@@ -107,13 +115,15 @@ void  normal_user_init(void)
 {
 	//swire2usb_init();
 	cpu_wakup_last_tick = clock_time();
-
     mouse_rf_init(&mouse_status);
 
-    write_reg8(0xf04, 0x90);
-    write_reg8(0xf0c, 0x85);
-
+#if(TELINK_MOUSE_DEMO)
     device_led_init(GPIO_LED, 1);
+
+#else
+    device_led_init(GPIO_LED_R, 0);
+#endif
+
 }
 
 
@@ -213,7 +223,7 @@ _attribute_ram_code_ void mouse_task_when_rf ( void ){
 #endif
 
 #if 0
-    if ( MOUSE_V_PATERN_MODE || (mouse_status.dbg_mode & STATE_TEST_V_BIT) ){
+    if ( 1 || MOUSE_V_PATERN_MODE || (mouse_status.dbg_mode & STATE_TEST_V_BIT) ){
         static u8 fno;
         mouse_status.data->x = fno & BIT(6) ? 6 : -6;
         mouse_status.data->y = fno & BIT(5) ? -6 : 6;
@@ -229,10 +239,6 @@ _attribute_ram_code_ void mouse_task_when_rf ( void ){
 
 //    mouse_rf_post_proc(&mouse_status);
 //    mouse_pair_and_sync_process(&mouse_status);
-
-#if(MOUSE_SLEEP_MODULE_EN)
-    //mouse_power_saving_process(&mouse_status);
-#endif
 
 #if(MOUSE_WHEEL_MODULE_EN)
     mouse_wheel_process(&mouse_status, wheel_prepare_tick);
@@ -256,21 +262,29 @@ _attribute_ram_code_ void mouse_task_when_rf ( void ){
     }
 #endif
 
-
+#if(MOUSE_SLEEP_MODULE_EN)
+    mouse_power_saving_process(&mouse_status);
+#endif
 
 #endif
 }
-
-_attribute_ram_code_ void mouse_task_in_ram( void ){
+void mouse_task_in_ram( void ){
     p_task_when_rf = mouse_task_when_rf;
 
     mouse_rf_process(&mouse_status);
-
 
     if (p_task_when_rf != NULL) {
 
        (*p_task_when_rf) ();
     }
+
+}
+
+void mouse_emi_process()
+{
+
+	emi_process (RF_POWER_8dBm);
+
 
 }
 
@@ -280,35 +294,36 @@ void mouse_main_loop(void)
 
 
 	if( MOUSE_EMI_4_FCC || (mouse_status.mouse_mode == STATE_EMI) ){
-		//mouse_emi_process(&mouse_status);
+		mouse_emi_process();
 	}
 	else
 	{
-		mouse_sleep.wakeup_tick = clock_time();
 
+		mouse_sleep.wakeup_tick = clock_time();
         if(mouse_status.mouse_mode <= STATE_PAIRING){				//pair and sync
         	mouse_pair_and_sync_process(&mouse_status);
         }
-        mouse_button_detect(&mouse_status, MOUSE_BTN_LOW);
+
+        mouse_button_detect(&mouse_status, MOUSE_BTN_LOW);		//Debug, no button
 
 #if(MOUSE_SENSOR_MODULE_EN)
+#if(TELINK_MOUSE_DEMO)
         mouse_sensor_data( &mouse_status );
+#else
+        drv_mouse_motion_report(&mouse_status.data->x, 0);			//Debug, no sensor
 #endif
-
+#endif
         mouse_task_in_ram();
 
-#if(MOUSE_LED_MODULE_EN)
-        device_led_process();
-#endif
+        device_led_process();										//Debug, no led
+
 #if(MOUSE_SLEEP_MODULE_EN )
-        mouse_power_saving_process(&mouse_status);
 
         int wakeup_status = cpu_sleep_wakeup( mouse_sleep.mode == SLEEP_MODE_DEEPSLEEP, mouse_sleep.wakeup_src, mouse_sleep.wakeup_next_tick );
 
     	if(!(wakeup_status & 2)){  // if not timer wakeup, need re_sync chn
     		device_sync = 0;
     	}
-    	DEVICE_LED_TOGGLE;
 
 #else
         while( !clock_time_exceed(main_loop_tick, 1000) );

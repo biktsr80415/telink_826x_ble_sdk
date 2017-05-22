@@ -30,7 +30,7 @@ mouse_sleep_t mouse_sleep ={
 	1,								//mcu sleep en
 
 	0,
-	1,
+	0,
 	0,								//rsv
 
 	0,								//basic suspend cnt
@@ -63,10 +63,6 @@ void mouse_sleep_wakeup_init( mouse_hw_t *pHW, u8 sensor ){
 #if MOUSE_DEEPSLEEP_EN
     if ( SENSOR_IS_SIGMA_8640(mouse_status.mouse_sensor) )
         mouse_sleep.mcu_sleep_en = 0;
-    else
-        mouse_sleep.mcu_sleep_en = CUST_MCU_SLEEP_EN;
-
-    mouse_sleep.sensor_sleep = CUST_SENSOR_SLEEP_EN;
     //u32 tick = ((p_custom_cfg->slp_tick << 1) + p_custom_cfg->slp_tick) >> 6; //tick = 200ms * 256 * 256 * 3 / 64 = 614s
 
     //mouse_sleep.long_suspend_thresh = sensor_motion_detct ? tick : (tick << 1);
@@ -122,26 +118,25 @@ void mouse_sleep_mode_machine (mouse_sleep_t *cfg_slp)
 
 extern led_cfg_t led_cfg[];
 #if(MOUSE_SLEEP_MODULE_EN )
-extern int SysMode;
+extern u8 SysMode;
 #define   DEBUG_NO_SUSPEND      0
 
+
+extern u8 mouse_rf_send;
 #if 0
 _attribute_ram_code_
 #endif
 void mouse_power_saving_process( mouse_status_t *mouse_status ){
     //log_event( TR_T_MS_MACHINE);
 #if MOUSE_DEEPSLEEP_EN
-    mouse_sleep.quick_sleep = M_HOST_NO_LINK && QUICK_SLEEP_EN;
-
+    mouse_sleep.quick_sleep = M_HOST_NO_LINK;
     if ( mouse_status->mouse_mode <= STATE_PAIRING ){
         if ( mouse_status->loop_cnt < 4096 )       //sync dongle time 4096 *8 ms most
             mouse_sleep.quick_sleep = 0;
     }
 #endif
-    mouse_sleep.device_busy = M_DEVICE_PKT_ASK;
-
+    mouse_sleep.device_busy = mouse_rf_send;			//rf send
     mouse_sleep_mode_machine( &mouse_sleep );
-
 
 #if (MOUSE_WKUP_SENSOR_SIM )
     u32 wkup_sesnor_sim = mouse_sensor_blinky_wkup( (mouse_sleep.device_busy && mouse_sleep.quick_sleep && !mouse_sleep.mcu_sleep_en) );
@@ -149,8 +144,8 @@ void mouse_power_saving_process( mouse_status_t *mouse_status ){
         mouse_status->no_ack = 0;
     }
     u32 wkup_sensor =  ((mouse_status->no_ack == 0) && M_DEVICE_PKT_ASK );
+#if(TELINK_MOUSE_DEMO || 1)
     u32 sensor_st = mouse_sensor_sleep_wakeup( &mouse_status->mouse_sensor, &mouse_sleep.sensor_sleep, wkup_sensor );
-
     if ( sensor_st & SENSOR_MODE_WORKING ){
        // mouse_sensor_set_cpi( &mouse_status->cpi );
         cpu_set_gpio_wakeup(mouse_status->hw_define->sensor_int, 0, 1);  //PAD wakeup enable when wakeup sensor
@@ -162,12 +157,10 @@ void mouse_power_saving_process( mouse_status_t *mouse_status ){
     	//mouse_info_save(mouse_status, 1);    	        //Save related information to 3.3V analog register
 	}
 #endif
-
-	static u32 debug_clock;
+#endif
 
 	if ( mouse_sleep.mode == SLEEP_MODE_BASIC_SUSPEND ){
-		debug_clock = clock_time();
-		mouse_sleep.wakeup_next_tick = mouse_sleep.wakeup_tick + (BASIC_SUSPEND_TIME * CLOCK_SYS_CLOCK_1MS) - 1440;
+		mouse_sleep.wakeup_next_tick = mouse_sleep.wakeup_tick + (BASIC_SUSPEND_TIME * CLOCK_SYS_CLOCK_1MS) - 320;
 		mouse_sleep.wakeup_src = PM_WAKEUP_TIMER;  //A1 wheel no need wkup 8ms suspend
 	}
 	//Suspend, deep sleep GPIO, 32K setting
@@ -187,7 +180,6 @@ void mouse_power_saving_process( mouse_status_t *mouse_status ){
         device_info_save(mouse_status, 0);
 	}
 #endif
-
 #if MOUSE_NO_HW_SIM
     mouse_sleep.mode = SLEEP_MODE_BASIC_SUSPEND;
 #endif

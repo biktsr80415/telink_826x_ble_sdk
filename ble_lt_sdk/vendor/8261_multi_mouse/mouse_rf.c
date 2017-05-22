@@ -10,6 +10,7 @@
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
 #include "../common/rf_frame.h"
+#include "../link_layer/rf_ll.h"
 #include "mouse_info.h"
 #include "mouse.h"
 #include "mouse_rf.h"
@@ -67,8 +68,6 @@ void mouse_rf_init(mouse_status_t *mouse_status)
 
 		rf_set_tx_pipe(PIPE_MOUSE);
 		mouse_rf_pkt = (u8 *)&pkt_mouse;
-
-		//rf_set_access_code1(0x9a969aa9);
 		rf_set_power_level_index (mouse_tx_power);
 
 	}
@@ -182,9 +181,9 @@ static inline int mouse_data_add_and_get(mouse_status_t *mouse_status)
 		else{
 			km_dat_release--;
 		}
-		km_wptr = (km_wptr + 1) & (KM_DATA_NUM * 2 -1);		//buffer size * 2
-		km_rptr += (((km_wptr - km_rptr ) & (KM_DATA_NUM*2 - 1)) > KM_DATA_NUM) ? 1 : 0;  //over write the oldest data
-		km_rptr &= (KM_DATA_NUM * 2 - 1);
+		km_wptr = (km_wptr + 1) & (KM_DATA_NUM - 1 );		//buffer size * 2
+		km_rptr += (km_rptr == km_wptr);  //over write the oldest data
+		km_rptr &= (KM_DATA_NUM - 1);
 	}
 
 	if(mouse_status->mouse_mode != STATE_NORMAL){		//no link with dongle
@@ -204,7 +203,7 @@ static inline int mouse_data_add_and_get(mouse_status_t *mouse_status)
 
 		for(int i=0; (i<MOUSE_FRAME_DATA_NUM) && (km_wptr != km_rptr); i++){
 			*(u32 *)&pkt_mouse.data[sizeof(mouse_data_t) * pkt_mouse.pno++] = *(u32 *)&km_data[km_rptr & (KM_DATA_NUM -1 )];
-			km_rptr = (km_rptr + 1) & (KM_DATA_NUM * 2 - 1);
+			km_rptr = (km_rptr + 1) & (KM_DATA_NUM - 1);
 		}
 	}
 	if (pkt_mouse.pno) {		//new frame
@@ -224,11 +223,13 @@ static inline int mouse_data_add_and_get(mouse_status_t *mouse_status)
 //Send package at select channel, and check ACK result
 
 u8 mouse_rf_send;
-
-_attribute_ram_code_ void mouse_rf_process(mouse_status_t *mouse_status)
+extern u8 irq_tx_cnt;
+#if 0
+_attribute_ram_code_
+#endif
+void mouse_rf_process(mouse_status_t *mouse_status)
 {
 	mouse_data_add_and_get(mouse_status);
-
 #if(0)
 
     static s8 tx_skip_ctrl = 2;
@@ -259,12 +260,17 @@ _attribute_ram_code_ void mouse_rf_process(mouse_status_t *mouse_status)
     mouse_rf_send = (  M_DEVICE_PKT_ASK  || ( mouse_status->mouse_mode <= STATE_PAIRING ));
 	if ( mouse_rf_send ) {
 
-		if( device_send_packet(mouse_rf_pkt, 550, 1, 0) )
+		if( device_send_packet(mouse_rf_pkt, 550, 2, 0) )
 		{	//Send package re-try and Check ACK result
 			mouse_dat_sending = 0;						//km_data_send_ok
 			mouse_status->no_ack = 0;
 		}
-        else if (mouse_status->no_ack < M_RF_SYNC_PKT_TH_NUM){
+        else if (mouse_status->no_ack < M_RF_SYNC_PKT_TH_NUM ){
+
+//        	if(mouse_status->no_ack >= (irq_tx_cnt + 3) && irq_tx_cnt ){
+//
+//        	}
+
     		mouse_status->no_ack++;
     		pkt_mouse.per++;
     	}
@@ -272,7 +278,6 @@ _attribute_ram_code_ void mouse_rf_process(mouse_status_t *mouse_status)
         	mouse_dat_sending = 0;	    //get data buff per cycle when no-link: mouse_status->no_ack  == RF_SYNC_PKT_TH_NUM
         }
 	}
-
 }
 
 u8	mode_link = 0;
@@ -282,10 +287,7 @@ u8	mode_link = 0;
 
 #define	DBG_RECIVE_PAKCET_NUM	8
 #define DBG_RECIVE_PAKCET_SIZE	48
-
-u8 dbg_rcv_pair_ack[DBG_RECIVE_PAKCET_SIZE * DBG_RECIVE_PAKCET_NUM];
-//u8 dbg_rcv_data_ack[DBG_RECIVE_PAKCET_SIZE * DBG_RECIVE_PAKCET_NUM];
-
+u8 rx_ack_pair[DBG_RECIVE_PAKCET_SIZE * DBG_RECIVE_PAKCET_NUM];
 #endif
 
 
@@ -293,14 +295,12 @@ _attribute_ram_code_ int  rf_rx_process(u8 * p)
 {
 	rf_packet_ack_pairing_t *p_pkt = (rf_packet_ack_pairing_t *) (p + 8);
 
-	static u8 rf_rx_cnt;
-	static u8 rf_rx_mouse;
-
 
 #if(DBG_RX_IRQ)
-	rf_rx_cnt = (rf_rx_cnt+1) & (DBG_RECIVE_PAKCET_SIZE -1);
-	memcpy( (dbg_rcv_pair_ack + (rf_rx_cnt * DBG_RECIVE_PAKCET_SIZE )),\
-			p, sizeof(rf_packet_ack_pairing_t));
+	static u8 rf_rx_cnt;
+	rf_rx_cnt = (rf_rx_cnt+1) & (DBG_RECIVE_PAKCET_NUM -1);
+	memcpy( (rx_ack_pair + (rf_rx_cnt * DBG_RECIVE_PAKCET_SIZE )),\
+			p, DBG_RECIVE_PAKCET_SIZE);
 #endif
 
 	if (p_pkt->proto == RF_PROTO_BYTE) {
@@ -317,15 +317,19 @@ _attribute_ram_code_ int  rf_rx_process(u8 * p)
 		////////// end of PIPE1 /////////////////////////////////////
 		///////////// PIPE1: ACK /////////////////////////////
 		else if (p_pkt->type == FRAME_TYPE_ACK_MOUSE) {
-			rf_rx_mouse++;
 #if(!MOUSE_PIPE1_DATA_WITH_DID)
 			pipe1_send_id_flg = 0;
 #endif
 			return 1;
 		}
+#if(!MOUSE_PIPE1_DATA_WITH_DID)
+		else if(p_pkt->type == FRAME_AUTO_ACK_MOUSE_ASK_ID){ //fix auto bug
+			pipe1_send_id_flg = 1;
+			return 1;
+		}
+#endif
 
 		////////// end of PIPE1 /////////////////////////////////////
 	}
 	return 0;
 }
-//mouse_emi_process

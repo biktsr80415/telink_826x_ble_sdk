@@ -142,7 +142,7 @@ void sif_SendByte( unsigned int data)
 	gpio_set_output_en (PIN_SIF_SDA, 0);
 }
 
-unsigned int I2C_PAN3204LL_ReadRegister(unsigned int cAddr)
+_attribute_ram_code_ unsigned int I2C_PAN3204LL_ReadRegister(unsigned int cAddr)
 {
 	//sif_SendByte((cAddr&0x7f));	
     unsigned int dat = 0;
@@ -665,12 +665,12 @@ static inline void OPTSensor_surface_optimiz_3207( void ){
 // return: 1-->available coordiates read, 0-->read fail
 // only Delta_X and Delta_Y has been read and stored
 // maybe should adjust the value based on the senario of mouse movement
-unsigned int debug_x, debug_y;
 
 extern mouse_sleep_t mouse_sleep;
 unsigned int OPTSensor_motion_report( signed char *pBuf, u32 no_overflow ){
 	static unsigned int optical_status = 0;
 	static unsigned int reg_x, reg_y;
+
 	static u32 debug_no_over = 0;
 
 //sensor ph5205 no overflow read
@@ -694,7 +694,9 @@ unsigned int OPTSensor_motion_report( signed char *pBuf, u32 no_overflow ){
 	// Read MOTION_STATUS regisgter, and then DELTA_X register, and
 	// third DELTA_Y regisgter. The sequence is not suggested to change.
 	//---------------------------------------------------------
+
 	optical_status = I2C_PAN3204LL_ReadRegister(REG_PAN3204LL_MOTION_STATUS);
+
 	if( (optical_status & MOTION_STATUS_MOT)  \
         || ( no_overflow && ((optical_status & MOTION_STATUS_DXOVF) || (optical_status & MOTION_STATUS_DYOVF)) )\
        ){
@@ -714,9 +716,6 @@ unsigned int OPTSensor_motion_report( signed char *pBuf, u32 no_overflow ){
 			if(optical_status & MOTION_STATUS_DYOVF)
 				reg_y = ((signed char)reg_y>=0)? 0x81:0x7f;   //y overflow, current<0,0x7f, current>0, 0xff
 		}
-		debug_x = reg_x;
-		debug_y = reg_y;
-
  		pBuf[0] = reg_x;
  		pBuf[1] = reg_y;
 
@@ -765,6 +764,7 @@ void OPTSensor_Shutdown(void)
 		{
 			I2C_PAN3204LL_WriteRegister(REG_PAN3204LL_OPERATION_MODE, SLEEP_DISABLE_3204);
 			I2C_PAN3204LL_WriteRegister(REG_PAN3204LL_CONFIGURATION, CONFIG_POWERDOWN_3204);
+
 		}
 
 		if( I2C_PAN3204LL_ReadRegister(REG_PAN3204LL_CONFIGURATION) != CONFIG_POWERDOWN_3204 ){
@@ -836,8 +836,17 @@ unsigned int OPTSensor_dpi_update( unsigned int cpi_ctrl ){
 
 int Sensor3204_Wakeup(u32 sensor){
 
+	int timeout = 0;
+	u8 debug_reg5;
     I2C_PAN3204LL_WriteRegister(REG_PAN3204LL_CONFIGURATION, 2);    //clear BIT(3) to exit Power down mode, deault cpi-rate-2
-    I2C_PAN3204LL_WriteRegister(REG_PAN3204LL_OPERATION_MODE, WAKEUP_3204);			//sleep enable and wakeup
+
+    do{
+    	I2C_PAN3204LL_WriteRegister(REG_PAN3204LL_OPERATION_MODE, WAKEUP_3204);			//sleep enable and wakeup
+
+    	debug_reg5 = I2C_PAN3204LL_ReadRegister(REG_PAN3204LL_OPERATION_MODE);
+    	OPTSensor_resync (33);
+    }while((debug_reg5 != WAKEUP_3204) && (++timeout < 32));
+
 	return 1;
 }
 

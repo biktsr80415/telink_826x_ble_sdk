@@ -1,5 +1,6 @@
 #pragma once
 #include "../common/mouse_type.h"
+#include "app_config.h"
 /* Enable C linkage for C++ Compilers: */
 #if defined(__cplusplus)
 extern "C" {
@@ -33,7 +34,12 @@ extern "C" {
 
 #define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known 
 
-#define MAX_MOUSE_BUTTON        6
+#if(TELINK_MOUSE_DEMO)
+	#define MAX_MOUSE_BUTTON        6
+#else
+	#define MAX_MOUSE_BUTTON        4	//Left,Right,Middle, Bound
+	#define MAX_LED_NUM				3	//RED, GREEN, BLUE
+#endif
 
 #define BASIC_SUSPEND_TIME		8
 #define LONG_SUSPEND_TIME		100
@@ -46,6 +52,7 @@ extern "C" {
 #define DEVICE_LED_OFF	(*(volatile u8*)(0x800000 + 0x583) &= ~BIT(0))
 #define DEVICE_LED_TOGGLE (*(volatile u8*)(0x800000 + 0x583) ^= BIT(0))
 
+#if (TELINK_MOUSE_DEMO)
 
 typedef struct {
 
@@ -64,36 +71,31 @@ typedef struct {
 	u32 wheel[2];
 	u32 sensor_data;
 	u32 sensor_sclk;
-	u32 sensor_int;
+	u32 sensor_int;					//motion
+
+}mouse_hw_t;
+#else
+
+typedef struct {
+	u32 button[MAX_MOUSE_BUTTON];    //the sequence is left, right, middle, bound
+
+	u32 led[MAX_LED_NUM];			 // red, green, blue
+	u32 batt;						 // battery
+
+	u8  gpio_level_button[MAX_MOUSE_BUTTON];  // 0-3 : button pull up/down(1 for pullup)
+
+	u32 wheel[3];
+
+	u32 sensor_int;						//motion
+	u32 sensor_ncs;						//ncs
+	u32 sensor_sclk;					//sclk
+	u32 sensor_mosi;
+	u32 sensor_miso;
 
 }mouse_hw_t;
 
 
-typedef struct{
-	u32 gpio;
-
-	u8  level_on;
-	u8  is_on;
-	u8  over_wrt;
-	u8  cnt_rate;
-
-	u32 repeat_count;
-
-	u32 on_time;
-	u32 off_time;
-
-	u32 clock;
-
-}mouse_led_t;
-
-typedef struct{
-
-    u8  on_time;        //led on time: *64ms
-    u8  off_time;       //led off time: *64ms
-    u8  repeat_count;   //led on-off repeat count bit7-~bit0
-    u8  over_wrt;       //BIT[5:0]led on-off repeat count bit13-~bit8
-                        //BIT[7:6]-over_wrt priority: over-write last led event (11>10>01>00)
-}mouse_led_cfg_t;
+#endif
 
 typedef struct {
 
@@ -118,7 +120,6 @@ typedef struct {
     u32 pkt_addr;    
     u32 loop_cnt;
     
-    mouse_led_t  *led_define;
 	mouse_hw_t    *hw_define;
 	mouse_data_t  *data;
 
@@ -139,7 +140,11 @@ typedef enum{
 #define STATE_TEST_EMI_BIT  0x40
 #define STATE_TEST_V_BIT    0x20
 
-#include "app_config.h"
+extern mouse_hw_t       mouse_hw;
+
+extern mouse_status_t mouse_status;
+
+
 /////////////////// set default   ////////////////
 
 #include "../common/default_config.h"
