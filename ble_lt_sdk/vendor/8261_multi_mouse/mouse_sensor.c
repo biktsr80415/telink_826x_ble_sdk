@@ -27,7 +27,9 @@ void mouse_sensor_set_cpi( u8 *cpi_idx ){
 
 int mouse_sensor_hw_init( mouse_hw_t *pHW, u8 *p_sensor, int poweron ){
     int ret;
+#if(TELINK_MOUSE_DEMO)
     OPTSensor_hardware_init (&pHW->sensor_data);
+#endif
     int sensor_is_3204s= 0;
     if ( poweron ){
         *p_sensor = OPTSensor_Init( poweron );
@@ -75,15 +77,13 @@ int mouse_sensor_init( u8 *p_sensor, u8 *cpi_idx ){
     mouse_sensor_set_cpi ( cpi_idx );
     *p_sensor &= ~(SENSOR_MODE_POWERUP|SENSOR_MODE_POWERDOWN);
     *p_sensor |= SENSOR_MODE_WORKING;
-#if MOUSE_SENSOR_MOTION
 
-#if(MOUSE_SENSOR_MODULE_EN)
+#if(!MOUSE_SENSOR_MOTION)
     no_motion_rd = 1;
 #else
+    no_motion_rd = !sensor_motion_detct || SENSOR_IS_8589(*p_sensor);
+#endif
 
-    no_motion_rd = !sensor_motion_detct || SENSOR_IS_8589(*p_sensor) || 1;
-#endif
-#endif
     sensor_no_ov_rd = sensor_no_overflow_rd;
 }
 
@@ -92,6 +92,7 @@ u32 mouse_sensor_sleep_wakeup( u8 *p_sensor, u8 *sleep, u32 wakeup ){
     if( wakeup && (*p_sensor & SENSOR_MODE_POWERDOWN) ){
         //3204 sensor must wakeup after it has been shutdown in deepsleep
         //but A3000 sensor can not do wakeup after power on initial  
+
         if ( (*pf_sensor_wakeup) ( 0 ) ){
     		*p_sensor &= ~(SENSOR_MODE_POWERUP|SENSOR_MODE_POWERDOWN);
     		*p_sensor |= SENSOR_MODE_WORKING;
@@ -102,6 +103,7 @@ u32 mouse_sensor_sleep_wakeup( u8 *p_sensor, u8 *sleep, u32 wakeup ){
     else if( *sleep ){
          if( !(*p_sensor & SENSOR_MODE_POWERDOWN) ){
              (*pf_sensor_shutdown) ();
+
             *p_sensor |= SENSOR_MODE_POWERDOWN;            
             *p_sensor &= ~SENSOR_MODE_WORKING;
             ret = SENSOR_MODE_POWERDOWN;

@@ -107,18 +107,20 @@ static inline void mouse_sensor_dir_adjust( signed char *px, signed char *py, un
 
 extern char no_motion_rd;
 extern char sensor_no_ov_rd;
-static inline void mouse_sensor_data(mouse_status_t *mouse_status){    
+extern mouse_hw_t mouse_hw;
+extern mouse_data_t mouse_data;
+static inline void mouse_sensor_data(mouse_status_t *mouse_status){
+
     if( mouse_status->mouse_sensor & SENSOR_MODE_WORKING ){
-    	mouse_data_t* mouse_data = mouse_status->data;
-#if (MOUSE_SENSOR_MOTION & 0)
-    	int motion_level = gpio_read(mouse_status->hw_define->sensor_int);
-        int motion_rd = no_motion_rd || !motion_level;
-        if( motion_rd )
+    	//mouse_data_t* mouse_data = mouse_status->data;
+#if (MOUSE_SENSOR_MOTION )
+//    	int motion_level = gpio_read(mouse_hw.sensor_int);
+//        int motion_rd = no_motion_rd || !motion_level;
+        if( !gpio_read(mouse_hw.sensor_int) || no_motion_rd )
 #endif
         {
-            (*pf_sensor_motion_report) ( &mouse_data->x, sensor_no_ov_rd || SENSOR_IS_8589(mouse_status->mouse_sensor) );
-
-			mouse_sensor_dir_adjust( &mouse_data->x, &mouse_data->y, mouse_status->sensor_dir );
+            (*pf_sensor_motion_report) ( &mouse_data.x, sensor_no_ov_rd );
+			mouse_sensor_dir_adjust( &mouse_data.x, &mouse_data.y, mouse_status->sensor_dir );
            }
     }
 }

@@ -96,7 +96,7 @@ extern "C" {
 #endif
 
 #ifndef M_HW_VBAT_CHN
-#define M_HW_VBAT_CHN    GPIO_PB7					//A/D Module
+#define M_HW_VBAT_CHN    GPIO_PB7			// A/D Module
 #endif
 
 #ifndef M_HW_CFG_1_DIR_0
@@ -177,72 +177,28 @@ typedef struct{
 
 
 typedef struct{
-	u16	vid;		//vendor id
+	u16	vid;			//vendor id
 	u16 gid;
     
-	u32 did;		//0x04~0x07 device id
+	u32 did;			//0x04~0x07 device id
 	
-	u8	cap;		//0x08 crystal CAP setting
-	
+	u8	cap;			//0x08 crystal CAP setting
     u8  tx_power;   	 //0x09
     u8  tx_power_paring; //0x0a
     u8  tx_power_emi;    //0x0b
     
-	u8	wheel_dir;	//0x0c
-	u8	sns_motion;
+	u8	wheel_dir;		//0x0c
+    u8  no_ov_rd;
 	u8	sns_dir;
-	u8	sns_hw_cpi;
-    
+	u8	sns_hw_cpi;		//0x0f
+
 	u8	sns_dir_idx_re[4];      //0x10	
 	u8	sns_cpi_idx_re[4];      //0x14
-	
-    //custom_slp_cfg_t slp_cfg;   //0x18
-    u8  slp_mode;
-    u8  slp_no_dongle;    
-    u16  slp_tick;              //time to enter deep sleep mode, 1 seonds base
     
 	custom_cpi_cfg_t sns_cpi;   //0x1c
-    u8	ui_level;		        //0x12	
-	u8	paring_only_pwon;       //0x23
-    
     custom_btn_ui_t btn_ui;     //0x24
 
-    u8  cpi_2_btn_ctrl;         //0x28
-    u8	slp_btn_blink;          //0x29    0: sensor sleep, blinky every button, else: sensor sleep, no-blinky every button
-    u8  led_pairing_end_mode;
-    u8  led_cpi_mode;
-
-
-    u8 bat_reuse_mb;            //0x44
-    u8 tx_power_sync;        //0x45
-    
-    u8 no_ov_rd;            //0x46
-    u8 c_rsvd;              //0x47
-
-    mouse_led_cfg_t led_cfg[E_LED_RSVD+1];    //0x2c, 30 34 38 3c 40
 	mouse_hw_t cust_ms_hw; 	 //0x48 mouse hw_define
-#if 0
-typedef struct {
-    u32 button[6];      //left: 0x0, right:0x4, middle:0x8, FB:0xc, 
-                        //BB:0x10,   DPI  :0x14
-    u32 led_cntr;       //0x18
-    u32 cfg_1_r[2];     //cfg_1_r_0: 0x1c,
-                        //cfg_1_r_1: 0x20
-                        
-    u32 cfg_2_r[2];     //cfg_2_r_0: 0x24,
-                        //cfg_2_r_1: 0x28
-
-    u32 gpio_level;     //0x2c -bit[0-5], button pull up/down ; bit 6 led on level; bit 8, 9 sensor direction pull up/down
-
-    u32 vbat_channel;	//0x30
-
-    u32 wheel[2];		//wheel_0: 0x34, wheel_1: 0x38
-
-    u32 sensor_data;	//0x3c
-    u32 sensor_sclk;    //0x40
-    u32 sensor_int;		//0x44
-}mouse_hw_t;
-#endif
 } custom_cfg_t;
 
 extern custom_cfg_t    *p_custom_cfg;
@@ -254,35 +210,9 @@ extern custom_btn_ui_t  mouse_btn_ui;
 #define mouse_tx_paring_power  ( (p_custom_cfg->tx_power_paring == 0xff) ? RF_POWER_4dBm : p_custom_cfg->tx_power_paring )
 #define mouse_tx_emi_power     ( (p_custom_cfg->tx_power_emi == 0xff) ? RF_POWER_8dBm : p_custom_cfg->tx_power_emi )
 
-#if	MOUSE_RF_CUSTOM
-#define mouse_cust_tx_power         (p_custom_cfg->tx_power)
-#define mouse_cust_tx_power_paring  ( (p_custom_cfg->tx_power_paring == 0xff) ? RF_POWER_4dBm : p_custom_cfg->tx_power_paring )
-#define mouse_cust_tx_power_sync  ( (p_custom_cfg->tx_power_sync == 0xff) ? mouse_status->tx_power : p_custom_cfg->tx_power_sync )
-#define mouse_cust_tx_power_emi         ( (p_custom_cfg->tx_power_emi == 0xff) ? RF_POWER_8dBm : p_custom_cfg->tx_power_emi )
-#else
-#define mouse_cust_tx_power_paring		RF_POWER_m28dBm
-#define mouse_cust_tx_power_sync		mouse_status->tx_power
-#define mouse_cust_tx_power_emi			RF_POWER_8dBm
-#endif
-
-
 #define sensor_motion_detct         (p_custom_cfg->cust_ms_hw.sensor_int)  //motion_pin定制值为0 表示硬件上无motion脚
 #define sensor_no_overflow_rd         (p_custom_cfg->no_ov_rd == 0)
 
-#define mouse_ui_level              ((p_custom_cfg->ui_level == 5) ? 5 : 0)
-#define mouse_paring_only_pwon      (p_custom_cfg->paring_only_pwon)
-#define mouse_cust_2_btn_cpi        (p_custom_cfg->cpi_2_btn_ctrl)
-#define mouse_cust_paring_only_pwon (p_custom_cfg->paring_only_pwon)
-#define mouse_cust_led_cpi_mode_2   (p_custom_cfg->led_cpi_mode == U8_MAX)
-#define mouse_cust_led_cpi_mode_1   (p_custom_cfg->led_cpi_mode == 1)
-
-#define CUST_MCU_SLEEP_EN 	        (p_custom_cfg->slp_mode & 1)
-#define CUST_SENSOR_SLEEP_EN        (p_custom_cfg->slp_mode & 2)
-
-
-#define QUICK_SLEEP_EN  	        (p_custom_cfg->slp_no_dongle)
-#define SENSOR_ON_EVERY_BTN         (!p_custom_cfg->slp_btn_blink)
-#define GET_HOST_ACCESS_CODE_FLASH_OTP  (p_custom_cfg->gid)
 
 
 void mouse_custom_init ( mouse_status_t *pStatus );

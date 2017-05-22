@@ -4,6 +4,8 @@
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 
 #if (__PROJECT_8261_MULTI_MOUSE__)
+#define		MI_MOUSE_EN			1
+
 
 typedef struct
 {
@@ -38,7 +40,11 @@ const u16 my_devNameUUID = GATT_UUID_DEVICE_NAME;
 //device information
 const u16 my_gapServiceUUID = SERVICE_UUID_GENERIC_ACCESS;
 // Device Name Characteristic Properties
+#if(MI_MOUSE_EN)
+static u8 my_devNameCharacter = CHAR_PROP_READ;
+#else
 static u8 my_devNameCharacter = CHAR_PROP_READ | CHAR_PROP_NOTIFY;
+#endif
 // Appearance Characteristic Properties
 const u16 my_appearanceUIID = 0x2a01;
 const u16 my_periConnParamUUID = 0x2a04;
@@ -59,8 +65,13 @@ static u8 my_PnPCharacter = CHAR_PROP_READ;
 const u8	my_PnPtrs [] = {0x02, 0x8a, 0x24, 0x66, 0x82, 0x01, 0x00};
 
 //////////////////////// Battery /////////////////////////////////////////////////
+
 const u16 my_batServiceUUID       			= SERVICE_UUID_BATTERY;
+#if(MI_MOUSE_EN)
+static u8 my_batProp 						= CHAR_PROP_READ;
+#else
 static u8 my_batProp 						= CHAR_PROP_READ | CHAR_PROP_NOTIFY;
+#endif
 const u16 my_batCharUUID       				= CHARACTERISTIC_UUID_BATTERY_LEVEL;
 u8 		  my_batVal[1] 						= {99};
 
@@ -98,12 +109,20 @@ static u8 reportRefKeyIn[2] =
              { HID_REPORT_ID_KEYBOARD_INPUT, HID_REPORT_TYPE_INPUT };
 
 // Key out Report characteristic variables
+#if(MI_MOUSE_EN)
+u8 reportKeyOutProp = CHAR_PROP_READ | CHAR_PROP_WRITE;
+#else
 u8 reportKeyOutProp = CHAR_PROP_READ | CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RSP;
+#endif
 u8 reportKeyOut[1];
 u8 reportKeyOutCCC[2];
+#if(MI_MOUSE_EN)
+static u8 reportRefKeyOut[2] =
+             { HID_REPORT_ID_KEYBOARD_INPUT, HID_REPORT_TYPE_FEATURE };
+#else
 static u8 reportRefKeyOut[2] =
              { HID_REPORT_ID_KEYBOARD_INPUT, HID_REPORT_TYPE_OUTPUT };
-
+#endif
 // Consumer Control input Report
 static u8 reportConsumerControlInProp = CHAR_PROP_READ | CHAR_PROP_NOTIFY;
 static u8 reportConsumerControlIn[2];
@@ -148,6 +167,127 @@ static u8 controlPoint;
 // HID Report Map characteristic
 static u8 reportMapProp = CHAR_PROP_READ;
 // Keyboard report descriptor (using format for Boot interface descriptor)
+
+
+
+
+#if(MI_MOUSE_EN)
+
+static const u8 reportMap[] =
+{
+#if 0
+	0x05, 0x01,  // Usage Page (Generic Desktop)
+	0x09, 0x02,  // Usage (Mouse)
+	0xA1, 0x01,  // Collection (Application)
+	0x85, 0x01,  // Report Id (1)
+	0x09, 0x01,  //   Usage (Pointer)
+	0xA1, 0x00,  //   Collection (Physical)
+	0x95, 0x05,
+	0x75, 0x01,
+	0x05, 0x09,  //     Usage Page (Buttons)
+	0x19, 0x01,  //     Usage Minimum (01) - Button 1
+	0x29, 0x05,  //     Usage Maximum (03) - Button 3
+	0x15, 0x00,  //     Logical Minimum (0)
+	0x25, 0x01,  //     Logical Maximum (1)
+	0x81, 0x02,
+	0x95, 0x01,  //     Report Count (3)
+	0x75, 0x03,  //     Report Size (1)
+	0x81, 0x01,
+	0x75, 0x08,  //     Report Size (5)
+	0x95, 0x01,  //     Report Count (1)
+
+	0x05, 0x01,  //??
+	0x09, 0x38,
+	0x15, 0x81,
+	0x25, 0x7f,
+	0x81, 0x06,
+	0x05, 0x0c,
+	0x0a, 0x38, 0x02,
+	0x95, 0x01,
+	0x81, 0x06,
+	0xC0,
+
+	0x85, 0x02,
+	0x09, 0x01,
+	0xa1, 0x00,
+	0x75, 0x08,			//0x75, 0x0c
+
+	0x95, 0x02,
+	0x05, 0x01,
+	0x09, 0x30,
+	0x09, 0x31,
+	0x15, 0x81,	//0x16, 0x01, 0xf8,
+	0x25, 0x7f,//0x26, 0xff, 0x07,
+	0x81, 0x06,
+	0xC0,
+	0xC0,
+#else
+    0x05, 0x01,  // Usage Page (Generic Desktop)
+    0x09, 0x02,  // Usage (Mouse)
+    0xA1, 0x01,  // Collection (Application)
+    0x85, 0x01,  // Report Id (1)
+    0x09, 0x01,  //   Usage (Pointer)
+    0xA1, 0x00,  //   Collection (Physical)
+    0x05, 0x09,  //     Usage Page (Buttons)
+    0x19, 0x01,  //     Usage Minimum (01) - Button 1
+    0x29, 0x03,  //     Usage Maximum (03) - Button 3
+    0x15, 0x00,  //     Logical Minimum (0)
+    0x25, 0x01,  //     Logical Maximum (1)
+    0x75, 0x01,  //     Report Size (1)
+    0x95, 0x03,  //     Report Count (3)
+    0x81, 0x02,  //     Input (Data, Variable, Absolute) - Button states
+    0x75, 0x05,  //     Report Size (5)
+    0x95, 0x01,  //     Report Count (1)
+    0x81, 0x01,  //     Input (Constant) - Padding or Reserved bits
+    0x05, 0x01,  //     Usage Page (Generic Desktop)
+    0x09, 0x30,  //     Usage (X)
+    0x09, 0x31,  //     Usage (Y)
+    0x09, 0x38,  //     Usage (Wheel)
+    0x15, 0x81,  //     Logical Minimum (-127)
+    0x25, 0x7F,  //     Logical Maximum (127)
+    0x75, 0x08,  //     Report Size (8)
+    0x95, 0x03,  //     Report Count (3)
+    0x81, 0x06,  //     Input (Data, Variable, Relative) - X & Y coordinate
+    0xC0,        //   End Collection
+    0xC0,        // End Collection
+
+#endif
+
+	0x05, 0x0c,
+	0x09, 0x01,
+	0xa1, 0x01,
+	0x85, 0x03,
+	0x15, 0x00,
+	0x25, 0x01,
+	0x75, 0x01,
+	0x95, 0x01,
+	0x09, 0xcd,
+	0x81, 0x06,
+	0x0a, 0x83, 0x01,
+	0x81, 0x06,
+	0x09, 0xb5,
+	0x81, 0x06,
+	0x09, 0xb6,
+	0x81, 0x06,
+	0x09, 0xea,
+	0x81, 0x06,
+	0x09, 0xe9,
+	0x81, 0x06,
+	0x0a, 0x25,0x02,
+	0x81, 0x06,
+	0x0a, 0x24, 0x02,
+	0x81, 0x06,
+	0x09, 0x05,
+	0x15, 0x00,
+	0x26, 0xff, 0x00,
+	0x75, 0x08,
+	0x95, 0x02,
+	0xb1, 0x02,
+	0xC0,
+};
+
+
+#else
 
 static const u8 reportMap[] =
 {
@@ -221,7 +361,7 @@ static const u8 reportMap[] =
     0x75, 0x02,   //     Report Size (2)
     0x81, 0x00,   //     Input (Data, Ary, Abs)
     0xC0,         //   End Collection
-    0x81, 0x03,   //   Input (Const, Var, Abs)
+//    0x81, 0x03,   //   Input (Const, Var, Abs)
     0xC0,         // End Collection
 #endif
 
@@ -273,7 +413,7 @@ static const u8 reportMap[] =
     0xC0,            // End Collection
 #endif
 };
-
+#endif
 // HID External Report Reference Descriptor for report map
 static u16 extServiceUUID;
 
@@ -305,7 +445,113 @@ const u8  my_OtaName[] = {'O', 'T', 'A'};
 // Include attribute (Battery service)
 static u16 include[3] = {0x0026, 0x0028, SERVICE_UUID_BATTERY};
 
+#if(MI_MOUSE_EN)
 
+const attribute_t my_Attributes[] = {
+#if (HID_MOUSE_ATT_ENABLE)
+	{36,0,0,0,0,0},
+#else
+	{40,0,0,0,0,0},	// total num of attribute
+#endif
+	// 0001 - 0007  gap
+	{7,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_devNameCharacter), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof(my_devName), (u8*)(&my_devNameUUID), (u8*)(my_devName), 0},
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_appearanceCharacter), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof (my_appearance), (u8*)(&my_appearanceUIID), 	(u8*)(&my_appearance), 0},
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_periConnParamChar), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof (my_periConnParameters),(u8*)(&my_periConnParamUUID), 	(u8*)(&my_periConnParameters), 0},
+
+
+	// 0008 - 000a  device Information Service
+	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_devServiceUUID), 0},
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_PnPCharacter), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},
+
+	/////////////////////////////////// 4. HID Service /////////////////////////////////////////////////////////
+	// 000b
+	{23,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_hidServiceUUID), 0},
+
+	// 000c - 000d  protocol mode
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&protocolModeProp), 0},				//prop
+	{0,ATT_PERMISSIONS_RDWR,2, sizeof(protocolMode),(u8*)(&hidProtocolModeUUID), 	(u8*)(&protocolMode), 0},	//value
+
+	//000e-0011
+	//  Characteristic declaration: Report (Mouse In button /wheel)
+	{0,ATT_PERMISSIONS_READ,2,1, (u8*)(&my_characterUUID), 		(u8*)(&reportMouseInProp), 0},
+	{0,ATT_PERMISSIONS_READ,2, sizeof(reportMouseIn),(u8*)(&hidReportUUID), 	(u8*)(&reportMouseIn), 0},
+	{0,ATT_PERMISSIONS_RDWR,2, sizeof(reportMouseInCCC), (u8*)(&clientCharacterCfgUUID), 	(u8*)(reportMouseInCCC), 0},
+	{0,ATT_PERMISSIONS_READ,2, sizeof(reportRefMouseIn), (u8*)(&reportRefUUID), 	(u8*)(reportRefMouseIn), 0},
+
+	// 0012 - 0015. report in: 4 ( Mouse Pointer )(char-val-client-ref)
+//	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&reportConsumerControlInProp), 0},				//prop
+//	{0,ATT_PERMISSIONS_READ,2, sizeof(reportConsumerControlIn),(u8*)(&hidReportUUID), 	(u8*)(reportConsumerControlIn), 0},	//value
+//	{0,ATT_PERMISSIONS_READ|ATT_PERMISSIONS_AUTHEN_WRITE,2,sizeof(reportConsumerControlInCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)(reportConsumerControlInCCC), 0},	//value
+//	{0,ATT_PERMISSIONS_RDWR,2,sizeof(reportRefConsumerControlIn),(u8*)(&reportRefUUID), 	(u8*)(reportRefConsumerControlIn), 0},	//value
+
+	// 0016 - 0018 . report in : 4 (Consumer )(char-val-client-ref)
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&reportKeyInProp), 0},				//prop
+	{0,ATT_PERMISSIONS_READ,2, sizeof(reportKeyIn),(u8*)(&hidReportUUID), 	(u8*)(reportKeyIn), 0},	//value
+	{0,ATT_PERMISSIONS_READ|ATT_PERMISSIONS_AUTHEN_WRITE,2,sizeof(reportKeyInCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)(reportKeyInCCC), 0},	//value
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof(reportRefKeyIn),(u8*)(&reportRefUUID), 	(u8*)(reportRefKeyIn), 0},	//value
+
+	//0019-001b
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&reportKeyOutProp), 0},				//prop
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof(reportKeyOut),(u8*)(&hidReportUUID), 	(u8*)(reportKeyOut), 0},	//value
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof(reportRefKeyOut),(u8*)(&reportRefUUID), 	(u8*)(reportRefKeyOut), 0},	//value
+
+	// 001c - 001d . report map: 3
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&reportMapProp), 0},				//prop
+	{0,ATT_PERMISSIONS_READ,2,sizeof(reportMap),(u8*)(&hidReportMapUUID), 	(u8*)(reportMap), 0},	//value
+//	{0,ATT_PERMISSIONS_READ|ATT_PERMISSIONS_WRITE,2,sizeof(extServiceUUID),(u8*)(&extReportRefUUID), 	(u8*)(&extServiceUUID), 0},	//value
+
+	//    boot mouse input report   +7
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&bootMouseInReportProp), 0},
+	{0,ATT_PERMISSIONS_RDWR,2, sizeof(bootMouseInReport), (u8*)(&hidbootMouseInReportUUID), 	(u8*)(&bootMouseInReport), 0},
+	{0,ATT_PERMISSIONS_RDWR,2, sizeof(bootMouseInReportCCC), (u8*)(&clientCharacterCfgUUID), 	(u8*)(bootMouseInReportCCC), 0},
+
+	// 0022 - 0023 . hid information: 2
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&hidInfoProps), 0},				//prop
+	{0,ATT_PERMISSIONS_READ,2, sizeof(hidInformation),(u8*)(&hidinformationUUID), 	(u8*)(hidInformation), 0},	//value
+
+	// 0024 - 0025 . control point: 2
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&controlPointProp), 0},				//prop
+	{0,ATT_PERMISSIONS_WRITE,2, sizeof(controlPoint),(u8*)(&hidCtrlPointUUID), 	(u8*)(&controlPoint), 0},	//value
+
+	////////////////////////////////////// 31. Battery Service /////////////////////////////////////////////////////
+	// 0026 - 0028
+	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_batServiceUUID), 0},
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_batProp), 0},				//prop
+	{0,ATT_PERMISSIONS_READ,2,sizeof(my_batVal),(u8*)(&my_batCharUUID), 	(u8*)(my_batVal), 0},	//value
+
+
+#if (__PROJECT_8267_BLE_REMOTE__ && 0)
+	// 0029 Audio
+	{10,ATT_PERMISSIONS_READ,2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_AudioUUID), 0},
+
+	// 002a - 002c  MIC
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_MicProp), 0},				//prop
+	{0,ATT_PERMISSIONS_READ,16,sizeof(my_MicData),(u8*)(&my_MicUUID), 	(u8*)(&my_MicData), 0},	//value
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_MicName),(u8*)(&userdesc_UUID), (u8*)(my_MicName), 0},
+
+	// 002d - 002f  SPEAKER
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_SpeakerProp), 0},				//prop
+	{0,ATT_PERMISSIONS_WRITE,16,sizeof(my_SpeakerData),(u8*)(&my_SpeakerUUID), 	(u8*)(&my_SpeakerData), 0},//value
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_SpeakerName),(u8*)(&userdesc_UUID), (u8*)(my_SpeakerName), 0},
+
+	// 0030 - 0032  OTA
+	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				//prop
+	{0,ATT_PERMISSIONS_RDWR,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
+#else
+	// OTA
+//	{4,ATT_PERMISSIONS_READ, 2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_OtaServiceUUID), 0},
+//	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				//prop
+//	{0,ATT_PERMISSIONS_WRITE,16,1,(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
+//	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
+#endif
+};
+#else
 // TM : to modify
 const attribute_t my_Attributes[] = {
 #if (HID_MOUSE_ATT_ENABLE)
@@ -425,7 +671,7 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
 #endif
 };
-
+#endif
 void	my_att_init ()
 {
 	bls_att_setAttributeTable ((u8 *)my_Attributes);

@@ -17,7 +17,7 @@
 #define RF_MODE_DATA		4
 //#define RF_MODE_LOSE_SYNC	0x10
 
-#define M_RF_SYNC_PKT_TH_NUM  200				//2s
+#define M_RF_SYNC_PKT_TH_NUM  255				//2s
 #define M_RF_SYNC_PKT_TX_NUM  ( (M_RF_SYNC_PKT_TH_NUM << 1) + M_RF_SYNC_PKT_TH_NUM )
 
 extern u8* mouse_rf_pkt;
@@ -50,7 +50,7 @@ static inline void mouse_rf_statistic_analysis( void ){
 }
 
 extern u8 mouse_rf_send;
-#define PARING_POWER_ON_CNT     64
+#define PARING_POWER_ON_CNT     512
 static inline void mouse_rf_post_proc(mouse_status_t *mouse_status){
 	if( mouse_status->mouse_mode <= STATE_PAIRING ){
 		rf_set_tx_pipe (PIPE_PARING);

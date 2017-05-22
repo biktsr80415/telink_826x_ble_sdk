@@ -26,18 +26,15 @@ static u8 button_pre;   //history button
 
 void mouse_button_init(mouse_hw_t *mouse_hw)
 {
-    int i;
     u32 level;
     u32 spec_pin;
-	for(i=0;i<MAX_MOUSE_BUTTON;i++){
-#if(!MOUSE_BUTTON_GPIO_REUSABILITY)  //no gpio reusability
+
+	for(int i=0;i<MAX_MOUSE_BUTTON;i++){
 		spec_pin = mouse_hw->button[i];
 		level = (mouse_hw->gpio_level_button[i] == U8_MAX);  //0xff：pullup   others:pulldown
 		gpio_btn_valid[i] =	level ? 0 : spec_pin;  //1:低有效  0:高有效
 		gpio_btn_all |= spec_pin;
 		//gpio_setup_up_down_resistor(spec_pin, level );		//已经10K上拉了
-#endif
-
 
 #if MOUSE_GPIO_FULL_RE_DEF
 		gpio_set_func(spec_pin,AS_GPIO);
@@ -108,20 +105,6 @@ static inline u32 mouse_button_special_seq( u32 button, u32 multi_seq, u32 power
     return seq;
 }
 
-static inline void mouse_button_process_cpi_2_btn(u32 *button){
-    static u16 btn_cpi_cnt = 0;
-    if( mouse_cust_2_btn_cpi ){
-        if( (*button & mouse_btn_ui.cpi_2_btn) == mouse_btn_ui.cpi_2_btn )
-            btn_cpi_cnt++;
-        else
-            btn_cpi_cnt = 0;
-
-        if( btn_cpi_cnt > mouse_btn_ui.cpi_2_btn_time){
-            *button |= FLAG_BUTTON_DPI;
-        }
-    }
-}
-
 static inline void mouse_button_process_test_mode( u8 *mouse_mode, u8 *dbg_mode, u32 button, u32 test_mode ){
     if( (test_mode == BTN_INTO_PAIRING) && !button ) {
         *mouse_mode = STATE_PAIRING;
@@ -132,10 +115,6 @@ static inline void mouse_button_process_test_mode( u8 *mouse_mode, u8 *dbg_mode,
 #if MOUSE_BUTTON_FULL_FUNCTION    
     if( (test_mode == BTN_INTO_SPECL_MODE) && (button & FLAG_BUTTON_LEFT) && (button & FLAG_BUTTON_RIGHT) ){
         *dbg_mode |= STATE_TEST_0_BIT;
-#if(MOUSE_LED_MODULE_EN & 0)
-        led_cfg_t mouse_led_test_0 = { 2, 4, 3, 0};
-        mouse_led_setup( mouse_led_test_0 );
-#endif
     }
     else if ( button == 0 )
         *dbg_mode &= ~STATE_TEST_0_BIT;
@@ -147,91 +126,100 @@ static inline void mouse_button_process_test_mode( u8 *mouse_mode, u8 *dbg_mode,
     
     if( (test_mode == BTN_INTO_SPECL_MODE) && (button & FLAG_BUTTON_LEFT) && !(button & FLAG_BUTTON_RIGHT) ){
         *dbg_mode |= STATE_TEST_V_BIT;
-#if(MOUSE_LED_MODULE_EN & 0)
-        led_cfg_t mouse_led_test_v = { 8, 16, 3, 0};
-        mouse_led_setup( mouse_led_test_v );
-#endif
     }
     else
         *dbg_mode &= ~STATE_TEST_V_BIT;
 #endif
 }
 
-extern int SysMode;
+extern u8 adv_type_switch;
+extern u8 mouse_get_pre_info_from_master;
+extern u8 SysMode;
 extern u16 ble_swith_time_thresh;
 extern u16 switch_mode_start_flg;
 extern led_cfg_t led_cfg[];
 extern led_cfg_t led_cpi[];
-static u8 test_mode_pending;
-#if 0
-_attribute_ram_code_
-#endif
-u32 mouse_button_process(mouse_status_t * mouse_status)
+
+
+inline u32 mouse_button_process(mouse_status_t * mouse_status)
 {   
-    u32 button = button_last;
+
     static u16 btn_lr_cnt = 0;
     static u16 thresh_cnt = 0;
 
-    thresh_cnt = (SysMode == RF_1M_BLE_MODE) ? ble_swith_time_thresh : _2P4G_MODE_SWITCH_CNT;
+    static u16 btn_d_cnt = 0;
 
-    if ( button_pre || button_last ){
-        if( (button & FLAG_BUTTON_LEFT) && (button & FLAG_BUTTON_RIGHT) )
-            btn_lr_cnt++;
-        else
-            btn_lr_cnt = 0;
-    
-        mouse_button_process_cpi_2_btn( &button );
+    //button_last: current button
+    //button_pre: previous button
+
+    if( switch_mode_start_flg == 1 ){
+    	switch_mode_start_flg = 2;
     }
 
-    if(btn_lr_cnt > thresh_cnt){
-    	btn_lr_cnt = 0;
-    	device_led_setup(led_cfg[0]);
-    	u8 ana_reg1 = analog_read(DEEP_ANA_REG1);
-    	if(!SysMode){
-    		ana_reg1 |= BIT(4);
+    if ( !button_last && (adv_type_switch != 1) && (switch_mode_start_flg != 2)){
+    	btn_lr_cnt=0;
+    	btn_d_cnt = 0;
+    	button_pre = button_last;
+
+    	return 0;				//there is no button be pressed
+    }
+    else{
+
+
+    	if(button_last == FLAG_BUTTON_MIDDLE){
+    		btn_d_cnt++;
     	}
     	else{
-    		ana_reg1 &= ~BIT(4);
+    		btn_d_cnt = 0;
     	}
-    	analog_write(DEEP_ANA_REG1, ana_reg1);
-    	switch_mode_start_flg = 1;
+
+    	if((button_last & FLAG_BUTTON_LEFT) && (button_last & FLAG_BUTTON_RIGHT))		//mode switch
+    		btn_lr_cnt++;
+    	else
+    		btn_lr_cnt=0;
+
+        if((button_pre != button_last) && (button_last & FLAG_BUTTON_DPI)) {            //new event
+            ++mouse_status->cpi;
+            mouse_status->cpi = (mouse_status->cpi < mouse_cpi.sns_cpi_sgmt) ? mouse_status->cpi : 0;
+            mouse_sensor_set_cpi( &mouse_status->cpi );
+
+            device_led_setup(led_cpi[mouse_status->cpi]);
+        }
+    	button_pre = button_last;
     }
 
-	if( (switch_mode_start_flg == 2) && !DEVICE_LED_BUSY){
+    thresh_cnt = (SysMode == RF_1M_BLE_MODE) ? ble_swith_time_thresh : _2P4G_MODE_SWITCH_CNT;
+
+    if((btn_d_cnt > 300) && !mouse_get_pre_info_from_master && (SysMode == RF_1M_BLE_MODE)){
+    	adv_type_switch = 1;
+    	device_led_setup(led_cfg[1]);
+    }
+
+
+    if( (btn_lr_cnt > thresh_cnt) && !switch_mode_start_flg){
+    	switch_mode_start_flg = 1;
+    	device_led_setup(led_cfg[0]);
+    }
+
+
+
+	if( ((switch_mode_start_flg == 2) || adv_type_switch == 1) && !DEVICE_LED_BUSY){
+    	u8 ana_reg1 = analog_read(DEEP_ANA_REG1);
+
+    	if(switch_mode_start_flg == 2){
+    		if(!SysMode)
+    			ana_reg1 |= BIT(4);
+    		else
+    			ana_reg1 &= ~BIT(4);
+    	}
+    	else{
+    		ana_reg1 |= BIT(5);
+    	}
+    	analog_write(DEEP_ANA_REG1, ana_reg1);
 		irq_disable();
 		REG_ADDR8(0x6f) = 0x20;
 		while(1);
 	}
-
-
-    if (button_pre != button) {            //new event
-#if 1
-        if( button & FLAG_BUTTON_DPI ){
-        	++mouse_status->cpi;
-            mouse_status->cpi = (mouse_status->cpi < mouse_cpi.sns_cpi_sgmt) ? mouse_status->cpi : 0;
-
-            mouse_sensor_set_cpi( &mouse_status->cpi );
-
-            device_led_setup(led_cpi[mouse_status->cpi]);
-#if(MOUSE_LED_MODULE_EN & 0)
-            mouse_led_setup( mouse_led_cpi_cfg_cust(mouse_status->cpi) );
-#endif
-        }
-#endif
-        u32 multi_seq = (btn_lr_cnt > 800) || mouse_ui_level;
-        u32 paring_any_time = !mouse_cust_paring_only_pwon && device_never_linked && !test_mode_pending;
-        //test_mode_pending |= mouse_button_special_seq( \
-            button, multi_seq, (mouse_status->mouse_mode == STATE_POWERON), paring_any_time ); 
-        
-    	//mouse_button_process_test_mode( &mouse_status->mouse_mode, &mouse_status->dbg_mode, button, test_mode_pending);
-
-       if( !button )
-            test_mode_pending = 0;
-
-    }
-
-	button_pre = button;
-
 }
 
 u32 mouse_button_process_emi(s8 *chn_idx, u8 *test_mode_sel, u32 btn_pro_end)
@@ -291,19 +279,25 @@ void mouse_button_pull(mouse_status_t  * mouse_status, u32 prepare_level ){
     }
 }
 
+
 /// \param detect_level - 0: detect low after button been pullup,  else: detect high after button been pulldown
 /// \mouse should detect high, then detect low
-u32 mouse_button_detect(mouse_status_t  * mouse_status, u32 detect_level)
+inline u8 mouse_button_detect(mouse_status_t  * mouse_status, u32 detect_level)
 {
     static u8 btn_cur = 0;
-    static u32 btn_changed = 0;			//once button be pressed/released, button_changed value is 1
+    static u8 btn_real;
+
+    if ( detect_level )
+        return 0;
 
     u32 pull_level = 0;
     u32 spec_pin = 0;
-    int i = 0;
-    for ( i = MAX_MOUSE_BUTTON - 1; i >= 0; i-- ){
-        spec_pin = mouse_status->hw_define->button[i];
-        pull_level = MOUSE_BTN_HIGH && mouse_status->hw_define->gpio_level_button[i];         
+    for ( int i = MAX_MOUSE_BUTTON - 1; i >= 0; i-- ){
+//        spec_pin = mouse_status->hw_define->button[i];
+//        pull_level = MOUSE_BTN_HIGH && mouse_status->hw_define->gpio_level_button[i];
+    	spec_pin = mouse_hw.button[i];
+    	pull_level = MOUSE_BTN_HIGH; //&& mouse_status->hw_define->gpio_level_button[i];
+
         if ( pull_level != detect_level ){
             if( !gpio_read(spec_pin) ^ !pull_level ){
                 btn_cur |= (1<<i);
@@ -311,41 +305,27 @@ u32 mouse_button_detect(mouse_status_t  * mouse_status, u32 detect_level)
         }
     }
 
-    if ( detect_level )
-        return 0;
-
-    static u8 btn_real;
-#if 0
-    u32 debouce_len = (mouse_status->mouse_mode == STATE_POWERON) ? 0 : 3;
-    btn_real = mouse_button_debounce( btn_cur, button_last, debouce_len );
-#endif
-
-    btn_real = btn_cur;
-
-    btn_cur = 0;
-
     //mask button event on power-on
-    static u8 btn_power_on_mask = 0xff;
-    if ( !btn_real )
-        btn_power_on_mask = 0xff;
+//    static u8 btn_power_on_mask = 0xff;
+//    if ( !btn_cur )
+//        btn_power_on_mask = 0xff;
 
+    mouse_status->data->btn = btn_cur & 0xff;
+    u8 button_change = 0;
+    button_change = (button_last != btn_cur) ? 1 : 0;
 
-
-    if( switch_mode_start_flg == 1 ){
-    	switch_mode_start_flg = 2;
-    	mouse_status->data->btn = 0;
-    }
-    else{
-
-    	mouse_status->data->btn = btn_real & btn_power_on_mask;
-
-    }
-    
-    btn_changed = (button_last != btn_real) ? 1 : 0;
-
-    button_last = btn_real;
-    //return button_last;
-    return btn_changed;
+//    if( !button_last && (btn_cur ^ button_last) ){
+//    	button_change = 1;					//button has been pressed
+//    }
+//    else if(!btn_real && (btn_cur ^ button_last)){
+//    	button_change = 0;					//buttn has been released
+//    }
+//    else if(btn_real && !(btn_cur ^ button_last) ){
+//    	button_change = 2;					//button hold on
+//    }
+    button_last = btn_cur;
+    btn_cur = 0;
+    return button_change;
 }
 
 u32 mouse_button_pull_and_detect(mouse_status_t  * mouse_status){

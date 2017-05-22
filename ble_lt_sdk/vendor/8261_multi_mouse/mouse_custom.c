@@ -16,6 +16,8 @@
 
 custom_cfg_t   *p_custom_cfg;
 
+
+#if(TELINK_MOUSE_DEMO)
 const u32 m_hw_def_dft[] = {
     M_HW_BTN_LEFT,
     M_HW_BTN_RIGHT,
@@ -40,7 +42,32 @@ const u32 m_hw_def_dft[] = {
     M_HW_SNS_CLK,
     M_HW_SNS_MOT_PIN,
 };
+#else
+const u32 m_hw_def_dft[] = {
 
+	GPIO_PA1,				//LEFT
+	GPIO_PE3,				//RIGHT
+	GPIO_PE2,				//MIDDLE
+	GPIO_PA0,				//BOUND		SWITCH BLE / 2.4G MODE
+
+	GPIO_PC4,				//LED_RED
+	GPIO_PC5,				//LED_GREEN
+	GPIO_PD2,				//LED_BLUE
+	GPIO_PB7,				//V_BAT
+
+	M_HW_GPIO_LEVEL_LEFT | (M_HW_GPIO_LEVEL_RIGHT<<8) | (M_HW_GPIO_LEVEL_MIDL<<16) | (0xff<<24),
+
+	GPIO_PE1,				//WHEEL1
+	GPIO_PE0,				//WHEEL2
+	GPIO_PD3,				//WHEEL3
+
+	GPIO_PA7,
+	GPIO_PB4,
+	GPIO_PA4,
+	GPIO_PB6,
+	GPIO_PB5,
+};
+#endif
 
 #define SENSOR_IDX_CLOCK_3  0
 #define SENSOR_IDX_CLOCK_6  1
@@ -145,7 +172,7 @@ u8 custom_cfg_re_define( u8 cfg, u8* p_cfg_re_def ){
 //  1      0       1    clk_6
 //  0      1       2    clk_9
 //  0      0       3    clk_12
-_attribute_ram_code_ u32 mouse_custom_cfg_r ( u32 *dir_r ){
+u32 mouse_custom_cfg_r ( u32 *dir_r ){
     u32 dir_idx = 0;
 	//Pin_1/Pin_0 internal pull up, and get input level
 
@@ -179,6 +206,8 @@ _attribute_ram_code_ u32 mouse_custom_cfg_r ( u32 *dir_r ){
 	return  (3 - dir_idx);
 }
 
+
+#if(TELINK_MOUSE_DEMO)
 u8 mouse_custom_sensor_dir_init (mouse_hw_t *pHW){
     u32 idx_dir;
 	idx_dir = mouse_custom_cfg_r(pHW->cfg_1_r);
@@ -192,6 +221,7 @@ u8 mouse_custom_sensor_dir_init (mouse_hw_t *pHW){
     idx_dir = custom_cfg_re_define( idx_dir, p_custom_cfg->sns_dir_idx_re);
 	return custom_tbl_dir[idx_dir&3];
 }
+#endif
 
 extern rf_packet_pairing_t	pkt_mouse_pairing;
 
@@ -203,22 +233,6 @@ void mouse_custom_init ( mouse_status_t *pStatus ){
 			break;
 		}
 	}
-#if 0
-	p_custom_cfg = (custom_cfg_t *)MOUSE_DEVICE_ID_ADDRESS;
-	DEVICE_LED_OFF;
-
-	/*****************   set up vid(vendor id)    ********************/
-    if(p_custom_cfg->vid != U16_MAX){
-		rf_set_access_code0 (rf_access_code_16to32(p_custom_cfg->vid));
-	}
-
-	/*****************   set up did(device id)    ********************/
-    if(p_custom_cfg->did != U32_MAX){
-    	pkt_mouse_pairing.did =  p_custom_cfg->did;
-    	pkt_mouse.did = pkt_mouse_pairing.did;
-    }
-#else
-
 
     if(*(volatile u16 *)(MOUSE_DEVICE_ID_ADDRESS) != U16_MAX){
 		rf_set_access_code0 (rf_access_code_16to32(*(volatile u16 *)(MOUSE_DEVICE_ID_ADDRESS)));
@@ -231,7 +245,6 @@ void mouse_custom_init ( mouse_status_t *pStatus ){
     	pkt_mouse_pairing.did =  *(mouse_did + 1);
     	pkt_mouse.did = pkt_mouse_pairing.did;
     }
-#endif
 
 	/**************  Load hardware config, cpi config, button ui config, and led config *************/
 #if 1

@@ -29,7 +29,7 @@ static inline void mouse_wheel_process(mouse_status_t  *mouse_status, u32 wheel_
 {
 
 	while(read_reg8(0xd8) != 0){
-		if(clock_time_exceed(wheel_prepare_tick, 150)){  //4 cylce is enough: 4*1/32k = 1/8 ms
+		if(clock_time_exceed(wheel_prepare_tick, 135)){  //4 cylce is enough: 4*1/32k = 1/8 ms
 			write_reg8(0xd6,0x01); //reset  d6[0]
 			write_reg8(0xd6,0x00);
 			break;
