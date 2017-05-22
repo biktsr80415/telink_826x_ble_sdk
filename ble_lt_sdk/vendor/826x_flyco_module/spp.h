@@ -179,11 +179,14 @@ typedef struct {
 #define				ADV_DATA_ADDR         0x70000
 #define				ADV_INTERVAL_ADDR     0x71000
 
-//used to indicate para address index
-typedef struct{
+//--------------------------nv management----------------------------
+#define             PARAM_NV_PDU_UNIT                30
+#define				PARAM_NV_UNIT					(PARAM_NV_PDU_UNIT + 2)//header(2B) + userData(30B)
+#define             PARAM_NV_MAX_IDX                (4096 - PARAM_NV_UNIT)
+typedef struct{//used to indicate para address index
 	u8  curNum;
 	u8  tmp;
-	u8  data[30];
+	u8  data[PARAM_NV_PDU_UNIT];
 }nv_manage_t;
 
 nv_manage_t baudrate_manage;
@@ -212,10 +215,15 @@ typedef enum {
  * Public Functions
  */
 //user data save in FLASH management
-u8 nv_read(u8 id, u8 *buf, u16 len);
 u8 nv_write(u8 id, u8 *buf, u16 len);
-void flyco_load_para_addr(u32 addr, int* index, u8* p, u8 len);
-void flyco_erase_para(u32 addr, int* index);
+//获取当前FLASH指定区域中参数存储的当前idx值
+int get_current_flash_idx(u32 addr);
+//从FLASH中获取当前idx存储的参数
+u8 load_param_from_flash(u32 addr, u8* p, u8 len);
+//判断是否需要将指定区域的FLASH sector擦除（4K）
+void param_clear_flash(u32 addr);
+//将用户数据存储到FLASH中当前idx区域
+u8 save_param_nv(u32 addr, u8* buf, u16 len);
 
 //flyco spp process function
 void reverse_data(u8 *p,u8 len,u8*rp);

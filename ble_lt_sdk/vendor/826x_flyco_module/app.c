@@ -272,31 +272,31 @@ void user_init()
 	reverse_data(tbl_mac, BLE_ADDR_LEN, identified);// The default product identification code equale ble MAC address!
 
 	memcpy(ble_devName, &DEV_NAME, 18);
-	flyco_load_para_addr(DEV_NAME_ADDR, &devname_index, devName, 20);
+	load_param_from_flash(DEV_NAME_ADDR, devName, 20);
 	if((devName[0]) !=0){
 		memset(ble_devName, 0, 18); //clear device name
 		memcpy(ble_devName, devName + 2, devName[0] - 1);
 	}
-	//user para init load in flash
-	flyco_load_para_addr(ADV_INTERVAL_ADDR, &adv_interval_index, (u8 *)&advinterval, 2);
-	flyco_load_para_addr(RF_POWER_ADDR, &rf_power_index, (u8 *)&rfpower, 1);
-	flyco_load_para_addr(ADV_TIMEOUT_ADDR, &adv_timeout_index, (u8 *)&adv_timeout, 4);
-	flyco_load_para_addr(ADV_DATA_ADDR, &adv_data_index, advTem, 20);
-	flyco_load_para_addr(DEV_NAME_ADDR, &devname_index, scanRspTem, 20);
-	flyco_load_para_addr(IDENTIFIED_ADDR, &identified_index, identified, 6);
-	flyco_load_para_addr(BAUD_RATE_ADDR, &baudrate_index, baudratetmp, 3);
-	flyco_load_para_addr(DEV_NAME1_ADDR, &devname1_index, devName1, 20);
-	flyco_load_para_addr(DEV_NAME2_ADDR, &devname2_index, devName2, 20);
+	//user param init load in flash
+	load_param_from_flash(ADV_INTERVAL_ADDR, (u8 *)&advinterval, 2);
+	load_param_from_flash(RF_POWER_ADDR, (u8 *)&rfpower, 1);
+	load_param_from_flash(ADV_TIMEOUT_ADDR, (u8 *)&adv_timeout, 4);
+	load_param_from_flash(ADV_DATA_ADDR, advTem, 20);
+	load_param_from_flash(DEV_NAME_ADDR, scanRspTem, 20);
+	load_param_from_flash(IDENTIFIED_ADDR, identified, 6);
+	load_param_from_flash(BAUD_RATE_ADDR, baudratetmp, 3);
+	load_param_from_flash(DEV_NAME1_ADDR, devName1, 20);
+	load_param_from_flash(DEV_NAME2_ADDR, devName2, 20);
 	//if should erase user data in flash area
-	flyco_erase_para(ADV_INTERVAL_ADDR, &adv_interval_index);
-	flyco_erase_para(RF_POWER_ADDR, &rf_power_index);
-	flyco_erase_para(ADV_TIMEOUT_ADDR, &adv_timeout_index);
-	flyco_erase_para(ADV_DATA_ADDR, &adv_data_index);
-	flyco_erase_para(DEV_NAME_ADDR, &devname_index);
-	flyco_erase_para(IDENTIFIED_ADDR, &identified_index);
-	flyco_erase_para(BAUD_RATE_ADDR, &baudrate_index);
-	flyco_erase_para(DEV_NAME1_ADDR, &devname1_index);
-	flyco_erase_para(DEV_NAME2_ADDR, &devname2_index);
+	param_clear_flash(ADV_INTERVAL_ADDR);
+	param_clear_flash(RF_POWER_ADDR);
+	param_clear_flash(ADV_TIMEOUT_ADDR);
+	param_clear_flash(ADV_DATA_ADDR);
+	param_clear_flash(DEV_NAME_ADDR);
+	param_clear_flash(IDENTIFIED_ADDR);
+	param_clear_flash(BAUD_RATE_ADDR);
+	param_clear_flash(DEV_NAME1_ADDR);
+	param_clear_flash(DEV_NAME2_ADDR);
 
 	if(advinterval_max < advinterval){
 		advinterval_max = advinterval;
