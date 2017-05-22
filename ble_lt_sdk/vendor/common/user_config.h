@@ -37,6 +37,8 @@
 	#include "../8261_ble_weixin/app_config.h"
 #elif (__PROJECT_USB_HOST__)
 	#include "../8267_usb_host/app_config.h"
+#elif (__PROJECT_8266_AUDIO_MIC_SDM__)
+	#include "../8266_ble_audio_mic_sdm/app_config.h"
 #else
 	#include "../common/default_config.h"
 #endif
