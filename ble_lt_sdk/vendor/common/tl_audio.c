@@ -870,7 +870,8 @@ void adpcm_to_pcm (signed short *ps, signed short *pd, int len){
 			*pd++ = ps[i];
 		}
 		else {
-			*pd++ = predict;
+			 ///*pd++ = predict;
+			 *(pd+0+2*i) = predict;//for 8266,L channel is ok,but R channel is bad,so the first two bytes of four bytes's buffer that .....is
 		}
 	}
 }
@@ -927,6 +928,20 @@ int		mic_encoder_data_ready (int *pd)
 	}
 	buffer_mic_pkt_rptr++;
 	return ADPCM_PACKET_LEN;
+}
+
+int	*	mic_encoder_data_buffer ()
+{
+	if (buffer_mic_pkt_rptr == buffer_mic_pkt_wptr) {
+			return 0;
+	}
+
+	int *ps = buffer_mic_enc + (ADPCM_PACKET_LEN>>2) *
+			(buffer_mic_pkt_rptr & (TL_MIC_PACKET_BUFFER_NUM - 1));
+
+	buffer_mic_pkt_rptr++;
+
+	return ps;
 }
 
 #endif

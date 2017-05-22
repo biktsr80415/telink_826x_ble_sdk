@@ -7,16 +7,19 @@ extern "C" {
 #endif
 #if		(__PROJECT_8266_AUDIO_MIC_SDM__)
 	#define CHIP_TYPE				CHIP_TYPE_8266
+#elif   (__PROJECT_8267_AUDIO_MIC_SDM__)
+	#define CHIP_TYPE				CHIP_TYPE_8267
+#elif   (__PROJECT_8269_AUDIO_MIC_SDM__)
+	#define CHIP_TYPE				CHIP_TYPE_8269
 #endif
 
 
 
 /////////////////// MODULE /////////////////////////////////
-#define MODULE_PM_ENABLE		0
-#define MODULE_ETH_ENABLE		0
-#define	MODULE_AUDIO_ENABLE		0
-#define APPLICATION_DONGLE		0					// or else APPLICATION_DEVICE
-
+#define MODULE_PM_ENABLE				   0
+#define	MODULE_AUDIO_ENABLE				   1
+#define	TELINK_AUDIO_SERVICE_ENABLE        1
+#define BLE_DMIC_ENABLE                    1
 /////////////////// PRINT DEBUG INFO ///////////////////////
 /* 826x module's pin simulate as a uart tx, Just for debugging */
 #define PRINT_DEBUG_INFO                    1//open/close myprintf
@@ -74,20 +77,37 @@ extern "C" {
 #define PD5_INPUT_ENABLE		1
 #define PULL_WAKEUP_SRC_PD4		PM_PIN_PULLUP_1M	//btn
 #define PULL_WAKEUP_SRC_PD5		PM_PIN_PULLUP_1M	//btn
-//////////////////// led gpio /////////////////////
-#define	 GPIO_LED_GREEN			GPIO_PC0
-#define	 GPIO_LED_RED			GPIO_PC4
-#define	 GPIO_LED_BLUE			GPIO_PC2
-#define	 GPIO_LED_WHITE			GPIO_PA1
 
-#define  PC0_INPUT_ENABLE		0
-#define	 PC0_OUTPUT_ENABLE		1
-#define  PC4_INPUT_ENABLE		0
-#define	 PC4_OUTPUT_ENABLE		1
-#define  PC2_INPUT_ENABLE		0
-#define  PC2_OUTPUT_ENABLE		1
-#define  PA1_INPUT_ENABLE		0
-#define	 PA1_OUTPUT_ENABLE		1
+//////////////////// led gpio /////////////////////
+#if	(__PROJECT_8267_AUDIO_MIC_SDM__ || __PROJECT_8269_AUDIO_MIC_SDM__ )//8267/8269 EVK board(C1T80A30_V1.0)
+#define RED_LED                             GPIO_PD5
+#define WHITE_LED     						GPIO_PD6
+#define GREEN_LED    		    			GPIO_PD7
+#define BLUE_LED                			GPIO_PB4
+#define  PD5_INPUT_ENABLE					0
+#define	 PD5_OUTPUT_ENABLE					1
+#define  PD6_INPUT_ENABLE					0
+#define	 PD6_OUTPUT_ENABLE					1
+#define  PD7_INPUT_ENABLE					0
+#define  PD7_OUTPUT_ENABLE					1
+#define  PB4_INPUT_ENABLE					0
+#define	 PB4_OUTPUT_ENABLE					1
+#else//__PROJECT_8266_AUDIO_MIC_SDM__ //8266 EVK board(C1T53A20_V2.0)
+#define RED_LED                             GPIO_PA5
+#define WHITE_LED     						GPIO_PB0
+#define GREEN_LED    		    			GPIO_PA1
+#define BLUE_LED                			GPIO_PA6
+#define  PA5_INPUT_ENABLE					0
+#define	 PA5_OUTPUT_ENABLE					1
+#define  PB0_INPUT_ENABLE					0
+#define	 PB0_OUTPUT_ENABLE					1
+#define  PA1_INPUT_ENABLE					0
+#define  PA1_OUTPUT_ENABLE					1
+#define  PA6_INPUT_ENABLE					0
+#define	 PA6_OUTPUT_ENABLE					1
+#endif
+#define ON            						1
+#define OFF           						0
 
 /////////////////// Clock  /////////////////////////////////
 #define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC
