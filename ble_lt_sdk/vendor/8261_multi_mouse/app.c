@@ -51,7 +51,7 @@ MYFIFO_INIT(blt_txfifo, 40, 16);
 
 /**    define variable param    **/
 
-u16 ble_swith_time_thresh;
+u16 BLE_MODE_SWITCH_THRESH;
 u16 switch_mode_start_flg;
 
 u8 adv_type_switch;
@@ -181,31 +181,37 @@ _attribute_ram_code_ void proc_mouse(u8 e, u8 *p, int n);
 
 #if (USER_TEST_BLT_SOFT_TIMER)
 
-int mouse_update_suspend_proc(void)
+_attribute_ram_code_ int mouse_update_suspend_proc(void)
 {
 	//gpio 0 toggle to see the effect
-	device_led_process();  //led management
-	proc_mouse(0,0,0);
-	if(blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
 
+	proc_mouse(0,0,0);
+	device_led_process();  //led management
+	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN ){
 		//conn_para_updata_retry();
-//		if(!clock_time_exceed(latest_user_event_tick, 3 * 1000000)){
-//			BleSuspendMode = BLE_SUSPEND_0;
-//			if(Suspend_back_flag){
-//				Suspend_back_flag = 0;
-//				return 24000;
-//			}
-//			return 11250;
-//		}
-		if(clock_time_exceed(latest_user_event_tick,3000000) && !clock_time_exceed(latest_user_event_tick, 62 * 1000000)){
-//			BleSuspendMode = BLE_SUSPEND_1;
+		if(adv_type_det){
+			adv_type_det = 0;
+			u8 analog_r4 = analog_read(DEEP_ANA_REG4)& (~BIT(3));
+			analog_write(DEEP_ANA_REG4, analog_r4);
+		}
+
+		BLE_MODE_SWITCH_THRESH =  BLE_CON_MODE_SWITCH_CNT;// : BLE_CON_MODE_SWITCH_CNT;
+		if(!clock_time_exceed(latest_user_event_tick, 3000000)){
+			return 11350;
+		}
+		else if(!clock_time_exceed(latest_user_event_tick, 61000000)){
+
 			return 105000;
 		}
-	}
-	else{									//adv state
-		return 0;						//hold on, 8ms
-	}
 
+	}
+	else{
+		return 0;
+//		if(!clock_time_exceed(latest_user_event_tick, 62 * 1000000)){
+//			BleSuspendMode = BLE_SUSPEND_1;
+//			return 105000;
+//		}
+	}
 }
 
 int gpio_test1(void)
@@ -292,7 +298,7 @@ void ble_para_updata(u8 e, u8 *p, int n ){
 
 void	task_connect (u8 e, u8 *p, int n)
 {
-	conn_para_tick = clock_time();
+	//conn_para_tick = clock_time();
 	bls_l2cap_requestConnParamUpdate (9, 9, 99, 400);   //10ms *(99+1) = 1000 ms
 
 }
@@ -394,7 +400,6 @@ _attribute_ram_code_ void proc_mouse(u8 e, u8 *p, int n)
 			latest_user_event_tick = clock_time();
 			bls_att_pushNotifyData (HID_HANDLE_MOUSE_REPORT, (u8 *)mouse_status.data, 4);
 			//Suspend_back_flag = (BleSuspendMode == BLE_SUSPEND_1) ? 1 : 0;
-			ble_swith_time_thresh = (blc_ll_getCurrentState() == BLS_LINK_STATE_ADV) ? BLE_ADV_MODE_SWITCH_CNT : BLE_CON_MODE_SWITCH_CNT;
 		}
 		else if(cur_btn_value){//(last_btn_value && !cur_btn_value){
 			bls_att_pushNotifyData (HID_HANDLE_MOUSE_REPORT, mouse_relsease_buff, 4);
@@ -562,12 +567,14 @@ void ble_user_init()
 	mouse_get_pre_info_from_master = bls_smp_getPeerAddrInfo (&master_per_info);		//0:success, 1:fail
 
 	if(!mouse_get_pre_info_from_master && !adv_type_det){			//direct adv
+		BLE_MODE_SWITCH_THRESH =  BLE_DIRECT_ADV_MODE_SWITCH_CNT;// : BLE_CON_MODE_SWITCH_CNT;
 		status = bls_ll_setAdvParam( ADV_INTERVAL_10MS, ADV_INTERVAL_10MS, \
 										ADV_TYPE_CONNECTABLE_DIRECTED_LOW_DUTY, OWN_ADDRESS_PUBLIC, \
 									 	 0,  master_per_info.addr_mac,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);		//directed adv packet, all channel, interval = 30ms, duration 60s
-		bls_ll_setAdvDuration(62000000, 1);
+		bls_ll_setAdvDuration(61000000, 1);
 	}
 	else{
+		BLE_MODE_SWITCH_THRESH =  BLE_UNDIRECT_ADV_MODE_SWITCH_CNT;// : BLE_CON_MODE_SWITCH_CNT;
 		status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 									 	 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 	 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
@@ -627,7 +634,7 @@ void ble_user_init()
 //////////////// TEST  /////////////////////////
 #if (USER_TEST_BLT_SOFT_TIMER)
 	blt_soft_timer_init();
-	blt_soft_timer_add(&mouse_update_suspend_proc, 11250);
+	blt_soft_timer_add(&mouse_update_suspend_proc, 11350);
 #endif
 
 
@@ -674,9 +681,9 @@ void main_loop ()
 
 		blt_sdk_main_loop();
 		////////////////////////////////////// UI entry /////////////////////////////////
+
 		//proc_mouse(0,0,0);
-		//DEVICE_LED_TOGGLE;
-		//device_led_process();  				//led management
+		//device_led_process();  			//led management
 
 		blt_pm_proc();						//power management
 	}

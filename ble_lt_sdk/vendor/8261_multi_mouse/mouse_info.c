@@ -23,6 +23,71 @@ static device_info_t device_info;
  *  or Load from OTP
  *
  */
+#if 1
+void device_info_load(mouse_status_t *mouse_status)
+{
+#if DEVICE_INFO_STORE
+    u8 * pd = (u8 *) &device_info;
+
+#if 0
+    for (int i=DEEP_ANA_REG1; i<=DEEP_ANA_REG4; i++) {
+        *pd ++ = analog_read (i);
+    }
+#else
+    for (int i=DEEP_ANA_REG0; i<=DEEP_ANA_REG4; i++) {
+        *pd ++ = analog_read (i);
+    }
+#endif
+
+    mouse_status->mouse_mode = device_info.mode & 0x03;
+
+//   Need get poweron, cpi, etc back first
+    if ( mouse_status->mouse_mode == STATE_NORMAL ){
+        mouse_status->mouse_sensor = device_info.mode & INFO_SENSOR_STATUS_CTRL;
+#if 0
+    	mouse_status->dongle_id = rf_access_code_16to32(device_info.dongle_id);
+        rf_set_access_code1 (mouse_status->dongle_id);
+#else
+    	mouse_status->dongle_id = device_info.dongle_id;
+        rf_set_access_code1 (mouse_status->dongle_id);
+#endif
+    }
+#else
+    mouse_status->mouse_mode = device_info.mode ? STATE_NORMAL : STATE_POWERON;
+#endif
+}
+
+/*
+ * Save the information need from the deep sleep back
+ *
+ */
+void device_info_save(mouse_status_t *mouse_status, u32 sleep_save)
+{
+
+    u8 * pd = (u8 *) &device_info;
+
+
+    device_info.mode = ( (SysMode<<2) | mouse_status->mouse_mode);
+
+    if(SysMode == RF_2M_2P4G_MODE){
+
+    	device_info.mode |= (mouse_status->mouse_sensor & 0xf0);
+
+#if 0
+    	device_info.dongle_id = rf_access_code_32to16(mouse_status->dongle_id);
+    	for (u8 i=DEEP_ANA_REG1; i<=DEEP_ANA_REG4; i++) {
+    		analog_write (i, *pd ++);
+    	}
+#else
+    	device_info.dongle_id = mouse_status->dongle_id;
+    	for (u8 i=DEEP_ANA_REG0; i<=DEEP_ANA_REG4; i++) {
+    		analog_write (i, *pd ++);
+    	}
+#endif
+
+    }
+}
+#else
 void device_info_load(mouse_status_t *mouse_status)
 {
 #if DEVICE_INFO_STORE
@@ -99,6 +164,6 @@ void device_info_save(mouse_status_t *mouse_status, u32 sleep_save)
     }
 }
 #endif
-
+#endif
 
 

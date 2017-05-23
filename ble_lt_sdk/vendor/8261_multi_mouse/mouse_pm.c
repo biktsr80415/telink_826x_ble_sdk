@@ -74,7 +74,7 @@ void mouse_sleep_wakeup_init( mouse_hw_t *pHW, u8 sensor ){
 
 
 
-void mouse_sleep_mode_machine (mouse_sleep_t *cfg_slp)
+_attribute_ram_code_ void mouse_sleep_mode_machine (mouse_sleep_t *cfg_slp)
 {
 	if(cfg_slp->device_busy){
 

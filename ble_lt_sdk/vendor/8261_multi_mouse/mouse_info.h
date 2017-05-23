@@ -7,16 +7,21 @@
 #endif
 
 typedef struct{
+
+#if 0
 	u8 	mode;
 	u8	sensor;
 
-#if 1
 	u16 rsvd;
 	u32 dongle_id;
-
 #else
-	u16 dongle_id;
+
+	u32 dongle_id;
+
+	u8 	mode;
+	u8	sensor;
 #endif
+
 
 } device_info_t;
 

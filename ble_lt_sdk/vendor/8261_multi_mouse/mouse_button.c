@@ -135,7 +135,7 @@ static inline void mouse_button_process_test_mode( u8 *mouse_mode, u8 *dbg_mode,
 extern u8 adv_type_switch;
 extern u8 mouse_get_pre_info_from_master;
 extern u8 SysMode;
-extern u16 ble_swith_time_thresh;
+extern u16 BLE_MODE_SWITCH_THRESH;
 extern u16 switch_mode_start_flg;
 extern led_cfg_t led_cfg[];
 extern led_cfg_t led_cpi[];
@@ -188,9 +188,9 @@ inline u32 mouse_button_process(mouse_status_t * mouse_status)
     	button_pre = button_last;
     }
 
-    thresh_cnt = (SysMode == RF_1M_BLE_MODE) ? ble_swith_time_thresh : _2P4G_MODE_SWITCH_CNT;
+    thresh_cnt = (SysMode == RF_1M_BLE_MODE) ? BLE_MODE_SWITCH_THRESH : NORMAL_MODE_SWITCH_THRESH;
 
-    if((btn_d_cnt > 300) && !mouse_get_pre_info_from_master && (SysMode == RF_1M_BLE_MODE)){
+    if((btn_d_cnt > 270) && !mouse_get_pre_info_from_master && (SysMode == RF_1M_BLE_MODE)){
     	adv_type_switch = 1;
     	device_led_setup(led_cfg[1]);
     }
@@ -204,18 +204,20 @@ inline u32 mouse_button_process(mouse_status_t * mouse_status)
 
 
 	if( ((switch_mode_start_flg == 2) || adv_type_switch == 1) && !DEVICE_LED_BUSY){
-    	u8 ana_reg1 = analog_read(DEEP_ANA_REG1);
+    	u8 ana_reg1 = analog_read(DEEP_ANA_REG4);
 
     	if(switch_mode_start_flg == 2){
-    		if(!SysMode)
-    			ana_reg1 |= BIT(4);
-    		else
-    			ana_reg1 &= ~BIT(4);
+    		if(!SysMode){
+    			ana_reg1 |= BIT(2);
+    		}
+    		else{
+    			ana_reg1 &= ~BIT(2);
+    		}
     	}
     	else{
-    		ana_reg1 |= BIT(5);
+    		ana_reg1 |= BIT(3);
     	}
-    	analog_write(DEEP_ANA_REG1, ana_reg1);
+    	analog_write(DEEP_ANA_REG4, ana_reg1);
 		irq_disable();
 		REG_ADDR8(0x6f) = 0x20;
 		while(1);

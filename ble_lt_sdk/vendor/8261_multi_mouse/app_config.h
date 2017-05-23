@@ -58,9 +58,10 @@ enum{
 #define 		CUST_CAP_INFO_ADDR		0x1f040
 #define 		CUST_TP_INFO_ADDR		0x1f080
 
-#define			BLE_CON_MODE_SWITCH_CNT		300			//8ms * 375 = 3s
-#define 		BLE_ADV_MODE_SWITCH_CNT		100			//30ms * 100 = 3s
-#define			_2P4G_MODE_SWITCH_CNT		300			//3s
+#define			BLE_CON_MODE_SWITCH_CNT				267			//11.25ms * 267 = 3s
+#define 		BLE_DIRECT_ADV_MODE_SWITCH_CNT		300			//30ms * 100 = 3s
+#define 		BLE_UNDIRECT_ADV_MODE_SWITCH_CNT	100			//30ms * 100 = 3s
+#define			NORMAL_MODE_SWITCH_THRESH			300			//3s
 
 #define			MOUSE_OPTICAL_EN		1			//open mouse_sensor_pix.c
 #define			TELINK_MOUSE_DEMO		1		// 1 : Telink multi mouse demo, 0: MIWU multi mouse

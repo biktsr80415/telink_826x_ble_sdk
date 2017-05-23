@@ -75,8 +75,8 @@ int main (void) {
 
 	deep_wakeup_proc();
 
-	SysMode = (analog_read(DEEP_ANA_REG1) & BIT(4)) >> 4;
-	adv_type_det = (analog_read(DEEP_ANA_REG1) & BIT(5)) >> 5;
+	SysMode = (analog_read(DEEP_ANA_REG4) & BIT(2)) >> 2;
+	adv_type_det = (analog_read(DEEP_ANA_REG4) & BIT(3)) >> 3;
 
 	rf_drv_init( SysMode == RF_2M_2P4G_MODE ? XTAL_12M_RF_2m_MODE : XTAL_12M_RF_1m_MODE);
 
