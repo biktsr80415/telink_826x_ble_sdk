@@ -17,6 +17,14 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj/drivers/uart.h"
 
+//////////////////////// UART variables ///////////////////////////
+unsigned char rx_uart_r_index;
+unsigned char rx_uart_w_index;
+uart_data_t T_txdata_buf;
+uart_data_t T_rxdata_user;
+uart_data_t T_rxdata_buf[2];   // data max 252, user must copy rxdata to other Ram,but not use directly
+///////////////////////////////////////////////////////////////////
+
 MYFIFO_INIT(hci_tx_fifo, 72, 4);
 
 int		dongle_pairing_enable;

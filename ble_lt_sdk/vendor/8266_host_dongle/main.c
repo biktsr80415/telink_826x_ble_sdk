@@ -10,7 +10,8 @@
 
 extern void user_init();
 extern void deep_wakeup_proc(void);
-
+extern uart_data_t T_rxdata_buf[2];
+extern unsigned char rx_uart_r_index;
 _attribute_ram_code_ void irq_handler(void)
 {
 	static	u32	dbg_tx, dbg_rx;

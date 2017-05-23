@@ -35,7 +35,7 @@ extern u8  devName2[20];
 
 flyco_spp_AppCallbacks_t *flyco_spp_cbs;
 
-u8 devNameT[26] = {0};//Temporary storage device name, data structure:[12閿涙evName1閿涳拷閿涙evName2]
+u8 devNameT[26] = {0};//Temporary storage device name, data structure:[12闁挎稒顑廵vName1闁挎冻鎷烽柨娑欘儚evName2]
 u8 set_devname1_flg = 0;//Set devname1 flag
 
 //flyco cmd timer callback used variable
@@ -55,127 +55,141 @@ u8 spp_cmd_set_baudrate_flg;
 u8 ble_connected_1st_flg;
 
 //Notice:flash_erase_sector should place at user_init(), Do Not use this function in main_loop()!!!
- int adv_interval_index;
- int rf_power_index;
- int adv_timeout_index;
- int adv_data_index;
- int devname_index;
- int devname1_index;
- int devname2_index;
- int identified_index;
- int baudrate_index;
-/////////////////////////////////////FLASH data save and read management////////////////////////////////
-// FLASH struct : index | 00 | data[30]
-//read user data in FLASH
-void flyco_load_para_addr(u32 addr, int* index, u8* p, u8 len){
+//////////////////////////////////// flash NV management ////////////////////////////////////>
+// FLASH struct : | index | 00 | data[PARAM_NV_UNIT - 2] |
+
+//获取当前FLASH指定区域中参数存储的当前idx值
+int get_current_flash_idx(u32 addr){
 	int idx=0;
-	for (idx=0; idx < 4*1024; idx+=32)//4K per sector
+	for (idx=0; idx < 4*1024; idx+= PARAM_NV_UNIT)//4K per sector
 	{
-		if (*(u16 *)(addr+idx) == U16_MAX)	//end
+		u16 read_from_flash;
+		flash_read_page((addr+idx), 2, (u8*)&read_from_flash);
+		if (read_from_flash == U16_MAX)//end
 		{
 			break;
 		}
 	}
 
-	idx -= 32;
-
-	if(idx < 0 || idx == 4064){
-		return;
-	}
-
-	*index = idx;
-	memcpy (p, (u32 *)(addr+idx+2), len);
-}
-//erase user data in FLASH
-void flyco_erase_para(u32 addr, int* index){
-	//get index in flash
-	int idx=0;
-	for (idx=0; idx < 4*1024; idx+=32)//4K per sector
-	{
-		if (*(u16 *)(addr+idx) == U16_MAX)	//end
-		{
-			break;
-		}
-	}
-
-	idx -= 32;
+	idx -= PARAM_NV_UNIT;
 
 	if(idx < 0){
-		return;
+		printf("empty. \n");
+		return -1;//empty
 	}
-
-	*index = idx;
-	////////////////////above get index in flash//////
-
-	if(*index >= 4032){//4064-32
-		nv_manage_t p;
-		p.curNum = 0x01;
-		memcpy (p.data, (u32*)(addr+ *index + 2), 30);
-		*index = 0;
-		flash_erase_sector(addr);
-		extern void save_para(u32 addr, int* index, u8* buf, u16 len);
-		save_para(addr, index, (u8*)&p, 32);
+	else if(idx >= PARAM_NV_MAX_IDX){
+		printf("full. \n");
+		return 0xffff;//full
+	}
+	else{
+		printf("current idx:0x%x. \n", idx);
+		return idx;//current idx num
 	}
 }
+//从FLASH中获取当前idx存储的内容
+u8 load_param_from_flash(u32 addr, u8* p, u8 len){
+	int currIdx = get_current_flash_idx(addr);
 
-void save_para(u32 addr, int* index, u8* buf, u16 len){
+    if( currIdx >= 0 && currIdx <= (PARAM_NV_MAX_IDX - PARAM_NV_UNIT)){
+
+    	if(len > (PARAM_NV_UNIT-2)){//len check
+    		return 0;//failed
+    	}
+
+    	memcpy (p, (u32 *)(addr+currIdx+2), len);//将FLASH中当前idx对应的参数拷贝到p中
+    	//printf("将FLASH中当前idx对应的参数拷贝到p中.\n");
+    	return 1;//succeed
+	}
+    //printf("当前FLASH区域为空或存满.\n");
+    return 0;//failed
+}
+//判断是否需要将指定区域的FLASH sector擦除（4K）
+void param_clear_flash(u32 addr){
 	//get index in flash
-	int idx=0;
-	for (idx=0; idx < 4096; idx+=32)//4K per sector
-	{
-		if (*(u16 *)(addr+idx) == U16_MAX)	//end
-		{
-			break;
-		}
+	int currIdx = get_current_flash_idx(addr);
+
+	if(currIdx == 0xffff){//full
+		//printf("当前FLASH区域存满.\n");
+		nv_manage_t p;
+		memcpy (p.data, (u32*)(addr + PARAM_NV_MAX_IDX + 2), PARAM_NV_UNIT - 2);
+        //printf("擦除当前FLASH区域.\n");
+		flash_erase_sector(addr);//erase
+		//printf("保存FLSH区域中最后一笔数据存储到当前FLASH首地址区域.\n");
+		save_param_nv(addr, (u8*)&p.data, PARAM_NV_UNIT - 2);
+	}
+}
+//将用户数据存储到FLASH中当前idx区域
+u8 save_param_nv(u32 addr, u8* buf, u16 len){
+	//get index in flash
+	int currIdx = get_current_flash_idx(addr);
+
+	if(currIdx == 0xffff){//full
+		//printf("当前FLASH区域存满.\n");
+		return 0;//failed
 	}
 
-	if(idx == 4064){//4096-32
-		return;
+	if(len > (PARAM_NV_UNIT - 2)){
+		//printf("保存参数长度过长.\n");
+		return 0;//failed
 	}
 
-	*index = idx;
-    ////////////////////above get index in flash//////
-
-	if(*index-32 >= 0){
+	//                     0:   start idx
+	//  4096 - PARAM_NV_UNIT:   full idx
+	//4096 - 2*PARAM_NV_UNIT:   full idx - PARAM_NV_UNIT
+	if(currIdx >= 0  && currIdx <= (PARAM_NV_MAX_IDX - PARAM_NV_UNIT)){
 		u8 clr[2] = {0};
-		flash_write_page(addr + *index - 32, 2, clr);
+		flash_write_page(addr + currIdx, 2, clr);
+		printf("Erase flash prefix header：0x0000. \n");
 	}
+
+	currIdx = PARAM_NV_UNIT + ((currIdx == -1) ? -PARAM_NV_UNIT : currIdx);
+
+	printf("Update currIdx: 0x%x. \n", currIdx);
+
 	nv_manage_t p;
 	p.curNum = 0x01;
 	p.tmp    = 0xFF;
+
 	memcpy(p.data, buf, len);
-	flash_write_page((addr + *index), len + 2, (u8*)&p);
-	*index += 32;
+
+	//printf("写下一组数据到下一个idx区域:\n");foreach(i, len+2){PrintHex(*((u8*)&p + i));} printf("\n");
+
+	//PARAM_NV_UNIT为2的倍数，每一个参数长度选PARAM_NV_UNIT不会出现跨page问题?
+	flash_write_page((addr + currIdx), len + 2, (u8*)&p);
+
+	return 1;
 }
+/////////////////////////////// flash NV management above /////////////////////////////////<
+
 
 u8 nv_write(u8 id, u8 *buf, u16 len){
 	switch(id){
 	case NV_FLYCO_ITEM_BAUD_RATE:
-		save_para(BAUD_RATE_ADDR, &baudrate_index, buf, len);
+		save_param_nv(BAUD_RATE_ADDR, buf, len);
 	break;
 	case NV_FLYCO_ITEM_RF_POWER:
-		save_para(RF_POWER_ADDR, &rf_power_index, buf, len);
+		save_param_nv(RF_POWER_ADDR, buf, len);
 	break;
 	case NV_FLYCO_ITEM_IDENTIFIED:
-		save_para(IDENTIFIED_ADDR, &identified_index, buf, len);
+		save_param_nv(IDENTIFIED_ADDR, buf, len);
 	break;
 	case NV_FLYCO_ITEM_ADV_TIMEOUT:
-		save_para(ADV_TIMEOUT_ADDR, &adv_timeout_index, buf, len);
+		save_param_nv(ADV_TIMEOUT_ADDR, buf, len);
 	break;
 	case NV_FLYCO_ITEM_DEV_NAME1:
-		save_para(DEV_NAME1_ADDR, &devname1_index, buf, len);
+		save_param_nv(DEV_NAME1_ADDR, buf, len);
 	break;
 	case NV_FLYCO_ITEM_DEV_NAME2:
-		save_para(DEV_NAME2_ADDR, &devname2_index, buf, len);
+		save_param_nv(DEV_NAME2_ADDR, buf, len);
 	break;
 	case NV_FLYCO_ITEM_DEV_NAME:
-		save_para(DEV_NAME_ADDR, &devname_index, buf, len);
+		save_param_nv(DEV_NAME_ADDR, buf, len);
 	break;
 	case NV_FLYCO_ITEM_ADV_DATA:
-		save_para(ADV_DATA_ADDR, &adv_data_index, buf, len);
+		save_param_nv(ADV_DATA_ADDR, buf, len);
 	break;
 	case NV_FLYCO_ITEM_ADV_INTERVAL:
-		save_para(ADV_INTERVAL_ADDR, &adv_interval_index, buf, len);
+		save_param_nv(ADV_INTERVAL_ADDR, buf, len);
 	break;
    }
    return 0;
@@ -231,6 +245,18 @@ int ble_event_handler(u32 h, u8 *para, int n)
 #if HEARTBEAT_FLYCO
 				ble_connected_1st_flg = 0;
 				spp_cmd_get_rssi_flg = 0;
+#endif
+
+#if 0//When terminate event occur, check if should erase user data in flash area.
+				param_clear_flash(ADV_INTERVAL_ADDR);
+				param_clear_flash(RF_POWER_ADDR);
+				param_clear_flash(ADV_TIMEOUT_ADDR);
+				param_clear_flash(ADV_DATA_ADDR);
+				param_clear_flash(DEV_NAME_ADDR);
+				param_clear_flash(IDENTIFIED_ADDR);
+				param_clear_flash(BAUD_RATE_ADDR);
+				param_clear_flash(DEV_NAME1_ADDR);
+				param_clear_flash(DEV_NAME2_ADDR);
 #endif
 			}
 				break;
@@ -431,7 +457,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 				if(blc_ll_getCurrentState() != BLS_LINK_STATE_CONN)
 					rssi = 0x80;//If not connected, according to FLYCO cmd provision rssi=0x80;
 				else
-					rssi = blc_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB閳槃SSI閳拷dB
+					rssi = blc_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB闁愁噮妲僑SI闁愁噯鎷穌B
 
 				//if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
 					//flyco_spp_module_rsp2cmd(pp->cmdID, &rssi, 1);
@@ -525,7 +551,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 				    set_devname1_flg = 0;
 					u8 devNameTmp1[20], devNameTmp2[20];
 
-					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1锛� 1 1 1 1 space Null锛�
+					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1閿涳拷 1 1 1 1 space Null閿涳拷
 					memcpy(devNameTmp2, devNameT + 13, 7);
 
 					nv_write(NV_FLYCO_ITEM_DEV_NAME1, devNameTmp1, 20);
@@ -640,7 +666,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				//The first value of the broadcast array is the total length of the broadcast data!
-				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data閿涙LYCO
+				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data闁挎稒顑慙YCO
 				if(advTem[0]){
 					memcpy(advData, advTem, 20);
 				}
@@ -743,7 +769,7 @@ void flyco_spp_onModuleCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_SET_ADV_TIMEOUT:{//Adv time set, boot or wake up after the parameter effect!
 			if(pp->len == 1){
 				flyco_spp_cmd_adv_timeout_t *p = (flyco_spp_cmd_adv_timeout_t *)pp;
-				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit閿涙s, enlarge 1000閿涘imeout unit:s
+				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit闁挎稒顒痵, enlarge 1000闁挎稑顔搃meout unit:s
 				nv_write(NV_FLYCO_ITEM_ADV_TIMEOUT, (u8 *)&adv_timeout, 4);
 				//bls_ll_setAdvDuration(adv_timeout, adv_timeout == 0 ? 0 : 1);
 				if(adv_timeout == 0)bls_ll_setAdvEnable(1);
@@ -947,7 +973,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 				if(blc_ll_getCurrentState() != BLS_LINK_STATE_CONN)
 					rssi = 0x80;//If not connected, according to FLYCO cmd provision rssi=0x80;
 				else
-					rssi = blc_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB閳槃SSI閳拷dB
+					rssi = blc_ll_getLatestAvgRSSI() - 110; //The reference range:-85dB闁愁噮妲僑SI闁愁噯鎷穌B
 				//if(rssi == 0x80 || (-85 <= rssi && rssi <= 5))
 					//flyco_spp_received_master_rsp2cmd(pp->cmdID, &rssi, 1);
 			}
@@ -1041,7 +1067,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 				    set_devname1_flg = 0;
 					u8 devNameTmp1[20], devNameTmp2[20];
 
-					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1锛� 1 1 1 1 space Null锛�
+					memcpy(devNameTmp1, devNameT, 13);// * 1 1 1 1 1 1 1 1 1 1 1 1閿涳拷 1 1 1 1 space Null閿涳拷
 					memcpy(devNameTmp2, devNameT + 13, 7);
 
 					nv_write(NV_FLYCO_ITEM_DEV_NAME1, devNameTmp1, 20);
@@ -1156,7 +1182,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 
 			if(pp->len == 0){
 				//The first value of the broadcast array is the total length of the broadcast data!
-				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data閿涙LYCO
+				u8 advData[20] = {5, 'F', 'L', 'Y', 'C', 'O'};//FLYCO default adv data闁挎稒顑慙YCO
 				if(advTem[0]){
 					memcpy(advData,advTem, 20);
 				}
@@ -1257,7 +1283,7 @@ void flyco_spp_onModuleReceivedMasterCmd(flyco_spp_cmd_t *pp) {
 		case FLYCO_SPP_CMD_MODULE_SET_ADV_TIMEOUT:{//Adv time set, boot or wake up after the parameter effect!
 			if(pp->len == 1){
 				flyco_spp_cmd_adv_timeout_t *p = (flyco_spp_cmd_adv_timeout_t *)pp;
-				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit閿涙s, enlarge 1000閿涘imeout unit:s
+				adv_timeout = ((u32)p->tim) * 1000 * 1000;//unit闁挎稒顒痵, enlarge 1000闁挎稑顔搃meout unit:s
 				nv_write(NV_FLYCO_ITEM_ADV_TIMEOUT, (u8 *)&adv_timeout, 4);
 				//bls_ll_setAdvDuration(adv_timeout, adv_timeout == 0 ? 0 : 1);
 				if(adv_timeout == 0)bls_ll_setAdvEnable(1);
@@ -1383,7 +1409,7 @@ void blt_user_timerCb_proc(void){
 			spp_cmd_disconnect_master_flg =0;
 		}
 		else{//Slave disconnect
-			bls_ll_setAdvEnable(0);//Add 娑撳秴绠嶉幘锟�
+			bls_ll_setAdvEnable(0);//Add 濞戞挸绉寸粻宥夊箻閿燂拷
 		}
 
 		bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
