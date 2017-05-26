@@ -44,14 +44,8 @@ extern "C" {
 
 #define ADPCM_PACKET_LEN 				128//压缩后发送给BLE master设备的语音压缩包大小
 #define TL_MIC_ADPCM_UNIT_SIZE 			248//15.5ms产生248个sample
-#define TL_SDM_BUFFER_SIZE 				1024//
+#define TL_SDM_BUFFER_SIZE 				2048//
 #define TL_MIC_32K_FIR_16K 				0
-
-#if TL_MIC_32K_FIR_16K//MIC 硬件使用32K 采样进行FIR 处理后以16K 速度将数据放入buffer 时，可以理解为每个sample 变成4 bytes 数据
-#define TL_MIC_BUFFER_SIZE 				1984//（压缩时只用前两个bytes 作为一个16 bit 的原声数据，后两个bytes 放弃），此时buffer size 加倍，TL_MIC_BUFFER_SIZE 为1984。
-#else//16k采样
-#define TL_MIC_BUFFER_SIZE 				992//将这个buffer 设置为能够存储2 笔压缩数据，也就是496 个sample，对应992bytes
-#endif
 
 /////////////////// DMIC GPIO /////////////////////
 //----Digital MIC------

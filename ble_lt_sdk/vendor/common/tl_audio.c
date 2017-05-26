@@ -1048,11 +1048,11 @@ void silence_to_sdm (void){
 	}
 }
 
-int  sdm_decode_ready (int nshort_to_decode)
+int  sdm_decode_ready (int nSample_to_decode)
 {
 	u16 sdm_rptr = reg_aud_rptr; //get_sdm_rd_ptr ();
 	u16 num = (buffer_sdm_wptr - sdm_rptr) & ((TL_SDM_BUFFER_SIZE>>2) - 1);
-	return (nshort_to_decode + num) < (TL_SDM_BUFFER_SIZE >> 2);
+	return (nSample_to_decode + num) < (TL_SDM_BUFFER_SIZE >> 2);
 }
 
 void  sdm_decode_rate (int step, int adj)
@@ -1077,6 +1077,77 @@ void proc_sdm_decoder (void)
 int  sdm_decode_data (int *ps, int nbyte)
 {
 
+}
+
+int  adpcm2sdm (signed short *ps){
+	int i;
+
+	//byte2,byte1: predict;  byte3: predict_idx; byte4:adpcm data len
+	int predict = ps[0];
+	int predict_idx = ps[1] & 0xff;
+	int adpcm_len = (ps[1]>>8) & 0xff;
+
+
+	unsigned char *pcode = (unsigned char *) (ps + 2);
+
+	unsigned char code;
+	code = *pcode ++;
+
+	//byte5- byte128: 124 byte(62 sample) adpcm data
+	for (i=0; i<adpcm_len * 2; i++) {
+
+		if (1) {
+			int step = steptbl[predict_idx];
+
+			int diffq = step >> 3;
+
+			if (code & 4) {
+				diffq = diffq + step;
+			}
+			step = step >> 1;
+			if (code & 2) {
+				diffq = diffq + step;
+			}
+			step = step >> 1;
+			if (code & 1) {
+				diffq = diffq + step;
+			}
+
+			if (code & 8) {
+				predict = predict - diffq;
+			}
+			else {
+				predict = predict + diffq;
+			}
+
+			if (predict > 32767) {
+				predict = 32767;
+			}
+			else if (predict < -32767) {
+				predict = -32767;
+			}
+
+			predict_idx = predict_idx + idxtbl[code & 15];
+
+			if(predict_idx < 0) {
+				predict_idx = 0;
+			}
+			else if(predict_idx > 88) {
+				predict_idx = 88;
+			}
+
+			if (i&1) {
+				code = *pcode ++;
+			}
+			else {
+				code = code >> 4;
+			}
+		}
+
+		buffer_sdm[buffer_sdm_wptr] = predict;
+		buffer_sdm_wptr = (buffer_sdm_wptr + 1) & ((TL_SDM_BUFFER_SIZE>>2) - 1);
+	}
+	return adpcm_len + 4;
 }
 
 #endif
