@@ -214,6 +214,7 @@ void mouse_pair_and_sync_process(mouse_status_t * mouse_status){
 }
 //u32 debug_last_wakeup_level;
 extern int uart_rx_irq_en;
+extern unsigned short battValue[10];
 _attribute_ram_code_ void mouse_task_when_rf ( void ){
 
 
@@ -249,16 +250,9 @@ _attribute_ram_code_ void mouse_task_when_rf ( void ){
     mouse_button_process(&mouse_status);
 #endif
     
-#if    MOSUE_BATTERY_LOW_DETECT
-    static u16 batt_det_count = 0;    
-    if( (mouse_status.rf_mode != RF_MODE_IDLE) && (device_sleep.mode == M_SUSPEND_8MS) ){        
-        if ( ++batt_det_count >= mouse_batt_detect_time ){
-            mouse_batt_det_process(&mouse_status);
-            batt_det_count = 0;
-        }
-    }
-    else{
-        batt_det_count = mouse_batt_detect_time;
+#if(MOUSE_BATT_MOUDULE_EN)
+    if(mouse_status.rf_mode == RF_MODE_IDLE){
+    	mouse_battery_check(battValue, sizeof(battValue)/sizeof(battValue[0]),2200);
     }
 #endif
 
@@ -280,21 +274,15 @@ void mouse_task_in_ram( void ){
 
 }
 
-void mouse_emi_process()
-{
 
-	emi_process (RF_POWER_8dBm);
-
-
-}
-
+extern void mouse_battery_check(unsigned short *batt, u8 len);
 void mouse_main_loop(void)
 {
 	static u32 main_loop_tick;
 
 
 	if( MOUSE_EMI_4_FCC || (mouse_status.mouse_mode == STATE_EMI) ){
-		mouse_emi_process();
+		mouse_emi_process(&mouse_status);
 	}
 	else
 	{
