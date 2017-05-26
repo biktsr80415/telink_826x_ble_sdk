@@ -1150,6 +1150,15 @@ int  adpcm2sdm (signed short *ps){
 	return adpcm_len + 4;
 }
 
+int  silence2sdm (int nsample)
+{
+	for (int i=0; i<nsample; i++) {
+		buffer_sdm[buffer_sdm_wptr] = 0;
+		buffer_sdm_wptr = (buffer_sdm_wptr + 1) & ((TL_SDM_BUFFER_SIZE>>2) - 1);
+	}
+	return 0;
+}
+
 #endif
 
 #endif

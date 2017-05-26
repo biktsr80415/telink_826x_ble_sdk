@@ -2153,7 +2153,7 @@
 								<option id="com.telink.tc32eclipse.compiler.option.def.363833228" name="Define Syms (-D)" superClass="com.telink.tc32eclipse.compiler.option.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__PROJECT_8266_AUDIO_MIC_SDM__=1"/>
 								</option>
-								<option id="com.telink.tc32eclipse.compiler.option.incpath.96340918" superClass="com.telink.tc32eclipse.compiler.option.incpath" valueType="includePath">
+								<option id="com.telink.tc32eclipse.compiler.option.incpath.96340918" name="Include Paths (-I)" superClass="com.telink.tc32eclipse.compiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj/mcu}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj/mcu_spec}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj/common}&quot;"/>
@@ -2162,7 +2162,7 @@
 							</tool>
 							<tool command="tc32-elf-ld --gc-sections" id="com.telink.tc32eclipse.tool.linker.TC32Win.app.release.1304616377" name="TC32 C Linker" superClass="com.telink.tc32eclipse.tool.linker.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.linker.option.libs.2003150086" name="Libraries (-l)" superClass="com.telink.tc32eclipse.linker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="lt_8266_mod"/>
+									<listOptionValue builtIn="false" value="lt_8266_32m"/>
 								</option>
 								<option id="com.telink.tc32eclipse.linker.option.libpath.1506509647" name="Libraries Path (-L)" superClass="com.telink.tc32eclipse.linker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj_lib}&quot;"/>
