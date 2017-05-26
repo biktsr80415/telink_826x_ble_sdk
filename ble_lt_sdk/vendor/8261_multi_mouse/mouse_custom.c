@@ -117,18 +117,6 @@ custom_btn_ui_t mouse_btn_ui = {
 };
 
 
-
-#if(MOUSE_LED_MODULE_EN & 0)
-led_cfg_t mouse_led_cfg[] = {
-    32,     1,      1,      0x40,    //power-on, 2s on
-    2,      2,      255,    0x40,    //pairing manual, 4Hz
-    0,      8,      3,      0x80,    //pairing end
-    4,      4,      3,      0,       //battery low  2Hz
-    8,      8,      3,      0,       //cpi, 1Hz
-    0,      8,      3,      0,       //rsvd, 3Hz
-};
-#endif
-
 #if 1//MOUSE_CUSTOM_FULL_FUNCTION    
 void mouse_custom_re_get( u8 *p_dst, u8 *p_src_0, u8 *p_src_1, u32 len ){
     int i;
@@ -251,7 +239,7 @@ void mouse_custom_init ( mouse_status_t *pStatus ){
 	mouse_custom_re_get_4( pStatus->hw_define, m_hw_def_dft, &p_custom_cfg->cust_ms_hw, sizeof(mouse_hw_t)>>2 );
     mouse_custom_re_get( &mouse_cpi, &mouse_cpi, &p_custom_cfg->sns_cpi, sizeof(custom_cpi_cfg_t) );
     mouse_custom_re_get( &mouse_btn_ui, &mouse_btn_ui, &p_custom_cfg->btn_ui, sizeof(custom_btn_ui_t) );
-//    mouse_custom_re_get( mouse_led_cfg, mouse_led_cfg, p_custom_cfg->led_cfg, sizeof(mouse_led_cfg) );
+
 #else
 	mouse_custom_re_get_4( pStatus->hw_define, m_hw_def_dft, m_hw_def_dft, sizeof(mouse_hw_t)>>2 );
 

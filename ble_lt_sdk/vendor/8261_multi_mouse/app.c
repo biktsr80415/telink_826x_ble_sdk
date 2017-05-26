@@ -34,6 +34,7 @@
 #include "mouse_sensor.h"
 
 #include "mouse_custom.h"
+#include "mouse_emi.h"
 #include "drv_mouse_pmw3610.h"
 
 
@@ -57,10 +58,7 @@ u16 switch_mode_start_flg;
 u8 adv_type_switch;
 u8 adv_type_det;
 
-//debug_
 
-
-//int SysMode = RF_1M_BLE_MODE; 			//default mode is ble mode
 u8 SysMode = RF_2M_2P4G_MODE; 			//default mode is ble mode
 
 extern mouse_status_t mouse_status;
@@ -72,8 +70,7 @@ addr_info_t master_per_info;
 
 extern st_ll_conn_slave_t		bltc;
 
-u8 conn_para_updata_success = 0;
-u32 conn_para_tick;
+
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -100,6 +97,7 @@ u32 conn_para_tick;
 
 
 u8 mouse_relsease_buff[4] = {0};
+unsigned short battValue[10] = {2376, 2897, 2678,2579, 2533, 2899, 2756, 2734, 2890, 2609};
 
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
@@ -127,34 +125,37 @@ enum{
 	LED_SHINE_OTA, //5
 };
 
-
+/*
 const led_cfg_t led_cpi[] = {
 		{250, 	250, 	1, 		0x04},
 		{250, 	250, 	2, 		0x04},
 		{250, 	250, 	3, 		0x04},
 };
-
+*/
 const led_cfg_t led_cfg[] = {
-	    {250,     0,      1,      0x00,	 },    //power-on, 1s on
 
-	    {250,	  250 ,   2,	  0x04,	 },    //1Hz for 3 seconds
-	    {250,	  250 ,   6,	  0x04,  },    //2Hz for 3 seconds
-	    {125,	  125 ,   200,	  0x08,  },    //4Hz for 50 seconds
+		{250,	250, 	1,	0x02,  },	// CPI 0
+		{250, 	250, 	2, 	0x02,  },	// CPI 1
+		{250, 	250, 	3, 	0x02,  },	// CPI 2
+
+#if (MOUSE_EMI_TEST_WITH_LED)
+		{500,   500,    1,  0x02,  },	//EMI Carry
+		{500,   500,    2,  0x02,  },	//EMI CD
+		{500,   500,    3,  0x02,  },	//EMI TX
+		{500,   500,    4,  0x02,  },	//EMI RX
+#endif
+	    {500,   0,   	1,  0x00,  },    // 1Hz, switch mode
+
+	    {500,	500 ,   2,	0x02,  },    // 1Hz for 2 seconds, back to non-direct adv
+	    {125,	125 ,   3,	0x08,  },    // 4Hz for 3 seconds
 
 };
 
 
 u32	advertise_begin_tick;
-
-
-#define CONSUMER_KEY   0
-#define KEYBOARD_KEY   1
-
-
-u8 sendTerminate_before_enterDeep = 0;
-
 u32 latest_user_event_tick;
 u8  user_task_flg;
+u8  sendTerminate_before_enterDeep = 0;
 
 static u8 ota_is_working = 0;
 
@@ -163,6 +164,8 @@ u32 stuckKey_keyPressTime;
 #endif
 
 /*
+u8 conn_para_updata_success = 0;
+u32 conn_para_tick;
 u8 conn_para_updata_retry(void){
 	if(!conn_para_updata_success && clock_time_exceed(conn_para_tick, 500000)){
 		if( bltc.conn_interval_next == 9 && bltc.conn_latency_next == 99){
@@ -177,6 +180,60 @@ u8 conn_para_updata_retry(void){
 */
 
 
+#if(MOUSE_BATT_MOUDULE_EN)
+/***********************************	希尔排序           ***********************************
+ *
+ * 算法实现：将需要排序的数组按增量d(n/2, n/4, n/8)进行分组插入排序，直到增量d为1，相当于执行一次直接插入排序
+ *
+**************************************************************************************/
+inline void ShellInsertSort(u16 *p, u8 len, int dt){
+	for(int i= dt; i<len; i++){
+		if(p[i] < p[i-dt]){
+			int j = i-dt;
+			int watcher = p[i];		//设置哨兵为第i个元素
+			while(watcher < p[j] && (j >= 0)){	//进行比较，找寻合适的插入位置
+				p[j+dt] =  p[j];
+				j -= dt;
+			}
+			p[j+dt] = watcher;		//插入到正确的位置
+		}
+	}
+}
+inline void ShellSort(u16 *p, u8 len){
+	u8 dk = len >> 1;
+		while(dk >= 1){
+			ShellInsertSort(p, len, dk);
+			dk = dk >> 1;
+		}
+ }
+
+
+_attribute_ram_code_ void mouse_battery_check(unsigned short *batt, u8 len, unsigned short alarm_thresh)
+{
+	static u32 battCheckTick = 0;
+	if(!clock_time_exceed(battCheckTick, 1000000)){
+		return;
+	}
+	else{
+		battCheckTick = clock_time();
+	}
+
+	for(int i=0; i<len;i++){
+		batt[i] = adc_SampleValueGet();
+	}
+	ShellSort(batt, len);//希尔排序
+	u8 midd = len >> 1;  //1/3分压，batt[midd-1] + batt[midd] + batt[midd-1]抵消
+	batt[0] =  (1428*((batt[midd] + batt[midd - 1] + batt[midd + 1])-128)/(16383-256));    //2^14 - 1 = 16383;
+
+	if(batt[0] < alarm_thresh){
+		device_led_setup(led_cfg[LED_BATTRY_ALARM]);			//4Hz, 3 seconds
+	}
+
+}
+
+
+#endif
+
 _attribute_ram_code_ void proc_mouse(u8 e, u8 *p, int n);
 
 #if (USER_TEST_BLT_SOFT_TIMER)
@@ -186,6 +243,8 @@ _attribute_ram_code_ int mouse_update_suspend_proc(void)
 	//gpio 0 toggle to see the effect
 
 	proc_mouse(0,0,0);
+	mouse_battery_check(battValue, sizeof(battValue)/sizeof(battValue[0]), 2200);
+
 	device_led_process();  //led management
 	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN ){
 		//conn_para_updata_retry();
@@ -194,7 +253,6 @@ _attribute_ram_code_ int mouse_update_suspend_proc(void)
 			u8 analog_r4 = analog_read(DEEP_ANA_REG4)& (~BIT(3));
 			analog_write(DEEP_ANA_REG4, analog_r4);
 		}
-
 		BLE_MODE_SWITCH_THRESH =  BLE_CON_MODE_SWITCH_CNT;// : BLE_CON_MODE_SWITCH_CNT;
 		if(!clock_time_exceed(latest_user_event_tick, 3000000)){
 			return 11350;
@@ -357,16 +415,13 @@ void deepback_pre_proc(int *det_key)
 #endif
 }
 
-u8 btn_value_det = 0;
-
-
 _attribute_ram_code_ void proc_mouse(u8 e, u8 *p, int n)
 {
 
 	/***************  按键检测      *****************/
 	//clear x,y
 	//static u8 last_btn_value;
-	static u8 cur_btn_value;
+	u8 cur_btn_value;
 	*(u32 *)(mouse_status.data) = 0;
 	//gpio_write(mouse_hw.sensor_int, 1);
 
@@ -563,18 +618,17 @@ void ble_user_init()
 
 ///////////////////// USER application initialization ///////////////////
 	bls_ll_setScanRspData(tbl_scanRsp, sizeof(tbl_scanRsp));
-
+	BLE_MODE_SWITCH_THRESH = BLE_CON_MODE_SWITCH_CNT;
 	mouse_get_pre_info_from_master = bls_smp_getPeerAddrInfo (&master_per_info);		//0:success, 1:fail
 
 	if(!mouse_get_pre_info_from_master && !adv_type_det){			//direct adv
-		BLE_MODE_SWITCH_THRESH =  BLE_DIRECT_ADV_MODE_SWITCH_CNT;// : BLE_CON_MODE_SWITCH_CNT;
+
 		status = bls_ll_setAdvParam( ADV_INTERVAL_10MS, ADV_INTERVAL_10MS, \
 										ADV_TYPE_CONNECTABLE_DIRECTED_LOW_DUTY, OWN_ADDRESS_PUBLIC, \
 									 	 0,  master_per_info.addr_mac,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);		//directed adv packet, all channel, interval = 30ms, duration 60s
 		bls_ll_setAdvDuration(61000000, 1);
 	}
 	else{
-		BLE_MODE_SWITCH_THRESH =  BLE_UNDIRECT_ADV_MODE_SWITCH_CNT;// : BLE_CON_MODE_SWITCH_CNT;
 		status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 									 	 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 	 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
@@ -653,6 +707,9 @@ void user_init(){
 #else
 
 	mouse_hw_init();
+#if(MOUSE_BATT_MOUDULE_EN)
+	adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_B7, 0, SINGLEEND, RV_1P428, RES14, S_3);
+#endif
 	if(SysMode == RF_2M_2P4G_MODE){
 		normal_user_init();
 	}
@@ -668,7 +725,6 @@ void user_init(){
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
-unsigned short battValue[20];
 
 void main_loop ()
 {
@@ -683,7 +739,6 @@ void main_loop ()
 		////////////////////////////////////// UI entry /////////////////////////////////
 
 		//proc_mouse(0,0,0);
-		//device_led_process();  			//led management
 
 		blt_pm_proc();						//power management
 	}

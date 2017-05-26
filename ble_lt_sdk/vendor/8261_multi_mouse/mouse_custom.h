@@ -217,34 +217,3 @@ extern custom_btn_ui_t  mouse_btn_ui;
 
 void mouse_custom_init ( mouse_status_t *pStatus );
 
-#if(MOUSE_LED_MODULE_EN & 0)
-#if MOUSE_CUSTOM_FULL_FUNCTION
-static inline led_cfg_t mouse_led_cpi_cfg_cust( u32 cpi ){
-     if ( mouse_cust_led_cpi_mode_1 ){                
-         led_cfg_t mouse_led_cpi_cfg = {0, 0, 0, 0};
-         mouse_led_cpi_cfg.over_wrt = mouse_led_cfg[E_LED_CPI].over_wrt;
-         mouse_led_cpi_cfg.repeat_count = 1 << cpi;
-         mouse_led_cpi_cfg.on_time = mouse_led_cfg[E_LED_CPI].on_time >> cpi;
-         mouse_led_cpi_cfg.off_time = mouse_led_cfg[E_LED_CPI].off_time >> cpi;
-         return mouse_led_cpi_cfg;
-     }   
-     else{
-         if( mouse_cust_led_cpi_mode_2 )
-            mouse_led_cfg[E_LED_CPI].repeat_count = cpi + 1;                
-         return mouse_led_cfg[E_LED_CPI];
-    }
-}
-
-static inline led_cfg_t mouse_led_pairing_end_cfg_cust( u32 pairing_end ){
-     if ( pairing_end == p_custom_cfg->led_pairing_end_mode ){         
-         mouse_led_cfg[E_LED_PAIRING_END].on_time = mouse_led_cfg[E_LED_PAIRING_END].off_time;
-     }
-     return mouse_led_cfg[E_LED_PAIRING_END];
-}
-
-#else
-static inline led_cfg_t mouse_led_cpi_cfg_cust( u32 cpi ) {}
-static inline led_cfg_t mouse_led_pairing_end_cfg_cust( u32 pairing_end ) {}
-#endif
-
-#endif

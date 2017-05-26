@@ -148,6 +148,7 @@ inline u32 mouse_button_process(mouse_status_t * mouse_status)
     static u16 thresh_cnt = 0;
 
     static u16 btn_d_cnt = 0;
+    static u8  btn_emi_cnt = 0;
 
     //button_last: current button
     //button_pre: previous button
@@ -164,16 +165,33 @@ inline u32 mouse_button_process(mouse_status_t * mouse_status)
     	return 0;				//there is no button be pressed
     }
     else{
-
-
-    	if(button_last == FLAG_BUTTON_MIDDLE){
-    		btn_d_cnt++;
+    	if(  SysMode == RF_1M_BLE_MODE  ){		//BLE MODE, BUTTON PROCESS
+    		if(button_last == FLAG_BUTTON_MIDDLE){
+    		    if((btn_d_cnt++ > 270) && !mouse_get_pre_info_from_master){
+    		    	adv_type_switch = 1;
+    		    	device_led_setup(led_cfg[LED_NON_DIR_ADV]);
+    		    }
+    		}
+    		else{
+    			btn_d_cnt=0;
+    		}
     	}
-    	else{
-    		btn_d_cnt = 0;
+    	else{									//2P4G MODE
+    		if(mouse_status->mouse_mode != STATE_EMI && (button_last == (FLAG_BUTTON_LEFT | FLAG_BUTTON_RIGHT |  FLAG_BUTTON_MIDDLE)) ){
+    			if(btn_emi_cnt++ > 0xfe){
+    				mouse_status->mouse_mode = STATE_EMI;
+    				button_pre = button_last;
+    				return 0;
+    			}
+    		}
+    		else{
+    			btn_emi_cnt = 0;
+    		}
+
     	}
 
-    	if((button_last & FLAG_BUTTON_LEFT) && (button_last & FLAG_BUTTON_RIGHT))		//mode switch
+    	//if((button_last & FLAG_BUTTON_LEFT) && (button_last & FLAG_BUTTON_RIGHT))		//mode switch
+    	if(button_last == (FLAG_BUTTON_LEFT | FLAG_BUTTON_RIGHT))
     		btn_lr_cnt++;
     	else
     		btn_lr_cnt=0;
@@ -183,22 +201,17 @@ inline u32 mouse_button_process(mouse_status_t * mouse_status)
             mouse_status->cpi = (mouse_status->cpi < mouse_cpi.sns_cpi_sgmt) ? mouse_status->cpi : 0;
             mouse_sensor_set_cpi( &mouse_status->cpi );
 
-            device_led_setup(led_cpi[mouse_status->cpi]);
+            //device_led_setup(led_cpi[mouse_status->cpi]);
+            device_led_setup(led_cfg[mouse_status->cpi]);
         }
     	button_pre = button_last;
     }
 
     thresh_cnt = (SysMode == RF_1M_BLE_MODE) ? BLE_MODE_SWITCH_THRESH : NORMAL_MODE_SWITCH_THRESH;
 
-    if((btn_d_cnt > 270) && !mouse_get_pre_info_from_master && (SysMode == RF_1M_BLE_MODE)){
-    	adv_type_switch = 1;
-    	device_led_setup(led_cfg[1]);
-    }
-
-
     if( (btn_lr_cnt > thresh_cnt) && !switch_mode_start_flg){
     	switch_mode_start_flg = 1;
-    	device_led_setup(led_cfg[0]);
+    	device_led_setup(led_cfg[LED_SWITCH_MODE]);
     }
 
 
@@ -229,6 +242,33 @@ u32 mouse_button_process_emi(s8 *chn_idx, u8 *test_mode_sel, u32 btn_pro_end)
     u32 cmd = 0;    
     if (button_pre != button_last) {     //new event
         cmd = 0x80;
+
+        if(!button_pre && (button_last == FLAG_BUTTON_MIDDLE)){
+        	*test_mode_sel = (*test_mode_sel+1) & 3;  //mode change: carrier, cd, rx, tx
+        }
+        else if(!button_pre && (button_last == FLAG_BUTTON_LEFT)){
+        	*chn_idx += 1;               //channel up
+        }
+        else if(!button_pre && (button_last == FLAG_BUTTON_RIGHT)) {
+               *chn_idx -= 1;            //channel down
+        }
+        else {
+        	cmd &= 0x0f;
+        }
+
+        if (*chn_idx < 0) {
+        	*chn_idx = 2;
+        }
+        else if (*chn_idx > 2) {
+            *chn_idx = 0;
+       }
+
+
+        if( btn_pro_end )
+            button_pre = button_last;
+    }
+
+#if 0
         if (!(button_pre & FLAG_BUTTON_MIDDLE) && (button_last & FLAG_BUTTON_MIDDLE)) {                
             *test_mode_sel = (*test_mode_sel+1) & 3;  //mode change: carrier, cd, rx, tx
         }
@@ -251,6 +291,7 @@ u32 mouse_button_process_emi(s8 *chn_idx, u8 *test_mode_sel, u32 btn_pro_end)
     }
     if( btn_pro_end )
         button_pre = button_last;
+#endif
     return cmd;
 }
 

@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include "mouse_emi.h"
 
 #if (__PROJECT_8261_MULTI_MOUSE__)
 	#define CHIP_TYPE				CHIP_TYPE_8261
@@ -15,6 +16,23 @@ extern "C" {
 enum{
 	RF_1M_BLE_MODE = 0,
 	RF_2M_2P4G_MODE = 1,
+};
+
+
+enum{
+	LED_CPI_0 = 0,
+	LED_CPI_1 = 1,
+	LED_CPI_2 = 2,
+#if (MOUSE_EMI_TEST_WITH_LED)
+	LED_EMI_CARRY,
+	LED_EMI_CD,
+	LED_EMI_RX,
+	LED_EMI_TX,
+#endif
+	LED_SWITCH_MODE,
+	LED_NON_DIR_ADV,
+	LED_BATTRY_ALARM,
+
 };
 
 #define UART_INIT_EN	0
@@ -58,10 +76,10 @@ enum{
 #define 		CUST_CAP_INFO_ADDR		0x1f040
 #define 		CUST_TP_INFO_ADDR		0x1f080
 
-#define			BLE_CON_MODE_SWITCH_CNT				267			//11.25ms * 267 = 3s
+#define			BLE_CON_MODE_SWITCH_CNT				250			//11.25ms * 267 = 3s
 #define 		BLE_DIRECT_ADV_MODE_SWITCH_CNT		300			//30ms * 100 = 3s
 #define 		BLE_UNDIRECT_ADV_MODE_SWITCH_CNT	100			//30ms * 100 = 3s
-#define			NORMAL_MODE_SWITCH_THRESH			300			//3s
+#define			NORMAL_MODE_SWITCH_THRESH			375			//3s
 
 #define			MOUSE_OPTICAL_EN		1			//open mouse_sensor_pix.c
 #define			TELINK_MOUSE_DEMO		1		// 1 : Telink multi mouse demo, 0: MIWU multi mouse
@@ -72,7 +90,7 @@ enum{
 #define 		MOUSE_BTN_MODULE_EN		1
 #define 		MOUSE_WHEEL_MODULE_EN	1
 #define 		MOUSE_SENSOR_MODULE_EN	1
-#define 		MOUSE_BATT_MOUDULE_EN	0					//battery check
+#define 		MOUSE_BATT_MOUDULE_EN	1					//battery check
 #define 		MOUSE_SLEEP_MODULE_EN	1
 #define			MOUSE_SENSOR_MOTION		1
 
