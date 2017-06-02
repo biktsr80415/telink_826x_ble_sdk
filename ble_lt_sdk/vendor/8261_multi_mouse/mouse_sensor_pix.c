@@ -837,7 +837,7 @@ unsigned int OPTSensor_dpi_update( unsigned int cpi_ctrl ){
 int Sensor3204_Wakeup(u32 sensor){
 
 	int timeout = 0;
-	u8 debug_reg5;
+	static u8 debug_reg5;
     I2C_PAN3204LL_WriteRegister(REG_PAN3204LL_CONFIGURATION, 2);    //clear BIT(3) to exit Power down mode, deault cpi-rate-2
 
     do{

@@ -12,7 +12,6 @@
 
 #if (__PROJECT_8261_MULTI_MOUSE__ )
 
-int uart_rx_irq_en = 0;
 
 extern u8 SysMode;
 extern u8 adv_type_det;

@@ -140,7 +140,6 @@ extern u16 switch_mode_start_flg;
 extern led_cfg_t led_cfg[];
 extern led_cfg_t led_cpi[];
 
-
 inline u32 mouse_button_process(mouse_status_t * mouse_status)
 {   
 
@@ -178,9 +177,8 @@ inline u32 mouse_button_process(mouse_status_t * mouse_status)
     	}
     	else{									//2P4G MODE
     		if(mouse_status->mouse_mode != STATE_EMI && (button_last == (FLAG_BUTTON_LEFT | FLAG_BUTTON_RIGHT |  FLAG_BUTTON_MIDDLE)) ){
-    			if(btn_emi_cnt++ > 0xfe){
+    			if(++btn_emi_cnt > 0x7f){
     				mouse_status->mouse_mode = STATE_EMI;
-    				button_pre = button_last;
     				return 0;
     			}
     		}

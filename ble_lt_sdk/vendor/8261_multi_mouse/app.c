@@ -166,9 +166,9 @@ u32 stuckKey_keyPressTime;
 /*
 u8 conn_para_updata_success = 0;
 u32 conn_para_tick;
-u8 conn_para_updata_retry(void){
-	if(!conn_para_updata_success && clock_time_exceed(conn_para_tick, 500000)){
-		if( bltc.conn_interval_next == 9 && bltc.conn_latency_next == 99){
+_attribute_ram_code_ u8 conn_para_updata_retry(void){
+	if(!conn_para_updata_success && clock_time_exceed(conn_para_tick, 5000000)){
+		if( bltc.conn_interval_next == 9){
 			conn_para_updata_success = 1;
 		}
 		else{
@@ -342,15 +342,18 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 	advertise_begin_tick = clock_time();
 
 }
+
 /*
 u8 conn_para_up = 0;
-u8 conn_para_uu[6];
+u8 conn_para_uu[12];
 void ble_para_updata(u8 e, u8 *p, int n ){
 	gpio_set_output_en(GPIO_LED, 1);
-	gpio_write(GPIO_LED, 1);
-	conn_para_up++;
-	memcpy(conn_para_uu, p, 6);
 
+	if(conn_para_up){
+		gpio_write(GPIO_LED, 1);
+	}
+	memcpy(conn_para_uu + conn_para_up * 6, p, 6);
+	conn_para_up++;
 }
 */
 
@@ -510,7 +513,7 @@ void blt_pm_proc(void)
 		else if(sendTerminate_before_enterDeep == 2){  //Terminate OK
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //when terminate, link layer change back to adc state
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
-			analog_write(DEEP_ANA_REG0, CONN_DEEP_FLG);
+			//analog_write(DEEP_ANA_REG0, CONN_DEEP_FLG);
 		}
 
 		//adv 60s, deepsleep
@@ -518,10 +521,11 @@ void blt_pm_proc(void)
 			clock_time_exceed(advertise_begin_tick , 60 * 1000000)){
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
-			analog_write(DEEP_ANA_REG0, ADV_DEEP_FLG);
+			//analog_write(DEEP_ANA_REG0, ADV_DEEP_FLG);
 
 			mouse_sleep.sensor_sleep = 1;
 			mouse_status.mouse_sensor = SENSOR_MODE_WORKING;
+		    gpio_setup_up_down_resistor(mouse_status.hw_define->sensor_data, PM_PIN_PULLUP_1M );
 		    mouse_sensor_sleep_wakeup( &mouse_status.mouse_sensor, &mouse_sleep.sensor_sleep, 0 );
 
 		}
@@ -536,6 +540,7 @@ void blt_pm_proc(void)
 
 			mouse_sleep.sensor_sleep = 1;
 			mouse_status.mouse_sensor = SENSOR_MODE_WORKING;
+		    gpio_setup_up_down_resistor(mouse_status.hw_define->sensor_data, PM_PIN_PULLUP_1M );
 		    mouse_sensor_sleep_wakeup( &mouse_status.mouse_sensor, &mouse_sleep.sensor_sleep, 0 );
 		}
 #endif

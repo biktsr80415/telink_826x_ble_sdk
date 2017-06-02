@@ -119,7 +119,7 @@ void  normal_user_init(void)
 
 #if(TELINK_MOUSE_DEMO)
     device_led_init(GPIO_LED, 1);
-
+    //gpio_set_output_en(GPIO_LED, 1);
 #else
     device_led_init(GPIO_LED_R, 0);
 #endif
@@ -213,8 +213,8 @@ void mouse_pair_and_sync_process(mouse_status_t * mouse_status){
 
 }
 //u32 debug_last_wakeup_level;
-extern int uart_rx_irq_en;
 extern unsigned short battValue[10];
+extern void mouse_battery_check(unsigned short *batt, u8 len, unsigned short alarm_thresh);
 _attribute_ram_code_ void mouse_task_when_rf ( void ){
 
 
@@ -250,12 +250,6 @@ _attribute_ram_code_ void mouse_task_when_rf ( void ){
     mouse_button_process(&mouse_status);
 #endif
     
-#if(MOUSE_BATT_MOUDULE_EN)
-    if(mouse_status.rf_mode == RF_MODE_IDLE){
-    	mouse_battery_check(battValue, sizeof(battValue)/sizeof(battValue[0]),2200);
-    }
-#endif
-
 #if(MOUSE_SLEEP_MODULE_EN)
     mouse_power_saving_process(&mouse_status);
 #endif
@@ -275,49 +269,41 @@ void mouse_task_in_ram( void ){
 }
 
 
-extern void mouse_battery_check(unsigned short *batt, u8 len);
+
 void mouse_main_loop(void)
 {
-	static u32 main_loop_tick;
-
 
 	if( MOUSE_EMI_4_FCC || (mouse_status.mouse_mode == STATE_EMI) ){
 		mouse_emi_process(&mouse_status);
 	}
 	else
 	{
-
 		mouse_sleep.wakeup_tick = clock_time();
         if(mouse_status.mouse_mode <= STATE_PAIRING){				//pair and sync
         	mouse_pair_and_sync_process(&mouse_status);
         }
-
         mouse_button_detect(&mouse_status, MOUSE_BTN_LOW);		//Debug, no button
 
 #if(MOUSE_SENSOR_MODULE_EN)
+
 #if(TELINK_MOUSE_DEMO)
         mouse_sensor_data( &mouse_status );
 #else
         drv_mouse_motion_report(&mouse_status.data->x, 0);			//Debug, no sensor
 #endif
+
 #endif
         mouse_task_in_ram();
 
+#if(MOUSE_BATT_MOUDULE_EN)
+        mouse_battery_check(battValue, sizeof(battValue)/sizeof(battValue[0]),2200);
+#endif
         device_led_process();										//Debug, no led
-
-#if(MOUSE_SLEEP_MODULE_EN )
-
         int wakeup_status = cpu_sleep_wakeup( mouse_sleep.mode == SLEEP_MODE_DEEPSLEEP, mouse_sleep.wakeup_src, mouse_sleep.wakeup_next_tick );
 
     	if(!(wakeup_status & 2)){  // if not timer wakeup, need re_sync chn
     		device_sync = 0;
     	}
-
-#else
-        while( !clock_time_exceed(main_loop_tick, 1000) );
-    	main_loop_tick = clock_time();
-#endif
-
 	}
     mouse_status.loop_cnt ++;
 }

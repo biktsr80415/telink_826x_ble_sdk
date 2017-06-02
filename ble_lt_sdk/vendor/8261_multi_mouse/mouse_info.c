@@ -37,13 +37,16 @@ void device_info_load(mouse_status_t *mouse_status)
     for (int i=DEEP_ANA_REG0; i<=DEEP_ANA_REG4; i++) {
         *pd ++ = analog_read (i);
     }
+    device_info.sensor = analog_read(DEEP_ANA_REG5);
 #endif
 
     mouse_status->mouse_mode = device_info.mode & 0x03;
 
 //   Need get poweron, cpi, etc back first
     if ( mouse_status->mouse_mode == STATE_NORMAL ){
-        mouse_status->mouse_sensor = device_info.mode & INFO_SENSOR_STATUS_CTRL;
+    	mouse_status->mouse_sensor = device_info.sensor & INFO_SENSOR_STATUS_CTRL;
+    	mouse_status->cpi = device_info.sensor & INFO_SENSOR_CPI_CTRL;			//default = 1
+        //mouse_status->mouse_sensor = device_info.mode & INFO_SENSOR_STATUS_CTRL;
 #if 0
     	mouse_status->dongle_id = rf_access_code_16to32(device_info.dongle_id);
         rf_set_access_code1 (mouse_status->dongle_id);
@@ -71,7 +74,8 @@ void device_info_save(mouse_status_t *mouse_status, u32 sleep_save)
 
     if(SysMode == RF_2M_2P4G_MODE){
 
-    	device_info.mode |= (mouse_status->mouse_sensor & 0xf0);
+    	//device_info.mode |= (mouse_status->mouse_sensor & 0xf0) ;
+    	device_info.sensor = (mouse_status->mouse_sensor & 0xf0) | (mouse_status->cpi & 0x0f);
 
 #if 0
     	device_info.dongle_id = rf_access_code_32to16(mouse_status->dongle_id);
@@ -83,6 +87,7 @@ void device_info_save(mouse_status_t *mouse_status, u32 sleep_save)
     	for (u8 i=DEEP_ANA_REG0; i<=DEEP_ANA_REG4; i++) {
     		analog_write (i, *pd ++);
     	}
+    	analog_write(DEEP_ANA_REG5, device_info.sensor);
 #endif
 
     }

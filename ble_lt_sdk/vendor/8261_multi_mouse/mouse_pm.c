@@ -134,6 +134,9 @@ void mouse_power_saving_process( mouse_status_t *mouse_status ){
         if ( mouse_status->loop_cnt < 4096 )       //sync dongle time 4096 *8 ms most
             mouse_sleep.quick_sleep = 0;
     }
+    else if( mouse_status->mouse_mode == STATE_EMI){
+    	return;
+    }
 #endif
     mouse_sleep.device_busy = mouse_rf_send;			//rf send
     mouse_sleep_mode_machine( &mouse_sleep );
@@ -176,7 +179,7 @@ void mouse_power_saving_process( mouse_status_t *mouse_status ){
 		mouse_sleep.wakeup_next_tick = 0;
 		mouse_sleep.wakeup_src = PM_WAKEUP_PAD;
         device_sync = 0;        //ll_channel_alternate_mode ();
-
+        gpio_setup_up_down_resistor(mouse_status->hw_define->sensor_data, PM_PIN_PULLUP_1M );
         device_info_save(mouse_status, 0);
 	}
 #endif
