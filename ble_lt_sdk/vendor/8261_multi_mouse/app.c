@@ -57,6 +57,7 @@ u16 switch_mode_start_flg;
 
 u8 adv_type_switch;
 u8 adv_type_det;
+u8 adv_direct_flg = 0;
 
 
 u8 SysMode = RF_2M_2P4G_MODE; 			//default mode is ble mode
@@ -163,21 +164,24 @@ static u8 ota_is_working = 0;
 u32 stuckKey_keyPressTime;
 #endif
 
-/*
+
 u8 conn_para_updata_success = 0;
 u32 conn_para_tick;
 _attribute_ram_code_ u8 conn_para_updata_retry(void){
-	if(!conn_para_updata_success && clock_time_exceed(conn_para_tick, 5000000)){
-		if( bltc.conn_interval_next == 9){
-			conn_para_updata_success = 1;
-		}
-		else{
-			conn_para_tick = clock_time();
-			bls_l2cap_requestConnParamUpdate (9, 9, 99, 400);   //10ms *(99+1) = 1000 ms
+
+	if(conn_para_tick != 0 && !conn_para_updata_success && !adv_direct_flg){
+		if(clock_time_exceed(conn_para_tick, 5000000)){
+			if( bltc.conn_interval_next == 9 && bltc.conn_latency_next == 99){
+				conn_para_updata_success = 1;
+			}
+			else{
+				conn_para_tick = clock_time();
+				bls_l2cap_requestConnParamUpdate (9, 9, 99, 400);   //10ms *(99+1) = 1000 ms
+			}
 		}
 	}
 }
-*/
+
 
 
 #if(MOUSE_BATT_MOUDULE_EN)
@@ -247,7 +251,7 @@ _attribute_ram_code_ int mouse_update_suspend_proc(void)
 
 	device_led_process();  //led management
 	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN ){
-		//conn_para_updata_retry();
+		conn_para_updata_retry();
 		if(adv_type_det){
 			adv_type_det = 0;
 			u8 analog_r4 = analog_read(DEEP_ANA_REG4)& (~BIT(3));
@@ -347,21 +351,25 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 u8 conn_para_up = 0;
 u8 conn_para_uu[12];
 void ble_para_updata(u8 e, u8 *p, int n ){
-	gpio_set_output_en(GPIO_LED, 1);
 
-	if(conn_para_up){
-		gpio_write(GPIO_LED, 1);
-	}
-	memcpy(conn_para_uu + conn_para_up * 6, p, 6);
-	conn_para_up++;
+//	if( bltc.conn_interval_next != 9 ){
+//		conn_para_tick = clock_time();
+//		bls_l2cap_requestConnParamUpdate (9, 9, 0, 400);   //10ms *(99+1) = 1000 ms
+//	}
+	//memcpy(conn_para_uu + conn_para_up * 6, p, 6);
+	//conn_para_up++;
 }
 */
 
 void	task_connect (u8 e, u8 *p, int n)
 {
-	//conn_para_tick = clock_time();
-	bls_l2cap_requestConnParamUpdate (9, 9, 99, 400);   //10ms *(99+1) = 1000 ms
-
+	conn_para_tick = clock_time();
+	if(adv_direct_flg){				//发定向广播包时，无需sever discover,直接更新参数
+		bls_l2cap_requestConnParamUpdate (9, 9, 99, 400);   //10ms *(99+1) = 1000 ms
+	}
+	else{							//非定向时，latency先为0,后继续更新
+		bls_l2cap_requestConnParamUpdate (9, 9, 0, 400);   //10ms *(99+1) = 1000 ms
+	}
 }
 
 void	update_done (u8 e, u8 *p, int n)
@@ -627,7 +635,7 @@ void ble_user_init()
 	mouse_get_pre_info_from_master = bls_smp_getPeerAddrInfo (&master_per_info);		//0:success, 1:fail
 
 	if(!mouse_get_pre_info_from_master && !adv_type_det){			//direct adv
-
+		adv_direct_flg = 1;
 		status = bls_ll_setAdvParam( ADV_INTERVAL_10MS, ADV_INTERVAL_10MS, \
 										ADV_TYPE_CONNECTABLE_DIRECTED_LOW_DUTY, OWN_ADDRESS_PUBLIC, \
 									 	 0,  master_per_info.addr_mac,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);		//directed adv packet, all channel, interval = 30ms, duration 60s
@@ -651,7 +659,7 @@ void ble_user_init()
 //ble event call back
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
 	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
-//	bls_app_registerEventCallback (BLT_EV_FLAG_CONN_PARA_UPDATE, &ble_para_updata);
+//	bls_app_registerEventCallback (BLT_EV_FLAG_ENCRYPTION_CONN_DONE, &ble_para_updata);
 
 
 #if(KEYSCAN_IRQ_TRIGGER_MODE)
