@@ -13,6 +13,9 @@
 #include "../../proj_lib/ble/ble_smp.h"
 #include "../../vendor/common/tl_audio.h"
 
+#define			SDM_SAMPLE_RATE						16000
+//#define			SDM_SAMPLE_RATE						8000
+
 //ATT handle of HID,audio,speaker
 #define			HID_HANDLE_CONSUME_REPORT			0x19
 #define			HID_HANDLE_KEYBOARD_REPORT			0x1D
@@ -146,7 +149,7 @@ void user_init()
 	//app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
 	REG_ADDR8(0x74) = 0x53;
-	REG_ADDR16(0x7e) = 0x08d1;
+	REG_ADDR16(0x7e) = 0x01d8;
 	REG_ADDR8(0x74) = 0x00;
 	usb_log_init ();
 	usb_dp_pullup_en (1);  //open USB enum
@@ -218,7 +221,7 @@ void user_init()
 
 	//////////////////////////// Audio config ////////////////////////////////
 #if MODULE_AUDIO_ENABLE
-	sdm_step = config_sdm  ((u32)buffer_sdm, TL_SDM_BUFFER_SIZE, 16000, 4);//16k
+	sdm_step = config_sdm  ((u32)buffer_sdm, TL_SDM_BUFFER_SIZE, SDM_SAMPLE_RATE, 4);//16k
 #endif
 
 #if (BATT_CHECK_ENABLE)
@@ -235,18 +238,24 @@ void user_init()
 #define			ADPCM_FLASH_SIZE		(0x10000 * 6)
 u32				adpcm_offset = 0;
 
-const	u8 adpcm_silence [128] = {
-		0x0, 0x0, 0x0, 0x7c,
-};
+u8			mute = 0;
+
 void task_audio(void)
 {
 	if ( sdm_decode_ready (256) )
 	{
-		adpcm_offset += adpcm2sdm((s16 *)(ADPCM_FLASH_ADR + adpcm_offset));
-
-		if (adpcm_offset >=  ADPCM_FLASH_SIZE)
+		if (mute)
 		{
-			adpcm_offset = 0;
+			silence2sdm (256);
+		}
+		else
+		{
+			adpcm_offset += adpcm2sdm((s16 *)(ADPCM_FLASH_ADR + adpcm_offset));
+
+			if (adpcm_offset >=  ADPCM_FLASH_SIZE)
+			{
+				adpcm_offset = 0;
+			}
 		}
 	}
 }
