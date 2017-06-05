@@ -138,8 +138,10 @@ enum{
 
 #define reg_i2c_irq_status		REG_ADDR8(0x21)
 #define reg_i2c_clr_status		REG_ADDR8(0x22)
+#define reg_spi_clr_status      reg_i2c_clr_status
 enum{
 	FLD_I2C_STATUS_WR = 		BIT(1),
+	FLD_SPI_STATUS_WR =         BIT(1),
 	FLD_I2C_STATUS_RD = 		BIT(2),
 };
 
