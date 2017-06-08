@@ -79,10 +79,17 @@ void show_ota_result(int result)
 #endif
 }
 
-
+extern st_ll_conn_slave_t		bltc;
+#define MAX_INTERVAL_VAL		16
 void	task_connect (void)
 {
 	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
+	if((bltc.conn_interval/CLOCK_SYS_CLOCK_1250US)>MAX_INTERVAL_VAL)//
+	{
+		printf("ConnInterval > 20ms. Slave sent update connPara req!\r\n");
+		bls_l2cap_requestConnParamUpdate (MAX_INTERVAL_VAL, MAX_INTERVAL_VAL, 0, 400);//20ms
+	}
+
 #if 0
 	gpio_write(RED_LED, ON);
 #else
