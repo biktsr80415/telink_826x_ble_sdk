@@ -4,6 +4,7 @@
 #include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "spp.h"
+#include "../../proj_lib/ble/ble_smp.h"
 
 extern int	module_uart_data_flg;
 extern u32 module_wakeup_module_tick;
@@ -27,7 +28,7 @@ int event_handler(u32 h, u8 *para, int n)
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
 				task_connect();
-				printf("connection event occured!\n\r");
+				printf("Connection event occured!\n\r");
 			}
 				break;
 			case BLT_EV_FLAG_TERMINATE:
@@ -36,7 +37,7 @@ int event_handler(u32 h, u8 *para, int n)
 				header = 0x0780 + BLT_EV_FLAG_TERMINATE;		//state change event
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
-				printf("terminate event occured!\n\r");
+				printf("Terminate event occured!\n\r");
 #if 0
 				gpio_write(RED_LED, OFF);
 #else
@@ -45,6 +46,29 @@ int event_handler(u32 h, u8 *para, int n)
 			}
 				break;
 			case BLT_EV_FLAG_PAIRING_BEGIN:
+			{
+#if(PASSKEY_ENTRY_TEST)
+	#if (PINCODE_RANDOM_ENABLE)//随机生成PINCODE，需要有显示能力，这里//打开宏PRINT_DEBUG_INFO，使用printf打印出来
+				u32 pinCode_random;
+				u8 pc[7] = { '0','0','0','0','0','0', '\0'};
+				generateRandomNum(4, (u8*)&pinCode_random);
+				pinCode_random &= 999999;//0~999999
+				pc[0] = (pinCode_random/100000) + '0';
+				pc[1] = (pinCode_random%100000)/10000 + '0';
+				pc[2] = ((pinCode_random%100000)%10000)/1000 + '0';
+				pc[3] = (((pinCode_random%100000)%10000)%1000)/100 + '0';
+				pc[4] = ((((pinCode_random%100000)%10000)%1000)%100)/10 + '0';
+				pc[5] = pinCode_random%10 + '0';
+				printf("PIN Code Number : %s\n", pc);
+
+				blc_smp_enableAuthMITM (1, pinCode_random);//pincode
+				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
+	#else//手机上弹出对话框，需要输入PINCODE：123456才可以配对
+				blc_smp_enableAuthMITM (1, 123456);//pincode
+				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
+	#endif
+#endif
+			}
 				break;
 			case BLT_EV_FLAG_PAIRING_FAIL:
 				break;
@@ -156,10 +180,10 @@ int bls_uart_handler (u8 *p, int n)
 	{
 		status = bls_ll_setAdvType(cmdPara[0]);
 	}
-	// set advertising direct address: 0e ff 07 00  00(public; 1 for random) 01 02 03 04 05 06
+	// set advertising direct initiator address & addr type: 0e ff 07 00  00(public; 1 for random) 01 02 03 04 05 06
 	else if (cmd == SPP_CMD_SET_ADV_DIRECT_ADDR)
 	{
-		status = blt_set_adv_addrtype(cmdPara);
+		status = blt_set_adv_direct_init_addrtype(cmdPara);
 	}
 	// add white list entry: 0f ff 07 00 01 02 03 04 05 06
 	else if (cmd == SPP_CMD_ADD_WHITE_LST_ENTRY)
@@ -262,8 +286,8 @@ int hci_send_data (u32 h, u8 *para, int n)
 	}
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
-	if(!module_uart_data_flg){ //UART涓婄┖闂诧紝鏂扮殑鏁版嵁鍙戦��
-		GPIO_WAKEUP_MCU_HIGH;  //閫氱煡MCU鏈夋暟鎹簡
+	if(!module_uart_data_flg){ //UART上空闲，新的数据发送
+		GPIO_WAKEUP_MCU_HIGH;  //通知MCU有数据了
 		module_wakeup_module_tick = clock_time() | 1;
 		module_uart_data_flg = 1;
 	}
@@ -296,9 +320,9 @@ int tx_to_uart_cb (void)
 
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
-		//濡傛灉MCU绔璁＄殑鏈変綆鍔熻�楋紝鑰宮odule鏈夋暟鎹媺楂楪PIO_WAKEUP_MCU鏃跺彧鏄皢mcu鍞ら啋锛岄偅涔堥渶瑕佽�冭檻
-		//mcu浠庡敜閱掑埌鑳藉绋冲畾鐨勬帴鏀秛art鏁版嵁鏄惁闇�瑕佷竴涓洖澶嶆椂闂碩銆傚鏋滈渶瑕佸洖澶嶆椂闂碩鐨勮瘽锛岃繖閲�
-		//灏嗕笅闈㈢殑100us鏀逛负user瀹為檯闇�瑕佺殑鏃堕棿銆�
+		//如果MCU端设计的有低功耗，而module有数据拉高GPIO_WAKEUP_MCU时只是将mcu唤醒，那么需要考虑
+		//mcu从唤醒到能够稳定的接收uart数据是否需要一个回复时间T。如果需要回复时间T的话，这里
+		//将下面的100us改为user实际需要的时间。
 		if(module_wakeup_module_tick){
 			while( !clock_time_exceed(module_wakeup_module_tick, 100) );
 		}

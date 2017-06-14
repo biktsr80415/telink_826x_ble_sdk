@@ -53,7 +53,7 @@ const u16 my_gattServiceUUID = SERVICE_UUID_GENERIC_ATTRIBUTE;
 const u8  serviceChangedProp = CHAR_PROP_INDICATE;
 const u16 serviceChangeUIID = GATT_UUID_SERVICE_CHANGE;
 u16 serviceChangeVal[2] = {0};
-static u8 indCharCfg[6] = {0x0b, 0x00, 0x02, 0x29};
+static u8 serviceChangeCCC[2]={0,0};
 
 
 
@@ -197,7 +197,7 @@ const attribute_t my_Attributes[] = {
 	{4,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gattServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&serviceChangedProp), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (serviceChangeVal), (u8*)(&serviceChangeUIID), 	(u8*)(&serviceChangeVal), 0},
-	{0,ATT_PERMISSIONS_RDWR,2,sizeof (indCharCfg),(u8*)(&clientCharacterCfgUUID), (u8*)(indCharCfg), 0},
+	{0,ATT_PERMISSIONS_RDWR,2,sizeof (serviceChangeCCC),(u8*)(&clientCharacterCfgUUID), (u8*)(serviceChangeCCC), 0},
 
 
 
