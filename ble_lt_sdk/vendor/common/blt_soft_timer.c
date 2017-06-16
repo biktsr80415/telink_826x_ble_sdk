@@ -18,11 +18,7 @@
 
 blt_soft_timer_t	blt_timer;
 
-#if(__PROJECT_8261_MULTI_MOUSE__)
 
-blt_time_event_t    blt_time_event;
-
-#endif
 //按照定时时间将timer排序，便于process时 依次触发timer
 int  blt_soft_timer_sort(void)
 {
@@ -54,7 +50,7 @@ int  blt_soft_timer_sort(void)
 }
 
 
-#if (!__PROJECT_8261_MULTI_MOUSE__)
+
 //user add timer
 int blt_soft_timer_add(blt_timer_callback_t func, u32 interval_us)
 {
@@ -74,17 +70,7 @@ int blt_soft_timer_add(blt_timer_callback_t func, u32 interval_us)
 		return  1;
 	}
 }
-#else				//js add
-int blt_soft_timer_add(blt_timer_callback_t func, u32 interval_us)
-{
-	u32 now = clock_time();
-	blt_time_event.cb = func;
-	blt_time_event.interval = interval_us * CLOCK_SYS_CLOCK_1US;
-	blt_time_event.t = now + blt_time_event.interval;
 
-	return  1;
-}
-#endif
 
 //timer 本来就是有序的，删除的时候，采用往前覆盖，所以不会破坏顺序，不需要重新排序
 int  blt_soft_timer_delete_by_index(u8 index)
@@ -129,7 +115,8 @@ int 	blt_soft_timer_delete(blt_timer_callback_t func)
 	return 0;
 }
 
-#if (!__PROJECT_8261_MULTI_MOUSE__)
+
+
 void  	blt_soft_timer_process(int type)
 {
 	if(type == CALLBACK_ENTRY){ //callback trigger
@@ -192,37 +179,7 @@ void  	blt_soft_timer_process(int type)
 	}
 
 }
-#else
 
-_attribute_ram_code_ void  	blt_soft_timer_process(int type)
-{
-
-	u32 now = clock_time();
-	int change_flg = 0;
-
-	if(blt_is_timer_expired(blt_time_event.t ,now) ){ //timer trigger
-		int result = blt_time_event.cb();
-		if(result == 0){
-			change_flg = 1;
-			blt_time_event.t = now + blt_time_event.interval;
-		}
-		else{  //set new timer interval
-			change_flg = 1;
-			blt_time_event.interval = result * CLOCK_SYS_CLOCK_1US;
-			blt_time_event.t = now + blt_time_event.interval;
-		}
-
-	}
-
-	if( (u32)(blt_time_event.t - now) < 3000 *  CLOCK_SYS_CLOCK_1MS){
-		bls_pm_setAppWakeupLowPower(blt_time_event.t,  1);
-	}
-	else{
-		bls_pm_setAppWakeupLowPower(0, 0);  //disable
-	}
-
-}
-#endif
 
 void 	blt_soft_timer_init(void)
 {

@@ -19,10 +19,6 @@
 	#include "../826x_spi_module/8267_app_config.h"
 #elif (__PROJECT_8267_SPI_MASTER__)
     #include "../8267_spi_master/app_config.h"
-#elif (__PROJECT_8261_MULTI_MOUSE__)
-	#include "../8261_multi_mouse/app_config.h"
-#elif (__PROJECT_8266_FLYCO_MODULE__)
-    #include "../826x_flyco_module/app_config.h"
 #elif (__PROJECT_DRIVER_TEST__)
 	#include "../8267_driver_test/app_config.h"
 #elif (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8266_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
@@ -33,8 +29,6 @@
 	#include "../826x_feature_test/app_config.h"
 #elif (__PROJECT_8266_OTA_BOOT__ || __PROJECT_8261_OTA_BOOT__)
 	#include "../826x_ota_boot/app_config.h"
-#elif (__PROJECT_8261_BLE_WEIXIN__)
-	#include "../8261_ble_weixin/app_config.h"
 #elif (__PROJECT_USB_HOST__)
 	#include "../8267_usb_host/app_config.h"
 #elif (__PROJECT_8266_AUDIO_MIC_SDM__)
