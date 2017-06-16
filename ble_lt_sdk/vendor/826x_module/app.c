@@ -47,7 +47,7 @@ void entry_ota_mode(void)
 {
 	ui_ota_is_working = 1;
 
-	bls_ota_setTimeout(100 * 1000000); //set OTA timeout  100 S
+	bls_ota_setTimeout(30 * 1000000); //set OTA timeout  30 S
 
 	//gpio_write(GPIO_LED, 1);  //LED on for indicate OTA mode
 }
@@ -79,17 +79,10 @@ void show_ota_result(int result)
 #endif
 }
 
-extern st_ll_conn_slave_t		bltc;
-#define MAX_INTERVAL_VAL		16
+
 void	task_connect (void)
 {
 	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
-	if((bltc.conn_interval/CLOCK_SYS_CLOCK_1250US) > MAX_INTERVAL_VAL)//
-	{
-		printf("ConnInterval > 20ms. Slave sent update connPara req!\r\n");
-		bls_l2cap_requestConnParamUpdate (MAX_INTERVAL_VAL, MAX_INTERVAL_VAL, 0, 400);//20ms
-	}
-
 #if 0
 	gpio_write(RED_LED, ON);
 #else
@@ -232,13 +225,9 @@ void user_init()
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
 
 	//smp initialization
-#if ( NO_ENCRYPTION_TEST )
-	//bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
-#elif ( JUST_WORK_TEST || PASSKEY_ENTRY_TEST )
-	//Just work方式加密时：TK默认为0，即PIN CODE默认为0，无需设置！
-	//Passkey Entry方式加密时：生成随机数或者设置默认的PIN CODE，放在event_handler函数中！
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
-#endif
+
+
 	///////////////////// USER application initialization ///////////////////
 
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
@@ -253,9 +242,9 @@ void user_init()
 		write_reg8(0x8000, 0x11);  //debug
 		while(1);
 	}
-    printf("\n\rAdv parameters setting success!\n\r");
+    printf("adv parameters setting success!\n\r");
 	bls_ll_setAdvEnable(1);  //adv enable
-	printf("Enable ble adv!\n\r");
+	printf("enable ble adv!\n\r");
 	rf_set_power_level_index (RF_POWER_8dBm);
 
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);//(SUSPEND_ADV | SUSPEND_CONN)

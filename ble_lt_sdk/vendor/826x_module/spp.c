@@ -4,7 +4,6 @@
 #include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "spp.h"
-#include "../../proj_lib/ble/ble_smp.h"
 
 extern int	module_uart_data_flg;
 extern u32 module_wakeup_module_tick;
@@ -28,7 +27,7 @@ int event_handler(u32 h, u8 *para, int n)
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
 				task_connect();
-				printf("Connection event occured!\n\r");
+				printf("connection event occured!\n\r");
 			}
 				break;
 			case BLT_EV_FLAG_TERMINATE:
@@ -37,7 +36,7 @@ int event_handler(u32 h, u8 *para, int n)
 				header = 0x0780 + BLT_EV_FLAG_TERMINATE;		//state change event
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
-				printf("Terminate event occured!\n\r");
+				printf("terminate event occured!\n\r");
 #if 0
 				gpio_write(RED_LED, OFF);
 #else
@@ -46,29 +45,6 @@ int event_handler(u32 h, u8 *para, int n)
 			}
 				break;
 			case BLT_EV_FLAG_PAIRING_BEGIN:
-			{
-#if(PASSKEY_ENTRY_TEST)
-	#if (PINCODE_RANDOM_ENABLE)//随机生成PINCODE，需要有显示能力，这里//打开宏PRINT_DEBUG_INFO，使用printf打印出来
-				u32 pinCode_random;
-				u8 pc[7] = { '0','0','0','0','0','0', '\0'};
-				generateRandomNum(4, (u8*)&pinCode_random);
-				pinCode_random &= 999999;//0~999999
-				pc[0] = (pinCode_random/100000) + '0';
-				pc[1] = (pinCode_random%100000)/10000 + '0';
-				pc[2] = ((pinCode_random%100000)%10000)/1000 + '0';
-				pc[3] = (((pinCode_random%100000)%10000)%1000)/100 + '0';
-				pc[4] = ((((pinCode_random%100000)%10000)%1000)%100)/10 + '0';
-				pc[5] = pinCode_random%10 + '0';
-				printf("PIN Code Number : %s\n", pc);
-
-				blc_smp_enableAuthMITM (1, pinCode_random);//pincode
-				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
-	#else//手机上弹出对话框，需要输入PINCODE：123456才可以配对
-				blc_smp_enableAuthMITM (1, 123456);//pincode
-				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
-	#endif
-#endif
-			}
 				break;
 			case BLT_EV_FLAG_PAIRING_FAIL:
 				break;
@@ -180,10 +156,10 @@ int bls_uart_handler (u8 *p, int n)
 	{
 		status = bls_ll_setAdvType(cmdPara[0]);
 	}
-	// set advertising direct initiator address & addr type: 0e ff 07 00  00(public; 1 for random) 01 02 03 04 05 06
+	// set advertising direct address: 0e ff 07 00  00(public; 1 for random) 01 02 03 04 05 06
 	else if (cmd == SPP_CMD_SET_ADV_DIRECT_ADDR)
 	{
-		status = blt_set_adv_direct_init_addrtype(cmdPara);
+		status = blt_set_adv_addrtype(cmdPara);
 	}
 	// add white list entry: 0f ff 07 00 01 02 03 04 05 06
 	else if (cmd == SPP_CMD_ADD_WHITE_LST_ENTRY)
