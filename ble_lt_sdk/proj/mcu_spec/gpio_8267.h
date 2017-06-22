@@ -69,6 +69,10 @@ enum{
 #define reg_gpio_gpio_func(i)	REG_ADDR8(0x586+((i>>8)<<3))
 #define reg_gpio_irq_en0(i)		REG_ADDR8(0x587+((i>>8)<<3))	// 对应reg_irq_mask,reg_irq_src 中的FLD_IRQ_GPIO_EN
 #define reg_gpio_irq_en(i)		REG_ADDR8(0x5c8+(i>>8))			// 对应reg_irq_mask,reg_irq_src 中的FLD_IRQ_GPIO_RISC2_EN, 为了与5320,5328一致, 使用 FLD_IRQ_GPIO_RISC2_EN
+#define reg_gpio_risc_m0(i)     REG_ADDR8(0x5b8 + (i >> 8))
+#define reg_gpio_risc_m1(i)     REG_ADDR8(0x5c0 + (i >> 8))
+#define reg_gpio_risc_m2(i)     REG_ADDR8(0x5c8 + (i >> 8))
+#define reg_gpio_risc(m, i)     REG_ADDR8(0x5b8 + (m << 3) + (i >> 8))
 
 #define reg_gpio_wakeup_irq  REG_ADDR8(0x5b5)
 enum{
@@ -172,6 +176,11 @@ static inline void gpio_write(u32 pin, u32 value){
 	}else{
 		BM_CLR(reg_gpio_out(pin), bit);
 	}
+}
+
+static inline void gpio_toggle(u32 pin){
+	u8	bit = pin & 0xff;
+	BM_FLIP(reg_gpio_out(pin), bit);
 }
 
 static inline u32 gpio_read(u32 pin){
@@ -507,3 +516,5 @@ enum{
 extern u32 mouse_gpio_table[];
 
 void gpio_set_wakeup(u32 pin, u32 level, int en);
+
+void gpio_setup_up_down_resistor(u32 gpio, u32 up_down);

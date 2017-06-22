@@ -143,6 +143,7 @@ enum{
 	FLD_I2C_STATUS_WR = 		BIT(1),
 	FLD_SPI_STATUS_WR =         BIT(1),
 	FLD_I2C_STATUS_RD = 		BIT(2),
+	FLD_SPI_STATUS_RD = 		BIT(2),
 };
 
 /****************************************************

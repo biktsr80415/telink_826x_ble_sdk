@@ -72,8 +72,8 @@ u8 		  my_batVal[1] 						= {99};
 //////////////////////// HID /////////////////////////////////////////////////////
 
 const u16 my_hidServiceUUID       			= SERVICE_UUID_HUMAN_INTERFACE_DEVICE;
-const u16 my_SppDataServer2ClientUUID		= TELINK_SPP_DATA_SERVER2CLIENT;
-const u16 my_SppDataClient2ServiceUUID		= TELINK_SPP_DATA_CLIENT2SERVER;
+//const u16 my_SppDataServer2ClientUUID		= TELINK_SPP_DATA_SERVER2CLIENT;
+//const u16 my_SppDataClient2ServiceUUID		= TELINK_SPP_DATA_CLIENT2SERVER;
 
 
 const u16 my_SppNameUUID		= GATT_UUID_CHAR_USER_DESC;
@@ -116,11 +116,12 @@ static u8 reportConsumerControlInCCC[2];
 static u8 reportRefConsumerControlIn[2] = { HID_REPORT_ID_CONSUME_CONTROL_INPUT, HID_REPORT_TYPE_INPUT };
 
 // HID Report characteristic, mouse input
+#if 0
 static u8 reportMouseInProp = CHAR_PROP_READ | CHAR_PROP_NOTIFY;
 static u8 reportMouseIn[4];
 static u8 reportMouseInCCC[2];
 static u8 reportRefMouseIn[2] = { HID_REPORT_ID_MOUSE_INPUT, HID_REPORT_TYPE_INPUT };
-
+#endif
 
 // Boot Keyboard Input Report
 static u8 bootKeyInReportProp = CHAR_PROP_READ | CHAR_PROP_NOTIFY;
@@ -130,13 +131,14 @@ static u8 bootKeyInReportCCC[2];
 // Boot Keyboard Output Report
 static u8 bootKeyOutReportProp = CHAR_PROP_READ | CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RSP;
 static u8 bootKeyOutReport;
-static u8 bootKeyOutReportCCC[2];
+//static u8 bootKeyOutReportCCC[2];
 
 // Boot Mouse Input Report
+#if 0
 static u8 bootMouseInReportProp = CHAR_PROP_READ | CHAR_PROP_WRITE;
 static u8 bootMouseInReport;
 static u8 bootMouseInReportCCC[2];
-
+#endif
 // HID Information characteristic
 static u8 hidInfoProps = CHAR_PROP_READ;
 const u8 hidInformation[] =
@@ -190,7 +192,7 @@ static const u8 reportMap[] =
     0x05, 0x0C,   // Usage Page (Consumer)
     0x09, 0x01,   // Usage (Consumer Control)
     0xA1, 0x01,   // Collection (Application)
-    0x85, 0x02,   //     Report Id (3)
+    0x85, 0x02,   //     Report Id (2)
 
     0x09, 0xE9,   //   Usage (Volume Up)			//consumer report: 0x0001
     0x09, 0xEA,   //   Usage (Volume Down)			//consumer report: 0x0002
@@ -289,9 +291,10 @@ const u8 my_OtaUUID[16]		= TELINK_SPP_DATA_OTA;
 const u8 my_OtaServiceUUID[16]		= TELINK_OTA_UUID_SERVICE;
 const u16 userdesc_UUID		= GATT_UUID_CHAR_USER_DESC;
 
-
+#if (BLE_AUDIO_ENABLE)
 static u8 my_MicProp 		= CHAR_PROP_READ | CHAR_PROP_NOTIFY;
 static u8 my_SpeakerProp 	= CHAR_PROP_WRITE_WITHOUT_RSP;
+#endif
 static u8 my_OtaProp		= CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP;
 
 

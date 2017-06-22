@@ -33,8 +33,8 @@ typedef enum {
 } UART_StopBitTypeDef;
 
 enum UARTIRQSOURCE{
-	UARTRXIRQ,
-	UARTTXIRQ,
+	UARTRXIRQ = BIT(0),
+	UARTTXIRQ = BIT(1),
 };
 
 enum{

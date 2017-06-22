@@ -261,6 +261,8 @@ u8			blc_ll_getCurrentState(void);
 
 u8 			blc_ll_getLatestAvgRSSI(void);
 
+u32 		bls_ll_getConnectionCreateTime();
+
 u16   		blc_ll_setInitTxDataLength (u16 maxTxOct);   //core4.2 long data packet
 
 

@@ -14,6 +14,9 @@
 u32 drive_pins[] = KB_DRIVE_PINS;
 u32 scan_pins[] = KB_SCAN_PINS;
 
+const u8 DRIVE_PINS_CNT = ARRAY_SIZE(drive_pins);
+const u8 SCAN_PINS_CNT = ARRAY_SIZE(scan_pins);
+
 #if (STUCK_KEY_PROCESS_ENABLE)
 u8 stuckKeyPress[ARRAY_SIZE(drive_pins)];
 #endif

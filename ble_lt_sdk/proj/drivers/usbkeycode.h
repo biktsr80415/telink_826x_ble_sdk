@@ -1,3 +1,4 @@
+#include "../common/types.h"
 
 #pragma once
 

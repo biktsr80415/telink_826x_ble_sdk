@@ -39,7 +39,7 @@ enum {
  */
 void audio_config_mic_buf(signed short* pbuff,unsigned char size_buff)
 {
-	reg_dfifo0_addr = pbuff;
+	reg_dfifo0_addr = (u32)pbuff & 0xFFFF;
 	reg_dfifo0_size = (size_buff>>4)-1;
 }
 /**
@@ -50,7 +50,7 @@ void audio_config_mic_buf(signed short* pbuff,unsigned char size_buff)
  */
 void audio_config_sdm_buf(signed short* pbuff, unsigned char size_buff)
 {
-	reg_aud_base_adr = pbuff;
+	reg_aud_base_adr = (u32)pbuff & 0xFFFF;
 	reg_aud_buff_size = (size_buff>>4)-1;
 }
 
@@ -80,6 +80,9 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
 		break;
 	case CLOCK_TYPE_PAD:
 		adc_mode = 16;  //FHS is 16Mhz crystal oscillator
+		break;
+	default:
+		adc_mode = 16;
 		break;
 	}
 
@@ -168,6 +171,9 @@ void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned
 	case CLOCK_TYPE_PAD:
 		adc_mode = 16;  //FHS is 16Mhz crystal oscillator
 		break;
+	default:
+		adc_mode = 16;
+		break;
 	}
 	/***config the pin dmic_sda and dmic_scl***/
 	gpio_set_func(GPIO_DMIC_DI,AS_DMIC);  //disable DI gpio function
@@ -215,7 +221,7 @@ void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned
 *	@return	none
 */
 void audio_amic_input_set(enum audio_input_t adc_ch){
-	unsigned char tem;
+	//unsigned char tem;
 	if(adc_ch == PGA_CH){ //this selection is diff mode. the input is pga.
 		pgaInit();
 		preGainAdjust(DB20); //set pre pga gain to 20db
@@ -303,6 +309,9 @@ void audio_sdm_output_set(unsigned char audio_out_en,int sample_rate,unsigned ch
 			break;
 		case CLOCK_TYPE_PAD:
 			adc_mode = 16;  //FHS is 16Mhz crystal oscillator
+			break;
+		default:
+			adc_mode = 16;
 			break;
 		}
 

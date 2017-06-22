@@ -18,16 +18,16 @@ void uartOpen(u32 baudrate){
 	// refine this,  看如何做到误差最小,  acceptable now
 	if(115200 == baudrate){
 		const u8 bpwc = 5;
-		reg_uart_clk_div = FLD_UART_CLK_DIV_EN | (((CLOCK_SYS_CLOCK_HZ / bpwc) + baudrate / 2) / baudrate - 1 );
+		reg_uart_clk_div = FLD_UART_CLK_DIV_EN | (((CLOCK_SYS_CLOCK_1S / bpwc) + baudrate / 2) / baudrate - 1 );
 		reg_uart_ctrl0 = (bpwc - 1) | FLD_UART_RX_DMA_EN | FLD_UART_TX_DMA_EN;
 	}else{
 		const u8 bpwc = 4;
-		reg_uart_clk_div = FLD_UART_CLK_DIV_EN | (((CLOCK_SYS_CLOCK_HZ / bpwc) + baudrate / 2) / baudrate - 1 );
+		reg_uart_clk_div = FLD_UART_CLK_DIV_EN | (((CLOCK_SYS_CLOCK_1S / bpwc) + baudrate / 2) / baudrate - 1 );
 		reg_uart_ctrl0 = (bpwc - 1) | FLD_UART_RX_DMA_EN | FLD_UART_TX_DMA_EN;
 	}
 	// 从示波器看，这个时间计算跟文档不一样
 	reg_uart_rx_timeout = (4 * (1 + 8 + 1)) | BIT(8);	//  10 bits timeout,  太长的时间会影响功耗,  因为 rx 完成中断来得太慢
-	reg_dma_uart_rx_addr = (u16)(uartRxBufPtr);
+	reg_dma_uart_rx_addr = (u16)((u32)uartRxBufPtr & 0xFFFF);
 #if(__GPIO_DEBUG__)	
 	reg_gpio_pc_oen = ~(GPIO_PC2 | GPIO_PC3 | GPIO_PC4 | GPIO_PC5);
 #endif
@@ -41,7 +41,7 @@ static inline void uartSetNextRxBuff(){
 	}else{
 		uartRxBufPtr = &uartRxBuf[0];
 	}
-	reg_dma_uart_rx_addr = (u16)(uartRxBufPtr);
+	reg_dma_uart_rx_addr = (u16)((u32)uartRxBufPtr & 0xFFFF);
 }
 
 void uart_irq_handler(void){

@@ -330,7 +330,7 @@ void deep_wakeup_proc(void)
 	//if deepsleep wakeup is wakeup by GPIO(key press), we must quickly scan this
 	//press, hold this data to the cache, when connection established OK, send to master
 	//deepsleep_wakeup_fast_keyscan
-	if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG){
+	if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG || analog_read(DEEP_ANA_REG0) == ADV_DEEP_FLG){
 		if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON, 1) && kb_event.cnt){
 			deepback_key_state = DEEPBACK_KEY_CACHE;
 			key_not_released = 1;
@@ -348,9 +348,12 @@ void deepback_pre_proc(int *det_key)
 {
 #if (DEEPBACK_FAST_KEYSCAN_ENABLE)
 	// to handle deepback key cache
+#if UEI_CASE_SCENARIO
+	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE){
+#else
 	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN \
 			&& clock_time_exceed(bls_ll_getConnectionCreateTime(), 25000)){
-
+#endif
 		memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
 		*det_key = 1;
 
@@ -372,8 +375,8 @@ void deepback_post_proc(void)
 	if(deepback_key_state == DEEPBACK_KEY_WAIT_RELEASE && clock_time_exceed(deepback_key_tick,150000)){
 		key_not_released = 0;
 
-		key_buf[2] = 0;
-		bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
+		//key_buf[2] = 0;
+		//bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
 		deepback_key_state = DEEPBACK_KEY_IDLE;
 	}
 #endif
@@ -527,8 +530,8 @@ void proc_keyboard (u8 e, u8 *p, int n)
 
 
 	kb_event.keycode[0] = 0;
+	kb_event.cnt = 0;
 	int det_key = kb_scan_key (0, 1);
-
 
 #if(DEEPBACK_FAST_KEYSCAN_ENABLE)
 	if(deepback_key_state != DEEPBACK_KEY_IDLE){
@@ -536,10 +539,23 @@ void proc_keyboard (u8 e, u8 *p, int n)
 	}
 #endif
 
+#if UEI_CASE_SCENARIO
+    extern char uei_case_manual();
+    extern char uei_case_enter();
+#endif
 
 	if (det_key){
+#if UEI_CASE_SCENARIO
+        uei_case_manual();
+#else
 		key_change_proc();
+#endif
 	}
+#if UEI_CASE_SCENARIO
+    else if (uei_case_enter()) {
+        uei_case_manual();
+    }
+#endif
 	
 
 #if (BLE_AUDIO_ENABLE)
@@ -565,7 +581,6 @@ int AA_dbg_deep;
 //_attribute_ram_code_
 void blt_pm_proc(void)
 {
-
 #if(BLE_REMOTE_PM_ENABLE)
 	if(ui_mic_enable)
 	{
@@ -607,7 +622,8 @@ void blt_pm_proc(void)
 		}
 
 		//adv 60s, deepsleep
-		if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
+		if( sendTerminate_before_enterDeep == 0 && \
+			blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && \
 			clock_time_exceed(advertise_begin_tick , ADV_IDLE_ENTER_DEEP_TIME * 1000000)){
 			bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
 			bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
@@ -663,7 +679,7 @@ void user_init()
 
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU(tbl_mac);   //mandatory
-
+#if 0
 	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
 	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
 	blc_ll_initPowerManagement_module();        //pm module:      	 optional
@@ -696,7 +712,7 @@ void user_init()
 	//ble event call back
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
 	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
-
+#endif
 
 	///////////////////// keyboard matrix initialization///////////////////
 	u32 pin[] = KB_DRIVE_PINS;
@@ -778,7 +794,7 @@ void user_init()
 
 
 
-
+#if 0
 		///////////////////// Power Management initialization///////////////////
 #if(BLE_REMOTE_PM_ENABLE)
 	blc_ll_initPowerManagement_module();
@@ -787,7 +803,7 @@ void user_init()
 #else
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 #endif
-
+#endif
 
 	////////////////LED initialization /////////////////////////
 	device_led_init(GPIO_LED, 1);
@@ -816,7 +832,6 @@ void user_init()
 
 
 	advertise_begin_tick = clock_time();
-
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -830,15 +845,24 @@ void main_loop (void)
 {
 	tick_loop ++;
 
+#if UEI_CASE_SCENARIO
+	extern void uei_case_pm();
+	extern int uei_case_suspend_wakeup_handle();
 
+	uei_case_suspend_wakeup_handle();
+
+	proc_keyboard (0,0, 0);
+
+	device_led_process();
+
+	uei_case_pm();
+#else
 
 	#if (USER_TEST_BLT_SOFT_TIMER)
 		blt_soft_timer_process(MAINLOOP_ENTRY);
 	#endif
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	blt_sdk_main_loop();
-
-
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 	#if (BLE_AUDIO_ENABLE)
@@ -859,6 +883,7 @@ void main_loop (void)
 	device_led_process();
 
 	blt_pm_proc();
+#endif
 }
 
 

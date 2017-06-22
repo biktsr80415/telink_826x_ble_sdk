@@ -46,6 +46,7 @@ enum {
 static inline void adc_SetClkFreq(u8 mhz){
 	reg_adc_step_l = mhz*4;
 	reg_adc_mod = MASK_VAL(FLD_ADC_MOD, 192*4, FLD_ADC_CLK_EN, 1);
+	analog_write(0x06, analog_read(0x06) & 0xFE);  // power on sar
 }
 
 /********************************************************

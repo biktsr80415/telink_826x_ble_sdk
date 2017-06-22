@@ -29,21 +29,24 @@ _attribute_ram_code_ void irq_handler(void)
 #endif
 
 	irq_blt_sdk_handler ();
-
+#if UEI_CASE_SCENARIO
+    extern void uei_case_irq_handler();
+    uei_case_irq_handler();
+#endif
 }
 
 int main (void) {
 
 	cpu_wakeup_init();
 
-	set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
+	//set_tick_per_us (CLOCK_SYS_CLOCK_1S/1000000);
 	clock_init();
 
 	gpio_init();
 
 	deep_wakeup_proc();
 
-	rf_drv_init(CRYSTAL_TYPE);
+	//rf_drv_init(CRYSTAL_TYPE);
 
 	user_init ();
 

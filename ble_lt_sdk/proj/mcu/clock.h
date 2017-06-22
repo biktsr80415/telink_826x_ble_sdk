@@ -32,9 +32,6 @@ enum{
 	CLOCK_HS_16M_OSC = 	3,
 };
 
-
-
-
 #ifdef	USE_SYS_TICK_PER_US
 	extern	u32 sys_tick_per_us;
 

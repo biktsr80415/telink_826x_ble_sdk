@@ -68,7 +68,7 @@ void emi_cd_data_gen( void ){
     fifo_emi->cd_feed[1] = pnGen(fifo_emi->cd_feed[1]);
 }
 
-static inline emi_fifo_init( void ){
+static inline void emi_fifo_init( void ){
     fifo_emi->start = FIFO_DEPTH + 1;
     fifo_emi->end = STATE3;
     fifo_emi->cd_feed[0] = STATE0;

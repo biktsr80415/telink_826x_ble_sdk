@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#define UEI_CASE_SCENARIO        (1)
 
 
 #if (__PROJECT_8261_BLE_REMOTE__)
@@ -24,12 +25,12 @@ extern "C" {
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			1
 #define BLE_REMOTE_SECURITY_ENABLE      1
-#define BLE_REMOTE_OTA_ENABLE			1
+#define BLE_REMOTE_OTA_ENABLE			0
 #define REMOTE_IR_ENABLE				0
 #define BATT_CHECK_ENABLE       		0   //enable or disable battery voltage detection
 
 #if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
-	#define BLE_AUDIO_ENABLE				1
+	#define BLE_AUDIO_ENABLE				0
 #else   //8261/8266  not support audio
 	#define BLE_AUDIO_ENABLE				0
 #endif
@@ -197,7 +198,8 @@ extern "C" {
 
 
 	#define  KB_DRIVE_PINS  {GPIO_PA6, GPIO_PA7, GPIO_PB1, GPIO_PB4, GPIO_PB5, GPIO_PB6, GPIO_PB7}
-	#define  KB_SCAN_PINS   {GPIO_PD3, GPIO_PD4, GPIO_PD5, GPIO_PD6, GPIO_PD7, GPIO_PE0, GPIO_PE1}
+	//#define  KB_SCAN_PINS   {GPIO_PD3, GPIO_PD4, GPIO_PD5, GPIO_PD6, GPIO_PD7, GPIO_PE0, GPIO_PE1}
+    #define  KB_SCAN_PINS   {GPIO_PD3, GPIO_PD4, GPIO_PD5, GPIO_PD6, GPIO_PD7, GPIO_PE2, GPIO_PE3}
 
 	#define	PA6_FUNC				AS_GPIO
 	#define	PA7_FUNC				AS_GPIO
@@ -229,24 +231,30 @@ extern "C" {
 	#define	PD5_FUNC				AS_GPIO
 	#define	PD6_FUNC				AS_GPIO
 	#define	PD7_FUNC				AS_GPIO
-	#define	PE0_FUNC				AS_GPIO
-	#define	PE1_FUNC				AS_GPIO
+	//#define	PE0_FUNC				AS_GPIO
+	//#define	PE1_FUNC				AS_GPIO
+    #define	PE2_FUNC				AS_GPIO
+    #define	PE3_FUNC				AS_GPIO
 	//scan  pin need 10K pullup
 	#define	PULL_WAKEUP_SRC_PD3		MATRIX_COL_PULL
 	#define	PULL_WAKEUP_SRC_PD4		MATRIX_COL_PULL
 	#define	PULL_WAKEUP_SRC_PD5		MATRIX_COL_PULL
 	#define	PULL_WAKEUP_SRC_PD6		MATRIX_COL_PULL
 	#define	PULL_WAKEUP_SRC_PD7		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PE0		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PE1		MATRIX_COL_PULL
+	//#define	PULL_WAKEUP_SRC_PE0		MATRIX_COL_PULL
+	//#define	PULL_WAKEUP_SRC_PE1		MATRIX_COL_PULL
+    #define	PULL_WAKEUP_SRC_PE2		MATRIX_COL_PULL
+    #define	PULL_WAKEUP_SRC_PE3		MATRIX_COL_PULL
 	//scan pin open input to read gpio level
 	#define PD3_INPUT_ENABLE		1
 	#define PD4_INPUT_ENABLE		1
 	#define PD5_INPUT_ENABLE		1
 	#define PD6_INPUT_ENABLE		1
 	#define PD7_INPUT_ENABLE		1
-	#define PE0_INPUT_ENABLE		1
-	#define PE1_INPUT_ENABLE		1
+	//#define PE0_INPUT_ENABLE		1
+	//#define PE1_INPUT_ENABLE		1
+    #define PE2_INPUT_ENABLE		1
+    #define PE3_INPUT_ENABLE		1
 
 
 #else  //8266 hardware: C43T53A5_V1.0
@@ -310,7 +318,7 @@ extern "C" {
 
 
 /////////////////// watchdog  //////////////////////////////
-#define MODULE_WATCHDOG_ENABLE		0
+#define MODULE_WATCHDOG_ENABLE		1
 #define WATCHDOG_INIT_TIMEOUT		500  //ms
 
 

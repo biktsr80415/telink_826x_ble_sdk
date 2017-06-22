@@ -87,7 +87,7 @@ _attribute_ram_code_ void sleep_us (u32 us)
 
 
 #ifdef	USE_SYS_TICK_PER_US
-u32		sys_tick_per_us = 16;
+u32		sys_tick_per_us = CLOCK_SYS_CLOCK_HZ / 1000000;
 void set_tick_per_us (u32 t)
 {
 	sys_tick_per_us = t;

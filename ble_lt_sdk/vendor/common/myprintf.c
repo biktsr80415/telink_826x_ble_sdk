@@ -15,12 +15,16 @@
 #define			OCTAL_OUTPUT		8
 #define			HEX_OUTPUT			16
 
+#ifdef va_start
+#undef va_start
+#undef va_arg
+#endif
 
 #define va_start(ap,v)    (ap = (char *)((int)&v + sizeof(v)))
 #define va_arg(ap,t)      ((t *)(ap += sizeof(t)))[-1]
 
 #ifndef		BIT_INTERVAL
-#define		BIT_INTERVAL	(CLOCK_SYS_CLOCK_HZ/PRINT_BAUD_RATE)
+#define		BIT_INTERVAL	(CLOCK_SYS_CLOCK_1S/PRINT_BAUD_RATE)
 #endif
 
 _attribute_ram_code_ static void uart_put_char(u8 byte){
@@ -64,6 +68,7 @@ static int puts(char *s){
 	while((*s != '\0')){
 		uart_put_char(*s++);
 	}
+	return 0;
 }
 
 static void puti(int num, int base){
@@ -126,11 +131,12 @@ int mini_printf(const char *format, ...){
 
 	}
 	va_end(arg_ptr);
+	return 0;
 }
 
-u8 HexTable[]={'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 void PrintHex(u8 x)
 {
+	u8 HexTable[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 	uart_put_char('0');
 	uart_put_char('x');
 	uart_put_char(HexTable[x>>4]);

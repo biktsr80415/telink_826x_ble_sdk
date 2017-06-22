@@ -2,6 +2,8 @@
 #pragma once
 
 #include "../drivers/usbkeycode.h"
+#include "../common/bit.h"
+#include "../mcu/register.h"
 
 #define KB_RETURN_KEY_MAX	6
 

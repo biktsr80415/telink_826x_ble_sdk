@@ -162,14 +162,14 @@ void uart_DmaModeInit(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn)
 	reg_dma0_ctrl |= FLD_DMA_WR_MEM;    //set DMA0 mode to 0x01 for receive.write to memory
 	reg_dma1_ctrl &= (~FLD_DMA_WR_MEM); //set DMA1 mode to 0x00 for send. read from memory
 	//3.config dma irq
-	if(dmaTxIrqEn){
+	if(dmaRxIrqEn){
 		reg_dma_chn_irq_msk |= FLD_DMA_UART_RX;    //enable uart rx dma interrupt
 		reg_irq_mask |= FLD_IRQ_DMA_EN;
 	}else{
 		reg_dma_chn_irq_msk &= (~FLD_DMA_UART_RX); //disable uart rx dma interrupt
 	}
 
-	if(dmaRxIrqEn){
+	if(dmaTxIrqEn){
 		reg_dma_chn_irq_msk |= FLD_DMA_UART_TX;    //enable uart tx dma interrupt
 		reg_irq_mask |= FLD_IRQ_DMA_EN;
 	}else{
@@ -239,6 +239,7 @@ unsigned char UART_NotDmaModeSendByte(unsigned char uartData)
 	write_reg8(0x90+uart_TxIndex,uartData);
 	uart_TxIndex++;
 	uart_TxIndex &= 0x03;// cycle the four register 0x90 0x91 0x92 0x93.
+	return 0;
 }
 
 /********************************************************************************
@@ -251,7 +252,7 @@ unsigned char UART_NotDmaModeSendByte(unsigned char uartData)
 */
 unsigned char uart_Send(unsigned char* addr){
 	if(TXDONE){
-		reg_dma1_addr = addr;   //packet data, start address is sendBuff+1
+		reg_dma1_addr = (u16)((u32)addr & 0xFFFF);   //packet data, start address is sendBuff+1
 		STARTTX;
 		return 1;
 	}
@@ -302,7 +303,7 @@ unsigned char uart_Send_kma(unsigned char* addr){
 void uart_RecBuffInit(unsigned char *recAddr, unsigned short recBuffLen){
 	unsigned char bufLen;
 	bufLen = recBuffLen/16;
-	reg_dma0_addr = (unsigned short)(recAddr);//set receive buffer address
+	reg_dma0_addr = (unsigned short)((u32)recAddr & 0xFFFF);//set receive buffer address
 
 	reg_dma0_ctrl &= (~FLD_DMA_BUF_SIZE);
 	reg_dma0_ctrl |= bufLen;  //set receive buffer size
@@ -364,7 +365,7 @@ enum UARTIRQSOURCE uart_IRQSourceGet_kma(void){
 	if(irqS & 0x01)	return UARTRXIRQ;
 	if(irqS & 0x02)	return UARTTXIRQ;
 
-	return UARTRXIRQ;
+	return 0;
 #else
 	return (irqS & UARTIRQ_MASK);
 #endif

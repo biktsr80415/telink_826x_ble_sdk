@@ -74,7 +74,7 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
 			gpio_set_func(GPIO_PC0|GPIO_PC1, AS_GPIO);                  //enable C0/C1 as gpio function
 		}
-		analog_write (0x0b,analog_read(0x0b)|0x28);                     //10k pull_up resistor
+		analog_write (0x0b, (analog_read(0x0b) & 0xC3) | 0x28);                     //10k pull_up resistor
 
 		break;
 	/**** B6 and B7 as i2c function. default i2c function ****/
@@ -90,7 +90,7 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
 			gpio_set_func(GPIO_PC0|GPIO_PC1,AS_GPIO);                   //enable C0/C1 as gpio function
 		}
-		analog_write (0x0e,analog_read(0x0e)|0x0c);                     //10k pull_up resistor
+		analog_write (0x0e, (analog_read(0x0e) & 0xF0) | 0x0A);                     //10k pull_up resistor
 
 		break;
 
@@ -107,7 +107,7 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);    // disable B6/B7 as i2c function
 			gpio_set_func(GPIO_PB6|GPIO_PB7,AS_GPIO);                   // enable B6/B7 as gpio function
 		}
-		analog_write (0x0e,analog_read(0x0e)|0xc0);                     //10k pull_up resistor
+		analog_write (0x0e, (analog_read(0x0e) & 0x0F) | 0xA0);                     //10k pull_up resistor
 
 		break;
 	default:
@@ -116,6 +116,8 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 #endif
 	gpio_set_input_en(gpio_sda,1); //enable input
 	gpio_set_input_en(gpio_scl,1); //enable input
+	gpio_set_output_en(gpio_sda,1); //enable input
+	gpio_set_output_en(gpio_scl,1); //enable input
 }
 /**
  * @brief      This function set the id of slave device and the speed of I2C interface
@@ -171,7 +173,7 @@ void i2c_slave_init(unsigned char device_id,enum I2C_SLAVE_MODE i2c_mode,unsigne
 	reg_i2c_id = MASK_VAL(FLD_I2C_ID,device_id); //configure the id of i2c module.
 	if(i2c_mode == I2C_SLAVE_MAP){
 		reg_i2c_mode = MASK_VAL(FLD_I2C_ADDR_AUTO, 1, FLD_I2C_MEM_MAP, 1); //enable i2c address auto increase and enable mapping mode.
-		reg_i2c_mem_map = (unsigned short*)pbuf;
+		reg_i2c_mem_map = ((u32)pbuf) & 0xFFFF;
 	}
 
 	BM_CLR(reg_i2c_mode, FLD_I2C_MODE_MASTER); //disable master mode .i.e enable slave mode.
@@ -276,7 +278,7 @@ void i2c_burst_write(unsigned char *addr, int addr_len, unsigned char * pbuf, in
     memcpy(&tmp_addr, addr, addr_len);
 
     for (i = 0; i < len; i++) {
-        i2c_write_byte(&tmp_addr, addr_len, pbuf[i]);
+        i2c_write_byte((unsigned char*)&tmp_addr, addr_len, pbuf[i]);
         tmp_addr++;
     }
 }
@@ -297,7 +299,7 @@ void i2c_burst_read(unsigned char* addr, int addr_len, unsigned char * pbuf, int
     memcpy(&tmp_addr, addr, addr_len);
 
     for (i = 0; i < len; i++) {
-        pbuf[i] = i2c_read_byte(&tmp_addr, addr_len);
+        pbuf[i] = i2c_read_byte((unsigned char*)&tmp_addr, addr_len);
         tmp_addr++;
     }
 }
