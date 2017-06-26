@@ -244,7 +244,7 @@ _attribute_ram_code_ void uei_case_irq_handler()
         I2C_I2CIrqSrcTypeDef irqS = i2c_slave_irq_get();
         if (irqS == 0)
             break;
-        i2c_slave_irq_clr(FLD_I2C_STATUS_RD | FLD_I2C_STATUS_WR);
+        i2c_slave_irq_clr(I2C_IRQ_HOST_READ_ONLY);
         //gpio_toggle(UEI_CASE_GPIO_INDICATE);
         g_uei_i2c_event = irqS;
         g_uei_spi_event = irqS;
@@ -1827,6 +1827,7 @@ PARSE_SPI_CMD:
                 (u8 *)spi_tx_buf, sizeof(spi_tx_buf), UEI_CASE_SPI_CS_PIN);
         // two blink to indicate success
         device_led_setup(uei_led_cfg[LED_UEI_SUCCESS]);
+        wd_start();
         break;
     case VK_3:  // SPI Slave with Highest Baud Rate;
     case VK_4:  // SPI Slave with Lowest Baud Rate;
