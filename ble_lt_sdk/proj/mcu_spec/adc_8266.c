@@ -20,7 +20,7 @@ u8 adc_chn_m_input = 0;
 
 static inline void adc_SetClkFreq(u8 mhz){
 	reg_adc_step_l = mhz*4;
-	reg_adc_mod = MASK_VAL(FLD_ADC_MOD, 192*4, FLD_ADC_CLK_EN, 1);
+	reg_adc_mod = MASK_VAL(FLD_ADC_MOD, 192*4);
 }
 
 static inline void adc_SetPeriod(void){

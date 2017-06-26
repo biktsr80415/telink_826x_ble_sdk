@@ -74,7 +74,7 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
 			gpio_set_func(GPIO_PC0|GPIO_PC1, AS_GPIO);                  //enable C0/C1 as gpio function
 		}
-		analog_write (0x0b,analog_read(0x0b)|0x28);                     //10k pull_up resistor
+		analog_write (0x0b,(analog_read(0x0b)&0xC3)|0x28);                     //10k pull_up resistor
 
 		break;
 	/**** B6 and B7 as i2c function. default i2c function ****/
@@ -90,7 +90,7 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
 			gpio_set_func(GPIO_PC0|GPIO_PC1,AS_GPIO);                   //enable C0/C1 as gpio function
 		}
-		analog_write (0x0e,analog_read(0x0e)|0x0a);                     //10k pull_up resistor
+		analog_write (0x0e,(analog_read(0x0e)&0xf0)|0x0a);                     //10k pull_up resistor
 
 		break;
 
@@ -107,7 +107,7 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);    // disable B6/B7 as i2c function
 			gpio_set_func(GPIO_PB6|GPIO_PB7,AS_GPIO);                   // enable B6/B7 as gpio function
 		}
-		analog_write (0x0e,analog_read(0x0e)|0xa0);                     //10k pull_up resistor
+		analog_write (0x0e,(analog_read(0x0e)&0x0f)|0xa0);                     //10k pull_up resistor
 
 		break;
 	default:

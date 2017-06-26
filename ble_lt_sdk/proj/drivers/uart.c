@@ -162,14 +162,14 @@ void uart_DmaModeInit(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn)
 	reg_dma0_ctrl |= FLD_DMA_WR_MEM;    //set DMA0 mode to 0x01 for receive.write to memory
 	reg_dma1_ctrl &= (~FLD_DMA_WR_MEM); //set DMA1 mode to 0x00 for send. read from memory
 	//3.config dma irq
-	if(dmaTxIrqEn){
+	if(dmaRxIrqEn){
 		reg_dma_chn_irq_msk |= FLD_DMA_UART_RX;    //enable uart rx dma interrupt
 		reg_irq_mask |= FLD_IRQ_DMA_EN;
 	}else{
 		reg_dma_chn_irq_msk &= (~FLD_DMA_UART_RX); //disable uart rx dma interrupt
 	}
 
-	if(dmaRxIrqEn){
+	if(dmaTxIrqEn){
 		reg_dma_chn_irq_msk |= FLD_DMA_UART_TX;    //enable uart tx dma interrupt
 		reg_irq_mask |= FLD_IRQ_DMA_EN;
 	}else{
@@ -250,13 +250,12 @@ unsigned char UART_NotDmaModeSendByte(unsigned char uartData)
 *	@return	'1' send success; '0' DMA busy
 */
 unsigned char uart_Send(unsigned char* addr){
-	if(TXDONE){
-		reg_dma1_addr = addr;   //packet data, start address is sendBuff+1
-		STARTTX;
-		return 1;
-	}
+	if(uart_tx_is_busy()){
 		return 0;
-
+	}
+	reg_dma1_addr = addr;   //packet data, start address is sendBuff+1
+	STARTTX;
+	return 1;
 }
 
 /********************************************************************************
