@@ -53,6 +53,10 @@ extern "C" {
 #define UEI_CASE_SERIAL_SLAVE_ADDR_HIGH       (0x80)
 #define UEI_CASE_SERIAL_SLAVE_ADDR_LOW        (0x00)
 #define UEI_CASE_SERIAL_SLAVE_ADDR            ((UEI_CASE_SERIAL_SLAVE_ADDR_HIGH << 8) | UEI_CASE_SERIAL_SLAVE_ADDR_LOW)
+#define UEI_CASE_SWIRE_SLAVE_ADDR             (UEI_CASE_SERIAL_SLAVE_ADDR)
+#define UEI_CASE_SWIRE_SLAVE_READY_ADDR       (UEI_CASE_SERIAL_SLAVE_ADDR + 0x08)
+#define UEI_CASE_SWIRE_SLAVE_WR_READY_VAL     (0xAA)
+#define UEI_CASE_SWIRE_SLAVE_RD_READY_VAL     (0x55)
 
 typedef char (* uei_case_func_t)();
 typedef struct uei_case_menu_range {
@@ -110,6 +114,9 @@ const static struct uei_case_menu_range uei_menu_range[] = {
 /************************************************************************************/
 
 extern void gpio_setup_up_down_resistor(u32 gpio, u32 up_down);
+extern void swire_write (unsigned short adr, unsigned char *ptr, int cnt);
+extern void reset_swm_for_keyboard();
+extern int swire_sync (int usb);
 
 char uei_case_enter();
 char uei_case_keyboard_pin(u32 gpio_pin);
@@ -415,13 +422,11 @@ char uei_case_manual()
          * to select UEI test case
          * if the case index is invalid, reset the FSM state
          */
-        if (uei_menu_range[g_uei_fsm_state].start > key) {
+        if (uei_menu_range[g_uei_fsm_state].start > key)
             goto UEI_CASE_FAIL;
-        }
-        if (uei_menu_range[g_uei_fsm_state].end < key) {
+        if (uei_menu_range[g_uei_fsm_state].end < key)
             goto UEI_CASE_FAIL;
-        }
-
+        // get case index
         if (g_uei_fsm_state > UEI_W_MENU_STEP_0) {
             uei_case_idx = uei_case_idx * 10 +
                     (key - UEI_CASE_MENU_STEP_BASE_CODE) % 10;
@@ -432,7 +437,7 @@ char uei_case_manual()
     }
 
     /*
-     * out of test cases
+     * out of user manual
      */
     if (uei_case_idx >= UEI_CASE_CNT) {
         goto UEI_CASE_FAIL;
@@ -462,8 +467,6 @@ char uei_case_manual()
         return 0;
 
     g_uei_case_enter = 0;
-
-    //led_setup = 0;
 
     return 0;
 
@@ -1641,15 +1644,11 @@ char uei_case_i2c()
     if (i >= cmd_meta[step ++].cmd_cnt)  // current command is not ready
         return 0;
 
-    print_hex(cmd[0]);
-
     i2c_pin_initial(GPIO_PC0, GPIO_PC1);
 PARSE_I2C_CMD:
     switch (cmd[0]) {
     case VK_0:
-        print_hex(cmd[1]);
         speed_idx = (cmd[1] - UEI_CASE_SUB_MEMU_BASE_CODE) % 10;
-        print_hex(speed_idx);
         if (speed_idx < 0 || speed_idx >= ARRAY_ELEM_CNT(speed))
             goto I2C_FAIL;
         break;
@@ -2090,15 +2089,15 @@ char uei_case_single_wire()
     static u8 ready = 0;
     static u8 cmd = 0;
     uei_gpio_range_t range[] = {
-        {VK_1, VK_1},  // to index command
+        {VK_1, VK_3},  // to index command
     };
 
     u32 sw_high = 0x01;
     u32 sw_low = 0x01;
     u32 rate = sw_low;
 
-    const u8 sw_rx_buf_ref[8] = {0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1};
-    u32 sw_rx_buf[4] = {0x00};
+    const u8 sw_tx_buf[8] = {0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1};
+    u8 sw_rx_buf[8] = {0x00};
 
     u8 match = 0;
 
@@ -2128,20 +2127,50 @@ char uei_case_single_wire()
     cmd = key;
 PARSE_SINGLE_WIRE_CMD:
     switch (cmd) {
-    case VK_0:  // Set SWI peripheral, highest baud rate as receiver
+    case VK_0:  // Set SWI peripheral, highest baud rate as transmitter
         rate = sw_high;
-    case VK_1:  // Set SWI peripheral, lowest baud rate as receiver
-        //
-        // if successful reception
-        //     double blink for success
-        // else
-        //     double long blink for failure
-        // single_wire_recv(sw_rx_buf, sizeof(sw_rx_buf));
-        ready = 1;
-        if (memcmp(sw_rx_buf, sw_rx_buf_ref, sizeof(sw_rx_buf_ref)) == 0)
+    case VK_1:  // Set SWI peripheral, lowest baud rate as transmitter
+        //swire_speed(rate);
+        wd_stop();
+        swire_sync(0);
+        swire_write(UEI_CASE_SWIRE_SLAVE_ADDR, (u8 *)sw_tx_buf, sizeof(sw_tx_buf));
+        ready = UEI_CASE_SWIRE_SLAVE_WR_READY_VAL;
+        swire_write(UEI_CASE_SWIRE_SLAVE_READY_ADDR, &ready, sizeof(ready));
+        device_led_setup(uei_led_cfg[LED_UEI_SUCCESS]);
+        reset_swm_for_keyboard();
+        ready = 0;
+        wd_start();
+        break;
+    case VK_2:  // Set SWI peripheral, highest baud rate as receiver
+        rate = sw_high;
+    case VK_3:  // Set SWI peripheral, lowest baud rate as receiver
+        //swire_speed(rate);
+        do {
+            /*
+             * wait for data from master is ready.
+             */
+            uei_case_serail_slave_read(UEI_CASE_SWIRE_SLAVE_READY_ADDR, &ready, sizeof(ready));
+            if (ready == UEI_CASE_SWIRE_SLAVE_WR_READY_VAL)
+                break;
+            wd_clear();
+        } while (1);
+
+        /*
+         * Master has sent data to register of slave with address of UEI_CASE_SWIRE_SLAVE_ADDR + REG_BASE_ADDR
+         * so slave get data from register of UEI_CASE_SWIRE_SLAVE_ADDR + 0, UEI_CASE_SWIRE_SLAVE_ADDR + 1,
+         * UEI_CASE_SWIRE_SLAVE_ADDR + 2, ..., UEI_CASE_SWIRE_SLAVE_ADDR + 7 respectively.
+         */
+        uei_case_serail_slave_read(UEI_CASE_SWIRE_SLAVE_ADDR, sw_rx_buf, sizeof(sw_rx_buf));
+        if (memcmp(sw_rx_buf, sw_tx_buf, sizeof(sw_rx_buf)) == 0)
             match = 1;
         memset(sw_rx_buf, 0, sizeof(sw_rx_buf));
         device_led_setup(uei_led_cfg[match ? LED_UEI_SUCCESS : LED_UEI_FAIL]);
+
+        // clear ready status
+        ready = UEI_CASE_SWIRE_SLAVE_RD_READY_VAL;
+        uei_case_serail_slave_write(UEI_CASE_SWIRE_SLAVE_READY_ADDR, &ready, sizeof(ready));
+
+        ready = 1;
         break;
     default:
         goto SWI_FAIL;
