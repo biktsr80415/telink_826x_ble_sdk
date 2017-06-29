@@ -115,6 +115,7 @@ const static struct uei_case_menu_range uei_menu_range[] = {
 
 extern void gpio_setup_up_down_resistor(u32 gpio, u32 up_down);
 extern void swire_write (unsigned short adr, unsigned char *ptr, int cnt);
+extern void swire_speed(unsigned char data);
 extern void reset_swm_for_keyboard();
 extern int swire_sync (int usb);
 
@@ -2092,9 +2093,9 @@ char uei_case_single_wire()
         {VK_1, VK_3},  // to index command
     };
 
-    u32 sw_high = 0x01;
-    u32 sw_low = 0x01;
-    u32 rate = sw_low;
+    u8 sw_high = 0x10;
+    u8 sw_low = 0xA0;
+    u8 rate = sw_low;
 
     const u8 sw_tx_buf[8] = {0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1};
     u8 sw_rx_buf[8] = {0x00};
@@ -2130,14 +2131,23 @@ PARSE_SINGLE_WIRE_CMD:
     case VK_0:  // Set SWI peripheral, highest baud rate as transmitter
         rate = sw_high;
     case VK_1:  // Set SWI peripheral, lowest baud rate as transmitter
-        //swire_speed(rate);
+        swire_speed(rate);
         wd_stop();
         swire_sync(0);
         swire_write(UEI_CASE_SWIRE_SLAVE_ADDR, (u8 *)sw_tx_buf, sizeof(sw_tx_buf));
+
+        // indicate slave the data is ready
         ready = UEI_CASE_SWIRE_SLAVE_WR_READY_VAL;
         swire_write(UEI_CASE_SWIRE_SLAVE_READY_ADDR, &ready, sizeof(ready));
+
         device_led_setup(uei_led_cfg[LED_UEI_SUCCESS]);
+        /*
+         * GPIO_PA7 is used for SWM and ROW of keyboard
+         * after SWM is done, reset GPIO_PA7 to ROW configure
+         * and wait for the next input from user.
+         */
         reset_swm_for_keyboard();
+
         ready = 0;
         wd_start();
         break;
