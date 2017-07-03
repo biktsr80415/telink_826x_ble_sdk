@@ -1,6 +1,10 @@
 #ifndef MYPRINTF_H
 #define MYPRINTF_H
 
+#ifdef printf
+#undef printf
+#endif
+
 #if (PRINT_DEBUG_INFO)
 
 void my_array_printf(char*data, int len);

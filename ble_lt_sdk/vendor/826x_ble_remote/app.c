@@ -536,6 +536,8 @@ void proc_keyboard (u8 e, u8 *p, int n)
 	}
 #endif
 
+	extern void uei_blink_out(const kb_data_t *kb_data);
+	uei_blink_out(det_key ? &kb_event : NULL);
 
 	if (det_key){
 		key_change_proc();

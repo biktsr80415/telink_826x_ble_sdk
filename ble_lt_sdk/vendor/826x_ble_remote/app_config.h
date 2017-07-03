@@ -26,7 +26,7 @@ extern "C" {
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_REMOTE_OTA_ENABLE			1
 #define REMOTE_IR_ENABLE				0
-#define BATT_CHECK_ENABLE       		0   //enable or disable battery voltage detection
+#define BATT_CHECK_ENABLE       		1   //enable or disable battery voltage detection
 
 #if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 	#define BLE_AUDIO_ENABLE				1
