@@ -13,6 +13,7 @@
 #include "../../proj/drivers/battery.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
+#include "uei.h"
 
 #if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8266_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
@@ -536,8 +537,13 @@ void proc_keyboard (u8 e, u8 *p, int n)
 	}
 #endif
 
-	extern void uei_blink_out(const kb_data_t *kb_data);
+#if UEI_CASE_OPEN
+	uei_ftm(det_key ? &kb_event : NULL);
+	if (uei_ftm_entered())
+		return;
+
 	uei_blink_out(det_key ? &kb_event : NULL);
+#endif
 
 	if (det_key){
 		key_change_proc();

@@ -4,6 +4,11 @@
  *  Created on: 2017-6-30
  *      Author: Telink
  */
+
+#include "uei.h"
+
+#if UEI_CASE_OPEN
+
 #include "../../proj/tl_common.h"
 #include "../../proj/common/string.h"
 #include "../../proj/drivers/keyboard.h"
@@ -16,13 +21,11 @@
 enum {
     LED_BLINK_SUCCESS = 0,
     LED_BLINK_OUTS = 0,
-    LED_BLINK_FTM,
     LED_BLINK_FAILURE,
 };
 
 const led_cfg_t blink_led[] = {
         {250,     250,    2,      0x04,  },    // Success
-        {200,     200,    4,      0x04,  },    // For Factory Test Mode
         {1000,    1000,   1,      0x04,  },    // For Failure of tests
 };
 
@@ -30,7 +33,7 @@ led_cfg_t mode_led[] = {
         {500,     500,    0,      0x04,  },    // For Blink outs
 };
 
-u8 * uei_get_mode(const void *code_str, size_t len)
+static u8 * uei_get_mode(const void *code_str, size_t len)
 {
 #define ENTER_BRACKET(c)  ((c) == '(' || (c) == '[' || (c) == '{')
 #define EXIT_BRACKET(c)   ((c) == ')' || (c) == ']' || (c) == '}')
@@ -59,7 +62,7 @@ u8 * uei_get_mode(const void *code_str, size_t len)
     return NULL;
 }
 
-u8 uei_get_mode_val(const void *mode_str, size_t idx)
+static u8 uei_get_mode_val(const void *mode_str, size_t idx)
 {
     u8 *mode = (u8 *)mode_str;
 
@@ -180,3 +183,5 @@ BLINK_OUT_FAIL:
     step = 0;
     return;
 }
+
+#endif

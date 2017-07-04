@@ -25,7 +25,7 @@ extern "C" {
 #define BLE_REMOTE_PM_ENABLE			1
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_REMOTE_OTA_ENABLE			1
-#define REMOTE_IR_ENABLE				0
+#define REMOTE_IR_ENABLE				1
 #define BATT_CHECK_ENABLE       		1   //enable or disable battery voltage detection
 
 #if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
@@ -76,6 +76,8 @@ extern "C" {
 #define	KB_REPEAT_KEY_INTERVAL_MS		200
 #define KB_REPEAT_KEY_NUM				1
 #define KB_MAP_REPEAT					{VK_1, }
+
+#define UEI_CASE_OPEN                   (1)
 
 
 #define			CR_VOL_UP		0xf0
