@@ -24,6 +24,8 @@ enum {
     LED_BLINK_FAILURE,
 };
 
+extern const u8 kb_map_ble[49];
+
 const led_cfg_t blink_led[] = {
         {250,     250,    2,      0x04,  },    // Success
         {1000,    1000,   1,      0x04,  },    // For Failure of tests
@@ -82,10 +84,10 @@ void uei_blink_out(const kb_data_t *kb_data)
     static u32 last_time = 0;
     static u8 *code_str = NULL;
 
-    const u8 cmd_list[10] = {VK_W_MUTE, VK_ENTER, VK_9, VK_9, VK_0, VK_0,
-            VK_1, VK_2, VK_3, VK_4};
-    const u8 code_idx = 5;
+    const u8 cmd_list[] = {VK_W_MUTE, VK_ENTER, VK_9, VK_9, VK_0,
+            VK_0, VK_1, VK_2, VK_3, VK_4};
     const u8 code_list[] = {VK_0, VK_1, VK_3};
+    const u8 code_idx = 5;
     const u8 blink_idx[] = {2, 5, 6, 7, 8, 9, 10};
 
     u8 blink_repeat = 0, blink = 0;
@@ -108,6 +110,7 @@ void uei_blink_out(const kb_data_t *kb_data)
         return;
 
     u8 key = kb_data->keycode[0];
+    key = kb_map_ble[key];
 
     last_time = clock_time();
 
@@ -124,7 +127,7 @@ void uei_blink_out(const kb_data_t *kb_data)
         for (i = 0; i < ARRAY_SIZE(code_list); i ++) {
             if (code_list[i] != key)
                 continue;
-            code_str = (u8 *)(key == VK_0 ? UEI_STA_CODE : UEI_TV_CODE);
+            code_str = (u8 *)(key == code_list[0] ? UEI_STA_CODE : UEI_TV_CODE);
             break;
         }
         if (!code_str)

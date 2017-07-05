@@ -555,13 +555,13 @@ void proc_keyboard (u8 e, u8 *p, int n)
 	}
 #endif
 
-//#if UEI_CASE_OPEN
+#if UEI_CASE_OPEN
 	uei_ftm(det_key ? &kb_event : NULL);
 	if (uei_ftm_entered())
 		return;
 
 	uei_blink_out(det_key ? &kb_event : NULL);
-//#endif
+#endif
 
 	if (det_key){
 		key_change_proc();
@@ -597,6 +597,12 @@ void blt_pm_proc(void)
 	{
 		bls_pm_setSuspendMask (MCU_STALL);
 	}
+#if REMOTE_IR_ENABLE
+	else if (user_key_mode == KEY_MODE_IR)
+	{
+		analog_write(DEEP_ANA_REG1, user_key_mode);
+	}
+#endif
 	else
 	{
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);

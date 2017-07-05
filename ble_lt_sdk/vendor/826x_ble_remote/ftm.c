@@ -30,6 +30,7 @@ static u8 tx_firmware_ver = 0;
 
 extern u8 user_key_mode;
 extern u8 ota_is_working;
+extern u8 ir_is_repeat_timer_enable;
 extern u8 sendTerminate_before_enterDeep;
 extern const u8 kb_map_ir[49];
 
@@ -48,25 +49,66 @@ static void uei_get_firmware_ver()
 
 static void uei_ftm_send_version()
 {
+#define TX_VER_WAIT_TIME           (500000)
+#define TX_VER_DATA_INTERVAL       (100000)
+#define TX_VER_RELEASE_INTERVAL    (120000)
     static u8 ver_idx = 0;
+    static u8 ver_data = 0;
+    static u32 tx_ver_time = 0;
 
     if (!tx_firmware_ver)
         return;
 
+    if (!tx_ver_time)
+        tx_ver_time = clock_time();
+
+    if (DEVICE_LED_BUSY)
+        return;
+
     /*
-     * ir is busy, wait for the next loop
+     * wait for IR is ready
+     */
+    if (!ver_idx &&
+        !clock_time_exceed(tx_ver_time, TX_VER_WAIT_TIME))
+        return;
+
+    /*
+     * IR is busy, wait for the next loop
      */
     extern int ir_is_sending();
     if (ir_is_sending())
         return;
 
-    gpio_write(GPIO_LED, 1);
-
-    ir_dispatch(TYPE_IR_SEND, 0x00, g_firmware_ver[ver_idx++]);
+    if (ver_data) {
+        /*
+         * send release
+         */
+        if (!clock_time_exceed(tx_ver_time, TX_VER_RELEASE_INTERVAL))
+            return;
+        if (!ir_is_repeat_timer_enable)
+            return;
+        ver_data = 0;
+        ir_dispatch(TYPE_IR_RELEASE, 0x00, 0x00);
+        tx_ver_time = clock_time();
+    } else {
+        /*
+         * send version data
+         */
+        if (!clock_time_exceed(tx_ver_time, TX_VER_DATA_INTERVAL))
+            return;
+        ver_data = 1;
+        ir_dispatch(TYPE_IR_SEND, 0x00, g_firmware_ver[ver_idx++]);
+        tx_ver_time = clock_time();
+        return;
+    }
 
     if (ver_idx < ARRAY_SIZE(g_firmware_ver))
         return;
 
+    if (ver_data != 0)
+        return;
+
+    ver_data = 0;
     ver_idx = 0;
     tx_firmware_ver = 0;
     gpio_write(GPIO_LED, 0);
@@ -109,14 +151,15 @@ void uei_ftm(const kb_data_t *kb_data)
 #define FTM_STUCK_TIMEOUT        ((u32)(30000000))
 
     static u32 last_time = 0;
+    static u32 power_time = 0;
     static u32 stuck_time = 0;
     static u8 key_released = 1;
 
-    if (!last_time) {
+    if (!power_time) {
         /*
          * indicate power or battery on
          */
-        last_time = clock_time();
+        power_time = clock_time();
         device_led_setup(ftm_led[LED_FTM_BATTERY_ON]);
     }
 
@@ -130,14 +173,17 @@ void uei_ftm(const kb_data_t *kb_data)
      * timeout, reset context of FTM
      */
     if (uei_ftm_enter > 0 &&
-        clock_time_exceed(last_time, FTM_INTERVAL_TIMEOUT))
+        clock_time_exceed(last_time, FTM_INTERVAL_TIMEOUT)) {
+        uei_ftm_enter = 0;
         goto FTM_FAIL;
+    }
 
     if (!kb_data) {
+        if (!key_released)
+            ir_dispatch(TYPE_IR_RELEASE, 0, 0);  //release
         key_released = 1;
         return;
     }
-
     u8 cnt = kb_data->cnt;
 
     if (key_released)
@@ -149,10 +195,9 @@ void uei_ftm(const kb_data_t *kb_data)
      * if it occurs, push system to deepsleep
      */
     if (clock_time_exceed(stuck_time, FTM_STUCK_TIMEOUT)) {
-        sendTerminate_before_enterDeep = 1;
-        ota_is_working = 0;
-        bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
-        return;
+        sendTerminate_before_enterDeep = 2;
+        bls_ll_setAdvEnable(1);
+        goto FTM_FAIL;
     }
 
     do {
@@ -165,14 +210,15 @@ void uei_ftm(const kb_data_t *kb_data)
         u8 key1 = kb_data->keycode[1];
         key0 = kb_map_ir[key0];
         key1 = kb_map_ir[key1];
-        if (key0 != VK_1 || key1 != VK_3)
+        if (key0 != IR_VK_1 || key1 != IR_VK_3)
             break;
         /*
          * if timeout occurs, there is no possiblity
          * to enter FTM without re-power on
          */
-        if (clock_time_exceed(last_time, FTM_ENTER_TIMEOUT))
+        if (clock_time_exceed(power_time, FTM_ENTER_TIMEOUT))
             goto FTM_FAIL;
+
         uei_ftm_enter = 1;
         device_led_setup(ftm_led[LED_FTM_ENTER]);
 
@@ -199,7 +245,7 @@ void uei_ftm(const kb_data_t *kb_data)
         uei_ftm_reset_factory();
 
         // send IR data with software version number
-        uei_ftm_send_version();
+        //uei_ftm_send_version();
     } while (0);
 
     last_time = clock_time();
@@ -210,19 +256,17 @@ void uei_ftm(const kb_data_t *kb_data)
     gpio_write(GPIO_LED, 1);
     u8 key = kb_data->keycode[0];
     key = kb_map_ir[key];
-
-    gpio_write(GPIO_LED, 1);
     ir_dispatch(TYPE_IR_SEND, 0x00, key);
     gpio_write(GPIO_LED, 0);
 
     return;
 
 FTM_FAIL:
-    uei_ftm_enter = 0;
     last_time = 0;
     stuck_time = 0;
     key_released = 1;
     gpio_write(GPIO_LED, 0);
+    ota_is_working = 0;
     return;
 }
 
