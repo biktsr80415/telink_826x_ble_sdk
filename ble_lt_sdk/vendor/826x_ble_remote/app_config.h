@@ -68,7 +68,7 @@ extern "C" {
 #define LONG_PRESS_KEY_POWER_OPTIMIZE	1   //lower power when pressing key without release
 
 //stuck key
-#define STUCK_KEY_PROCESS_ENABLE		0
+#define STUCK_KEY_PROCESS_ENABLE		1
 #define STUCK_KEY_ENTERDEEP_TIME		60  //in s
 
 //repeat key
@@ -77,8 +77,17 @@ extern "C" {
 #define KB_REPEAT_KEY_NUM				1
 #define KB_MAP_REPEAT					{VK_1, }
 
-#define UEI_CASE_OPEN                   (1)
+#define UEI_CASE_OPEN                   (REMOTE_IR_ENABLE)
 
+#if REMOTE_IR_ENABLE
+//ir key
+#define TYPE_IR_SEND                    1
+#define TYPE_IR_RELEASE                 2
+
+///////////////////// key mode //////////////////////
+#define KEY_MODE_BLE                    0    //ble key
+#define KEY_MODE_IR                     1    //ir  key
+#endif
 
 #define			CR_VOL_UP		0xf0
 #define			CR_VOL_DN		0xf1
@@ -153,8 +162,9 @@ extern "C" {
 #if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
 	#define			GPIO_LED				GPIO_PC7
+	#define			GPIO_LED1				GPIO_PD2
 
-	#if (BLE_IR_ENABLE)  //with IR keymap
+	#if (REMOTE_IR_ENABLE)  //with IR keymap
 			#define 		GPIO_IR_CONTROL			GPIO_PD0
 
 			#define		KB_MAP_NORMAL	{\
@@ -162,7 +172,7 @@ extern "C" {
 							{7,		8,		9,		10,		VOICE,	12,		13,		}, \
 							{14,	15,		16,		17,		18,		19, 	KEY_MODE_SWITCH, }, \
 							{21,	22,		23,		24,		25,		26,		27,		}, \
-							{28,	29,		30,		31,		32,		33,		34,		}, \
+							{28,	29,		30,		31,		32,		33,		KEY_MODE_SWITCH, }, \
 							{35,	36,		37,		38,		39,		40,		41,		}, \
 							{42,	43,		44,		45,		46,		47,		48,		}, }
 
@@ -199,7 +209,7 @@ extern "C" {
 
 
 	#define  KB_DRIVE_PINS  {GPIO_PA6, GPIO_PA7, GPIO_PB1, GPIO_PB4, GPIO_PB5, GPIO_PB6, GPIO_PB7}
-	#define  KB_SCAN_PINS   {GPIO_PD3, GPIO_PD4, GPIO_PD5, GPIO_PD6, GPIO_PD7, GPIO_PE0, GPIO_PE1}
+	#define  KB_SCAN_PINS   {GPIO_PD3, GPIO_PD4, GPIO_PD5, GPIO_PD6, GPIO_PD7, GPIO_PE2, GPIO_PE3}
 
 	#define	PA6_FUNC				AS_GPIO
 	#define	PA7_FUNC				AS_GPIO
@@ -231,24 +241,24 @@ extern "C" {
 	#define	PD5_FUNC				AS_GPIO
 	#define	PD6_FUNC				AS_GPIO
 	#define	PD7_FUNC				AS_GPIO
-	#define	PE0_FUNC				AS_GPIO
-	#define	PE1_FUNC				AS_GPIO
+	#define	PE2_FUNC				AS_GPIO
+	#define	PE3_FUNC				AS_GPIO
 	//scan  pin need 10K pullup
 	#define	PULL_WAKEUP_SRC_PD3		MATRIX_COL_PULL
 	#define	PULL_WAKEUP_SRC_PD4		MATRIX_COL_PULL
 	#define	PULL_WAKEUP_SRC_PD5		MATRIX_COL_PULL
 	#define	PULL_WAKEUP_SRC_PD6		MATRIX_COL_PULL
 	#define	PULL_WAKEUP_SRC_PD7		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PE0		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PE1		MATRIX_COL_PULL
+	#define	PULL_WAKEUP_SRC_PE2		MATRIX_COL_PULL
+	#define	PULL_WAKEUP_SRC_PE3		MATRIX_COL_PULL
 	//scan pin open input to read gpio level
 	#define PD3_INPUT_ENABLE		1
 	#define PD4_INPUT_ENABLE		1
 	#define PD5_INPUT_ENABLE		1
 	#define PD6_INPUT_ENABLE		1
 	#define PD7_INPUT_ENABLE		1
-	#define PE0_INPUT_ENABLE		1
-	#define PE1_INPUT_ENABLE		1
+	#define PE2_INPUT_ENABLE		1
+	#define PE3_INPUT_ENABLE		1
 
 
 #else  //8266 hardware: C43T53A5_V1.0

@@ -112,17 +112,20 @@ u8 		ota_is_working = 0;
 
 
 #if (REMOTE_IR_ENABLE)
-	//ir key
-	#define TYPE_IR_SEND			1
-	#define TYPE_IR_RELEASE			2
+	extern void ir_send_release(void);
+	extern void ir_nec_send(u8 addr1, u8 addr2, u8 cmd);
 
-	///////////////////// key mode //////////////////////
-	#define KEY_MODE_BLE	   		0    //ble key
-	#define KEY_MODE_IR        		1    //ir  key
+	const u8 kb_map_ble[49] = 	KB_MAP_BLE;  //7*7
+	const u8 kb_map_ir[49] = 	KB_MAP_IR;   //7*7
 
-
-	static const u8 kb_map_ble[49] = 	KB_MAP_BLE;  //7*7
-	static const u8 kb_map_ir[49] = 	KB_MAP_IR;   //7*7
+	void ir_dispatch(u8 type, u8 syscode ,u8 ircode){
+		if(type == TYPE_IR_SEND){
+			ir_nec_send(syscode,~(syscode),ircode);
+		}
+		else if(type == TYPE_IR_RELEASE){
+			ir_send_release();
+		}
+	}
 #endif
 
 
@@ -294,11 +297,15 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 
 	}
 
+#if (REMOTE_IR_ENABLE)
+	if (user_key_mode == KEY_MODE_IR)
+		bls_ll_setAdvEnable(0);  //switch to idle state;
+#endif
+
 	 //user has push terminate pkt to ble TX buffer before deepsleep
 	if(sendTerminate_before_enterDeep == 1){
 		sendTerminate_before_enterDeep = 2;
 	}
-
 
 #if (BLE_AUDIO_ENABLE)
 	if(ui_mic_enable){
@@ -307,7 +314,6 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 #endif
 
 	advertise_begin_tick = clock_time();
-
 }
 
 void	task_connect (u8 e, u8 *p, int n)
@@ -406,6 +412,20 @@ void key_change_proc(void)
 		{
 			user_key_mode = !user_key_mode;
 			device_led_setup(led_cfg[LED_SHINE_SLOW + user_key_mode]);
+
+#if (REMOTE_IR_ENABLE)
+			if (user_key_mode == KEY_MODE_IR) {
+				if (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN) {
+					bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
+				} else {
+					bls_ll_setAdvEnable(0);  //switch to idle state
+				}
+				ota_is_working = 0;
+			} else {
+				bls_ll_setAdvEnable(1);
+			}
+#endif
+
 		}
 #if (BLE_AUDIO_ENABLE)
 		else if (key0 == VOICE)
@@ -443,7 +463,7 @@ void key_change_proc(void)
 			key_value = kb_map_ir[key0];
 			key_type = IR_KEY;
 			if(!ir_not_released){
-				//ir_dispatch(TYPE_IR_SEND, 0x88, key_value);
+				ir_dispatch(TYPE_IR_SEND, 0x88, key_value);
 				ir_not_released = 1;
 			}
 		}
@@ -489,7 +509,7 @@ void key_change_proc(void)
 		{
 			if(ir_not_released){
 				ir_not_released = 0;
-				//ir_dispatch(TYPE_IR_RELEASE, 0, 0);  //release
+				ir_dispatch(TYPE_IR_RELEASE, 0, 0);  //release
 			}
 		}
 #endif
@@ -497,8 +517,6 @@ void key_change_proc(void)
 
 
 }
-
-
 
 #define GPIO_WAKEUP_KEYPROC_CNT				3
 
@@ -537,13 +555,13 @@ void proc_keyboard (u8 e, u8 *p, int n)
 	}
 #endif
 
-#if UEI_CASE_OPEN
+//#if UEI_CASE_OPEN
 	uei_ftm(det_key ? &kb_event : NULL);
 	if (uei_ftm_entered())
 		return;
 
 	uei_blink_out(det_key ? &kb_event : NULL);
-#endif
+//#endif
 
 	if (det_key){
 		key_change_proc();
@@ -630,6 +648,7 @@ void blt_pm_proc(void)
 
 			bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
 			sendTerminate_before_enterDeep = 1;
+			ota_is_working = 0;
 		}
 	#endif
 
@@ -809,7 +828,14 @@ void user_init()
 
 
 #if (REMOTE_IR_ENABLE)
+	extern void rc_ir_init(void);
+	rc_ir_init();
+	//	Only with IR Send function, So the GPIO_IR_CONTROL need to output high
+	gpio_set_output_en(GPIO_IR_CONTROL, 1);
+	gpio_write(GPIO_IR_CONTROL, 1);
 	user_key_mode = analog_read(DEEP_ANA_REG1);
+	if (user_key_mode == KEY_MODE_IR)
+		bls_ll_setAdvEnable(0);  //switch to idle state;
 #endif
 
 

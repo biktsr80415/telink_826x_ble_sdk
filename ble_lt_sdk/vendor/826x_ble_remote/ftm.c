@@ -26,6 +26,51 @@ const led_cfg_t ftm_led[] = {
 };
 
 static u8 uei_ftm_enter = 0;
+static u8 tx_firmware_ver = 0;
+
+extern u8 user_key_mode;
+extern u8 ota_is_working;
+extern u8 sendTerminate_before_enterDeep;
+extern const u8 kb_map_ir[49];
+
+extern void ir_dispatch(u8 type, u8 syscode ,u8 ircode);
+
+static u8 g_firmware_ver[2];
+
+static void uei_get_firmware_ver()
+{
+    /*
+     * Get firmware version from flash
+     */
+    u32 ver_addr = 0x02;
+    flash_read_page(ver_addr, sizeof(g_firmware_ver), g_firmware_ver);
+}
+
+static void uei_ftm_send_version()
+{
+    static u8 ver_idx = 0;
+
+    if (!tx_firmware_ver)
+        return;
+
+    /*
+     * ir is busy, wait for the next loop
+     */
+    extern int ir_is_sending();
+    if (ir_is_sending())
+        return;
+
+    gpio_write(GPIO_LED, 1);
+
+    ir_dispatch(TYPE_IR_SEND, 0x00, g_firmware_ver[ver_idx++]);
+
+    if (ver_idx < ARRAY_SIZE(g_firmware_ver))
+        return;
+
+    ver_idx = 0;
+    tx_firmware_ver = 0;
+    gpio_write(GPIO_LED, 0);
+}
 
 static void uei_ftm_reset_factory()
 {
@@ -37,12 +82,12 @@ static void uei_ftm_reset_factory()
      * 0x40000 ~ 0x73FFF: User Data Area
      * 0x74000 ~ 0x75FFF: Pair & Sec Info
      * 0x76000 ~ 0x76FFF: MAC Address
-     * 0x77000 ~ 0x77FFF: Customed value
+     * 0x77000 ~ 0x77FFF: Customed value for calibrate, can't erase.
      * 0x78000 ~ 0x7FFFF: User Data Area
      */
     for (; start < end; start += UEI_FLASH_SECTOR_SIZE)
         flash_erase_sector(start);
-    start = 0x77000;
+    start = 0x78000;
     end = 0x80000;
     for (; start < end; start += UEI_FLASH_SECTOR_SIZE)
         flash_erase_sector(start);
@@ -54,15 +99,18 @@ static void uei_ftm_reset_factory()
 
 u8 uei_ftm_entered()
 {
-	return uei_ftm_enter != 0;
+    return uei_ftm_enter != 0;
 }
 
 void uei_ftm(const kb_data_t *kb_data)
 {
 #define FTM_ENTER_TIMEOUT        ((u32)(6000000))
 #define FTM_INTERVAL_TIMEOUT     ((u32)(30000000))
+#define FTM_STUCK_TIMEOUT        ((u32)(30000000))
 
     static u32 last_time = 0;
+    static u32 stuck_time = 0;
+    static u8 key_released = 1;
 
     if (!last_time) {
         /*
@@ -73,6 +121,11 @@ void uei_ftm(const kb_data_t *kb_data)
     }
 
     /*
+     * send version to master
+     */
+    uei_ftm_send_version();
+
+    /*
      * the maximue interval between two key is 30s
      * timeout, reset context of FTM
      */
@@ -80,44 +133,96 @@ void uei_ftm(const kb_data_t *kb_data)
         clock_time_exceed(last_time, FTM_INTERVAL_TIMEOUT))
         goto FTM_FAIL;
 
-    if (!kb_data)
+    if (!kb_data) {
+        key_released = 1;
         return;
+    }
 
     u8 cnt = kb_data->cnt;
+
+    if (key_released)
+        stuck_time = clock_time();
+    key_released = 0;
+
+    /*
+     * the maximue timeout of stuck key is 30s
+     * if it occurs, push system to deepsleep
+     */
+    if (clock_time_exceed(stuck_time, FTM_STUCK_TIMEOUT)) {
+        sendTerminate_before_enterDeep = 1;
+        ota_is_working = 0;
+        bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
+        return;
+    }
 
     do {
         if (uei_ftm_enter)
             break;
         // Press two keys simultaneously
         if (cnt != 2)
-            return;
-        if (kb_data->keycode[0] != VK_1 ||
-            kb_data->keycode[1] != VK_3)
-            return;
+            break;
+        u8 key0 = kb_data->keycode[0];
+        u8 key1 = kb_data->keycode[1];
+        key0 = kb_map_ir[key0];
+        key1 = kb_map_ir[key1];
+        if (key0 != VK_1 || key1 != VK_3)
+            break;
         /*
          * if timeout occurs, there is no possiblity
          * to enter FTM without re-power on
          */
         if (clock_time_exceed(last_time, FTM_ENTER_TIMEOUT))
-            return;
+            goto FTM_FAIL;
         uei_ftm_enter = 1;
         device_led_setup(ftm_led[LED_FTM_ENTER]);
-        last_time = clock_time();
+
+        tx_firmware_ver = 1;
+        uei_get_firmware_ver();
+
+        /*
+         * IR and BLE can work together
+         * FTM needs to work with IR,
+         * so we switch BLE to idle state
+         */
+        if (user_key_mode != KEY_MODE_IR) {
+            user_key_mode = KEY_MODE_IR;
+            if (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN) {
+                bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
+            } else {
+                bls_ll_setAdvEnable(0);  //switch to idle state
+            }
+            ota_is_working = 0;
+        }
+        /*
+         * clear all the data, and reset to factory setting
+         */
+        uei_ftm_reset_factory();
+
+        // send IR data with software version number
+        uei_ftm_send_version();
     } while (0);
 
-    /*
-     * clear all the data, and reset to factory setting
-     */
-    uei_ftm_reset_factory();
+    last_time = clock_time();
 
-    // send IR data with software version number
+    if (!uei_ftm_enter || cnt != 1)
+        return;
+
     gpio_write(GPIO_LED, 1);
-    // ir_send(...);
+    u8 key = kb_data->keycode[0];
+    key = kb_map_ir[key];
+
+    gpio_write(GPIO_LED, 1);
+    ir_dispatch(TYPE_IR_SEND, 0x00, key);
+    gpio_write(GPIO_LED, 0);
+
     return;
 
 FTM_FAIL:
     uei_ftm_enter = 0;
     last_time = 0;
+    stuck_time = 0;
+    key_released = 1;
+    gpio_write(GPIO_LED, 0);
     return;
 }
 

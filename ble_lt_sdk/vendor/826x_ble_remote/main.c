@@ -7,6 +7,10 @@
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/ll/ll.h"
 
+#if REMOTE_IR_ENABLE
+#include "rc_ir.h"
+#endif
+
 #if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8266_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
 extern void user_init();
@@ -15,7 +19,7 @@ extern void deep_wakeup_proc(void);
 
 _attribute_ram_code_ void irq_handler(void)
 {
-#if (BLE_IR_ENABLE)
+#if (REMOTE_IR_ENABLE)
 	u32 src = reg_irq_src;
 	if(src & FLD_IRQ_TMR1_EN){
 		ir_irq_send();
