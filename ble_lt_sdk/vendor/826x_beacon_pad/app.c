@@ -40,7 +40,7 @@ u16 host_update_conn_timeout;
 u8 current_conn_adr_type;
 u8 current_conn_address[6];
 u8 mac_configured[8] = {0};
-
+u8 adv_ibeacon_filter = 1;
 
 
 typedef void (*main_service_t) (void);
@@ -544,6 +544,7 @@ int app_event_callback (u32 h, u8 *p, int n)
 		//------------ disconnect -------------------------------------
 		if(evtCode == HCI_CMD_DISCONNECTION_COMPLETE)  //connection terminate
 		{
+			gpio_write (GPIO_LED_BLUE, 0);
 			event_disconnection_t	*pd = (event_disconnection_t *)p;
 
 			//terminate reason
@@ -600,6 +601,7 @@ int app_event_callback (u32 h, u8 *p, int n)
 			if (subEvt_code == HCI_SUB_EVT_LE_CONNECTION_COMPLETE)	// connection complete
 			{
 				event_cb_conn++;
+				gpio_write (GPIO_LED_BLUE, 1);
 				//after controller is set to initiating state by host (blc_ll_createConnection(...) )
 				//it will scan the specified device(adr_type & mac), when find this adv packet, send a connection request packet to slave
 				//and enter to connection state, send connection complete evnet. but notice that connection complete not
@@ -656,7 +658,11 @@ int app_event_callback (u32 h, u8 *p, int n)
 				u8 rs = rssi;
 
 				//vendor_apple: 0x004c; ibeacon: 0x1502
-				if (pa->data[5] != 0x4c || pa->data[6] != 0 || pa->data[7] != 0x02 || pa->data[8] != 0x15
+				if (!adv_ibeacon_filter)
+				{
+
+				}
+				else if (pa->data[5] != 0x4c || pa->data[6] != 0 || pa->data[7] != 0x02 || pa->data[8] != 0x15
 					|| rs < 0xc8 )
 				//if (pa->data[5] != 0x4c || pa->data[6] != 0)
 				{
@@ -694,7 +700,6 @@ int app_event_callback (u32 h, u8 *p, int n)
 											 pa->adr_type, pa->mac, BLE_ADDR_PUBLIC, \
 											 CONN_INTERVAL_30MS, CONN_INTERVAL_30MS, 0, CONN_TIMEOUT_4S, \
 											 0, 0);
-
 
 					//save current connect address type and address
 					current_conn_adr_type = pa->adr_type;
@@ -786,6 +791,7 @@ int app_event_callback (u32 h, u8 *p, int n)
 
 int app_hci_rx_from_usb (void)
 {
+	static u32 AACC = 0;
 	u8 buff[72];
 	static u32 hci_tx_ddd;
 
@@ -815,7 +821,21 @@ int app_hci_rx_from_usb (void)
 			{
 				r = 9;
 			}
-			REG_ADDR8 (0x43e) = 0xc0 | r;
+			REG_ADDR8 (0x43e) = 0xc0 | r;	//
+		}
+		else if (buff[0] == 0xd4 && buff[1] == 0xff)	//disable ibeacon filter
+		{
+			adv_ibeacon_filter = buff[4];
+		}
+		else if (buff[0] == 0xfe && buff[1] == 0xff)	//connect to
+		{
+			blc_ll_createConnection( SCAN_INTERVAL_100MS, SCAN_INTERVAL_100MS, INITIATE_FP_ADV_SPECIFY,  \
+										0, buff + 5, BLE_ADDR_PUBLIC, \
+										CONN_INTERVAL_30MS, CONN_INTERVAL_30MS, 0, CONN_TIMEOUT_1S, \
+										0, 0);
+			current_conn_adr_type = buff[4];
+			AACC++;
+			memcpy(current_conn_address, buff + 5, 6);
 		}
 		else if (!blc_master_handler || !blc_master_handler (buff, n))
 		{
