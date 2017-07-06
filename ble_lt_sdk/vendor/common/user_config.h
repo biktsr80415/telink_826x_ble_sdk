@@ -5,6 +5,10 @@
 	#include "../8266_host_dongle/app_config.h"
 #elif (__PROJECT_8267_MASTER__)
 	#include "../8267_master/app_config.h"
+#elif (__PROJECT_8261_BEACON__)
+	#include "../826x_beacon/app_config.h"
+#elif (__PROJECT_8267_BEACON_PAD__)
+	#include "../826x_beacon_pad/app_config.h"
 #elif (__PROJECT_8267_BTUSB__)
 	#include "../8267_btusb/app_config.h"
 #elif (__PROJECT_8261_HCI__|__PROJECT_8267_HCI__|__PROJECT_8269_HCI__)
