@@ -30,7 +30,6 @@ void device_led_init(u32 gpio,u8 polarity){  //polarity: 1 for high led on, 0 fo
 
 int device_led_setup(led_cfg_t led_cfg)
 {
-
 	if( device_led.repeatCount &&  device_led.priority >= led_cfg.priority){
 		return 0; //new led event priority not higher than the not ongoing one
 	}
@@ -68,7 +67,10 @@ void led_proc(void)
 		if(clock_time_exceed(device_led.startTick,(device_led.onTime_ms-5)*1000)){
 			device_led_on_off(0);
 			if(device_led.offTime_ms){ //offTime not zero
-				device_led.startTick += device_led.onTime_ms*CLOCK_SYS_CLOCK_1MS;
+			    u32 time = clock_time();
+                device_led.startTick += device_led.onTime_ms*CLOCK_SYS_CLOCK_1MS;
+                if ((u32)(time - device_led.startTick) > (device_led.onTime_ms >> 1)*1000)
+                    device_led.startTick = time - (device_led.onTime_ms >> 2)*1000;
 			}
 			else{
 				device_led.repeatCount = 0;
@@ -78,8 +80,11 @@ void led_proc(void)
 	else{
 		if(clock_time_exceed(device_led.startTick,(device_led.offTime_ms-5)*1000)){
 			if(--device_led.repeatCount){
-				device_led_on_off(1);
-				device_led.startTick += device_led.offTime_ms*CLOCK_SYS_CLOCK_1MS;
+                device_led_on_off(1);
+                u32 time = clock_time();
+                device_led.startTick += device_led.onTime_ms*CLOCK_SYS_CLOCK_1MS;
+                if ((u32)(time - device_led.startTick) > (device_led.onTime_ms >> 1)*1000)
+                    device_led.startTick = time - (device_led.onTime_ms >> 2)*1000;
 			}
 		}
 	}
