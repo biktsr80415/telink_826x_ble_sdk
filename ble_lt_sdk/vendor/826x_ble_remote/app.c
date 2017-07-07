@@ -33,13 +33,14 @@ MYFIFO_INIT(blt_txfifo, 40, 16);
 #define			HID_HANDLE_CONSUME_REPORT			25
 #define			HID_HANDLE_KEYBOARD_REPORT			29
 #define			AUDIO_HANDLE_MIC					47
+#define			BAT_LOW_VOL							2000
 
 
 //////////////////////////////////////////////////////////////////////////////
 //	 Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
 const u8	tbl_advData[] = {
-	 0x05, 0x09, 't', 'h', 'i', 'd',
+	 0x05, 0x09, 'U', 'E', 'I', '0',
 	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
 	 0x03, 0x19, 0x80, 0x01, 					// 384, Generic Remote Control, Generic category
 	 0x05, 0x02, 0x12, 0x18, 0x0F, 0x18,		// incomplete list of service class UUIDs (0x1812, 0x180F)
@@ -74,11 +75,12 @@ u32		advertise_begin_tick;
 u8		ui_mic_enable = 0;
 u8 		key_voice_press = 0;
 
-int 	lowBattDet_enable = 0;
-int		lowBatt_alarmFlag = 0;
+#if (BATT_CHECK_ENABLE)
+u8 lowBattDet_enable = 0;
+u8 lowBatt_alarmFlag = 0;
+#endif
 
-
-int     ui_mtu_size_exchange_req = 0;
+u8     ui_mtu_size_exchange_req = 0;
 
 
 //////////////////// key type ///////////////////////
@@ -92,9 +94,9 @@ u8 		user_key_mode;
 
 u8 		key_buf[8] = {0};
 
-int 	key_not_released;
+u8 	key_not_released;
 
-int 	ir_not_released;
+u8 	ir_not_released;
 
 u32 	latest_user_event_tick;
 
@@ -105,7 +107,7 @@ u8 		ota_is_working = 0;
 
 
 #if (STUCK_KEY_PROCESS_ENABLE)
-	u32 	stuckKey_keyPressTime;
+//	u32 	stuckKey_keyPressTime;
 #endif
 
 
@@ -337,7 +339,11 @@ void deep_wakeup_proc(void)
 	//if deepsleep wakeup is wakeup by GPIO(key press), we must quickly scan this
 	//press, hold this data to the cache, when connection established OK, send to master
 	//deepsleep_wakeup_fast_keyscan
-	if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG){
+	if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG
+#if REMOTE_IR_ENABLE
+		|| analog_read(DEEP_ANA_REG1) == KEY_MODE_IR
+#endif
+			){
 		if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON, 1) && kb_event.cnt){
 			deepback_key_state = DEEPBACK_KEY_CACHE;
 			key_not_released = 1;
@@ -355,18 +361,27 @@ void deepback_pre_proc(int *det_key)
 {
 #if (DEEPBACK_FAST_KEYSCAN_ENABLE)
 	// to handle deepback key cache
-	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN \
-			&& clock_time_exceed(bls_ll_getConnectionCreateTime(), 25000)){
+	u8 ble_check = (deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN \
+			&& clock_time_exceed(bls_ll_getConnectionCreateTime(), 25000));
+#if REMOTE_IR_ENABLE
+	u8 ir_check = (user_key_mode == KEY_MODE_IR);
+#endif
+	if(!(*det_key)) {
+		if (ble_check
+#if REMOTE_IR_ENABLE
+			|| ir_check
+#endif
+				) {
+			memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
+			*det_key = 1;
 
-		memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
-		*det_key = 1;
-
-		if(key_not_released || kb_event_cache.keycode[0] == VOICE){  //no need manual release
-			deepback_key_state = DEEPBACK_KEY_IDLE;
-		}
-		else{  //need manual release
-			deepback_key_tick = clock_time();
-			deepback_key_state = DEEPBACK_KEY_WAIT_RELEASE;
+			if(key_not_released || kb_event_cache.keycode[0] == VOICE){  //no need manual release
+				deepback_key_state = DEEPBACK_KEY_IDLE;
+			}
+			else{  //need manual release
+				deepback_key_tick = clock_time();
+				deepback_key_state = DEEPBACK_KEY_WAIT_RELEASE;
+			}
 		}
 	}
 #endif
@@ -383,6 +398,12 @@ void deepback_post_proc(void)
 		bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
 		deepback_key_state = DEEPBACK_KEY_IDLE;
 	}
+#if REMOTE_IR_ENABLE
+	else if (user_key_mode == KEY_MODE_IR) {
+		ir_dispatch(TYPE_IR_RELEASE, 0x00, 0x00);
+		key_not_released = 0;
+	}
+#endif
 #endif
 }
 
@@ -408,6 +429,17 @@ void key_change_proc(void)
 	}
 	else if(kb_event.cnt == 1)
 	{
+#if (BATT_CHECK_ENABLE)
+		if (lowBatt_alarmFlag)
+			device_led_setup(led_cfg[LED_SHINE_FAST]);
+#endif
+		if (ota_program_offset == 0x00) {  // current running firmware is 0x20000
+#if (REMOTE_IR_ENABLE)
+			key0 = (key0 == 0 ? 38 : key0);
+#else
+			key0 = (key0 == VK_7 ? VK_8 : key 0);
+#endif
+		}
 		if(key0 == KEY_MODE_SWITCH)
 		{
 			user_key_mode = !user_key_mode;
@@ -600,7 +632,7 @@ void blt_pm_proc(void)
 #if REMOTE_IR_ENABLE
 	else if (user_key_mode == KEY_MODE_IR)
 	{
-		analog_write(DEEP_ANA_REG1, user_key_mode);
+		uei_ir_pm();
 	}
 #endif
 	else
@@ -836,12 +868,13 @@ void user_init()
 #if (REMOTE_IR_ENABLE)
 	extern void rc_ir_init(void);
 	rc_ir_init();
-	//	Only with IR Send function, So the GPIO_IR_CONTROL need to output high
-	gpio_set_output_en(GPIO_IR_CONTROL, 1);
-	gpio_write(GPIO_IR_CONTROL, 1);
 	user_key_mode = analog_read(DEEP_ANA_REG1);
-	if (user_key_mode == KEY_MODE_IR)
+	if (user_key_mode == KEY_MODE_IR) {
 		bls_ll_setAdvEnable(0);  //switch to idle state;
+		if (deepback_key_state == DEEPBACK_KEY_CACHE && key_not_released)
+			sleep_us(200000);
+	}
+	//analog_write(DEEP_ANA_REG1, 0x00);
 #endif
 
 
@@ -891,8 +924,8 @@ void main_loop (void)
 		if(lowBattDet_enable){
 			battery_power_check();
 		}
+		lowBatt_alarmFlag = (g_cur_bat_val > 0 && g_cur_bat_val < BAT_LOW_VOL) ? 1 : 0;
 	#endif
-	//lowBatt_alarmFlag =  //low battery detect
 
 	proc_keyboard (0,0, 0);
 

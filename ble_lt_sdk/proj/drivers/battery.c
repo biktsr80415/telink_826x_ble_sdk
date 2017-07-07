@@ -6,10 +6,7 @@
 #include "../../proj_lib/pm.h"
 #if(BATT_CHECK_ENABLE)
 
-
-
-
-
+u16 g_cur_bat_val;
 
 /***
  * the function can filter the not good data from the adc.
@@ -76,6 +73,8 @@ void battery_power_check(void)
 #elif(MCU_CORE_TYPE == MCU_CORE_8266)
 	tem_batteryVol = ((1300*average_data)>>14);
 #endif
+
+	g_cur_bat_val = tem_batteryVol;
 
 	if(tem_batteryVol < 1900){  //when battery voltage is lower than 1.9v, chip will enter deep sleep mode
 		cpu_sleep_wakeup(1, PM_WAKEUP_PAD, 0);
