@@ -18,9 +18,10 @@
 #ifdef ARRAY_SIZE
 #undef ARRAY_SIZE
 #endif
-#define ARRAY_SIZE(a)    (sizeof((a))/sizeof((a[0])))
+#define ARRAY_SIZE(a)    (sizeof((a)) / sizeof((a[0])))
 
-extern u8 uei_ftm_entered();
+extern void uei_ir_pm(void);
+extern u8 uei_ftm_entered(void);
 extern void uei_ftm(const kb_data_t *kb_data);
 extern void uei_blink_out(const kb_data_t *kb_data);
 

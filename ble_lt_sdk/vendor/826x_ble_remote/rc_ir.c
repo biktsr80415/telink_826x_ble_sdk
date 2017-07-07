@@ -684,6 +684,10 @@ void rc_ir_init(void)
 	pwmm_set_mode(IR_PWM_ID, PWM_NORMAL_MODE);  //pwm0 count mode
 	pwmm_set_duty(IR_PWM_ID, PWM_CYCLE_VALUE, PWM_HIGH_VALUE);  //set cycle and high
 	pwmm_set_phase(IR_PWM_ID, 0);   //no phase at pwm beginning
+
+	//	Only with IR Send function, So the GPIO_IR_CONTROL need to output high
+	gpio_set_output_en(GPIO_IR_CONTROL, 1);
+	gpio_write(GPIO_IR_CONTROL, 1);
 }
 
 
