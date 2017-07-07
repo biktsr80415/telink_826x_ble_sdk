@@ -16,6 +16,7 @@ void e2prom_write (int adr, u8 *p, int len)
 	{
 		int l = len >= 8 ? 8 : len;				//page write: 8-byte
 		len -= l;
+		extern void i2c_sim_burst_write(u8 id, u8 addr,u8 *p, int n);
 		i2c_sim_burst_write (EEPROM_I2C_ID, adr + i, p + i, l);
 		i += l;
 		sleep_us (5000);
@@ -23,5 +24,6 @@ void e2prom_write (int adr, u8 *p, int len)
 }
 void e2prom_read (int adr, u8 *p, int len)
 {
+	extern void i2c_sim_burst_read(u8 id, u8 addr,u8 *p, int n);
 	i2c_sim_burst_read (EEPROM_I2C_ID, adr, p, len);
 }
