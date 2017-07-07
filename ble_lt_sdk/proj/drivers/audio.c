@@ -12,7 +12,7 @@
 #include "../../proj/tl_common.h"
 #include "audio.h"
 #include "pga.h"
-#include "../mcu_spec/adc_8267.h"
+#include "adc.h"
 
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
