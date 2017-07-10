@@ -17,7 +17,6 @@
 #include "../common/blt_led.h"
 
 #define UEI_IR_IDLE_MAX_TIME_US    (60000000)
-#define UEI_IR_STUCK_MAX_TIME_US   (30000000)
 
 enum {
     LED_FTM_BATTERY_ON = 0,
@@ -177,15 +176,8 @@ static void uei_ftm_pm()
     cpu_sleep_wakeup(sleep_type, src, clock_time() + CLOCK_SYS_CLOCK_1S);
 }
 
-void uei_ir_pm()
+u8 uei_stuck_key_check()
 {
-    u8 status;
-    if (user_key_mode != KEY_MODE_IR)
-        return;
-
-    if (!g_tx_fm_ver && !DEVICE_LED_BUSY && !ir_not_released &&
-        clock_time_exceed(g_uei_last_ir_tick, 100000))
-        g_ftm_sleep_type = FTM_SUSPEND;
     /*
      * the maximue timeout of stuck key is 30s
      * if it occurs, push system to deepsleep
@@ -200,7 +192,22 @@ void uei_ir_pm()
             cpu_set_gpio_wakeup (pin[i], 0, 1);  // reverse stuck key pad wakeup level
             gpio_set_wakeup(pin[i], 0, 1);       // reverse stuck key pad wakeup level
         }
+        return 1;
     }
+    return 0;
+}
+
+void uei_ir_pm()
+{
+    u8 status;
+    if (user_key_mode != KEY_MODE_IR)
+        return;
+
+    if (!g_tx_fm_ver && !DEVICE_LED_BUSY && !ir_not_released &&
+        clock_time_exceed(g_uei_last_ir_tick, 100000))
+        g_ftm_sleep_type = FTM_SUSPEND;
+
+    uei_stuck_key_check();
 
     if (clock_time_exceed(g_uei_last_ir_tick, UEI_IR_IDLE_MAX_TIME_US))
         g_ftm_sleep_type = FTM_DEEPSLEEP;

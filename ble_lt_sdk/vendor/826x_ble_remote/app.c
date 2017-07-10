@@ -107,7 +107,7 @@ u8 		ota_is_working = 0;
 
 
 #if (STUCK_KEY_PROCESS_ENABLE)
-//	u32 	stuckKey_keyPressTime;
+	u32 	stuckKey_keyPressTime;
 #endif
 
 
@@ -423,6 +423,10 @@ void key_change_proc(void)
 	u8 key_value;
 
 	key_not_released = 1;
+#if (STUCK_KEY_PROCESS_ENABLE)
+	if (kb_event.cnt > 0)
+		stuckKey_keyPressTime = clock_time();
+#endif
 	if (kb_event.cnt == 2)   //two key press, do  not process
 	{
 
@@ -688,6 +692,37 @@ void blt_pm_proc(void)
 			sendTerminate_before_enterDeep = 1;
 			ota_is_working = 0;
 		}
+#if (STUCK_KEY_PROCESS_ENABLE)
+		if (key_not_released && clock_time_exceed(stuckKey_keyPressTime, UEI_IR_STUCK_MAX_TIME_US)) {
+			u32 pin[] = KB_DRIVE_PINS;
+			for (u8 i = 0; i < ARRAY_SIZE(pin); i ++) {
+				extern u8 stuckKeyPress[];
+				if(!stuckKeyPress[i])
+					continue;
+				cpu_set_gpio_wakeup (pin[i], 0, 1);  // reverse stuck key pad wakeup level
+				gpio_set_wakeup(pin[i], 0, 1);       // reverse stuck key pad wakeup level
+			}
+			if (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN) {
+				if(key_type == CONSUMER_KEY) {
+					key_buf[0] = 0;
+					bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, key_buf, 2);  //release
+				} else if(key_type == KEYBOARD_KEY)	{
+					key_buf[2] = 0;
+					bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
+				}
+				bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
+				sendTerminate_before_enterDeep = 1;
+				ota_is_working = 0;
+			} else {
+				bls_pm_setSuspendMask (DEEPSLEEP_ADV); //set deepsleep
+				bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio PAD wakeup deesleep
+				analog_write(DEEP_ANA_REG0, ADV_DEEP_FLG);
+				#if (REMOTE_IR_ENABLE)
+				analog_write(DEEP_ANA_REG1, user_key_mode);
+				#endif
+			}
+		}
+#endif
 	#endif
 
 	}

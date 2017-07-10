@@ -20,8 +20,11 @@
 #endif
 #define ARRAY_SIZE(a)    (sizeof((a)) / sizeof((a[0])))
 
+#define UEI_IR_STUCK_MAX_TIME_US   (30000000)
+
 extern void uei_ir_pm(void);
 extern u8 uei_ftm_entered(void);
+extern u8 uei_stuck_key_check(void);
 extern void uei_ftm(const kb_data_t *kb_data);
 extern void uei_blink_out(const kb_data_t *kb_data);
 
