@@ -174,7 +174,7 @@ static void uei_ftm_pm()
     if (sleep_type == SUSPEND_MODE)
         src = PM_WAKEUP_CORE | PM_WAKEUP_TIMER;
 
-    cpu_sleep_wakeup(sleep_type, src, clock_time() + (UEI_IR_IDLE_MAX_TIME_US >> 1) * CLOCK_SYS_CLOCK_1US);
+    cpu_sleep_wakeup(sleep_type, src, clock_time() + CLOCK_SYS_CLOCK_1S);
 }
 
 void uei_ir_pm()
