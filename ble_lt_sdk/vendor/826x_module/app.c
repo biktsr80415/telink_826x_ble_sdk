@@ -311,7 +311,25 @@ void user_init()
 	#endif
 #endif
 	ui_advertise_begin_tick = clock_time();
+
+#if (HEART_RATE_ENABLE)
+	gpio_set_input_en(GPIO_PD2, 1);
+	gpio_setup_up_down_resistor(GPIO_PD2, PM_PIN_PULLUP_1M);
+#endif
 }
+
+#if (HEART_RATE_ENABLE)
+void push_notify_data() {
+	if(gpio_read(GPIO_PD2) == 0) {
+		extern heart_rate_meassure_t heart_rate_val;
+		heart_rate_val.flag = 1;
+		heart_rate_val.meassure_val = 123;
+		heart_rate_val.energy_expended = 321;
+		heart_rate_val.rr_interval = 30;			//unit : sec
+		bls_att_pushNotifyData(10, (u8*)(&heart_rate_val), sizeof(heart_rate_val));	//opcode
+	}
+}
+#endif
 
 extern void battery_power_check(void);
 /////////////////////////////////////////////////////////////////////
@@ -322,6 +340,10 @@ void main_loop ()
 	static u32 tick_loop;
 
 	tick_loop ++;
+
+#if (HEART_RATE_ENABLE)
+	push_notify_data();
+#endif
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	blt_sdk_main_loop();
