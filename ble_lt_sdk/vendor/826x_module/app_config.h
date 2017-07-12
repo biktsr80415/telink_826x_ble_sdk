@@ -192,28 +192,8 @@ extern "C" {
 
 #endif
 
-///////////////////// BLE Service ///////////////////////
-#define ADDITIONAL_SERVICE_ENABLE	0
 
-#if (ADDITIONAL_SERVICE_ENABLE)
-#define HEART_RATE_ENABLE			1
-#define SENSING_TMPERATURE_ENABLE	1
-#define HEART_RATE_NUM				8
-#define SENSING_TEMP_NUM			3
 
-#include "../../proj/common/types.h"
-typedef struct {
-	u8 flag;
-	u16 meassure_val;
-	u16 energy_expended;
-	u16 rr_interval;
-}heart_rate_meassure_t;
-#else
-#define HEART_RATE_ENABLE			0
-#define SENSING_TMPERATURE_ENABLE	0
-#define HEART_RATE_NUM				0
-#define SENSING_TEMP_NUM			0
-#endif
 /////////////////// set default   ////////////////
 
 #include "../common/default_config.h"
