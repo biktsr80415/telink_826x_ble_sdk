@@ -72,41 +72,6 @@ static u8 my_batProp 						= CHAR_PROP_READ | CHAR_PROP_NOTIFY;
 const u16 my_batCharUUID       				= CHARACTERISTIC_UUID_BATTERY_LEVEL;
 u8 		  my_batVal[1] 						= {99};
 
-//////////////////////// Heart Rate //////////////////////////////////////////////
-#if (HEART_RATE_ENABLE)
-#define CHARACTERISTIC_UUID_HEART_RATE_MEASSUREMENT		0x2A37;
-#define CHARACTERISTIC_UUID_BODY_SENSOR_LOCATION		0x2A38;
-#define CHARACTERISTIC_UUID_CONTROL_POINT				0x2A39;
-
-const u16 my_heartrateServiceUUID       	= SERVICE_UUID_HEART_RATE;
-static u8 my_heartrateProp 					= CHAR_PROP_NOTIFY;
-const u16 my_heartrateCharUUID       		= CHARACTERISTIC_UUID_HEART_RATE_MEASSUREMENT;
-heart_rate_meassure_t heart_rate_val;
-u16 heart_rate_descriptor;
-
-static u8 my_sensorlocProp 					= CHAR_PROP_READ;
-const u16 my_sensorlocCharUUID       		= CHARACTERISTIC_UUID_BODY_SENSOR_LOCATION;
-u8 body_sensor_loc 							= 4;			//hand
-
-static u8 my_controlpitProp 				= CHAR_PROP_WRITE;
-const u16 my_controlpitCharUUID       		= CHARACTERISTIC_UUID_CONTROL_POINT;
-u8 control_point;
-#endif
-//////////////////////// Environmental sensing //////////////////////////////////////
-#if (SENSING_TMPERATURE_ENABLE)
-#define	SERVICE_UUID_ENVIRONMENTAL_SENSING				0x181A;
-#define CHARACTERISTIC_UUID_ENVIRONMENTAL_TEMPERATURE	0x2A6E;
-const u16 my_envirsensServiceUUID       	= SERVICE_UUID_ENVIRONMENTAL_SENSING;
-static u8 my_envirtempProp 					= CHAR_PROP_READ;
-const u16 my_envirtempCharUUID       		= CHARACTERISTIC_UUID_ENVIRONMENTAL_TEMPERATURE;
-s16 temperature = 15;
-
-int temperatureread(void *p) {
-
-	temperature = REG_ADDR8(0x448);
-	return temperature;
-}
-#endif
 /////////////////////////////////////////////////////////
 const u16 userdesc_UUID		= GATT_UUID_CHAR_USER_DESC;
 
@@ -213,7 +178,7 @@ u8	 	my_OtaData 		= 0x00;
 // TM : to modify
 const attribute_t my_Attributes[] = {
 #if (TELIK_SPP_SERVICE_ENABLE)
-	{26 + HEART_RATE_NUM + SENSING_TEMP_NUM,0,0,0,0,0},	// total num of attribute
+	{26,0,0,0,0,0},	// total num of attribute
 #else
 	{18,0,0,0,0,0},	// total num of attribute
 #endif
@@ -227,19 +192,6 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_periConnParamChar), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_periConnParameters),(u8*)(&my_periConnParamUUID), 	(u8*)(&my_periConnParameters), 0},
 
-#if (HEART_RATE_ENABLE)
-////////////////////////////////////// Heart rate //////////////////////////////////////////////////////
-	{8,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_heartrateServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_heartrateProp), 0},
-	{0,ATT_PERMISSIONS_READ,2,sizeof (heart_rate_val),(u8*)(&my_heartrateCharUUID), (u8*)(&heart_rate_val), 0},
-	{0,ATT_PERMISSIONS_RDWR,2,2,(u8*)(&clientCharacterCfgUUID),(u8*)(&heart_rate_descriptor), 0},
-
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_sensorlocProp), 0},
-	{0,ATT_PERMISSIONS_READ,2,sizeof (body_sensor_loc),(u8*)(&my_sensorlocCharUUID), (u8*)(&body_sensor_loc), 0},
-
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_controlpitProp), 0},
-	{0,ATT_PERMISSIONS_READ,2,sizeof (control_point),(u8*)(&my_controlpitCharUUID), (u8*)(&control_point), 0},
-#endif
 
 	// 0008 - 000b gatt
 	{4,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gattServiceUUID), 0},
@@ -247,17 +199,12 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_READ,2,sizeof (serviceChangeVal), (u8*)(&serviceChangeUIID), 	(u8*)(&serviceChangeVal), 0},
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof (indCharCfg),(u8*)(&clientCharacterCfgUUID), (u8*)(indCharCfg), 0},
 
+
+
 	// 000c - 000e  device Information Service
 	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_devServiceUUID), 0},
 	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_PnPCharacter), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},
-
-#if (SENSING_TMPERATURE_ENABLE)
-////////////////////////////////////// Sensing Temperature /////////////////////////////////////////////
-	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_envirsensServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_envirtempProp), 0},
-	{0,ATT_PERMISSIONS_READ,2,sizeof (temperature),(u8*)(&my_envirtempCharUUID), (u8*)(&temperature), 0,	&temperatureread},
-#endif
 
 ////////////////////////////////////// SPP Service /////////////////////////////////////////////////////
 #if (TELIK_SPP_SERVICE_ENABLE)
