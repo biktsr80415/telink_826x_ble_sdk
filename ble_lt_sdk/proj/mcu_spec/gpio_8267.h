@@ -178,6 +178,10 @@ static inline u32 gpio_read(u32 pin){
 	return BM_IS_SET(reg_gpio_in(pin), pin & 0xff);
 }
 
+static inline void gpio_toggle(u32 pin) {
+	reg_gpio_out(pin) ^= (pin & 0xFF);
+}
+
 static inline u32 gpio_read_cache(u32 pin, u8 *p){
 	return p[pin>>8] & (pin & 0xff);
 }
@@ -507,3 +511,5 @@ enum{
 extern u32 mouse_gpio_table[];
 
 void gpio_set_wakeup(u32 pin, u32 level, int en);
+
+void gpio_setup_up_down_resistor(u32 gpio, u32 up_down);

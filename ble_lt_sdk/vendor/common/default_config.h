@@ -692,8 +692,10 @@ enum{
 #define IR_PWM_ID			0
 #endif
 
+#if 0
 #ifndef GPIO_IR_LEARN_IN
 #define GPIO_IR_LEARN_IN	0
+#endif
 #endif
 
 enum{

@@ -14,6 +14,7 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
 #include "uei.h"
+#include "rc_ir.h"
 
 #if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8266_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
@@ -114,17 +115,15 @@ u8 		ota_is_working = 0;
 
 
 #if (REMOTE_IR_ENABLE)
-	extern void ir_send_release(void);
-	extern void ir_nec_send(u8 addr1, u8 addr2, u8 cmd);
+	u32 learn_keycode;
 
 	const u8 kb_map_ble[49] = 	KB_MAP_BLE;  //7*7
 	const u8 kb_map_ir[49] = 	KB_MAP_IR;   //7*7
 
 	void ir_dispatch(u8 type, u8 syscode ,u8 ircode){
 		if(type == TYPE_IR_SEND){
-			ir_nec_send(syscode,~(syscode),ircode);
-		}
-		else if(type == TYPE_IR_RELEASE){
+			ir_send_cmd(syscode,~(syscode),ircode);
+		} else if(type == TYPE_IR_RELEASE){
 			ir_send_release();
 		}
 	}
@@ -597,6 +596,7 @@ void proc_keyboard (u8 e, u8 *p, int n)
 		return;
 
 	uei_blink_out(det_key ? &kb_event : NULL);
+	ir_learn(det_key ? &kb_event : NULL);
 #endif
 
 	if (det_key){
@@ -899,6 +899,7 @@ void user_init()
 
 #if (REMOTE_IR_ENABLE)
 	extern void rc_ir_init(void);
+	//uei_debug_init();
 	rc_ir_init();
 	user_key_mode = analog_read(DEEP_ANA_REG1);
 	if (user_key_mode == KEY_MODE_IR) {

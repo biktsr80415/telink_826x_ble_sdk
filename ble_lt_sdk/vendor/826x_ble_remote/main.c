@@ -21,14 +21,24 @@ _attribute_ram_code_ void irq_handler(void)
 {
 #if (REMOTE_IR_ENABLE)
 	u32 src = reg_irq_src;
-	if(src & FLD_IRQ_TMR1_EN){
+	if (src & FLD_IRQ_TMR1_EN) {
 		ir_irq_send();
 		reg_tmr_sta = FLD_TMR_STA_TMR1;
 	}
 
-	if(src & FLD_IRQ_TMR2_EN){
+	if (src & FLD_IRQ_TMR2_EN) {
 		ir_repeat_handle();
 		reg_tmr_sta = FLD_TMR_STA_TMR2;
+	}
+
+	if (src & IR_LEARN_INTERRUPT_MASK) {    //红外学习IO口产生中断
+		//if (!gpio_read(GPIO_IR_LEARN_IN)) {
+		if (gpio_read(GPIO_IR_LEARN_IN)) {
+			gpio_toggle(GPIO_PA0);
+			ir_learn_irq_handler();
+		}
+		//reg_irq_src = FLD_IRQ_GPIO_EN;
+		gpio_toggle(GPIO_PA1);
 	}
 #endif
 

@@ -46,7 +46,7 @@ extern u8 user_key_mode;
 extern u8 ota_is_working;
 extern u8 ir_not_released;
 extern u8 lowBatt_alarmFlag;
-extern u8 ir_is_repeat_timer_enable;
+extern u8 g_ir_is_repeat_timer_enable;
 extern u8 sendTerminate_before_enterDeep;
 extern const u8 kb_map_ir[49];
 
@@ -89,7 +89,7 @@ static void uei_ftm_send_version()
     /*
      * IR is busy, wait for the next loop
      */
-    extern int ir_is_sending();
+    extern u8 ir_is_sending();
     if (ir_is_sending())
         return;
 
@@ -99,7 +99,7 @@ static void uei_ftm_send_version()
          */
         if (!clock_time_exceed(tx_ver_time, TX_VER_RELEASE_INTERVAL))
             return;
-        if (!ir_is_repeat_timer_enable)
+        if (!g_ir_is_repeat_timer_enable)
             return;
         ver_data = 0;
         ir_dispatch(TYPE_IR_RELEASE, 0x00, 0x00);
@@ -173,7 +173,7 @@ static void uei_ftm_pm()
     if (sleep_type == SUSPEND_MODE)
         src = PM_WAKEUP_CORE | PM_WAKEUP_TIMER;
 
-    cpu_sleep_wakeup(sleep_type, src, clock_time() + CLOCK_SYS_CLOCK_1S);
+    cpu_sleep_wakeup(sleep_type, src, clock_time() + CLOCK_SYS_CLOCK_1S / 2);
 }
 
 u8 uei_stuck_key_check()
@@ -204,7 +204,7 @@ void uei_ir_pm()
         return;
 
     if (!g_tx_fm_ver && !DEVICE_LED_BUSY && !ir_not_released &&
-        clock_time_exceed(g_uei_last_ir_tick, 100000))
+        !ir_learning() && clock_time_exceed(g_uei_last_ir_tick, 100000))
         g_ftm_sleep_type = FTM_SUSPEND;
 
     uei_stuck_key_check();
@@ -213,8 +213,6 @@ void uei_ir_pm()
         g_ftm_sleep_type = FTM_DEEPSLEEP;
     status = g_ftm_sleep_type;
     uei_ftm_pm();
-    //if (status != FTM_ACTIVE)
-    //    sleep_us(5000);
 }
 
 void uei_ftm(const kb_data_t *kb_data)

@@ -154,6 +154,10 @@ extern "C" {
 #define 		IR_VOICE		0x77
 #define 		IR_PAUSE		0x78
 
+#define 		IR_LEARN_L		0xc7
+#define 		IR_LEARN_R		0xc8
+#define 		IR_LEARN_STOP	0xc9
+
 #define			T_VK_CH_UP		0xd0
 #define			T_VK_CH_DN		0xd1
 
@@ -166,6 +170,8 @@ extern "C" {
 
 	#if (REMOTE_IR_ENABLE)  //with IR keymap
 			#define 		GPIO_IR_CONTROL			GPIO_PD0
+			#define 		GPIO_IR_OUT				GPIO_PA0
+            #define 		GPIO_IR_LEARN_IN		GPIO_PD1
 
 			#define		KB_MAP_NORMAL	{\
 							{0, 	1,		2,		3,		4,		5,		6,		}, \
@@ -187,13 +193,13 @@ extern "C" {
 
 
 			#define		KB_MAP_IR	{\
-							IR_VK_7,	IR_VK_4,	IR_VK_1,	IR_RED_KEY,	IR_VOL_DN,	IR_VOL_UP,	IR_BACK	, \
-							IR_LEFT,	VK_NONE,	VK_NONE,	IR_PREV,	VK_NONE,	VK_MMODE,	IR_POWER, \
-							IR_RIGHT,	IR_HOME,	VK_NONE,	IR_NEXT,	IR_STOP,	IR_SEARCH,	KEY_MODE_SWITCH , \
-							IR_VK_9,	IR_VK_6,	IR_VK_3,	IR_BLUE_KEY,VK_CH_DN,	VK_CH_UP,	IR_MENU , \
-							IR_YELLOW_KEY,IR_AUDIO_MUTE,VK_NONE,IR_DN,		IR_SEL,		IR_UP,		VK_NONE , \
-							VK_NONE,	VK_NONE,	IR_VK_0,	IR_VK_8,	IR_VK_5,	IR_VK_2,	IR_GREEN_KEY , \
-							IR_PAUSE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE, }
+							IR_VK_7,		IR_VK_4,		IR_VK_1,	IR_RED_KEY,		IR_VOL_DN,	IR_VOL_UP,	IR_BACK	, \
+							IR_LEFT,		VK_NONE,		IR_LEARN_L,	IR_PREV,		VK_NONE,	VK_MMODE,	IR_POWER, \
+							IR_RIGHT,		IR_HOME,		IR_LEARN_R,	IR_NEXT,		IR_STOP,	IR_SEARCH,	KEY_MODE_SWITCH , \
+							IR_VK_9,		IR_VK_6,		IR_VK_3,	IR_BLUE_KEY,	VK_CH_DN,	VK_CH_UP,	IR_MENU , \
+							IR_YELLOW_KEY,	IR_AUDIO_MUTE,	VK_NONE,	IR_DN,			IR_SEL,		IR_UP,		VK_NONE , \
+							VK_NONE,		IR_LEARN_STOP,	IR_VK_0,	IR_VK_8,		IR_VK_5,	IR_VK_2,	IR_GREEN_KEY , \
+							IR_PAUSE,		VK_NONE,		VK_NONE,	VK_NONE,		VK_NONE,	VK_NONE,	VK_NONE, }
 	#else   //key map
 
 			#define		KB_MAP_NORMAL	{\
@@ -260,6 +266,12 @@ extern "C" {
 	#define PE2_INPUT_ENABLE		1
 	#define PE3_INPUT_ENABLE		1
 
+#define	PA0_FUNC				AS_GPIO
+#define PA0_OUTPUT_ENABLE		1
+#define PA0_INPUT_ENABLE		0
+#define	PA1_FUNC				AS_GPIO
+#define PA1_OUTPUT_ENABLE		1
+#define PA1_INPUT_ENABLE		0
 
 #else  //8266 hardware: C43T53A5_V1.0
 

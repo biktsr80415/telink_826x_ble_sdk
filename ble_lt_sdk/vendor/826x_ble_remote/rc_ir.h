@@ -11,18 +11,11 @@
 
 ////////////////////////// IR  /////////////////////////////
 #define IR_CARRIER_FREQ				38000
-#define PWM_CYCLE_VALUE				( CLOCK_SYS_CLOCK_HZ/IR_CARRIER_FREQ )  //16M: 421 tick, f = 16000000/421 = 38004,T = 421/16=26.3125 us
-#define PWM_HIGH_VALUE				( PWM_CYCLE_VALUE/3 )   // 1/3 duty
+#define PWM_CYCLE_VALUE				(CLOCK_SYS_CLOCK_HZ / IR_CARRIER_FREQ)  //16M: 421 tick, f = 16000000/421 = 38004,T = 421/16=26.3125 us
+#define PWM_HIGH_VALUE				(PWM_CYCLE_VALUE / 3)   // 1/3 duty
 // 1 frame -> 1/38k -> 1000/38 = 26 us
 
 #define IR_PWM_ID					0   //0: PWM0   1:PWM1  ...   5:PWM5
-
-
-void rc_ir_init(void);
-void ir_send_release(void);
-//void ir_send_cmd(u8 addr, u8 cmd);
-
-
 
 #define IR_HIGH_CARR_TIME			565			// in us
 #define IR_HIGH_NO_CARR_TIME		1685
@@ -43,7 +36,10 @@ void ir_send_release(void);
 #define IR_CARRIER_DUTY				3
 #define IR_LEARN_SERIES_CNT     	160
 
-enum{
+//#define IR_LEARN_INTERRUPT_MASK     (FLD_IRQ_GPIO_EN | FLD_IRQ_GPIO_RISC2_EN)
+#define IR_LEARN_INTERRUPT_MASK     (FLD_IRQ_GPIO_EN)
+
+enum {
     IR_TYPE_KONKA_KONKA=0,
     IR_TYPE_SUNSUNG_TC9012,
     IR_TYPE_HAIER_TC9012,
@@ -55,31 +51,32 @@ enum{
     IR_TYPE_MAX ,
 };
 
+typedef void (*ir_send_func_t)(u8 addr1, u8 addr2,u8 cmd);
+typedef void (*ir_send_release_func_t)(u8 addr);
 
-
-typedef struct{
+typedef struct {
 	u32 *time_series;
 	u8 type;
 	u8 start_high;
 	u8 series_cnt;
 	u8 code;
-}ir_send_ctrl_data_t;
+} ir_send_ctrl_data_t;
 
-typedef struct{
+typedef struct {
 	//8byte save an index, use 256bytes(1pages)to save 32 key index
 	u32 learnkey_flash_addr;
 	u32 local_key_code;
-}ir_search_index_t;
+} ir_search_index_t;
 
-typedef struct{
+typedef struct {
 	ir_send_ctrl_data_t	data[8];
 	u32 sending_start_time;
 	u8 index;
 	u8 cnt;
 	u8 is_sending;
-}ir_send_ctrl_t;
+} ir_send_ctrl_t;
 
-typedef struct{
+typedef struct {
 	u8 ir_protocol;
 	u8 toshiba_c0flag;
 	u8 resv0[2];
@@ -87,10 +84,10 @@ typedef struct{
 	u32 carr_low_tm;
 	u16 series_cnt;
 	u16 resv1;
-	u8 series_tm[(IR_LEARN_SERIES_CNT/2)*3];
-}ir_universal_pattern_t;
+	u8 series_tm[(IR_LEARN_SERIES_CNT / 2) * 3];
+} ir_universal_pattern_t;
 
-typedef struct{
+typedef struct {
 	u8 is_carr;
 	u8 ir_protocol;
 	u8 toshiba_c0flag;
@@ -106,14 +103,12 @@ typedef struct{
 	u32 carr_high_tm;
 	u32	carr_low_tm;
 	int ir_int_cnt;
-
-}ir_learn_ctrl_t;
+} ir_learn_ctrl_t;
 
 extern ir_send_ctrl_t ir_send_ctrl;
-extern u8 ir_is_repeat_timer_enable;
+extern u8 g_ir_is_repeat_timer_enable;
 
 void ir_send_switch(u8 addr, u8 cmd);
-
 
 #ifndef GPIO_IR_LEARN_IN
 #define GPIO_IR_LEARN_IN			//
@@ -122,11 +117,13 @@ void ir_send_switch(u8 addr, u8 cmd);
 void ir_record(u32 tm, int pol);
 int ir_record_end(void * data);
 
-void ir_learn(void);
-void ir_learn_init(void);
-void ir_learn_test(void);
-
+void rc_ir_init(void);
+void ir_start_learn(void);
+void ir_exit_learn(void);
+void ir_learn_irq_handler(void);
 void ir_irq_send(void);
 void ir_repeat_handle();
+void ir_send_release(void);
+void ir_send_cmd(u8 addr1, u8 addr2, u8 cmd);
 
 #endif /* RC_IR_H_ */

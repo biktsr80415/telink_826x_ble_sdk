@@ -159,7 +159,7 @@ int ismemzero4(void *data, unsigned int len){
 }
 
 int ismemf4(void *data, unsigned int len){
-	int *p = (int*)data;
+	u32 *p = (u32*)data;
 	len = len >> 2;
 	for(int i = 0; i < len; ++i){
 		if(*p != 0xffffffff){
