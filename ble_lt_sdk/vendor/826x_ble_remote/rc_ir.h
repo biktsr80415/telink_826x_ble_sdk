@@ -105,7 +105,6 @@ typedef struct {
 	int ir_int_cnt;
 } ir_learn_ctrl_t;
 
-extern ir_send_ctrl_t ir_send_ctrl;
 extern u8 g_ir_is_repeat_timer_enable;
 
 void ir_send_switch(u8 addr, u8 cmd);

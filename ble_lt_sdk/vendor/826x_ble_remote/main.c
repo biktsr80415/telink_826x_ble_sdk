@@ -20,6 +20,8 @@ extern void deep_wakeup_proc(void);
 _attribute_ram_code_ void irq_handler(void)
 {
 #if (REMOTE_IR_ENABLE)
+	extern u32 g_ir_learn_pulse_tick;
+	g_ir_learn_pulse_tick = clock_time();
 	u32 src = reg_irq_src;
 	if (src & FLD_IRQ_TMR1_EN) {
 		ir_irq_send();
@@ -32,13 +34,10 @@ _attribute_ram_code_ void irq_handler(void)
 	}
 
 	if (src & IR_LEARN_INTERRUPT_MASK) {    //红外学习IO口产生中断
-		//if (!gpio_read(GPIO_IR_LEARN_IN)) {
-		if (gpio_read(GPIO_IR_LEARN_IN)) {
-			gpio_toggle(GPIO_PA0);
+		if (!gpio_read(GPIO_IR_LEARN_IN)) {
+			//gpio_toggle(GPIO_PA1);
 			ir_learn_irq_handler();
 		}
-		//reg_irq_src = FLD_IRQ_GPIO_EN;
-		gpio_toggle(GPIO_PA1);
 	}
 #endif
 

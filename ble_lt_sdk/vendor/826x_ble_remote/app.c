@@ -115,7 +115,7 @@ u8 		ota_is_working = 0;
 
 
 #if (REMOTE_IR_ENABLE)
-	u32 learn_keycode;
+	u32 g_learn_keycode;
 
 	const u8 kb_map_ble[49] = 	KB_MAP_BLE;  //7*7
 	const u8 kb_map_ir[49] = 	KB_MAP_IR;   //7*7
@@ -597,9 +597,11 @@ void proc_keyboard (u8 e, u8 *p, int n)
 
 	uei_blink_out(det_key ? &kb_event : NULL);
 	ir_learn(det_key ? &kb_event : NULL);
+	if (ir_learning())
+		return;
 #endif
 
-	if (det_key){
+	if (det_key) {
 		key_change_proc();
 	}
 	

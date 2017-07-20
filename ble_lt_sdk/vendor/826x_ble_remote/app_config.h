@@ -266,9 +266,11 @@ extern "C" {
 	#define PE2_INPUT_ENABLE		1
 	#define PE3_INPUT_ENABLE		1
 
+#if 0
 #define	PA0_FUNC				AS_GPIO
 #define PA0_OUTPUT_ENABLE		1
 #define PA0_INPUT_ENABLE		0
+#endif
 #define	PA1_FUNC				AS_GPIO
 #define PA1_OUTPUT_ENABLE		1
 #define PA1_INPUT_ENABLE		0
