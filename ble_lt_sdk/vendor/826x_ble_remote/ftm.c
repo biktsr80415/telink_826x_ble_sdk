@@ -199,22 +199,24 @@ u8 uei_stuck_key_check()
 
 void uei_ir_pm()
 {
-    if (user_key_mode != KEY_MODE_IR)
-        return;
+    do {
+        if (user_key_mode != KEY_MODE_IR)
+            return;
 
-    if (uei_stuck_key_check())
-        return;
+        if (uei_stuck_key_check())
+            break;
 
-    if (g_tx_fm_ver || DEVICE_LED_BUSY || ir_learning() || ir_not_released)
-        return;
+        if (g_tx_fm_ver || DEVICE_LED_BUSY || ir_learning() || ir_not_released)
+            break;
 
-    if (clock_time_exceed(g_uei_last_ir_tick, 100000))
-        g_ftm_sleep_type = FTM_SUSPEND;
+        if (clock_time_exceed(g_uei_last_ir_tick, 100000))
+            g_ftm_sleep_type = FTM_SUSPEND;
 
-    if (clock_time_exceed(g_uei_last_ir_tick, UEI_IR_IDLE_MAX_TIME_US))
-        g_ftm_sleep_type = FTM_DEEPSLEEP;
+        if (clock_time_exceed(g_uei_last_ir_tick, UEI_IR_IDLE_MAX_TIME_US))
+            g_ftm_sleep_type = FTM_DEEPSLEEP;
+    } while (0);
 
-    //uei_ftm_pm();
+    uei_ftm_pm();
 }
 
 void uei_ftm(const kb_data_t *kb_data)

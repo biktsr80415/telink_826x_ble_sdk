@@ -949,7 +949,6 @@ void ir_record(u32 tm, int pol)
                     #if 0
                     if (0 == g_ir_learn_ctrl.learn_timer_started) {
                         g_ir_learn_ctrl.learn_timer_started = 1;
-                        device_led_setup(g_ir_led[5]);
                         ir_record_end(&g_ir_index_data);
                     }
                     #endif
@@ -1011,14 +1010,12 @@ void ir_check_tick()
     case IR_LEARN_FINISH:
         break;
     case IR_LEARN_WAIT_KEY:
-        break;
         timeout = IR_LEARN_WAIT_KEY_TIMEOUT;
     case IR_LEARN_KEY:
-        break;
         if (clock_time_exceed(g_ir_learn_tick, timeout)) {
-            g_ir_learn_state = IR_LEARN_DISABLE;
             g_ir_learn_tick = clock_time();
             device_led_setup(g_ir_led[g_ir_learn_state]);
+            g_ir_learn_state = IR_LEARN_DISABLE;
             ir_restore_keyboard();
         }
         break;
@@ -1029,7 +1026,6 @@ void ir_check_tick()
         }
         break;
     default:
-
         break;
     }
 }
@@ -1052,12 +1048,18 @@ static void ir_restore_keyboard()
         cpu_set_gpio_wakeup(pin[i], 1, 1);  // drive pin pad deepsleep wakeup high
     }
     reg_irq_src |= IR_LEARN_INTERRUPT_MASK;
+    extern u8 ir_not_released;
+    ir_not_released = 0;
     rc_ir_init();
 }
 
 void ir_learn(const kb_data_t *kb_data)
 {
     u8 key;
+
+    extern u8 user_key_mode;
+    if (user_key_mode != KEY_MODE_IR)
+        return;
 
     ir_check_tick();
 
