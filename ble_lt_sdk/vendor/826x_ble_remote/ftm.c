@@ -227,6 +227,7 @@ void uei_ftm(const kb_data_t *kb_data)
 
     static u32 last_time = 0;
     static u32 power_time = 0;
+    static u8 reset_factory = 0;
 
     if (!power_time) {
         /*
@@ -303,13 +304,29 @@ void uei_ftm(const kb_data_t *kb_data)
         if (user_key_mode != KEY_MODE_IR) {
             user_key_mode = KEY_MODE_IR;
             if (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN) {
+                extern u8 key_not_released;
+                if (key_not_released) {
+                    extern u8 key_type;
+                    if(key_type == 1) {
+                        u8 key_buf[2] = {0};
+                        bls_att_pushNotifyData (25, key_buf, 2);  //release
+                    } else if(key_type == 2) {
+                        u8 key_buf[8] = {0};
+                        bls_att_pushNotifyData (29, key_buf, 8); //release
+                    }
+                }
                 bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
-            } else {
-                bls_ll_setAdvEnable(0);  //switch to idle state
             }
+            bls_ll_setAdvEnable(0);  //switch to idle state
             ota_is_working = 0;
         }
+        reset_factory = 1;
         last_time = clock_time();
+
+        return;
+    } while (0);
+
+    if (reset_factory) {
         /*
          * clear all the data, and reset to factory setting
          */
@@ -317,8 +334,8 @@ void uei_ftm(const kb_data_t *kb_data)
 
         // send IR data with software version number
         uei_ftm_send_version();
-        return;
-    } while (0);
+        reset_factory = 0;
+    }
 
     last_time = clock_time();
 

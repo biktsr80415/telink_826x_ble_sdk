@@ -14,7 +14,7 @@
 #include "../../proj/drivers/keyboard.h"
 #include "../common/blt_led.h"
 
-#define UEI_STA_CODE      "uei_sta_code(0.00)2345"
+#define UEI_SAT_CODE      "uei_sat_code(0.00)2345"
 #define UEI_TV_CODE       "uei_tv_code(1.20)4325"
 #define DIGITAL(c)        ((c) >= '0' && (c) <= '9')
 
@@ -127,7 +127,7 @@ void uei_blink_out(const kb_data_t *kb_data)
         for (i = 0; i < ARRAY_SIZE(code_list); i ++) {
             if (code_list[i] != key)
                 continue;
-            code_str = (u8 *)(key == code_list[0] ? UEI_STA_CODE : UEI_TV_CODE);
+            code_str = (u8 *)(key == code_list[0] ? UEI_SAT_CODE : UEI_TV_CODE);
             break;
         }
         if (!code_str)
