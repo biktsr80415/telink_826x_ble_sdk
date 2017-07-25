@@ -907,7 +907,7 @@ void user_init()
 	if (user_key_mode == KEY_MODE_IR) {
 		bls_ll_setAdvEnable(0);  //switch to idle state;
 		if (deepback_key_state == DEEPBACK_KEY_CACHE && key_not_released)
-			sleep_us(200000);
+			sleep_us(200000);  // wait for IR is ready
 	}
 	//analog_write(DEEP_ANA_REG1, 0x00);
 #endif

@@ -34,6 +34,8 @@ const led_cfg_t ftm_led[] = {
         {250,     250,    4,      0x05,  },    // For Factory Test Mode
 };
 
+u8 g_reset_factory;
+
 static u8 g_tx_fm_ver = 0;
 static u8 g_firmware_ver[2];
 static u8 g_key_released = 0;
@@ -149,9 +151,10 @@ static void uei_ftm_reset_factory()
     for (; start < end; start += UEI_FLASH_SECTOR_SIZE)
         flash_erase_sector(start);
     wd_start();
-
+#if 0
     if (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN)
         bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
+#endif
 }
 
 u8 uei_ftm_entered()
@@ -206,7 +209,12 @@ void uei_ir_pm()
         if (uei_stuck_key_check())
             break;
 
-        if (g_tx_fm_ver || DEVICE_LED_BUSY || ir_learning() || ir_not_released)
+        if (ir_learning()) {
+            g_uei_last_ir_tick = clock_time();
+            break;
+        }
+
+        if (g_tx_fm_ver || DEVICE_LED_BUSY || ir_not_released)
             break;
 
         if (clock_time_exceed(g_uei_last_ir_tick, 100000))
@@ -227,7 +235,6 @@ void uei_ftm(const kb_data_t *kb_data)
 
     static u32 last_time = 0;
     static u32 power_time = 0;
-    static u8 reset_factory = 0;
 
     if (!power_time) {
         /*
@@ -290,7 +297,11 @@ void uei_ftm(const kb_data_t *kb_data)
         if (clock_time_exceed(power_time, FTM_ENTER_TIMEOUT))
             goto FTM_FAIL;
 
+        ir_dispatch(TYPE_IR_RELEASE, 0x00, 0x00);
+        ir_not_released = 0;
+
         g_uei_ftm_enter = 1;
+        g_reset_factory = 1;
         device_led_setup(ftm_led[LED_FTM_ENTER]);
 
         g_tx_fm_ver = 1;
@@ -320,21 +331,17 @@ void uei_ftm(const kb_data_t *kb_data)
             bls_ll_setAdvEnable(0);  //switch to idle state
             ota_is_working = 0;
         }
-        reset_factory = 1;
-        last_time = clock_time();
 
+        last_time = clock_time();
         return;
     } while (0);
 
-    if (reset_factory) {
+    if (g_reset_factory) {
         /*
          * clear all the data, and reset to factory setting
          */
         uei_ftm_reset_factory();
-
-        // send IR data with software version number
-        uei_ftm_send_version();
-        reset_factory = 0;
+        g_reset_factory = 0;
         return;
     }
 

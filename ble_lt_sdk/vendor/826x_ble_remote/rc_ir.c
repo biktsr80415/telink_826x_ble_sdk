@@ -61,6 +61,7 @@ static u8 g_ir_send_start_high;
 static u8 g_ir_search_index_next_addr;
 
 extern u32 g_learn_keycode;
+extern u8 g_reset_factory;
 extern const u8 kb_map_ir[49];
 
 void ir_irq_send(void);
@@ -116,20 +117,15 @@ static int ir_send_repeat_timer(void *data)
 
 void ir_send_cmd(u8 addr1, u8 addr2, u8 cmd)
 {
-    static u8 nec_init = 0;
     if (ir_find_learnkey_data(cmd) == 0) {
         ir_learn_send(cmd);
-        nec_init = 1;
         return;
     }
 
     if (g_ir_proto_type >= IR_TYPE_MAX)
         g_ir_proto_type = IR_TYPE_NEC_TIANZUN;
 
-    if (nec_init) {
-        nec_init = 0;
-        rc_ir_init();
-    }
+    rc_ir_init();
 
     if (ir_send_array[g_ir_proto_type])
         ir_send_array[g_ir_proto_type](addr1, addr2, cmd);
@@ -634,10 +630,11 @@ static int ir_write_universal_data(ir_search_index_t *ir_index_data)
     if (g_ir_search_index_next_addr >= IR_MAX_INDEX_TABLE_LEN) {
         ++ g_ir_errcnt;
         //it's full, don't store any more.
+        memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
         return -1;
     }
 
-    if (g_ir_learn_ctrl.series_cnt < 32) {
+    if (g_ir_learn_ctrl.series_cnt < FRAXEL_LEVEL_NUM) {
         // invalide learn data
         memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
         return -1;
@@ -752,6 +749,8 @@ static int ir_write_universal_data(ir_search_index_t *ir_index_data)
         ++ g_ir_search_index_next_addr;
     }
 
+    memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
+
     return 0;
 }
 
@@ -804,11 +803,11 @@ static void ir_learn_send(u8 local_data_code)
     if (ir_sending_check()) {
         return;
     }
-
+#if 0
     if (ir_find_learnkey_data(local_data_code)) {
         return;//not found
     }
-
+#endif
     memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
     //record protocol and c0flag in order to diff repeat code.
     g_ir_learn_ctrl.ir_protocol = g_ir_learn_pattern.ir_protocol;
@@ -821,21 +820,19 @@ static void ir_learn_send(u8 local_data_code)
                 (g_ir_learn_pattern.series_tm[i * 3 + 2] << 16);
         } else {
             g_ir_learn_ctrl.series_tm[i] = g_ir_learn_pattern_extend.series_tm[(i - IR_LEARN_SERIES_CNT / 2) * 3] |
-                (g_ir_learn_pattern_extend.series_tm[(i-IR_LEARN_SERIES_CNT / 2) * 3 + 1] << 8) |
-                (g_ir_learn_pattern_extend.series_tm[(i-IR_LEARN_SERIES_CNT / 2) * 3 + 2] << 16);
+                (g_ir_learn_pattern_extend.series_tm[(i - IR_LEARN_SERIES_CNT / 2) * 3 + 1] << 8) |
+                (g_ir_learn_pattern_extend.series_tm[(i - IR_LEARN_SERIES_CNT / 2) * 3 + 2] << 16);
         }
     }
 
+    pwmm_clk(CLOCK_SYS_CLOCK_HZ, CLOCK_SYS_CLOCK_HZ);
     if (g_ir_learn_ctrl.ir_protocol == 0) {
-        pwmm_clk(CLOCK_SYS_CLOCK_HZ, CLOCK_SYS_CLOCK_HZ);
         carrier_cycle = g_ir_learn_pattern.carr_high_tm + g_ir_learn_pattern.carr_low_tm;
-        pwmm_set_duty(IR_PWM_ID, carrier_cycle, g_ir_learn_pattern.carr_high_tm);  //set cycle and high
-        pwmm_set_phase(IR_PWM_ID, 0);   //no phase at pwm beginning
+        pwmm_set_duty(IR_PWM_ID, carrier_cycle, carrier_cycle / 3);  //set cycle and high
     } else {
-        pwmm_clk(CLOCK_SYS_CLOCK_HZ, CLOCK_SYS_CLOCK_HZ);
         pwmm_set_duty(IR_PWM_ID, PWM_CYCLE_VALUE, PWM_HIGH_VALUE);  //set cycle and high
-        pwmm_set_phase(IR_PWM_ID, 0);   //no phase at pwm beginning
     }
+    pwmm_set_phase(IR_PWM_ID, 0);   //no phase at pwm beginning
 
     ir_send_ctrl_clear();
     ir_send_add_series_item(g_ir_learn_ctrl.series_tm, g_ir_learn_pattern.series_cnt, 1);
@@ -878,6 +875,7 @@ static void ir_nec_send(u8 addr1, u8 addr2, u8 cmd)
 
 int ir_record_end(void *data)
 {
+    char ret = -1;
     if (g_ir_learn_ctrl.series_cnt < IR_LEARN_SERIES_CNT) {
         ++ g_ir_learn_ctrl.series_cnt;  // plus the last carrier.
     }
@@ -888,16 +886,17 @@ int ir_record_end(void *data)
      * | preamble | address | ~address | command | ~command | repeat |
      * | 2 pulse  | 8 pulse | 8 pulse  | 8 pulse | 8 pulse  | 2 pulse|
      */
-    if (g_ir_learn_ctrl.series_cnt > 32) {
+    if (g_ir_learn_ctrl.series_cnt >= FRAXEL_LEVEL_NUM &&
+        ir_write_universal_data(&g_ir_index_data) == 0) {
         // IR learn success
-        ir_write_universal_data(&g_ir_index_data);
         device_led_setup(g_ir_led[IR_LEARN_FINISH - 1]);
-        return 0;
+        ret = 0;
     } else {
+        memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
         device_led_setup(g_ir_led[IR_LEARN_FAIL - 1]);
     }
 
-    return -1;
+    return ret;
 }
 
 void ir_record(u32 tm, int pol)
@@ -948,17 +947,17 @@ void ir_record(u32 tm, int pol)
                 // It decrease one cycle with actually calculate, so add it.
                g_ir_learn_ctrl.series_tm[(g_ir_learn_ctrl.series_cnt)] =
                        (g_ir_learn_ctrl.last_trigger_tm - g_ir_learn_ctrl.carr_switch_start_tm) + g_ir_learn_ctrl.carr_first;
-                if (g_ir_learn_ctrl.series_tm[0] < IR_LEARN_START_MINLEN){
+                if (g_ir_learn_ctrl.series_tm[0] < IR_LEARN_START_MINLEN ) {
                     memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
+                    //g_ir_learn_state = IR_LEARN_KEY;
                     return;
                 } else {
-                    //#ifndef WIN32
-                    #if 0
+#if 0
                     if (0 == g_ir_learn_ctrl.learn_timer_started) {
                         g_ir_learn_ctrl.learn_timer_started = 1;
-                        ir_record_end(&g_ir_index_data);
+                        ir_exit_learn();
                     }
-                    #endif
+#endif
                 }
 
                 ++ g_ir_learn_ctrl.series_cnt;
