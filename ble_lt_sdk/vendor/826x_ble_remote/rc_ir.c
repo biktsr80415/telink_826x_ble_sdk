@@ -116,13 +116,20 @@ static int ir_send_repeat_timer(void *data)
 
 void ir_send_cmd(u8 addr1, u8 addr2, u8 cmd)
 {
+    static u8 nec_init = 0;
     if (ir_find_learnkey_data(cmd) == 0) {
         ir_learn_send(cmd);
+        nec_init = 1;
         return;
     }
 
     if (g_ir_proto_type >= IR_TYPE_MAX)
         g_ir_proto_type = IR_TYPE_NEC_TIANZUN;
+
+    if (nec_init) {
+        nec_init = 0;
+        rc_ir_init();
+    }
 
     if (ir_send_array[g_ir_proto_type])
         ir_send_array[g_ir_proto_type](addr1, addr2, cmd);
@@ -1194,7 +1201,8 @@ void rc_ir_init(void)
 
     memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
     g_last_cmd = 0xff;
-    ir_get_index_addr();
+    if (g_ir_search_index_next_addr == 0)
+        ir_get_index_addr();
 
     g_ir_proto_type = IR_TYPE_NEC_TIANZUN;
 }
