@@ -335,6 +335,7 @@ void uei_ftm(const kb_data_t *kb_data)
         // send IR data with software version number
         uei_ftm_send_version();
         reset_factory = 0;
+        return;
     }
 
     last_time = clock_time();
