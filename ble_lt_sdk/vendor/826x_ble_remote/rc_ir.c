@@ -61,7 +61,6 @@ static u8 g_ir_send_start_high;
 static u8 g_ir_search_index_next_addr;
 
 extern u32 g_learn_keycode;
-extern u8 g_reset_factory;
 extern const u8 kb_map_ir[49];
 
 void ir_irq_send(void);

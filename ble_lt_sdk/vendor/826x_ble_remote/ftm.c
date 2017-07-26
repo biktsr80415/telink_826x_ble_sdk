@@ -34,8 +34,6 @@ const led_cfg_t ftm_led[] = {
         {250,     250,    4,      0x05,  },    // For Factory Test Mode
 };
 
-u8 g_reset_factory;
-
 static u8 g_tx_fm_ver = 0;
 static u8 g_firmware_ver[2];
 static u8 g_key_released = 0;
@@ -235,6 +233,7 @@ void uei_ftm(const kb_data_t *kb_data)
 
     static u32 last_time = 0;
     static u32 power_time = 0;
+    static u8 reset_factory = 0;
 
     if (!power_time) {
         /*
@@ -301,8 +300,7 @@ void uei_ftm(const kb_data_t *kb_data)
         ir_not_released = 0;
 
         g_uei_ftm_enter = 1;
-        g_reset_factory = 1;
-        device_led_setup(ftm_led[LED_FTM_ENTER]);
+        reset_factory = 1;
 
         g_tx_fm_ver = 1;
         uei_get_firmware_ver();
@@ -336,12 +334,13 @@ void uei_ftm(const kb_data_t *kb_data)
         return;
     } while (0);
 
-    if (g_reset_factory) {
+    if (reset_factory) {
         /*
          * clear all the data, and reset to factory setting
          */
+        device_led_setup(ftm_led[LED_FTM_ENTER]);
         uei_ftm_reset_factory();
-        g_reset_factory = 0;
+        reset_factory = 0;
         return;
     }
 
