@@ -85,7 +85,7 @@ extern "C" {
 
 
 
-#if __PROJECT_8261_MASTER_KMA_DONGLE__ || __PROJECT_8267_MASTER_KMA_DONGLE__ || __PROJECT_8269_MASTER_KMA_DONGLE__
+#if __PROJECT_8267_BEACON_PAD__
 	//----------------------- GPIO for UI --------------------------------
 	//---------------  Button ----------------------------------
 	#define PD2_INPUT_ENABLE		1

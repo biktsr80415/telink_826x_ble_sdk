@@ -544,7 +544,7 @@ int app_event_callback (u32 h, u8 *p, int n)
 		//------------ disconnect -------------------------------------
 		if(evtCode == HCI_CMD_DISCONNECTION_COMPLETE)  //connection terminate
 		{
-			gpio_write (GPIO_LED_BLUE, 0);
+			//gpio_write (GPIO_LED_BLUE, 0);
 			event_disconnection_t	*pd = (event_disconnection_t *)p;
 
 			//terminate reason
@@ -601,7 +601,7 @@ int app_event_callback (u32 h, u8 *p, int n)
 			if (subEvt_code == HCI_SUB_EVT_LE_CONNECTION_COMPLETE)	// connection complete
 			{
 				event_cb_conn++;
-				gpio_write (GPIO_LED_BLUE, 1);
+				//gpio_write (GPIO_LED_BLUE, 1);
 				//after controller is set to initiating state by host (blc_ll_createConnection(...) )
 				//it will scan the specified device(adr_type & mac), when find this adv packet, send a connection request packet to slave
 				//and enter to connection state, send connection complete evnet. but notice that connection complete not
@@ -826,6 +826,12 @@ int app_hci_rx_from_usb (void)
 		else if (buff[0] == 0xd4 && buff[1] == 0xff)	//disable ibeacon filter
 		{
 			adv_ibeacon_filter = buff[4];
+		}
+		else if (buff[0] == 0xd5 && buff[1] == 0xff)	//OTA
+		{
+			int ota1 = buff[4] == 1;
+
+			host_button_trigger_ota_start (ota1, !ota1);
 		}
 		else if (buff[0] == 0xfe && buff[1] == 0xff)	//connect to
 		{

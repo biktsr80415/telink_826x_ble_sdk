@@ -169,6 +169,33 @@ int app_event_callback (u32 h, u8 *p, int n)
 }
 #endif
 
+///////////////////////////////////
+u8 ui_ota_is_working;
+void entry_ota_mode(void)
+{
+	ui_ota_is_working = 1;
+
+	bls_ota_setTimeout(100 * 1000000); //set OTA timeout  100 S
+}
+
+void show_ota_result(int result)
+{
+#if 1
+	for(int i=0; i< 8;i++)
+	{
+		if (result == OTA_SUCCESS)
+		{	//4Hz shine for  4 second
+			gpio_write(GPIO_LED, i & 1);
+		}
+		else
+		{
+			gpio_write(GPIO_LED, i & 4);
+		}
+		cpu_sleep_wakeup (0, PM_WAKEUP_TIMER, clock_time () + 125000 * sys_tick_per_us );
+	}
+	gpio_write(GPIO_LED, 0);
+#endif
+}
 
 void user_init()
 {
@@ -195,6 +222,8 @@ void user_init()
 		tbl_mac[0] = (u8)rand();
 		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
 	}
+	//tbl_mac[4] = 0x55;
+	//tbl_mac[5] = 0xaa;
 
 	pmac = (u32 *) FLASH_TELINK_BEACON_CONFIG;
 	if (*pmac != 0xffffffff)
@@ -202,6 +231,7 @@ void user_init()
 		memcpy (&ibeacon_tbl_adv, pmac, sizeof (ibeacon_tbl_adv));
 		memcpy (&telink_beacon_config, ((u8 *)pmac) + 64, sizeof (telink_beacon_config));
 	}
+	//ibeacon_tbl_adv.flag = 7;
 
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU(tbl_mac);   //mandatory
@@ -246,6 +276,10 @@ void user_init()
 	//bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_EXIT, &func_suspend_exit);
 #endif
 
+	// OTA init
+	bls_ota_clearNewFwDataArea(); //must
+	bls_ota_registerStartCmdCb(entry_ota_mode);
+	bls_ota_registerResultIndicateCb(show_ota_result);
 
 
 	////// Host Initialization  //////////

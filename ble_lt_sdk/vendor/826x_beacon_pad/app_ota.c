@@ -164,7 +164,7 @@ void host_find_slave_ota_attHandle(u8 *p)
 
 
 u32 otaStart_cmd_tick;
-
+u32 AAota;
 void proc_ota (void)
 {
 	static u32 ota_begin_tick;
@@ -267,11 +267,16 @@ void proc_ota (void)
 
 
 			n_firmware = *(u32 *)(flash_adr_ota_master + 0x18);
-			if(n_firmware > (FW_SIZE_MAX<<10)){  //bigger then 128K
+			unsigned short crc = crc16 (flash_adr_ota_master, n_firmware);
+
+			if( n_firmware > (FW_SIZE_MAX<<10)  //bigger then 128K
+				|| crc != *(unsigned short *)(flash_adr_ota_master + n_firmware) 	//CRC not match
+			){
 				ota_set_result(0);
 				return;
 			}
 
+			AAota++;
 
 		    host_ota_start = 1;
 		    ota_begin_tick = clock_time();
