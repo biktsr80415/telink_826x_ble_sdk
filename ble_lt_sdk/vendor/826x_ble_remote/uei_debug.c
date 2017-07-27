@@ -49,8 +49,6 @@ void uei_debug_print(void *buf, size_t len)
 
 void uei_debug_print_hex(u8 hex)
 {
-	//extern u32 g_learn_keycode;
-	//g_learn_keycode = (hex << 24) | (g_learn_keycode & 0xFFFFFF);
 	uei_debug_print(&hex, sizeof(hex));
 }
 

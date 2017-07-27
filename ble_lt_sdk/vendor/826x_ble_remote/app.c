@@ -59,6 +59,7 @@ enum{
 	LED_SHINE_SLOW, //3
 	LED_SHINE_FAST, //4
 	LED_SHINE_OTA, //5
+	LED_IR_NOT_READY,
 };
 
 const led_cfg_t led_cfg[] = {
@@ -68,6 +69,7 @@ const led_cfg_t led_cfg[] = {
 	    {500,	  500 ,   2,	  0x04,	 },    //1Hz for 3 seconds
 	    {250,	  250 ,   4,	  0x04,  },    //2Hz for 3 seconds
 	    {250,	  250 ,   200,	  0x08,  },    //2Hz for 50 seconds
+	    {1000,    1000,   1,      0x0A,	 },    //NOT ready
 };
 
 
@@ -420,6 +422,18 @@ void key_change_proc(void)
 	u8 key0 = kb_event.keycode[0];
 	//u8 key1 = kb_event.keycode[1];
 	u8 key_value;
+
+#if (REMOTE_IR_ENABLE)
+    /*
+     * IR and BLE can't work together
+     * If the BLE is not disable, we don't support IR operation.
+     */
+    if (user_key_mode == KEY_MODE_IR &&
+        blc_ll_getCurrentState() != BLS_LINK_STATE_IDLE) {
+    	device_led_setup(led_cfg[LED_IR_NOT_READY]);
+        return;
+    }
+#endif
 
 	key_not_released = 1;
 #if (STUCK_KEY_PROCESS_ENABLE)
