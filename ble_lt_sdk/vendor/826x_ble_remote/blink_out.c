@@ -79,7 +79,7 @@ static u8 uei_get_mode_val(const void *mode_str, size_t idx)
 
 void uei_blink_out(const kb_data_t *kb_data)
 {
-#define BLINK_INTERVAL_TIMEOUT    ((u32)(10000000))
+#define BLINK_INTERVAL_TIMEOUT    ((u32)(10000000))//10s
     static u8 step = 0;
     static u32 last_time = 0;
     static u8 *code_str = NULL;

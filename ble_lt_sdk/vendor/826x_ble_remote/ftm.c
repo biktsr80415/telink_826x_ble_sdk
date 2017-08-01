@@ -168,7 +168,7 @@ static void uei_ftm_pm()
     int src = PM_WAKEUP_PAD;
     int sleep_type = g_ftm_sleep_type - 1;
     g_ftm_sleep_type = FTM_ACTIVE;
-
+    //printf("DEEP_ANA_REG1:key_mode=%d.\n", user_key_mode);
     analog_write(DEEP_ANA_REG1, user_key_mode);
 
     if (sleep_type == SUSPEND_MODE)
@@ -215,10 +215,10 @@ void uei_ir_pm()
         if (g_tx_fm_ver || DEVICE_LED_BUSY || ir_not_released)
             break;
 
-        if (clock_time_exceed(g_uei_last_ir_tick, 100000))
+        if (clock_time_exceed(g_uei_last_ir_tick, 100000))//100ms
             g_ftm_sleep_type = FTM_SUSPEND;
 
-        if (clock_time_exceed(g_uei_last_ir_tick, UEI_IR_IDLE_MAX_TIME_US))
+        if (clock_time_exceed(g_uei_last_ir_tick, UEI_IR_IDLE_MAX_TIME_US))//60s
             g_ftm_sleep_type = FTM_DEEPSLEEP;
     } while (0);
 

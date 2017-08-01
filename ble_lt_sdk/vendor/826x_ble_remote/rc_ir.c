@@ -1187,6 +1187,7 @@ void ir_start_learn(void)
 
 void rc_ir_init(void)
 {
+	//pa0 ir out
     PWM0_CFG_GPIO_A0();
     pwmm_clk(CLOCK_SYS_CLOCK_HZ, CLOCK_SYS_CLOCK_HZ);  //set pwm_clk as sys_clk(16000000)
     pwmm_set_mode(IR_PWM_ID, PWM_NORMAL_MODE);  //pwm0 count mode

@@ -25,7 +25,7 @@ extern "C" {
 #define BLE_REMOTE_PM_ENABLE			1
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_REMOTE_OTA_ENABLE			1
-#define REMOTE_IR_ENABLE				1
+#define REMOTE_IR_ENABLE				1   //ir enable or disable
 #define BATT_CHECK_ENABLE       		1   //enable or disable battery voltage detection
 
 #if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
@@ -342,6 +342,28 @@ extern "C" {
 
 
 
+
+
+
+
+#define PRINT_DEBUG_INFO             1
+//////////////////// PRINT DEBUG INFO ///////////////////////
+#ifndef PRINT_DEBUG_INFO
+#define PRINT_DEBUG_INFO                    0
+#endif
+#if PRINT_DEBUG_INFO
+//defination debug printf pin
+#define PRINT_BAUD_RATE             		1000000 //1M baud rate,should Not bigger than 1M, when system clock is 16M.
+#if	(__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
+#define DEBUG_INFO_TX_PIN           		GPIO_PA1//TP25 for 8267/8269 EVK board(C1T80A5_V2.0)
+//#define PA1_OUTPUT_ENABLE	        		1       //mini_printf function contain this
+#define PULL_WAKEUP_SRC_PA1         		PM_PIN_PULLUP_1M
+#else//__PROJECT_8266_MODULE__
+#define DEBUG_INFO_TX_PIN           		GPIO_PD3//G9 for 8266 EVK board(C1T53A20_V2.0)
+//#define PD3_OUTPUT_ENABLE	        		1       //mini_printf function contain this
+#define PULL_WAKEUP_SRC_PD3         		PM_PIN_PULLUP_1M
+#endif
+#endif
 
 
 

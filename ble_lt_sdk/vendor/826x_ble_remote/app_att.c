@@ -55,7 +55,7 @@ u16 serviceChangeVal[2] = {0};
 static u8 indCharCfg[6] = {0x0b, 0x00, 0x02, 0x29};
 
 
-const u8	my_devName[] = {'t','R','e','m','o','t','e'};
+const u8	my_devName[] = "tRC";
 
 // Device Name Characteristic Properties
 static u8 my_PnPCharacter = CHAR_PROP_READ;

@@ -28,7 +28,7 @@
 
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
-MYFIFO_INIT(blt_txfifo, 40, 16);
+MYFIFO_INIT(blt_txfifo, 40, 8);
 ////////////////////////////////////////////////////////////////////
 
 #define			HID_HANDLE_CONSUME_REPORT			25
@@ -48,7 +48,7 @@ const u8	tbl_advData[] = {
 };
 
 const u8	tbl_scanRsp [] = {
-		 0x08, 0x09, 't', 'R', 'e', 'm', 'o', 't', 'e',
+		 0x05, 0x09, 'U', 'E', 'I', '0',
 	};
 
 /////////////////////////// led management /////////////////////
@@ -340,17 +340,17 @@ void deep_wakeup_proc(void)
 	//if deepsleep wakeup is wakeup by GPIO(key press), we must quickly scan this
 	//press, hold this data to the cache, when connection established OK, send to master
 	//deepsleep_wakeup_fast_keyscan
-	if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG
-#if REMOTE_IR_ENABLE
-		|| analog_read(DEEP_ANA_REG1) == KEY_MODE_IR
-#endif
-			){
-		if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON, 1) && kb_event.cnt){
-			deepback_key_state = DEEPBACK_KEY_CACHE;
-			key_not_released = 1;
-			memcpy(&kb_event_cache,&kb_event,sizeof(kb_event));
+	//if(analog_read(DEEP_ANA_REG1) == KEY_MODE_BLE){//ble mode
+		if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG){
+			if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON, 1) && kb_event.cnt){
+				deepback_key_state = DEEPBACK_KEY_CACHE;
+				key_not_released = 1;
+				memcpy(&kb_event_cache,&kb_event,sizeof(kb_event));
+				//printf("deepback fast keyscan.\n");
+			}
+			//analog_write(DEEP_ANA_REG0, 0);//clear
 		}
-	}
+	//}
 #endif
 }
 
@@ -360,29 +360,25 @@ void deep_wakeup_proc(void)
 
 void deepback_pre_proc(int *det_key)
 {
+#if REMOTE_IR_ENABLE //(add by tyf 170728. IR mode not need BLE reconnection time)
+	u8 ir_check = (user_key_mode == KEY_MODE_IR);
+	if(ir_check)return;
+#endif
+
 #if (DEEPBACK_FAST_KEYSCAN_ENABLE)
 	// to handle deepback key cache
-	u8 ble_check = (deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN \
-			&& clock_time_exceed(bls_ll_getConnectionCreateTime(), 25000));
-#if REMOTE_IR_ENABLE
-	u8 ir_check = (user_key_mode == KEY_MODE_IR);
-#endif
-	if(!(*det_key)) {
-		if (ble_check
-#if REMOTE_IR_ENABLE
-			|| ir_check
-#endif
-				) {
-			memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
-			*det_key = 1;
+	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN \
+			&& clock_time_exceed(bls_ll_getConnectionCreateTime(), 25000)){
 
-			if(key_not_released || kb_event_cache.keycode[0] == VOICE){  //no need manual release
-				deepback_key_state = DEEPBACK_KEY_IDLE;
-			}
-			else{  //need manual release
-				deepback_key_tick = clock_time();
-				deepback_key_state = DEEPBACK_KEY_WAIT_RELEASE;
-			}
+		memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
+		*det_key = 1;
+
+		if(key_not_released || kb_event_cache.keycode[0] == VOICE){  //no need manual release
+			deepback_key_state = DEEPBACK_KEY_IDLE;
+		}
+		else{  //need manual release
+			deepback_key_tick = clock_time();
+			deepback_key_state = DEEPBACK_KEY_WAIT_RELEASE;
 		}
 	}
 #endif
@@ -390,6 +386,11 @@ void deepback_pre_proc(int *det_key)
 
 void deepback_post_proc(void)
 {
+#if REMOTE_IR_ENABLE //(add by tyf 170728. IR mode not need BLE reconnection time)
+	u8 ir_check = (user_key_mode == KEY_MODE_IR);
+	if(ir_check)return;
+#endif
+
 #if (DEEPBACK_FAST_KEYSCAN_ENABLE)
 	//manual key release
 	if(deepback_key_state == DEEPBACK_KEY_WAIT_RELEASE && clock_time_exceed(deepback_key_tick,150000)){
@@ -399,12 +400,6 @@ void deepback_post_proc(void)
 		bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
 		deepback_key_state = DEEPBACK_KEY_IDLE;
 	}
-#if REMOTE_IR_ENABLE
-	else if (user_key_mode == KEY_MODE_IR) {
-		ir_dispatch(TYPE_IR_RELEASE, 0x00, 0x00);
-		key_not_released = 0;
-	}
-#endif
 #endif
 }
 
@@ -431,51 +426,63 @@ void key_change_proc(void)
     if (user_key_mode == KEY_MODE_IR &&
         blc_ll_getCurrentState() != BLS_LINK_STATE_IDLE) {
     	device_led_setup(led_cfg[LED_IR_NOT_READY]);
+    	//printf("IR and BLE can't work together.\n");
         return;
     }
 #endif
 
 	key_not_released = 1;
 #if (STUCK_KEY_PROCESS_ENABLE)
-	if (kb_event.cnt > 0)
+	if (kb_event.cnt > 0){
 		stuckKey_keyPressTime = clock_time();
+	}
 #endif
 	if (kb_event.cnt == 2)   //two key press, do  not process
 	{
-
+		//printf("two key press, do  not process.\n");
 	}
 	else if(kb_event.cnt == 1)
 	{
+		//printf("key0 = 0x%x.user_key_mode =%d.\n", key0, user_key_mode);
+
 #if (BATT_CHECK_ENABLE)
 		if (lowBatt_alarmFlag)
 			device_led_setup(led_cfg[LED_SHINE_FAST]);
 #endif
+
 		if (ota_program_offset == 0x00) {  // current running firmware is 0x20000
 #if (REMOTE_IR_ENABLE)
-			key0 = (key0 == 0 ? 38 : key0);
+			key0 = (key0 == 0 ? 38 : key0);//just OTA test use
 #else
-			key0 = (key0 == VK_7 ? VK_8 : key 0);
+			key0 = (key0 == VK_7 ? VK_8 : key0);
 #endif
 		}
-		if(key0 == KEY_MODE_SWITCH)
+
+		if(key0 == KEY_MODE_SWITCH)//ir / ble switch key
 		{
+			//printf("Key mode switch: ");
 			user_key_mode = !user_key_mode;
+			//printf("%s\n", user_key_mode ? "KEY_MODE_IR" : "KEY_MODE_BLE");
 			device_led_setup(led_cfg[LED_SHINE_SLOW + user_key_mode]);
 
 #if (REMOTE_IR_ENABLE)
 			if (user_key_mode == KEY_MODE_IR) {
 				if (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN) {
 					bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN);
-				} else {
+				}
+				else{
 					bls_ll_setAdvEnable(0);  //switch to idle state
+					//printf("Switch to ir mode.\n");
 				}
 				ota_is_working = 0;
 			} else {
 				bls_ll_setAdvEnable(1);
+				//printf("Enable ble adv.\n");
 			}
 #endif
 
 		}
+
 #if (BLE_AUDIO_ENABLE)
 		else if (key0 == VOICE)
 		{
@@ -491,42 +498,46 @@ void key_change_proc(void)
 #endif
 
 #if (REMOTE_IR_ENABLE)
-		else if(user_key_mode == KEY_MODE_BLE)
+		else if(user_key_mode == KEY_MODE_BLE)//ble key
 		{
 			key_value = kb_map_ble[key0];
-			if(key_value == VK_VOL_DN || key_value == VK_VOL_UP){
+			if(key_value == VK_VOL_DN || key_value == VK_VOL_UP || key_value == VK_W_MUTE){
 				key_type = CONSUMER_KEY;
-				key_buf[0] = key_value == VK_VOL_UP ? 0x01 : 0x02;
+				key_buf[0] = (key_value !=VK_W_MUTE) ? (key_value == VK_VOL_UP ? 0x01 : 0x02) : 0x04;
 				bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, key_buf, 2);
+				//printf("BLE consumer key notify.\n");
 			}
 			else
 			{
 				key_type = KEYBOARD_KEY;
 				key_buf[2] = key_value;
 				bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8);
+				//printf("BLE keyboard key notify.\n");
 			}
 
 		}
-		else if(user_key_mode == KEY_MODE_IR)
-		{  //IR mode
+		else if(user_key_mode == KEY_MODE_IR)//IR mode
+		{
 			key_value = kb_map_ir[key0];
 			key_type = IR_KEY;
 			if(!ir_not_released){
 				ir_dispatch(TYPE_IR_SEND, 0x88, key_value);
 				ir_not_released = 1;
+				//printf("IR key send.\n");
 			}
 		}
 		else
 		{
 			key_type = IDLE_KEY;
+			//printf("IDLE_KEY.\n");
 		}
 #else
 		else
 		{
 			key_value = key0;
-			if(key_value == VK_VOL_DN || key_value == VK_VOL_UP){
+			if(key_value == VK_VOL_DN || key_value == VK_VOL_UP || key_value == VK_W_MUTE){
 				key_type = CONSUMER_KEY;
-				key_buf[0] = key_value == VK_VOL_UP ? 0x01 : 0x02;
+				key_buf[0] = (key_value !=VK_W_MUTE) ? (key_value == VK_VOL_UP ? 0x01 : 0x02) : 0x04;
 				bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, key_buf, 2);
 			}
 			else
@@ -547,11 +558,13 @@ void key_change_proc(void)
 		{
 			key_buf[0] = 0;
 			bls_att_pushNotifyData (HID_HANDLE_CONSUME_REPORT, key_buf, 2);  //release
+			//printf("BLE consumer key release.\n");
 		}
 		else if(key_type == KEYBOARD_KEY)
 		{
 			key_buf[2] = 0;
 			bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
+			//printf("BLE keyboard key release.\n");
 		}
 #if (REMOTE_IR_ENABLE)
 		else if(key_type == IR_KEY)
@@ -559,6 +572,7 @@ void key_change_proc(void)
 			if(ir_not_released){
 				ir_not_released = 0;
 				ir_dispatch(TYPE_IR_RELEASE, 0, 0);  //release
+				//printf("IR key release.\n");
 			}
 		}
 #endif
@@ -604,21 +618,25 @@ void proc_keyboard (u8 e, u8 *p, int n)
 	}
 #endif
 
-#if UEI_CASE_OPEN
-	uei_ftm(det_key ? &kb_event : NULL);
-	if (uei_ftm_entered())
-		return;
 
+#if UEI_CASE_OPEN//uei test cases
+	if(user_key_mode == KEY_MODE_IR){
+		uei_ftm(det_key ? &kb_event : NULL);
+		if (uei_ftm_entered())
+			return;
+
+		ir_learn(det_key ? &kb_event : NULL);
+		if (ir_learning())
+			return;
+	}
 	uei_blink_out(det_key ? &kb_event : NULL);
-	ir_learn(det_key ? &kb_event : NULL);
-	if (ir_learning())
-		return;
 #endif
+
 
 	if (det_key) {
 		key_change_proc();
 	}
-	
+
 
 #if (BLE_AUDIO_ENABLE)
 	 //long press voice 1 second
@@ -637,9 +655,6 @@ void proc_keyboard (u8 e, u8 *p, int n)
 
 
 extern u32	scan_pin_need;
-
-int AA_dbg_deep;
-
 //_attribute_ram_code_
 void blt_pm_proc(void)
 {
@@ -652,6 +667,7 @@ void blt_pm_proc(void)
 #if REMOTE_IR_ENABLE
 	else if (user_key_mode == KEY_MODE_IR)
 	{
+		//printf("uei_ir_pm.\n");
 		uei_ir_pm();
 	}
 #endif
@@ -785,27 +801,21 @@ void user_init()
 	blc_ll_initPowerManagement_module();        //pm module:      	 optional
 
 
-
 	////// Host Initialization  //////////
 	extern void my_att_init ();
 	my_att_init (); //gatt initialization
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER ); 	//smp initialization
-
-
 	//HID_service_on_android7p0_init();  //hid device on android 7.0
 
 ///////////////////// USER application initialization ///////////////////
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_20MS, ADV_INTERVAL_30MS, \
 									 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
-	if(status != BLE_SUCCESS){  //adv setting err
-		write_reg8(0x8000, 0x11);  //debug
-		while(1);
-	}
+
 	bls_ll_setAdvEnable(1);  //adv enable
 	rf_set_power_level_index (RF_POWER_8dBm);
 
@@ -915,15 +925,19 @@ void user_init()
 
 #if (REMOTE_IR_ENABLE)
 	extern void rc_ir_init(void);
-	//uei_debug_init();
 	rc_ir_init();
+	//uei_debug_init();
 	user_key_mode = analog_read(DEEP_ANA_REG1);
+	//printf("Deepback:user_key_mode=%d.\n", user_key_mode);
+
 	if (user_key_mode == KEY_MODE_IR) {
+		//printf("Deepback ir mode.\n");
 		bls_ll_setAdvEnable(0);  //switch to idle state;
-		if (deepback_key_state == DEEPBACK_KEY_CACHE && key_not_released)
-			sleep_us(200000);  // wait for IR is ready
+//		if (deepback_key_state == DEEPBACK_KEY_CACHE && key_not_released)
+//			sleep_us(200000);  // wait for IR is ready
 	}
-	//analog_write(DEEP_ANA_REG1, 0x00);
+
+	analog_write(DEEP_ANA_REG1, 0x00);
 #endif
 
 
@@ -938,7 +952,7 @@ void user_init()
 
 
 	advertise_begin_tick = clock_time();
-
+    //printf("user init...\n");
 }
 
 /////////////////////////////////////////////////////////////////////
