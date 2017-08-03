@@ -7,7 +7,7 @@ tcdb.exe wf 0 -e -s 128k
 echo "Download OTA boot code to address 0x1a000 ..."
 tcdb.exe wf 1a000 -eb -i 8261_ota_boot.bin 
 
-echo "Download OTA boot code to address 0x1a000 ..."
+echo "Download 8261_beacon ..."
 tcdb.exe wf 0 -eb -i 8261_beacon.bin 
 
 set /P anykey=press any key to finish
