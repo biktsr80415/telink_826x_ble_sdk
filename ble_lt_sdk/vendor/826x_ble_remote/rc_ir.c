@@ -992,6 +992,7 @@ void ir_exit_learn(void)
     irq_clr_mask(IR_LEARN_INTERRUPT_MASK);//Add tyf 8-7 it must,否则第一次学习完，发学习键，成功率不高，需要重新上电，切换到ir模式，
     reg_irq_src = FLD_IRQ_GPIO_EN;//tyf 8-7
     BM_CLR(reg_gpio_irq_en0(GPIO_IR_LEARN_IN), GPIO_IR_LEARN_IN & 0xff);//关闭外学习引脚的中断使能寄存器//Modified by tyf
+    //gpio_clr_interrupt(GPIO_IR_LEARN_IN);
 
     //recover IR_out and IR_control to default mode.
     gpio_set_func(GPIO_IR_OUT, AS_PWM);
@@ -1027,7 +1028,7 @@ void ir_check_tick()
         //此时等待红外信息进来，IR学习，学习超时时间30s
         if (clock_time_exceed(g_ir_learn_tick, timeout)) {
             g_ir_learn_tick = clock_time();
-            device_led_setup(g_ir_led[g_ir_learn_state]);
+            device_led_setup(g_ir_led[g_ir_learn_state -1]);
             g_ir_learn_state = IR_LEARN_DISABLE;
             ir_exit_learn();//add tyf 8-6
             ir_restore_keyboard();
