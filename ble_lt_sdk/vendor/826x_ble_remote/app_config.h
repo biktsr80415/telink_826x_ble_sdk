@@ -24,7 +24,7 @@ extern "C" {
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			1
 #define BLE_REMOTE_SECURITY_ENABLE      1
-#define BLE_REMOTE_OTA_ENABLE			1
+#define BLE_REMOTE_OTA_ENABLE			0
 #define REMOTE_IR_ENABLE				1   //ir enable or disable
 #define BATT_CHECK_ENABLE       		1   //enable or disable battery voltage detection
 
@@ -346,7 +346,7 @@ extern "C" {
 
 
 
-#define PRINT_DEBUG_INFO             1
+#define PRINT_DEBUG_INFO             0
 //////////////////// PRINT DEBUG INFO ///////////////////////
 #ifndef PRINT_DEBUG_INFO
 #define PRINT_DEBUG_INFO                    0

@@ -29,6 +29,7 @@ enum {
     IR_LEARN_KEY_PULSE,
     IR_LEARN_FINISH,
     IR_LEARN_FAIL,
+    IR_LEARN_FLASH_FULL,
 };
 
 const static led_cfg_t g_ir_led[] = {
@@ -37,19 +38,21 @@ const static led_cfg_t g_ir_led[] = {
         {1000, 1000, 0x02,  0x04},    // Timeout for wait for pulse
         {250,  250,  0x03,  0x04},    // IR learn success
         {1000, 1000, 0x03,  0x04},    // IR learn fail
+        {250,   250, 0x010, 0x04},    // IR learn flash full :learn fail
 };
 
-u32 g_ir_learn_pulse_tick;
 u8 g_ir_is_repeat_timer_enable;
 
 static u32 g_ir_learn_tick;
 static u32 g_ir_is_repeat_time;
 static u32 g_ir_byte_time[2][2];
 static ir_send_ctrl_t g_ir_send_ctrl;
-static ir_learn_ctrl_t g_ir_learn_ctrl;
 static ir_search_index_t g_ir_index_data;
-static ir_universal_pattern_t g_ir_learn_pattern;
-static ir_universal_pattern_t g_ir_learn_pattern_extend;
+
+//如何复用Audio buffer？buffer_mic 对应1984个bytes(if TL_MIC_BUFFER_SIZE == 1)
+ ir_learn_ctrl_t *g_ir_learn_ctrl;//680bytes
+ ir_universal_pattern_t *g_ir_learn_pattern;//256bytes
+ ir_universal_pattern_t *g_ir_learn_pattern_extend;//256bytes
 
 static u8 g_ir_addr;
 static u8 g_last_cmd;
@@ -132,7 +135,8 @@ void ir_send_cmd(u8 addr1, u8 addr2, u8 cmd)
 
 void ir_send_ctrl_clear(void)
 {
-    g_ir_send_ctrl.is_sending = g_ir_send_ctrl.cnt = g_ir_send_ctrl.index = 0;
+    //g_ir_send_ctrl.is_sending = g_ir_send_ctrl.cnt = g_ir_send_ctrl.index = 0;
+    memset(&g_ir_send_ctrl, 0, sizeof(ir_send_ctrl_t));
 }
 
 void ir_send_add_series_item(u32 *time_series, u8 series_cnt, u8 start_high)
@@ -209,7 +213,7 @@ void ir_send_ctrl_start(int need_repeat)
 void ir_send_release(void)
 {
     g_last_cmd = 0xff;
-    ir_release_repeat_timer();
+    ir_release_repeat_timer();//stop tmr2
 }
 
 static inline void ir_send_start_next_item(void)
@@ -238,10 +242,12 @@ _attribute_ram_code_ void ir_irq_send(void){
             if (g_ir_send_ctrl.index == 0) {
                 if (g_ir_send_irq_idx < g_ir_send_ctrl.data[i].series_cnt) {
                     t = g_ir_send_ctrl.data[i].time_series[g_ir_send_irq_idx];
-                } else {
+                }
+                else {
                     end = 1;
                 }
-            } else {
+            }
+            else {
                 t = g_ir_send_ctrl.data[i].time_series[g_ir_send_irq_idx];
             }
         } else {
@@ -268,29 +274,35 @@ _attribute_ram_code_ void ir_irq_send(void){
     if (end) {
         ++ g_ir_send_ctrl.index;
         if (g_ir_send_ctrl.index < g_ir_send_ctrl.cnt) {
-            ir_send_start_next_item();
+            //ir_send_start_next_item();
+            g_ir_send_irq_idx = 0;
+            reg_tmr1_tick = 0;
+            reg_tmr1_capt = (u32)(CLOCK_SYS_CLOCK_1US / 2);
+
             return;
         } else {
             g_ir_send_ctrl.is_sending = 0;
             reg_irq_mask &= ~FLD_IRQ_TMR1_EN;
-            pwmm_stop(IR_PWM_ID);
+            BM_CLR(reg_pwm_enable, BIT(IR_PWM_ID));//pwmm_stop(IR_PWM_ID);
 
-            timer_disable_timer(1);
+            CLR_FLD(reg_tmr_ctrl8, BIT(1 * 3));//timer_disable_timer(1);
             return;
         }
     } else if (0 == g_ir_send_irq_idx) {  // start
         //ir_send_cmd_start_time = clock_time();
         g_ir_send_start_high = g_ir_send_ctrl.data[i].start_high;
-        timer_enable_timer(1);
+        SET_FLD(reg_tmr_ctrl8, BIT(1 * 3));//timer_enable_timer(1);
     }
 
     if (g_ir_send_start_high) {
-        pwmm_start(IR_PWM_ID);
+    	BM_SET(reg_pwm_enable, BIT(IR_PWM_ID));//pwmm_start(IR_PWM_ID);
     } else {
-        pwmm_stop(IR_PWM_ID);
+    	BM_CLR(reg_pwm_enable, BIT(IR_PWM_ID));//pwmm_stop(IR_PWM_ID);
     }
 
-    timer_set_timeout(1, t);
+    //timer_set_timeout(1, t);//设置tmr1超时时间：t,产生tmr1中断
+    reg_tmr1_tick = 0;
+    reg_tmr1_capt = (u32)t;
 
     ++ g_ir_send_irq_idx;
     g_ir_send_start_high = !g_ir_send_start_high;
@@ -590,38 +602,55 @@ void ir_nec_send_repeat(u8 addr1)
     ir_send_ctrl_start(1);
 }
 
-#define NEC_FRAME_CYCLE                 (108 * 1000)
-#define GD25Q40B_FLASH_PAGE_SIZE        (0x100)
-#define IR_LEARN_MAX_INTERVAL           (WATCHDOG_INIT_TIMEOUT * CLOCK_SYS_CLOCK_1MS)
+
+#define GD25Q40B_FLASH_PAGE_SIZE        (0x100)//256
+#define IR_MAX_INDEX_TABLE_LEN          (32)//FLASH_management ir learn idx & addr(8byte) *32
+//#define IR_LEARN_MAX_INTERVAL           (WATCHDOG_INIT_TIMEOUT * CLOCK_SYS_CLOCK_1MS)
 #define IR_STORED_INDEX_ADDRESS         (0x78000)
 #define IR_STORED_SERIES_ADDRESS        (0x7A000)
-#define IR_LEARN_NONE_CARR_MIN          (200 * CLOCK_SYS_CLOCK_1US)//old is 80
+#define IR_LEARN_NONE_CARR_MIN          (240 * CLOCK_SYS_CLOCK_1US)//old is 80  //400
 #define IR_LEARN_CARR_GLITCH_MIN        (3 * CLOCK_SYS_CLOCK_1US)
 #define IR_LEARN_CARR_MIN               (7 * CLOCK_SYS_CLOCK_1US)
 #define IR_CARR_CHECK_CNT               (10)
-#define IR_LEARN_START_MINLEN           (300 * CLOCK_SYS_CLOCK_1US)
-#define IR_MAX_INDEX_TABLE_LEN          (32)
-#define NEC_LEAD_CARR_MIN_INTERVAL      (8700 * CLOCK_SYS_CLOCK_1US)
-#define NEC_LEAD_CARR_MAX_INTERVAL      (9300 * CLOCK_SYS_CLOCK_1US)
-#define NEC_LEAD_NOCARR_MIN_INTERVAL    (4200 * CLOCK_SYS_CLOCK_1US)
-#define NEC_LEAD_NOCARR_MAX_INTERVAL    (4800 * CLOCK_SYS_CLOCK_1US)
-#define TOSHIBA_LEAD_MIN_INTERVAL       (4200 * CLOCK_SYS_CLOCK_1US)
-#define TOSHIBA_LEAD_MAX_INTERVAL       (4800 * CLOCK_SYS_CLOCK_1US)
-#define FRAXEL_LEAD_CARR_MIN_INTERVAL   (2100 * CLOCK_SYS_CLOCK_1US)
-#define FRAXEL_LEAD_CARR_MAX_INTERVAL   (2700 * CLOCK_SYS_CLOCK_1US)
-#define FRAXEL_LEAD_NOCARR_MIN_INTERVAL (900 * CLOCK_SYS_CLOCK_1US)
-#define FRAXEL_LEAD_NOCARR_MAX_INTERVAL (1500 * CLOCK_SYS_CLOCK_1US)
+//Shape IX0073CE 第一段红外载波只有250us左右的宽度
+#define IR_LEARN_START_MINLEN           (120 * CLOCK_SYS_CLOCK_1US)//用于判断红外学习收到的第一段载波宽度需要大于该值，才认为有效
 
-#define IR_NEC_TYPE                     1
-#define IR_TOSHIBA_TYPE                 2
-#define IR_FRAXEL_TYPE                  3
+//PD6121G protocol
+#define PD6121G_FRAME_CYCLE                 (108 * 1000)
+#define PD6121G_LEAD_CARR_MIN_INTERVAL      (8700 * CLOCK_SYS_CLOCK_1US)
+#define PD6121G_LEAD_CARR_MAX_INTERVAL      (9300 * CLOCK_SYS_CLOCK_1US)
+#define PD6121G_LEAD_NOCARR_MIN_INTERVAL    (4200 * CLOCK_SYS_CLOCK_1US)
+#define PD6121G_LEAD_NOCARR_MAX_INTERVAL    (4800 * CLOCK_SYS_CLOCK_1US)
+//TOSHIBA protocol //TC9012
+#define TC9012_FRAME_CYCLE              (108 * 1000)
+#define TOSHIBA_LEAD_MIN_INTERVAL       (4300 * CLOCK_SYS_CLOCK_1US)
+#define TOSHIBA_LEAD_MAX_INTERVAL       (4700 * CLOCK_SYS_CLOCK_1US)
+//Philips RC-6 Protocol
+#define PHILIPS_RC6_LEAD_CARR_MIN_INTERVAL   (2466 * CLOCK_SYS_CLOCK_1US)
+#define PHILIPS_RC6_LEAD_CARR_MAX_INTERVAL   (2866 * CLOCK_SYS_CLOCK_1US)
+#define PHILIPS_RC6_LEAD_NOCARR_MIN_INTERVAL (689 * CLOCK_SYS_CLOCK_1US)
+#define PHILIPS_RC6_LEAD_NOCARR_MAX_INTERVAL (1089 * CLOCK_SYS_CLOCK_1US)
+//Sharp(IX0773CE)
+#define IX0773CE_LEAD_CARR_MIN_INTERVAL   (120 * CLOCK_SYS_CLOCK_1US)
+#define IX0773CE_LEAD_CARR_MAX_INTERVAL   (320 * CLOCK_SYS_CLOCK_1US)
+#define IX0773CE_LEAD_NOCARR_MIN_INTERVAL (1600 * CLOCK_SYS_CLOCK_1US)
+#define IX0773CE_LEAD_NOCARR_MAX_INTERVAL (2000 * CLOCK_SYS_CLOCK_1US)
+
+#define IR_PD6121G_TYPE                 1
+#define IR_TOSHIBA_TYPE                 2//IR_TC9012_TYPE
+#define IR_PHILIPS_RC6_TYPE             3//Philips RC-6 Protocol
+#define IR_NEC2_E2_TYPE                 4
+#define IR_IX0773CE_TYPE                5
+
 #define IR_HIGH_LOW_MIN_INTERVAL        (1000 * CLOCK_SYS_CLOCK_1US)
 #define IR_HIGH_LOW_MAX_INTERVAL        (2000 * CLOCK_SYS_CLOCK_1US)
-#define TC9012_FRAME_CYCLE              (108 * 1000)
-#define FRAXEL_LEVEL_NUM                19
-#define NEC_TOSHIBA_LEVEL_NUM           67
 
+#define FRAXEL_LEVEL_NUM                19
+#define NEC_TOSHIBA_LEVEL_NUM           67 //2(start)+4*8*2(data 4byes) +1(stop)=67?
+#define NEC2_E2_LEVEL_NUM               135
+#define IX0773CE_LEVEL_NUM              127//4*32
 //////////////////////////////////////////////////
+//通用的红外发送（发送红外学习后的数据)
 static int ir_write_universal_data(ir_search_index_t *ir_index_data)
 {
     u8 ir_start_cnt = 0;
@@ -629,126 +658,69 @@ static int ir_write_universal_data(ir_search_index_t *ir_index_data)
     if (g_ir_search_index_next_addr >= IR_MAX_INDEX_TABLE_LEN) {
         ++ g_ir_errcnt;
         //it's full, don't store any more.
-        memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
+        memset((u8*)g_ir_learn_ctrl, 0, sizeof(ir_learn_ctrl_t));
+        device_led_setup(g_ir_led[IR_LEARN_FLASH_FULL - 1]);
         return -1;
     }
 
-    if (g_ir_learn_ctrl.series_cnt < FRAXEL_LEVEL_NUM) {
+    if (g_ir_learn_ctrl->series_cnt < FRAXEL_LEVEL_NUM) {
         // invalide learn data
-        memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
+        memset((u8*)g_ir_learn_ctrl, 0, sizeof(ir_learn_ctrl_t));
         return -1;
     }
 
-    memset((void *)&g_ir_learn_pattern, 0, sizeof(ir_universal_pattern_t));
+    //init
+    memset((void *)(u8*)g_ir_learn_pattern, 0, sizeof(ir_universal_pattern_t));
+    memset((void *)(u8*)g_ir_learn_pattern_extend, 0, sizeof(ir_universal_pattern_t));
 
-    g_ir_learn_pattern.series_cnt = g_ir_learn_ctrl.series_cnt;
-    g_ir_learn_pattern.carr_high_tm = g_ir_learn_ctrl.carr_high_tm;
-    g_ir_learn_pattern.carr_low_tm = g_ir_learn_ctrl.carr_low_tm;
+    g_ir_learn_pattern->series_cnt = g_ir_learn_ctrl->series_cnt;
+    g_ir_learn_pattern->carr_high_tm = g_ir_learn_ctrl->carr_high_tm;
+    g_ir_learn_pattern->carr_low_tm = g_ir_learn_ctrl->carr_low_tm;
 
     #if 0
     //because use timer int to send,so don't need to judge if the time interval more than watchdog timeout.
-    foreach (i,g_ir_learn_pattern.series_cnt) {
-        if (g_ir_learn_ctrl.series_tm[i] >= IR_LEARN_MAX_INTERVAL) {
+    foreach (i,g_ir_learn_pattern->series_cnt) {
+        if (g_ir_learn_ctrl->series_tm[i] >= IR_LEARN_MAX_INTERVAL) {
             // time interval shouldn't be more than watchdog timeout time
             ++ g_ir_errcnt;
             return -1;
         }
     }
     #endif
-    if (g_ir_learn_pattern.series_cnt <= IR_LEARN_SERIES_CNT / 2) {
-        foreach(i,g_ir_learn_pattern.series_cnt) {
-            if (g_ir_learn_ctrl.series_tm[i] > NEC_LEAD_CARR_MIN_INTERVAL &&
-                g_ir_learn_ctrl.series_tm[i] < NEC_LEAD_CARR_MAX_INTERVAL &&
-                g_ir_learn_ctrl.series_tm[i + 1] > NEC_LEAD_NOCARR_MIN_INTERVAL &&
-                g_ir_learn_ctrl.series_tm[i + 1] < NEC_LEAD_NOCARR_MAX_INTERVAL) {
-                g_ir_learn_pattern.ir_protocol = IR_NEC_TYPE;
-                g_ir_learn_ctrl.series_tm[i] = (9000 * CLOCK_SYS_CLOCK_1US);
-                g_ir_learn_ctrl.series_tm[i + 1] = (4500 * CLOCK_SYS_CLOCK_1US);
-                ir_start_cnt = i + 2;
-                break;
-            } else if (g_ir_learn_ctrl.series_tm[i] > TOSHIBA_LEAD_MIN_INTERVAL &&
-                g_ir_learn_ctrl.series_tm[i] < TOSHIBA_LEAD_MAX_INTERVAL &&
-                g_ir_learn_ctrl.series_tm[i + 1] > TOSHIBA_LEAD_MIN_INTERVAL &&
-                g_ir_learn_ctrl.series_tm[i + 1] < TOSHIBA_LEAD_MAX_INTERVAL) {
-                g_ir_learn_pattern.ir_protocol = IR_TOSHIBA_TYPE;
-                g_ir_learn_ctrl.series_tm[i] = (4500 * CLOCK_SYS_CLOCK_1US);
-                g_ir_learn_ctrl.series_tm[i + 1] = (4500 * CLOCK_SYS_CLOCK_1US);
-                ir_start_cnt = i + 2;
-                break;
-            } else if (g_ir_learn_ctrl.series_tm[i] > FRAXEL_LEAD_CARR_MIN_INTERVAL &&
-                g_ir_learn_ctrl.series_tm[i] < FRAXEL_LEAD_CARR_MAX_INTERVAL &&
-                g_ir_learn_ctrl.series_tm[i + 1] > FRAXEL_LEAD_NOCARR_MIN_INTERVAL &&
-                g_ir_learn_ctrl.series_tm[i + 1] < FRAXEL_LEAD_NOCARR_MAX_INTERVAL) {
-                g_ir_learn_pattern.ir_protocol = IR_FRAXEL_TYPE;
-                g_ir_learn_ctrl.series_tm[i] = (2400 * CLOCK_SYS_CLOCK_1US);
-                g_ir_learn_ctrl.series_tm[i + 1] = (1200 * CLOCK_SYS_CLOCK_1US);
-                ir_start_cnt = i + 2;
-                break;
-            } else {
-                //do nothing
-            }
-        }
-    }
 
-    if (g_ir_learn_pattern.ir_protocol == IR_TOSHIBA_TYPE) {
-        g_ir_learn_pattern.series_cnt = NEC_TOSHIBA_LEVEL_NUM;
-        if (g_ir_learn_ctrl.series_tm[ir_start_cnt + 1] > (g_ir_learn_ctrl.series_tm[ir_start_cnt] << 1))
-            g_ir_learn_pattern.toshiba_c0flag = 1;
-        else
-            g_ir_learn_pattern.toshiba_c0flag = 0;
-    }
 
-    if (g_ir_learn_pattern.ir_protocol == IR_FRAXEL_TYPE)
-        g_ir_learn_pattern.series_cnt = FRAXEL_LEVEL_NUM;
-    if (g_ir_learn_pattern.ir_protocol == IR_NEC_TYPE)
-        g_ir_learn_pattern.series_cnt = NEC_TOSHIBA_LEVEL_NUM;
-    if (g_ir_learn_pattern.ir_protocol != 0) {
-        for (int i = ir_start_cnt; i < g_ir_learn_pattern.series_cnt; i ++) {
-            if (g_ir_learn_ctrl.series_tm[i] < IR_HIGH_LOW_MIN_INTERVAL) {
-                g_ir_learn_ctrl.series_tm[i] = (560 * CLOCK_SYS_CLOCK_1US);
-            } else if (g_ir_learn_ctrl.series_tm[i] < IR_HIGH_LOW_MAX_INTERVAL) {
-                if (g_ir_learn_pattern.ir_protocol == IR_NEC_TYPE)
-                    g_ir_learn_ctrl.series_tm[i] = (1680 * CLOCK_SYS_CLOCK_1US);
-                else
-                    g_ir_learn_ctrl.series_tm[i] = (1690 * CLOCK_SYS_CLOCK_1US);
-            } else {
-            }
-        }
-    }
     //transfer 4bytes to 3bytes before saving.
-    foreach (i,g_ir_learn_pattern.series_cnt) {
+    //红外学习的每个载波及低电平时间不会超过1s.3个Byte足以存储这些tick值。
+    foreach (i,g_ir_learn_pattern->series_cnt) {
         if (i < IR_LEARN_SERIES_CNT / 2) {
-            g_ir_learn_pattern.series_tm[i * 3] = ((g_ir_learn_ctrl.series_tm[i]) & 0x0000FF);
-            g_ir_learn_pattern.series_tm[i * 3 + 1] = (((g_ir_learn_ctrl.series_tm[i]) & 0x00FF00) >> 8);
-            g_ir_learn_pattern.series_tm[i * 3 + 2] = (((g_ir_learn_ctrl.series_tm[i]) & 0xFF0000) >> 16);
-        } else {
-            g_ir_learn_pattern_extend.series_tm[(i-IR_LEARN_SERIES_CNT / 2) * 3] = ((g_ir_learn_ctrl.series_tm[i]) & 0x0000FF);
-            g_ir_learn_pattern_extend.series_tm[(i-IR_LEARN_SERIES_CNT / 2) * 3 + 1] = (((g_ir_learn_ctrl.series_tm[i]) & 0x00FF00) >> 8);
-            g_ir_learn_pattern_extend.series_tm[(i-IR_LEARN_SERIES_CNT / 2) * 3 + 2] = (((g_ir_learn_ctrl.series_tm[i]) & 0xFF0000) >> 16);
+            g_ir_learn_pattern->series_tm[i * 3] = ((g_ir_learn_ctrl->series_tm[i]) & 0x0000FF);
+            g_ir_learn_pattern->series_tm[i * 3 + 1] = (((g_ir_learn_ctrl->series_tm[i]) & 0x00FF00) >> 8);
+            g_ir_learn_pattern->series_tm[i * 3 + 2] = (((g_ir_learn_ctrl->series_tm[i]) & 0xFF0000) >> 16);
+        }
+        else {
+            g_ir_learn_pattern_extend->series_tm[(i-IR_LEARN_SERIES_CNT / 2) * 3] = ((g_ir_learn_ctrl->series_tm[i]) & 0x0000FF);
+            g_ir_learn_pattern_extend->series_tm[(i-IR_LEARN_SERIES_CNT / 2) * 3 + 1] = (((g_ir_learn_ctrl->series_tm[i]) & 0x00FF00) >> 8);
+            g_ir_learn_pattern_extend->series_tm[(i-IR_LEARN_SERIES_CNT / 2) * 3 + 2] = (((g_ir_learn_ctrl->series_tm[i]) & 0xFF0000) >> 16);
         }
     }
 
     // Use one page to save one key series data.
-    flash_write_page((IR_STORED_SERIES_ADDRESS + GD25Q40B_FLASH_PAGE_SIZE * g_ir_search_index_next_addr),
-            sizeof(ir_universal_pattern_t), (u8*)(&g_ir_learn_pattern));
-    ir_index_data->learnkey_flash_addr = IR_STORED_SERIES_ADDRESS + GD25Q40B_FLASH_PAGE_SIZE * g_ir_search_index_next_addr;
-    ir_index_data->local_key_code = g_learn_keycode;
+    flash_write_page((IR_STORED_SERIES_ADDRESS + GD25Q40B_FLASH_PAGE_SIZE * g_ir_search_index_next_addr), sizeof(ir_universal_pattern_t), (u8*)(g_ir_learn_pattern));
 
     // Store index data
-    flash_write_page((IR_STORED_INDEX_ADDRESS + sizeof(ir_search_index_t) * g_ir_search_index_next_addr),
-            sizeof(ir_search_index_t), (u8*)(ir_index_data));
+    ir_index_data->learnkey_flash_addr = IR_STORED_SERIES_ADDRESS + GD25Q40B_FLASH_PAGE_SIZE * g_ir_search_index_next_addr;
+    ir_index_data->local_key_code = g_learn_keycode;
+    flash_write_page((IR_STORED_INDEX_ADDRESS + sizeof(ir_search_index_t) * g_ir_search_index_next_addr), sizeof(ir_search_index_t), (u8*)(ir_index_data));
     ++ g_ir_search_index_next_addr;
 
-    if (g_ir_learn_pattern.series_cnt > IR_LEARN_SERIES_CNT / 2) {
+    if (g_ir_learn_pattern->series_cnt > IR_LEARN_SERIES_CNT / 2) {
         //use two page to save if serial cnt > 80
-        flash_write_page((IR_STORED_SERIES_ADDRESS + GD25Q40B_FLASH_PAGE_SIZE * g_ir_search_index_next_addr),
-                sizeof(ir_universal_pattern_t), (u8*)(&g_ir_learn_pattern_extend));
-        flash_write_page((IR_STORED_INDEX_ADDRESS + sizeof(ir_search_index_t) * g_ir_search_index_next_addr),
-                sizeof(ir_search_index_t), (u8*)(ir_index_data));
+        flash_write_page((IR_STORED_SERIES_ADDRESS + GD25Q40B_FLASH_PAGE_SIZE * g_ir_search_index_next_addr),sizeof(ir_universal_pattern_t), (u8*)(g_ir_learn_pattern_extend));
+        flash_write_page((IR_STORED_INDEX_ADDRESS + sizeof(ir_search_index_t) * g_ir_search_index_next_addr), sizeof(ir_search_index_t), (u8*)(ir_index_data));
         ++ g_ir_search_index_next_addr;
     }
 
-    memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
+    memset((u8*)g_ir_learn_ctrl, 0, sizeof(ir_learn_ctrl_t));
 
     return 0;
 }
@@ -757,7 +729,7 @@ void ir_get_index_addr(void)
 {
     u8 i = 0;
      //32*8 = 256 , one page size.
-    ir_search_index_t indexTable[IR_MAX_INDEX_TABLE_LEN];
+    ir_search_index_t indexTable[IR_MAX_INDEX_TABLE_LEN];//32
     flash_read_page(IR_STORED_INDEX_ADDRESS, sizeof(indexTable), (u8*)(indexTable));
     for (i = 0; i < IR_MAX_INDEX_TABLE_LEN; i ++) {
         if (ismemf4((void*)(&indexTable[i]), sizeof(ir_search_index_t))) {
@@ -771,7 +743,10 @@ void ir_get_index_addr(void)
 static int ir_find_learnkey_data(u8 key_value)
 {
     int i;
+    //键值+绑定的键值红外数据
     ir_search_index_t indexTable[IR_MAX_INDEX_TABLE_LEN]; //32*8 = 256 , one page size.
+
+    ir_get_index_addr();//更新红外学习记录信息在FLASH中的index.
 
     if (g_ir_search_index_next_addr >= IR_MAX_INDEX_TABLE_LEN) {
         g_ir_search_index_next_addr = IR_MAX_INDEX_TABLE_LEN;
@@ -780,15 +755,20 @@ static int ir_find_learnkey_data(u8 key_value)
     if (g_ir_search_index_next_addr == 0)
         return -1;
 
+    //ini 0 ,reload from flash
+    memset((void *)g_ir_learn_pattern, 0, sizeof(ir_universal_pattern_t));
+    memset((void *)g_ir_learn_pattern_extend, 0, sizeof(ir_universal_pattern_t));
+
+    //78000存放键值及对应红外学习数据存放的地址
+    //如果存在红外学习记录信息，从第一笔数据检查
     flash_read_page(IR_STORED_INDEX_ADDRESS, sizeof(indexTable), (u8*)(indexTable));
     // Search serial data flash addr from the newest one by the key_value
     for (i = (g_ir_search_index_next_addr - 1); i >= 0; i --) {
-        if (indexTable[i].local_key_code == key_value) {
-            flash_read_page(indexTable[i].learnkey_flash_addr,
-                    sizeof(ir_universal_pattern_t), (u8*)(&g_ir_learn_pattern));
-            if (g_ir_learn_pattern.series_cnt > IR_LEARN_SERIES_CNT / 2) {
-                flash_read_page(((indexTable[i].learnkey_flash_addr) + GD25Q40B_FLASH_PAGE_SIZE),
-                        sizeof(ir_universal_pattern_t), (u8*)(&g_ir_learn_pattern_extend));
+        if (indexTable[i].local_key_code == key_value){
+            flash_read_page(indexTable[i].learnkey_flash_addr, sizeof(ir_universal_pattern_t), (u8*)(g_ir_learn_pattern));//读256bytes数据
+            if (g_ir_learn_pattern->series_cnt > IR_LEARN_SERIES_CNT / 2) {// >80
+            	//offset 256byes, 读取扩展的256bytes数据
+                flash_read_page(((indexTable[i].learnkey_flash_addr) + GD25Q40B_FLASH_PAGE_SIZE), sizeof(ir_universal_pattern_t), (u8*)(g_ir_learn_pattern_extend));
             }
             return 0;
         }
@@ -802,45 +782,44 @@ static void ir_learn_send(u8 local_data_code)
     if (ir_sending_check()) {
         return;
     }
-#if 0
-    if (ir_find_learnkey_data(local_data_code)) {
-        return;//not found
-    }
-#endif
-    memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
-    //record protocol and c0flag in order to diff repeat code.
-    g_ir_learn_ctrl.ir_protocol = g_ir_learn_pattern.ir_protocol;
-    g_ir_learn_ctrl.toshiba_c0flag = g_ir_learn_pattern.toshiba_c0flag;
 
-    foreach (i,g_ir_learn_pattern.series_cnt) {
+    memset((u8*)g_ir_learn_ctrl, 0, sizeof(ir_learn_ctrl_t));
+
+
+    //record protocol and c0flag in order to diff repeat code.
+    g_ir_learn_ctrl->ir_protocol = g_ir_learn_pattern->ir_protocol;
+    g_ir_learn_ctrl->toshiba_c0flag = g_ir_learn_pattern->toshiba_c0flag;
+
+    foreach (i,g_ir_learn_pattern->series_cnt) {
         if (i < IR_LEARN_SERIES_CNT / 2) {
-            g_ir_learn_ctrl.series_tm[i] = g_ir_learn_pattern.series_tm[i * 3] |
-                (g_ir_learn_pattern.series_tm[i * 3 + 1] << 8) |
-                (g_ir_learn_pattern.series_tm[i * 3 + 2] << 16);
-        } else {
-            g_ir_learn_ctrl.series_tm[i] = g_ir_learn_pattern_extend.series_tm[(i - IR_LEARN_SERIES_CNT / 2) * 3] |
-                (g_ir_learn_pattern_extend.series_tm[(i - IR_LEARN_SERIES_CNT / 2) * 3 + 1] << 8) |
-                (g_ir_learn_pattern_extend.series_tm[(i - IR_LEARN_SERIES_CNT / 2) * 3 + 2] << 16);
+            g_ir_learn_ctrl->series_tm[i] = g_ir_learn_pattern->series_tm[i * 3] |
+                                           (g_ir_learn_pattern->series_tm[i * 3 + 1] << 8) |
+                                           (u32)(g_ir_learn_pattern->series_tm[i * 3 + 2] << 16);
+        }
+        else{
+            g_ir_learn_ctrl->series_tm[i] = g_ir_learn_pattern_extend->series_tm[(i - IR_LEARN_SERIES_CNT / 2) * 3] |
+                                           (g_ir_learn_pattern_extend->series_tm[(i - IR_LEARN_SERIES_CNT / 2) * 3 + 1] << 8) |
+                                           (u32)(g_ir_learn_pattern_extend->series_tm[(i - IR_LEARN_SERIES_CNT / 2) * 3 + 2] << 16);
         }
     }
 
+
     pwmm_clk(CLOCK_SYS_CLOCK_HZ, CLOCK_SYS_CLOCK_HZ);
-    if (g_ir_learn_ctrl.ir_protocol == 0) {
-        carrier_cycle = g_ir_learn_pattern.carr_high_tm + g_ir_learn_pattern.carr_low_tm;
-        pwmm_set_duty(IR_PWM_ID, carrier_cycle, carrier_cycle / 3);  //set cycle and high
-    } else {
-        pwmm_set_duty(IR_PWM_ID, PWM_CYCLE_VALUE, PWM_HIGH_VALUE);  //set cycle and high
-    }
+    carrier_cycle = g_ir_learn_pattern->carr_high_tm + g_ir_learn_pattern->carr_low_tm;
+	if((CLOCK_TICK_TO_US(carrier_cycle)<20)&&(CLOCK_TICK_TO_US(carrier_cycle)>24)){//    38k-> cycle= 26us
+		//38K PWM, 占空比33.3%
+		pwmm_set_duty(IR_PWM_ID, PWM_CYCLE_VALUE, PWM_HIGH_VALUE);  //set cycle and high
+	}
+	else{
+		pwmm_set_duty(IR_PWM_ID, carrier_cycle, carrier_cycle / 3);  //set cycle and high
+	}
+	pwmm_set_mode(IR_PWM_ID, PWM_NORMAL_MODE);  //pwm0 count mode
     pwmm_set_phase(IR_PWM_ID, 0);   //no phase at pwm beginning
 
     ir_send_ctrl_clear();
-    ir_send_add_series_item(g_ir_learn_ctrl.series_tm, g_ir_learn_pattern.series_cnt, 1);
-    if ((g_ir_learn_ctrl.ir_protocol == IR_NEC_TYPE) ||
-        (g_ir_learn_ctrl.ir_protocol == IR_TOSHIBA_TYPE)) {
-        ir_send_ctrl_start(1);
-    } else {
-        ir_send_ctrl_start(0);
-    }
+    //记录的红外学习：载波宽度tick + 低电平宽度tick .....组成的数组
+    ir_send_add_series_item(g_ir_learn_ctrl->series_tm, g_ir_learn_pattern->series_cnt, 1);
+    ir_send_ctrl_start(0);
 }
 
 
@@ -849,13 +828,17 @@ static void ir_nec_send(u8 addr1, u8 addr2, u8 cmd)
     if (ir_sending_check() || g_last_cmd == cmd) {
         return;
     }
-
+    //引导码:9ms_carr + 4.5ms_high
     static u32 ir_lead_times[] = {IR_INTRO_CARR_TIME_NEC * CLOCK_SYS_CLOCK_1US,
             IR_INTRO_NO_CARR_TIME_NEC * CLOCK_SYS_CLOCK_1US};
+    //停止码
     static u32 ir_stop_bit_times[] = {IR_END_TRANS_TIME_NEC * CLOCK_SYS_CLOCK_1US};
 
+    //逻辑"1" 560us_carr + 1690us_high
     g_ir_byte_time[0][0] = IR_HIGH_CARR_TIME_NEC * CLOCK_SYS_CLOCK_1US;
     g_ir_byte_time[0][1] = IR_HIGH_NO_CARR_TIME_NEC * CLOCK_SYS_CLOCK_1US;
+
+    //逻辑"0" 560us_carr + 560us_high
     g_ir_byte_time[1][0] = IR_LOW_CARR_TIME_NEC * CLOCK_SYS_CLOCK_1US;
     g_ir_byte_time[1][1] = IR_LOW_NO_CARR_TIME_NEC * CLOCK_SYS_CLOCK_1US;
 
@@ -872,11 +855,11 @@ static void ir_nec_send(u8 addr1, u8 addr2, u8 cmd)
     g_ir_addr = addr1;
 }
 
-int ir_record_end(void *data)
+char ir_record_end(void)
 {
     char ret = -1;
-    if (g_ir_learn_ctrl.series_cnt < IR_LEARN_SERIES_CNT) {
-        ++ g_ir_learn_ctrl.series_cnt;  // plus the last carrier.
+    if (g_ir_learn_ctrl->series_cnt < IR_LEARN_SERIES_CNT) {
+        ++ g_ir_learn_ctrl->series_cnt;  // plus the last carrier.
     }
 
     gpio_clr_interrupt(GPIO_IR_LEARN_IN);
@@ -885,91 +868,95 @@ int ir_record_end(void *data)
      * | preamble | address | ~address | command | ~command | repeat |
      * | 2 pulse  | 8 pulse | 8 pulse  | 8 pulse | 8 pulse  | 2 pulse|
      */
-    if (g_ir_learn_ctrl.series_cnt >= FRAXEL_LEVEL_NUM &&
+    if (g_ir_learn_ctrl->series_cnt >= FRAXEL_LEVEL_NUM &&
         ir_write_universal_data(&g_ir_index_data) == 0) {
         // IR learn success
         device_led_setup(g_ir_led[IR_LEARN_FINISH - 1]);
         ret = 0;
-    } else {
-        memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
+    }
+    else{
+        memset((u8*)g_ir_learn_ctrl, 0, sizeof(ir_learn_ctrl_t));
         device_led_setup(g_ir_led[IR_LEARN_FAIL - 1]);
     }
 
     return ret;
 }
-
-void ir_record(u32 tm, int pol)
+_attribute_ram_code_ void ir_record(u32 tm, int pol)
 {
-    ++ g_ir_learn_ctrl.ir_int_cnt;
-    g_ir_learn_ctrl.curr_trigger_tm = tm;
-
-    if (g_ir_learn_ctrl.series_cnt >= IR_LEARN_SERIES_CNT) {
+	DBG_CHN1_TOGGLE;
+	 DBG_CHN0_HIGH;
+    ++ g_ir_learn_ctrl->ir_int_cnt;
+    g_ir_learn_ctrl->curr_trigger_tm = tm;//ir start receive tick
+#if 1
+    if (g_ir_learn_ctrl->series_cnt >= IR_LEARN_SERIES_CNT) {
+    	DBG_CHN0_LOW;
         return;
     }
 
-    if (g_ir_learn_ctrl.ir_int_cnt > 1) {
-        g_ir_learn_ctrl.time_interval = g_ir_learn_ctrl.curr_trigger_tm - g_ir_learn_ctrl.last_trigger_tm;
+    if (g_ir_learn_ctrl->ir_int_cnt > 1) {//载波间隔
+        g_ir_learn_ctrl->time_interval = g_ir_learn_ctrl->curr_trigger_tm - g_ir_learn_ctrl->last_trigger_tm;
         // record carrier time
-        if (g_ir_learn_ctrl.time_interval < IR_LEARN_NONE_CARR_MIN &&
-            g_ir_learn_ctrl.time_interval > IR_LEARN_CARR_GLITCH_MIN) {   // removing glitch  // receiving carrier
-            if (!g_ir_learn_ctrl.is_carr) {
-                g_ir_learn_ctrl.carr_first = g_ir_learn_ctrl.time_interval;
-                if (g_ir_learn_ctrl.series_cnt > 0) {  //  Do not record leading none-carrier
-                    g_ir_learn_ctrl.series_tm[(g_ir_learn_ctrl.series_cnt)] =
-                            g_ir_learn_ctrl.curr_trigger_tm - g_ir_learn_ctrl.carr_switch_start_tm - g_ir_learn_ctrl.carr_first;
-                    ++ g_ir_learn_ctrl.series_cnt;
+        //<200us, carrier
+        if (g_ir_learn_ctrl->time_interval < IR_LEARN_NONE_CARR_MIN && g_ir_learn_ctrl->time_interval > IR_LEARN_CARR_GLITCH_MIN) {   // removing glitch  // receiving carrier
+            if (!g_ir_learn_ctrl->is_carr) {//default:is carrier 0
+                g_ir_learn_ctrl->carr_first = g_ir_learn_ctrl->time_interval;
+                if (g_ir_learn_ctrl->series_cnt > 0) {  //  Do not record leading none-carrier
+                    g_ir_learn_ctrl->series_tm[(g_ir_learn_ctrl->series_cnt)] = g_ir_learn_ctrl->curr_trigger_tm - g_ir_learn_ctrl->carr_switch_start_tm - g_ir_learn_ctrl->carr_first;
+                    ++ g_ir_learn_ctrl->series_cnt;
                 }
-                g_ir_learn_ctrl.carr_switch_start_tm = g_ir_learn_ctrl.curr_trigger_tm;
-                g_ir_learn_ctrl.is_carr = 1;
-            } else {
-                g_ir_learn_ctrl.series_tm[(g_ir_learn_ctrl.series_cnt)] = g_ir_learn_ctrl.curr_trigger_tm - g_ir_learn_ctrl.carr_switch_start_tm;
-                        //+ (g_ir_learn_ctrl.ir_series_data.carr_low_tm + g_ir_learn_ctrl.ir_series_data.carr_high_tm);
+                g_ir_learn_ctrl->carr_switch_start_tm = g_ir_learn_ctrl->curr_trigger_tm;
+                g_ir_learn_ctrl->is_carr = 1;
+            }
+            else{
+                g_ir_learn_ctrl->series_tm[(g_ir_learn_ctrl->series_cnt)] = g_ir_learn_ctrl->curr_trigger_tm - g_ir_learn_ctrl->carr_switch_start_tm;
+                        //+ (g_ir_learn_ctrl->ir_series_data.carr_low_tm + g_ir_learn_ctrl->ir_series_data.carr_high_tm);
             }
 
-            if (g_ir_learn_ctrl.carr_check_cnt < IR_CARR_CHECK_CNT) {
-                //&& g_ir_learn_ctrl.time_interval < IR_LEARN_CARR_MAX && g_ir_learn_ctrl.time_interval > IR_LEARN_CARR_MIN){
-                ++ g_ir_learn_ctrl.carr_check_cnt;
+            //获取红外载波频率，通过获取10次，最小间隔作为红外载波周期T
+            if (g_ir_learn_ctrl->carr_check_cnt < IR_CARR_CHECK_CNT) {
+                //&& g_ir_learn_ctrl->time_interval < IR_LEARN_CARR_MAX && g_ir_learn_ctrl->time_interval > IR_LEARN_CARR_MIN){
+                ++ g_ir_learn_ctrl->carr_check_cnt;
                 // we are receiving carrier
+                //红外载波的频率，红外学习按键发送时，则使用如下的值计算PWM载波频率！
                 if (pol) {
-                    if (g_ir_learn_ctrl.time_interval < g_ir_learn_ctrl.carr_high_tm ||
-                        0 == g_ir_learn_ctrl.carr_high_tm)     //  record the shortest cycle
-                        g_ir_learn_ctrl.carr_high_tm = g_ir_learn_ctrl.time_interval;
-                } else {
-                    if (g_ir_learn_ctrl.time_interval < g_ir_learn_ctrl.carr_low_tm ||
-                        0 == g_ir_learn_ctrl.carr_low_tm)   //  record the shortest cycle
-                        g_ir_learn_ctrl.carr_low_tm = g_ir_learn_ctrl.time_interval;
+                    if (g_ir_learn_ctrl->time_interval < g_ir_learn_ctrl->carr_high_tm || 0 == g_ir_learn_ctrl->carr_high_tm)     //  record the shortest cycle
+                        g_ir_learn_ctrl->carr_high_tm = g_ir_learn_ctrl->time_interval;
+                }
+                else{
+                    if (g_ir_learn_ctrl->time_interval < g_ir_learn_ctrl->carr_low_tm || 0 == g_ir_learn_ctrl->carr_low_tm)   //  record the shortest cycle
+                        g_ir_learn_ctrl->carr_low_tm = g_ir_learn_ctrl->time_interval;
                 }
             }
-        } else {
-            // record carrier time
-            if (g_ir_learn_ctrl.is_carr) {
-                // It decrease one cycle with actually calculate, so add it.
-               g_ir_learn_ctrl.series_tm[(g_ir_learn_ctrl.series_cnt)] =
-                       (g_ir_learn_ctrl.last_trigger_tm - g_ir_learn_ctrl.carr_switch_start_tm) + g_ir_learn_ctrl.carr_first;
-                if (g_ir_learn_ctrl.series_tm[0] < IR_LEARN_START_MINLEN ) {
-                    memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
-                    //g_ir_learn_state = IR_LEARN_KEY;
-                    return;
-                } else {
-#if 0
-                    if (0 == g_ir_learn_ctrl.learn_timer_started) {
-                        g_ir_learn_ctrl.learn_timer_started = 1;
-                        ir_exit_learn();
-                    }
-#endif
-                }
-
-                ++ g_ir_learn_ctrl.series_cnt;
-
-                g_ir_learn_ctrl.carr_switch_start_tm = g_ir_learn_ctrl.last_trigger_tm;
-            }
-            g_ir_learn_ctrl.is_carr = 0;
         }
-    } else {
-        g_ir_learn_tick = clock_time();
-        g_ir_learn_state = IR_LEARN_KEY_PULSE;
+        else{//> delat >200us, carrier OR <10us
+            // record carrier time
+            if (g_ir_learn_ctrl->is_carr) {
+                // It decrease one cycle with actually calculate, so add it.
+                g_ir_learn_ctrl->series_tm[(g_ir_learn_ctrl->series_cnt)] = (g_ir_learn_ctrl->last_trigger_tm - g_ir_learn_ctrl->carr_switch_start_tm) + g_ir_learn_ctrl->carr_first;
+                if (g_ir_learn_ctrl->series_tm[0] < IR_LEARN_START_MINLEN ) {
+                    memset((u8*)g_ir_learn_ctrl, 0, sizeof(ir_learn_ctrl_t));
+                    //g_ir_learn_state = IR_LEARN_KEY;
+                    DBG_CHN0_LOW;
+                    return;
+                }
+                else {
+
+                }
+
+                ++ g_ir_learn_ctrl->series_cnt;
+
+                g_ir_learn_ctrl->carr_switch_start_tm = g_ir_learn_ctrl->last_trigger_tm;
+            }
+            g_ir_learn_ctrl->is_carr = 0;
+        }
     }
-    g_ir_learn_ctrl.last_trigger_tm = g_ir_learn_ctrl.curr_trigger_tm;
+    else{//第一次进来，记录当前tick为红外学习开始的时间点，当前的学习状态为学习键值
+        g_ir_learn_tick = clock_time();
+        g_ir_learn_state = IR_LEARN_KEY_PULSE;//学习红外的引导脉冲，检测当前的tick距离g_ir_learn_tick 大于IR_LEARN_KEY_PULSE_TIMEOUT（350ms），认为红外学习结束
+    }
+#endif
+    g_ir_learn_ctrl->last_trigger_tm = g_ir_learn_ctrl->curr_trigger_tm;
+    DBG_CHN0_LOW;
 }
 
 _attribute_ram_code_ void ir_learn_irq_handler(void)
@@ -977,20 +964,15 @@ _attribute_ram_code_ void ir_learn_irq_handler(void)
     if (g_ir_learn_state != IR_LEARN_KEY &&
         g_ir_learn_state != IR_LEARN_KEY_PULSE)
         return;
+
     reg_irq_src |= IR_LEARN_INTERRUPT_MASK;
-    ir_record(g_ir_learn_pulse_tick, 1);  // IR Learning
+
+    ir_record(clock_time(), 1);  // IR Learning
 }
 
 void ir_exit_learn(void)
 {
-    //irq_clr_mask(FLD_IRQ_GPIO_EN);
-    gpio_clr_interrupt(GPIO_IR_LEARN_IN);
-    //recover IR_out and IR_control to default mode.
-    gpio_set_func(GPIO_IR_OUT, AS_PWM);
-    gpio_set_output_en(GPIO_IR_CONTROL, 1);
-    gpio_write(GPIO_IR_CONTROL, 1);
-
-    #if(MODULE_FRAXEL_ENABLE)
+    #if (MODULE_FRAXEL_ENABLE)
     //Recover other gpio interrupt
     reg_irq_src = 0xffffffff;
     gpio_set_interrupt(GPIO_FRAXEL_PIN0, 0);
@@ -998,16 +980,39 @@ void ir_exit_learn(void)
     #endif
     g_ir_learn_state = IR_LEARN_FINISH;
     g_ir_learn_tick = clock_time();
-    ir_record_end(&g_ir_index_data);
+
+    /************ enter ir learning mode,gpio settings*******
+    reg_irq_src |= IR_LEARN_INTERRUPT_MASK;
+    gpio_set_wakeup(GPIO_IR_LEARN_IN, 0, 1);
+    gpio_core_irq_enable_all(1);
+    irq_set_mask(IR_LEARN_INTERRUPT_MASK);
+    ********************************************************/
+
+    /********* exist ir learning mode,gpio settings*********/
+    irq_clr_mask(IR_LEARN_INTERRUPT_MASK);//Add tyf 8-7 it must,否则第一次学习完，发学习键，成功率不高，需要重新上电，切换到ir模式，
+    reg_irq_src = FLD_IRQ_GPIO_EN;//tyf 8-7
+    BM_CLR(reg_gpio_irq_en0(GPIO_IR_LEARN_IN), GPIO_IR_LEARN_IN & 0xff);//关闭外学习引脚的中断使能寄存器//Modified by tyf
+
+    //recover IR_out and IR_control to default mode.
+    gpio_set_func(GPIO_IR_OUT, AS_PWM);
+    pwmm_stop(IR_PWM_ID);//add by tuyf
+
+    //TL_IRcontrol output high,close IR learning function
+    gpio_set_output_en(GPIO_IR_CONTROL, 1);
+    gpio_write(GPIO_IR_CONTROL, 1);
+
+    ir_get_index_addr();//更新红外学习记录信息在FLASH中的index.
+
+    ir_record_end();
     ir_restore_keyboard();
 }
 
 void ir_check_tick()
 {
-#define IR_LEARN_WAIT_KEY_TIMEOUT    (10000000)
-#define IR_LEARN_KEY_TIMEOUT         (30000000)
-#define IR_LEARN_KEY_PULSE_TIMEOUT   (300000)
-    u32 timeout = IR_LEARN_KEY_TIMEOUT;
+#define IR_LEARN_WAIT_KEY_TIMEOUT    (10000000)//10s
+#define IR_LEARN_KEY_TIMEOUT         (30000000)//30s
+#define IR_LEARN_KEY_PULSE_TIMEOUT   (230000)  //230ms
+    u32 timeout = IR_LEARN_KEY_TIMEOUT;//30s
 
     switch (g_ir_learn_state) {
     case IR_LEARN_DISABLE:
@@ -1015,17 +1020,22 @@ void ir_check_tick()
     case IR_LEARN_FINISH:
         break;
     case IR_LEARN_WAIT_KEY:
-        timeout = IR_LEARN_WAIT_KEY_TIMEOUT;
+    	//开始红外学习，等待用户输入需要学习的按键，这个时间段超时时间10s
+        timeout = IR_LEARN_WAIT_KEY_TIMEOUT;//10s
     case IR_LEARN_KEY:
+        //同时按下Learn_L和Learn_R 开始红外学习，再按需要学习的按钮，进入g_ir_learn_state = IR_LEARN_KEY状态。
+        //此时等待红外信息进来，IR学习，学习超时时间30s
         if (clock_time_exceed(g_ir_learn_tick, timeout)) {
             g_ir_learn_tick = clock_time();
             device_led_setup(g_ir_led[g_ir_learn_state]);
             g_ir_learn_state = IR_LEARN_DISABLE;
+            ir_exit_learn();//add tyf 8-6
             ir_restore_keyboard();
         }
         break;
     case IR_LEARN_KEY_PULSE:
-        if (clock_time_exceed(g_ir_learn_tick, IR_LEARN_KEY_PULSE_TIMEOUT)) {
+    	//第一次进入ir_record函数时，设置g_ir_learn_state = IR_LEARN_KEY_PULSE，记录此时开始的时间点到红外波形的最大波形长度阈值
+        if (clock_time_exceed(g_ir_learn_tick, IR_LEARN_KEY_PULSE_TIMEOUT)) {//300ms
             ir_exit_learn();
             g_ir_learn_tick = clock_time();
         }
@@ -1119,9 +1129,11 @@ void ir_learn(const kb_data_t *kb_data)
         if (g_learn_keycode != 0 && (g_learn_keycode & 0xFF) != key) {
             // new key
             device_led_setup(g_ir_led[3]);
-            ir_record_end(&g_ir_index_data);
+            ir_record_end();
         }
 #endif
+        //同时按下Learn_L和Learn_R 开始红外学习，再按需要学习的按钮，进入g_ir_learn_state = IR_LEARN_KEY状态。
+        //此时等待红外信息进来，IR学习，学习超时时间30s
         ir_start_learn();
         g_ir_learn_state = IR_LEARN_KEY;
         g_learn_keycode = key;
@@ -1152,8 +1164,11 @@ void ir_start_learn(void)
     gpio_clr_interrupt(GPIO_FRAXEL_PIN1);
     #endif
 
-    // Init data
-    memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
+    extern u8 ui_mic_enable;
+	if(ui_mic_enable)ui_enable_mic (0);//复用了Audio buffer
+
+    // Init data,红外学习存储变量清空，主要在中断学习代码中记录相关的电平特征数据
+    memset((void*)g_ir_learn_ctrl, 0, sizeof(ir_learn_ctrl_t));
 
     // To output ircontrol and irout low, then ir receive can work.
     gpio_set_func(GPIO_IR_OUT, AS_GPIO);
@@ -1165,20 +1180,16 @@ void ir_start_learn(void)
     gpio_set_func(GPIO_IR_CONTROL, AS_GPIO);
     gpio_set_input_en(GPIO_IR_CONTROL, 0);
     gpio_set_output_en(GPIO_IR_CONTROL, 1);
-    gpio_set_data_strength(GPIO_IR_CONTROL, 1);
-    gpio_write(GPIO_IR_CONTROL, 0);
+    gpio_set_data_strength(GPIO_IR_CONTROL, 1);//驱动使能仅在GPIO配置为输出时才有效
+    gpio_write(GPIO_IR_CONTROL, 0);//IRcontrol low ,enable IR learn func.
 
     gpio_set_func(GPIO_IR_LEARN_IN, AS_GPIO);
     gpio_set_input_en(GPIO_IR_LEARN_IN, 1);
     gpio_set_output_en(GPIO_IR_LEARN_IN, 0);
 
-    // Enable interrupt.
+    // clear gpio irq src status.
     reg_irq_src |= IR_LEARN_INTERRUPT_MASK;
-    gpio_set_wakeup(GPIO_IR_LEARN_IN, 0, 1);
-#if 0
-    gpio_set_interrupt(GPIO_IR_LEARN_IN, 1);
-    gpio_setup_up_down_resistor(GPIO_IR_LEARN_IN, PM_PIN_PULLUP_10K);
-#endif
+    gpio_set_wakeup(GPIO_IR_LEARN_IN, 0, 1);//低电平唤醒
     gpio_core_irq_enable_all(1);
     irq_set_mask(IR_LEARN_INTERRUPT_MASK);
 
@@ -1195,10 +1206,12 @@ void rc_ir_init(void)
     pwmm_set_phase(IR_PWM_ID, 0);   //no phase at pwm beginning
 
     // Only with IR Send function, So the GPIO_IR_CONTROL need to output high
+    //TL_IRcontrol output high,close IR learning function.
+    //TL_IRcontrol output low, open IR learning function.
     gpio_set_output_en(GPIO_IR_CONTROL, 1);
     gpio_write(GPIO_IR_CONTROL, 1);
 
-    memset(&g_ir_learn_ctrl, 0, sizeof(g_ir_learn_ctrl));
+    memset((u8*)g_ir_learn_ctrl, 0, sizeof(ir_learn_ctrl_t));
     g_last_cmd = 0xff;
     if (g_ir_search_index_next_addr == 0)
         ir_get_index_addr();

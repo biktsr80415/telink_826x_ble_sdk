@@ -9,6 +9,8 @@
 #define RC_IR_H_
 
 
+#define CLOCK_TICK_TO_US(t)			((t)/CLOCK_SYS_CLOCK_1US)
+
 ////////////////////////// IR  /////////////////////////////
 #define IR_CARRIER_FREQ				38000
 #define PWM_CYCLE_VALUE				(CLOCK_SYS_CLOCK_HZ / IR_CARRIER_FREQ)  //16M: 421 tick, f = 16000000/421 = 38004,T = 421/16=26.3125 us
@@ -114,7 +116,7 @@ void ir_send_switch(u8 addr, u8 cmd);
 #endif
 
 void ir_record(u32 tm, int pol);
-int ir_record_end(void * data);
+char ir_record_end(void);
 
 void rc_ir_init(void);
 void ir_start_learn(void);

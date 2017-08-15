@@ -340,17 +340,17 @@ void deep_wakeup_proc(void)
 	//if deepsleep wakeup is wakeup by GPIO(key press), we must quickly scan this
 	//press, hold this data to the cache, when connection established OK, send to master
 	//deepsleep_wakeup_fast_keyscan
-	//if(analog_read(DEEP_ANA_REG1) == KEY_MODE_BLE){//ble mode
-		if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG){
-			if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON, 1) && kb_event.cnt){
-				deepback_key_state = DEEPBACK_KEY_CACHE;
-				key_not_released = 1;
-				memcpy(&kb_event_cache,&kb_event,sizeof(kb_event));
-				//printf("deepback fast keyscan.\n");
-			}
-			//analog_write(DEEP_ANA_REG0, 0);//clear
+	if(analog_read(DEEP_ANA_REG0) == CONN_DEEP_FLG
+#if REMOTE_IR_ENABLE
+		|| analog_read(DEEP_ANA_REG1) == KEY_MODE_IR
+#endif
+			){
+		if(kb_scan_key (KB_NUMLOCK_STATUS_POWERON, 1) && kb_event.cnt){
+			deepback_key_state = DEEPBACK_KEY_CACHE;
+			key_not_released = 1;
+			memcpy(&kb_event_cache,&kb_event,sizeof(kb_event));
 		}
-	//}
+	}
 #endif
 }
 
@@ -360,25 +360,29 @@ void deep_wakeup_proc(void)
 
 void deepback_pre_proc(int *det_key)
 {
-#if REMOTE_IR_ENABLE //(add by tyf 170728. IR mode not need BLE reconnection time)
-	u8 ir_check = (user_key_mode == KEY_MODE_IR);
-	if(ir_check)return;
-#endif
-
 #if (DEEPBACK_FAST_KEYSCAN_ENABLE)
 	// to handle deepback key cache
-	if(!(*det_key) && deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN \
-			&& clock_time_exceed(bls_ll_getConnectionCreateTime(), 25000)){
+	u8 ble_check = (deepback_key_state == DEEPBACK_KEY_CACHE && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN \
+			&& clock_time_exceed(bls_ll_getConnectionCreateTime(), 25000));
+#if REMOTE_IR_ENABLE
+	u8 ir_check = (user_key_mode == KEY_MODE_IR);
+#endif
+	if(!(*det_key)) {
+		if (ble_check
+#if REMOTE_IR_ENABLE
+			|| ir_check
+#endif
+				) {
+			memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
+			*det_key = 1;
 
-		memcpy(&kb_event,&kb_event_cache,sizeof(kb_event));
-		*det_key = 1;
-
-		if(key_not_released || kb_event_cache.keycode[0] == VOICE){  //no need manual release
-			deepback_key_state = DEEPBACK_KEY_IDLE;
-		}
-		else{  //need manual release
-			deepback_key_tick = clock_time();
-			deepback_key_state = DEEPBACK_KEY_WAIT_RELEASE;
+			if(key_not_released || kb_event_cache.keycode[0] == VOICE){  //no need manual release
+				deepback_key_state = DEEPBACK_KEY_IDLE;
+			}
+			else{  //need manual release
+				deepback_key_tick = clock_time();
+				deepback_key_state = DEEPBACK_KEY_WAIT_RELEASE;
+			}
 		}
 	}
 #endif
@@ -386,11 +390,6 @@ void deepback_pre_proc(int *det_key)
 
 void deepback_post_proc(void)
 {
-#if REMOTE_IR_ENABLE //(add by tyf 170728. IR mode not need BLE reconnection time)
-	u8 ir_check = (user_key_mode == KEY_MODE_IR);
-	if(ir_check)return;
-#endif
-
 #if (DEEPBACK_FAST_KEYSCAN_ENABLE)
 	//manual key release
 	if(deepback_key_state == DEEPBACK_KEY_WAIT_RELEASE && clock_time_exceed(deepback_key_tick,150000)){
@@ -400,6 +399,12 @@ void deepback_post_proc(void)
 		bls_att_pushNotifyData (HID_HANDLE_KEYBOARD_REPORT, key_buf, 8); //release
 		deepback_key_state = DEEPBACK_KEY_IDLE;
 	}
+#if REMOTE_IR_ENABLE
+	else if (user_key_mode == KEY_MODE_IR) {
+		ir_dispatch(TYPE_IR_RELEASE, 0x00, 0x00);
+		key_not_released = 0;
+	}
+#endif
 #endif
 }
 
@@ -621,14 +626,14 @@ void proc_keyboard (u8 e, u8 *p, int n)
 
 #if UEI_CASE_OPEN//uei test cases
 	if(user_key_mode == KEY_MODE_IR){
-		uei_ftm(det_key ? &kb_event : NULL);
-		if (uei_ftm_entered())
-			return;
-
 		ir_learn(det_key ? &kb_event : NULL);
 		if (ir_learning())
 			return;
 	}
+	uei_ftm(det_key ? &kb_event : NULL);
+	if (uei_ftm_entered())
+		return;
+
 	uei_blink_out(det_key ? &kb_event : NULL);
 #endif
 
@@ -924,7 +929,19 @@ void user_init()
 
 
 #if (REMOTE_IR_ENABLE)
-	extern void rc_ir_init(void);
+	extern void rc_ir_init(void);	//将红外学习的buffer指向Audio buffer
+
+	//如何复用Audio buffer？buffer_mic 对应1984个bytes(if TL_MIC_BUFFER_SIZE == 1)
+	extern s16		buffer_mic[TL_MIC_BUFFER_SIZE>>1];
+	extern ir_learn_ctrl_t *g_ir_learn_ctrl;//680bytes
+	extern ir_universal_pattern_t *g_ir_learn_pattern;//256bytes
+	extern ir_universal_pattern_t *g_ir_learn_pattern_extend;//256bytes
+	//s16 buffer_mic[TL_MIC_BUFFER_SIZE>>1];
+	u8* p = (u8*)&buffer_mic[0];
+	g_ir_learn_ctrl = (ir_learn_ctrl_t*)p;
+	g_ir_learn_pattern = (ir_universal_pattern_t*)(p + sizeof(ir_learn_ctrl_t));
+	g_ir_learn_pattern_extend = (ir_universal_pattern_t*)(p + sizeof(ir_learn_ctrl_t)+ sizeof(ir_universal_pattern_t) + 1);;
+
 	rc_ir_init();
 	//uei_debug_init();
 	user_key_mode = analog_read(DEEP_ANA_REG1);
@@ -933,8 +950,8 @@ void user_init()
 	if (user_key_mode == KEY_MODE_IR) {
 		//printf("Deepback ir mode.\n");
 		bls_ll_setAdvEnable(0);  //switch to idle state;
-//		if (deepback_key_state == DEEPBACK_KEY_CACHE && key_not_released)
-//			sleep_us(200000);  // wait for IR is ready
+		if (deepback_key_state == DEEPBACK_KEY_CACHE && key_not_released)
+			sleep_us(200000);  // wait for IR is ready
 	}
 
 	analog_write(DEEP_ANA_REG1, 0x00);

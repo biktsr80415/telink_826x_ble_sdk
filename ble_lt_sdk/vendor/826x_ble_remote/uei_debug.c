@@ -10,7 +10,7 @@
 #include "../../proj/mcu/gpio.h"
 #include "../../proj/mcu/watchdog_i.h"
 
-#define UEI_DEBUG_OPEN     (1)
+#define UEI_DEBUG_OPEN     (0)
 
 #if UEI_DEBUG_OPEN
 
