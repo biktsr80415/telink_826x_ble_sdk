@@ -24,8 +24,8 @@ extern "C" {
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			1
 #define BLE_REMOTE_SECURITY_ENABLE      1
-#define BLE_REMOTE_OTA_ENABLE			0
-#define REMOTE_IR_ENABLE				1   //ir enable or disable
+#define BLE_REMOTE_OTA_ENABLE			1
+#define REMOTE_IR_ENABLE				1
 #define BATT_CHECK_ENABLE       		1   //enable or disable battery voltage detection
 
 #if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)

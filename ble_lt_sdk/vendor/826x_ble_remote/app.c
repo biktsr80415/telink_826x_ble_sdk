@@ -28,7 +28,7 @@
 
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
-MYFIFO_INIT(blt_txfifo, 40, 8);
+MYFIFO_INIT(blt_txfifo, 40, 16);
 ////////////////////////////////////////////////////////////////////
 
 #define			HID_HANDLE_CONSUME_REPORT			25
@@ -625,16 +625,17 @@ void proc_keyboard (u8 e, u8 *p, int n)
 
 
 #if UEI_CASE_OPEN//uei test cases
-	if(user_key_mode == KEY_MODE_IR){
-		ir_learn(det_key ? &kb_event : NULL);
-		if (ir_learning())
-			return;
-	}
 	uei_ftm(det_key ? &kb_event : NULL);
 	if (uei_ftm_entered())
 		return;
 
 	uei_blink_out(det_key ? &kb_event : NULL);
+
+	if(user_key_mode == KEY_MODE_IR){
+		ir_learn(det_key ? &kb_event : NULL);
+		if (ir_learning())
+			return;
+	}
 #endif
 
 
@@ -817,10 +818,13 @@ void user_init()
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_20MS, ADV_INTERVAL_30MS, \
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 									 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
-
+	if(status != BLE_SUCCESS){  //adv setting err
+		write_reg8(0x8000, 0x11);  //debug
+		while(1);
+	}
 	bls_ll_setAdvEnable(1);  //adv enable
 	rf_set_power_level_index (RF_POWER_8dBm);
 
@@ -930,7 +934,8 @@ void user_init()
 
 #if (REMOTE_IR_ENABLE)
 	extern void rc_ir_init(void);	//将红外学习的buffer指向Audio buffer
-
+	//uei_debug_init();
+	
 	//如何复用Audio buffer？buffer_mic 对应1984个bytes(if TL_MIC_BUFFER_SIZE == 1)
 	extern s16		buffer_mic[TL_MIC_BUFFER_SIZE>>1];
 	extern ir_learn_ctrl_t *g_ir_learn_ctrl;//680bytes
@@ -954,7 +959,7 @@ void user_init()
 			sleep_us(200000);  // wait for IR is ready
 	}
 
-	analog_write(DEEP_ANA_REG1, 0x00);
+	//analog_write(DEEP_ANA_REG1, 0x00);
 #endif
 
 

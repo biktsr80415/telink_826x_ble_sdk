@@ -670,8 +670,8 @@ static int ir_write_universal_data(ir_search_index_t *ir_index_data)
     }
 
     //init
-    memset((void *)(u8*)g_ir_learn_pattern, 0, sizeof(ir_universal_pattern_t));
-    memset((void *)(u8*)g_ir_learn_pattern_extend, 0, sizeof(ir_universal_pattern_t));
+    memset((void *)g_ir_learn_pattern, 0, sizeof(ir_universal_pattern_t));
+    memset((void *)g_ir_learn_pattern_extend, 0, sizeof(ir_universal_pattern_t));
 
     g_ir_learn_pattern->series_cnt = g_ir_learn_ctrl->series_cnt;
     g_ir_learn_pattern->carr_high_tm = g_ir_learn_ctrl->carr_high_tm;
@@ -1028,7 +1028,7 @@ void ir_check_tick()
         //此时等待红外信息进来，IR学习，学习超时时间30s
         if (clock_time_exceed(g_ir_learn_tick, timeout)) {
             g_ir_learn_tick = clock_time();
-            device_led_setup(g_ir_led[g_ir_learn_state -1]);
+            device_led_setup(g_ir_led[g_ir_learn_state]);
             g_ir_learn_state = IR_LEARN_DISABLE;
             ir_exit_learn();//add tyf 8-6
             ir_restore_keyboard();
