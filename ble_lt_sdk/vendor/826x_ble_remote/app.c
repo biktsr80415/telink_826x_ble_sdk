@@ -28,7 +28,7 @@
 
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
-MYFIFO_INIT(blt_txfifo, 40, 16);
+MYFIFO_INIT(blt_txfifo, 40, 12);//fifo size set smaller,  avoid RAM overflow...
 ////////////////////////////////////////////////////////////////////
 
 #define			HID_HANDLE_CONSUME_REPORT			25
@@ -480,10 +480,13 @@ void key_change_proc(void)
 					//printf("Switch to ir mode.\n");
 				}
 				ota_is_working = 0;
-			} else {
+
+			}
+			else{
 				bls_ll_setAdvEnable(1);
 				//printf("Enable ble adv.\n");
 			}
+			analog_write(DEEP_ANA_REG1, user_key_mode);//update (after ota,restart the mode maybe unmatch.(e.g. before OTA,switch into ir mode,after that, switch to ble mode)
 #endif
 
 		}
@@ -941,14 +944,13 @@ void user_init()
 	extern ir_learn_ctrl_t *g_ir_learn_ctrl;//680bytes
 	extern ir_universal_pattern_t *g_ir_learn_pattern;//256bytes
 	extern ir_universal_pattern_t *g_ir_learn_pattern_extend;//256bytes
-	//s16 buffer_mic[TL_MIC_BUFFER_SIZE>>1];
 	u8* p = (u8*)&buffer_mic[0];
 	g_ir_learn_ctrl = (ir_learn_ctrl_t*)p;
 	g_ir_learn_pattern = (ir_universal_pattern_t*)(p + sizeof(ir_learn_ctrl_t));
-	g_ir_learn_pattern_extend = (ir_universal_pattern_t*)(p + sizeof(ir_learn_ctrl_t)+ sizeof(ir_universal_pattern_t) + 1);;
+	g_ir_learn_pattern_extend = (ir_universal_pattern_t*)(p + sizeof(ir_learn_ctrl_t)+ sizeof(ir_universal_pattern_t));;
 
 	rc_ir_init();
-	//uei_debug_init();
+
 	user_key_mode = analog_read(DEEP_ANA_REG1);
 	//printf("Deepback:user_key_mode=%d.\n", user_key_mode);
 
@@ -981,7 +983,6 @@ void user_init()
 // main loop flow
 /////////////////////////////////////////////////////////////////////
 u32 tick_loop;
-unsigned short battValue[20];
 
 
 void main_loop (void)

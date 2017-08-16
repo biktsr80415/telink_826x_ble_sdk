@@ -45,6 +45,7 @@ _attribute_ram_code_ void irq_handler(void)
 
 }
 
+//.\tcdb.exe  wf 00000 -eb -i "E:\Telink BLE 项目\UEI项目\uei_complete_fm\ble_lt_app\ble_lt_sdk\8267_ble_remote\8267_remote.bin"
 int main (void) {
 
 	cpu_wakeup_init();
