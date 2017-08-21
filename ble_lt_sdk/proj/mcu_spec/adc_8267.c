@@ -47,6 +47,7 @@ static inline void adc_SetClkFreq(u8 mhz){
 	reg_adc_step_l = mhz*4;
 	reg_adc_mod = MASK_VAL(FLD_ADC_MOD, 192*4);
 }
+
 /********************************************************
 *
 *	@brief		power on SAR ADC
