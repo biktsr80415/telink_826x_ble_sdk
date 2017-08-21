@@ -272,6 +272,7 @@ void adc_BatteryCheckInit(enum ADCCLOCK adc_clk,unsigned char div_en,enum ONETHI
 	/***7.set misc channel sample and convert period***/
 //	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
 
+	adc_ClkEn(1);    // enable ADC clock
 	/***enable adc auto mode***/
 	EN_ADC_AUTO;
 }
