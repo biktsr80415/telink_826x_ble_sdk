@@ -77,7 +77,6 @@ u32 ota_adr = 0;
 u32 ota_mode_begin_tick;
 
 
-
 int master_ota_cmd;
 u32 led_indicate_begin_tick;
 u32 led_indicate_gpio;

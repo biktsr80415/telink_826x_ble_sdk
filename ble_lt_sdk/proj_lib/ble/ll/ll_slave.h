@@ -12,11 +12,11 @@
 
 typedef struct {
 	u8		time_update_st;
-	u8 		ll_localFeature;  //only 8 faeture in core_4.2,  1 byte is enough
+	u8 		last_rf_len;
 	u8 		ll_remoteFeature; //not only one for BLE master, use connHandle to identify
 	u8		remoteFeatureReq;
 
-	u8 		brx_rx_num;  //rx number in a new interval  brx state machine
+	u8 		rsvd2;
 	u8		interval_level;
 	u16		connHandle;
 
@@ -32,7 +32,7 @@ typedef struct {
 	u16		conn_update_inst_diff;
 
 
-	u32		conn_access_code;
+	u32		conn_access_code_revert;
 	u32		conn_crc;
 	u32		connExpectTime;
 	int		conn_interval_adjust;

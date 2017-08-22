@@ -112,11 +112,32 @@
 //-- OCF --
 #define HCI_CMD_SET_EVENT_MASK                                       0x01
 #define HCI_CMD_RESET                                                0x03
+#define HCI_CMD_SET_EVENT_FILTER									 0x05
+#define HCI_CMD_WRITE_PIN_TYPE										 0x0A
+#define HCI_CMD_CREATE_NEW_UINT_KEY									 0x0B
 #define HCI_CMD_DELETE_STORED_LINK_KEY								 0x12
+#define	HCI_CMD_WRITE_LOCAL_NAME									 0x13
+#define	HCI_CMD_READ_LOCAL_NAME										 0x14
+#define	HCI_CMD_WRITE_CONNECTION_ACCEPT_TIMEOUT						 0x16
+#define	HCI_CMD_WRITE_PAGE_TIMEOUT									 0x18
+#define	HCI_CMD_WRITE_SCAN_ENABLE									 0x1A
+#define	HCI_CMD_WRITE_PAGE_SCAN_ACTIVITY							 0x1C
+#define	HCI_CMD_WRITE_INQUIRY_SCAN_ACTIVITY							 0x1E
+#define	HCI_CMD_WRITE_AUTHENTICATION_ENABLE							 0x20
+#define HCI_CMD_WRITE_CLASS_OF_DEVICE			                     0x24
+#define HCI_CMD_WRITE_VOICE_SETTING				                     0x26
+#define HCI_CMD_WRITE_NUM_BROADCAST_RETRANSMISSIONS			         0x2A
+#define HCI_CMD_WRITE_HOLD_MODE_ACTIVITY			         		 0x2C
 #define HCI_CMD_READ_TX_POWER_LEVEL                                  0x2D
+#define HCI_CMD_SYNCHRONOUS_FLOW_CONTROL_ENABLE						 0x2F
 #define HCI_CMD_SET_CONTROLLER_TO_HOST_FLOW_CTRL                     0x31
 #define HCI_CMD_HOST_BUF_SIZE                                        0x33
 #define HCI_CMD_HOST_NUM_OF_COMPLETE_PACKETS                         0x35
+#define HCI_CMD_WRITE_CURRENT_IAC_LAP 								 0x3A
+#define HCI_CMD_SET_AFH_HOST_CHN_CLASSIFICATION						 0x3F
+#define HCI_CMD_WRITE_INQUIRY_SCAN_TYPE								 0x43
+#define HCI_CMD_WRITE_INQUIRY_MODE									 0x45
+#define HCI_CMD_WRITE_PAGE_SCAN_TYPE								 0x47
 
 
 //Informational Parameters

@@ -5,6 +5,7 @@
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ll/ll.h"
+#include "../../proj/drivers/uart.h"
 
 #if (__PROJECT_8261_FEATURE_TEST__ || __PROJECT_8266_FEATURE_TEST__ || __PROJECT_8267_FEATURE_TEST__ || __PROJECT_8269_FEATURE_TEST__)
 
@@ -17,7 +18,7 @@ _attribute_ram_code_ void irq_handler(void)
 
 	irq_blt_sdk_handler ();
 
-#if (HCI_ACCESS==HCI_USE_UART)
+#if (HCI_ACCESS==HCI_USE_UART || FEATURE_TEST_MODE == TEST_BLE_PHY)
 	unsigned char irqS = reg_dma_rx_rdy0;
     if(irqS & FLD_DMA_UART_RX)	//rx
     {
@@ -34,15 +35,15 @@ _attribute_ram_code_ void irq_handler(void)
     if(irqS & FLD_DMA_UART_TX)	//tx
     {
     	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
-#if __PROJECT_8266_CERT_TEST__
-		uart_clr_tx_busy_flag();
-#endif
+		#if (MCU_CORE_TYPE == MCU_CORE_8266)
+				uart_clr_tx_busy_flag();
+		#endif
     }
 #endif
 }
 
 int main (void) {
-	cpu_wakeup_init();
+	cpu_wakeup_init(CRYSTAL_TYPE);
 
 	set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
 	clock_init();

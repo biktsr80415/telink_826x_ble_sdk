@@ -30,17 +30,13 @@
 
 
 typedef struct {
-	u8		adv_en;
 	u8		adv_chn_mask;
 	u8		adv_duraton_en;
 	u8		adv_type;
-
 	u8 		adv_filterPolicy;
-	u8		adv_rcvdReq;  //scanReq & connReq
-	u8		adv_extension_mask;
-	s8		T_SCAN_RSP_INTVL;
 
-	u16		advInt_rand;
+	s8		T_SCAN_RSP_INTVL;
+	u8		advInt_rand;
 	u16		advInt_min;
 
 	u32		adv_interval;     // system tick
@@ -76,6 +72,8 @@ void 		blc_ll_initAdvertising_module(u8 *public_adr);;
 ble_sts_t	bls_ll_setAdvData(u8 *data, u8 len);
 ble_sts_t 	bls_ll_setScanRspData(u8 *data, u8 len);
 ble_sts_t   bls_ll_setAdvEnable(int adv_enable);
+
+u8 			blt_set_adv_direct_init_addrtype(u8* cmdPara);
 
 ble_sts_t   bls_ll_setAdvParam( u16 intervalMin, u16 intervalMax, u8 advType, 	   u8 ownAddrType,  \
 							     u8 peerAddrType, u8 *peerAddr,   u8 adv_channelMap, u8 advFilterPolicy);

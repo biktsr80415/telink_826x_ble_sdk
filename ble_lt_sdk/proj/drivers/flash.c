@@ -43,6 +43,8 @@ _attribute_ram_code_ static void flash_wait_done()
 _attribute_ram_code_ void flash_erase_sector(u32 addr){
 	u8 r = irq_disable();
 
+	WATCHDOG_CLEAR;  //in case of watchdog timeout
+
 	flash_send_cmd(FLASH_WRITE_ENABLE_CMD);
 	flash_send_cmd(FLASH_SECT_ERASE_CMD);
 	flash_send_addr(addr);

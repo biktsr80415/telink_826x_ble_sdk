@@ -39,7 +39,8 @@ void uart_set_tx_busy_flag(){
     #endif
 }
 
-void uart_clr_tx_busy_flag(){
+void uart_clr_tx_busy_flag(void)
+{
     #if(UART_CONTINUE_DELAY_EN)
     uart_continue_delay_time = clock_time() | 1; // make sure not zero
     #else

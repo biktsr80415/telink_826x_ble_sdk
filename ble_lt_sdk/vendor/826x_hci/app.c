@@ -94,6 +94,8 @@ void app_power_management ()
 #endif
 }
 
+
+#if (HCI_ACCESS==HCI_USE_UART)
 int blc_rx_from_uart (void)
 {
 	if(my_fifo_get(&hci_rx_fifo) == 0)
@@ -127,6 +129,22 @@ int blc_hci_tx_to_uart ()
 	}
 	return 0;
 }
+#else
+
+int app_hci_cmd_from_usb (void)
+{
+	u8 buff[72];
+	extern int usb_bulk_out_get_data (u8 *p);
+	int n = usb_bulk_out_get_data (buff);
+	if (n)
+	{
+		blc_hci_handler (buff, n);
+	}
+	return 0;
+}
+
+
+#endif
 
 void user_init()
 {
@@ -142,7 +160,8 @@ void user_init()
 
 	////////////////// BLE stack initialization ////////////////////////////////////
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
-	u32 *pmac = (u32 *) (CFG_ADR_MAC + 10);
+	//u32 *pmac = (u32 *) (CFG_ADR_MAC + 10);
+	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff)
 	{
 	    memcpy (tbl_mac, pmac, 6);
@@ -164,24 +183,13 @@ void user_init()
 	blc_l2cap_register_handler (blc_hci_sendACLData2Host); 		//send l2cap 2 uart
 	blc_hci_registerControllerEventHandler(blc_hci_send_data);		//register event callback
 
-	///////////////////// USER application initialization ///////////////////
-#if 0
-	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
-	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
-
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
-			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
-			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
-
-	bls_ll_setAdvEnable(1);  //adv enable
-#endif
 	rf_set_power_level_index (RF_POWER_8dBm);
 
 	////////////////// HCI interface initialization ///////////////////////////////////
 	#if (HCI_ACCESS==HCI_USE_USB)
 		usb_bulk_drv_init (0);
-		blc_register_hci_handler (blc_hci_rx_from_usb, blc_hci_tx_to_usb);
+		blc_register_hci_handler (app_hci_cmd_from_usb, blc_hci_tx_to_usb);
 	#else	//uart
 		//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
 		gpio_set_input_en(GPIO_PB2, 1);

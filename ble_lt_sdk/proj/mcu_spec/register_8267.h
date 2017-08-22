@@ -1188,7 +1188,7 @@ enum{
 	RMII_REFCLK_OUTPUT_EN = BIT(3),
 };
 
-#define reg_gpio_config_func REG_ADDR32(0x5b0)
+
 #define reg_gpio_config_func0 REG_ADDR8(0x5b0)
 enum{
 	FLD_DMIC_DI_PWM0    =   BIT(0),
@@ -1275,6 +1275,8 @@ enum{
 	FLD_TMR_STA_WD =			BIT(3),
 };
 
+#define WATCHDOG_CLEAR		( reg_tmr_sta = FLD_TMR_STA_WD )
+
 #define reg_tmr0_capt			REG_ADDR32(0x624)
 #define reg_tmr1_capt			REG_ADDR32(0x628)
 #define reg_tmr2_capt			REG_ADDR32(0x62c)
@@ -1341,6 +1343,17 @@ enum {
 /****************************************************
  PWM regs define:  begin  0x780
  *****************************************************/
+
+typedef enum {
+	PWM0_ID = 0,
+	PWM1_ID,
+	PWM2_ID,
+	PWM3_ID,
+	PWM4_ID,
+	PWM5_ID,
+}pwm_id;
+
+
 #define reg_pwm_enable			REG_ADDR8(0x780)
 #define reg_pwm_clk				REG_ADDR8(0x781)
 #define reg_pwm_mode			REG_ADDR8(0x782)
@@ -1349,12 +1362,12 @@ enum{
 	FLD_PWM1_MODE  = 				BIT_RNG(2,3),
 };
 
-enum{
+typedef enum{
 	PWM_NORMAL_MODE = 0x00,
 	PWM_COUNT_MODE  = 0x01,
 	PWM_IR_MODE     = 0x03,
 
-};
+}pwm_mode;
 
 #define reg_pwm_invert			REG_ADDR8(0x783)
 #define reg_pwm_n_invert		REG_ADDR8(0x784)
@@ -1373,7 +1386,7 @@ enum{
 #define reg_pwm_irq_mask		REG_ADDR8(0x7b0)
 #define reg_pwm_irq_sta			REG_ADDR8(0x7b1)
 
-enum{
+typedef enum{
 	FLD_IRQ_PWM0_PNUM =			BIT(0),
 	FLD_IRQ_PWM1_PNUM =			BIT(1),
 	FLD_IRQ_PWM0_FRAME =		BIT(2),
@@ -1382,50 +1395,92 @@ enum{
 	FLD_IRQ_PWM3_FRAME =		BIT(5),
 	FLD_IRQ_PWM4_FRAME 	=		BIT(6),
 	FLD_IRQ_PWM5_FRAME =		BIT(7),
-};
+}PWM_IRQ;
 
-static inline void pwmm_set_mode(int id, int mode){
-	if(0 == id){
-		reg_pwm_mode = MASK_VAL(FLD_PWM0_MODE,mode);
-	}else if(1 == id){
-		reg_pwm_mode = MASK_VAL(FLD_PWM1_MODE,mode);
+
+
+static inline void pwm_set_mode(pwm_id id, int mode){
+	if(PWM0_ID == id){
+		reg_pwm_mode = MASK_VAL(FLD_PWM0_MODE, mode);
+	}else if(PWM1_ID == id){
+		reg_pwm_mode = MASK_VAL(FLD_PWM1_MODE, mode);
 	}
 }
-static inline void pwm_set(int id, u16 max_tick, u16 cmp_tick){
-	reg_pwm_cycle(id) = MASK_VAL(FLD_PWM_CMP, cmp_tick, FLD_PWM_MAX, max_tick);
-}
 
-static inline void pwmm_clk(int system_clock_hz, int pwm_clk){
+//Set PWM clock frequency
+static inline void pwm_set_clk(int system_clock_hz, int pwm_clk){
 	reg_pwm_clk = (int)system_clock_hz /pwm_clk - 1;
 }
 
-static inline void pwmm_set_duty(int id, u16 max_tick, u16 cmp_tick){
-	reg_pwm_cycle(id) = MASK_VAL(FLD_PWM_CMP, cmp_tick, FLD_PWM_MAX, max_tick);
+
+static inline void pwm_set_cmp(pwm_id id, u16 cmp_tick){
+	reg_pwm_cmp(id) = cmp_tick;
 }
 
-static inline void pwmm_set_cmp(int id, u16 cmp){
-	reg_pwm_cmp(id) = cmp;
+static inline void pwm_set_cycle(pwm_id id, u16 cycle_tick){
+	reg_pwm_max(id) = cycle_tick;
 }
 
-static inline void pwmm_set_max(int id, u16 max){
-	reg_pwm_max(id) = max;
+
+static inline void pwm_set_cycle_and_duty(pwm_id id, u16 cycle_tick, u16 cmp_tick){
+	reg_pwm_cycle(id) = MASK_VAL(FLD_PWM_CMP, cmp_tick, FLD_PWM_MAX, cycle_tick);
 }
 
-static inline void pwmm_set_phase(int id, u16 phase){
+
+static inline void pwm_set_phase(pwm_id id, u16 phase){
 	reg_pwm_phase(id) = phase;
 }
 
-static inline void pwmm_set_pulse_num(int id, u16 pulse_num){
+
+static inline void pwm_set_pulse_num(pwm_id id, u16 pulse_num){
 	reg_pwm_pulse_num(id) = pulse_num;
 }
 
-static inline void pwmm_start(int id){
+static inline void pwm_start(pwm_id id){
 	BM_SET(reg_pwm_enable, BIT(id));
 }
 
-static inline void pwmm_stop(int id){
+static inline void pwm_stop(pwm_id id){
 	BM_CLR(reg_pwm_enable, BIT(id));
 }
+
+//revert PWMx
+static inline void pwm_revert(pwm_id id){
+	reg_pwm_invert |= BIT(id);
+}
+
+
+//revert PWMx_N
+static inline void pwm_n_revert(pwm_id id){
+	reg_pwm_n_invert |= BIT(id);
+}
+
+static inline void pwm_polo_enable(pwm_id id, int en){
+	if(en){
+		BM_SET(reg_pwm_pol, BIT(id));
+	}else{
+		BM_CLR(reg_pwm_pol, BIT(id));
+	}
+}
+
+
+static inline void pwm_set_interrupt_enable(PWM_IRQ irq){
+//	if(en){
+//		BM_SET(reg_pwm_irq_mask, irq);
+//	}else{
+//		BM_CLR(reg_pwm_irq_mask, irq);
+//	}
+	BM_SET(reg_pwm_irq_mask, irq);
+}
+
+static inline void pwm_set_interrupt_disable(PWM_IRQ irq){
+	BM_CLR(reg_pwm_irq_mask, irq);
+}
+
+static inline void pwm_clear_interrupt_status( PWM_IRQ irq){
+	reg_pwm_irq_sta = irq;
+}
+
 
 //////////////////////////////////////////////////////////////
 // DFIFO
@@ -1530,18 +1585,6 @@ static inline u16 config_sdm (u32 adr, int size, int sample_rate, int sdm_fmhz) 
 
 	reg_ascl_step = AUD_SDM_STEP (sample_rate, sdm_fmhz*1000000);
 	return reg_ascl_step;
-}
-
-static inline	void config_dmic (int sample_rate) {		//16K configuration
-	reg_clk_en2 |= FLD_CLK2_DIFIO_EN;
-	reg_gpio_pa_gpio &= ~(BIT(1) | BIT(0));		//dmic clk gpio off
-	reg_gpio_config_func |= FLD_DMIC_DI_PWM0;
-	reg_dmic_step = FLD_DMIC_CLK_EN | 1; //2;
-	reg_dmic_mod = 94 * 16000 / sample_rate;//188 * 16000 / sample_rate;					// dmic clock 192M (PLL) / 188 * 2 = 2M
-	reg_dfifo_ana_in = FLD_DFIFO_AUD_INPUT_MONO;
-	reg_dfifo_scale = 0x1b;				// down scale by 128
-	reg_aud_hpf_alc = 11;				// volume setting
-	reg_aud_alc_vol = 28;
 }
 
 static inline void config_adc_channel1 (int chn_mic) {

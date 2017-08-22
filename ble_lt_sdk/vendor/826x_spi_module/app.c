@@ -84,27 +84,6 @@ void	task_connect (void)
 }
 
 
-void rf_customized_param_load(void)
-{
-	  // customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
-	 if( (*(unsigned char*) CUST_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) CUST_CAP_INFO_ADDR)&0x1f) );
-	 }
-
-	 //customize TP0, flash 0x77041 customize TP1
-	 if( ((*(unsigned char*) (CUST_TP_INFO_ADDR)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+1)) != 0xff) ){
-		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
-	 }
-
-
-	 // customize 32k RC cap value, if not customized, default ana_32 is 0x80
-	 if( (*(unsigned char*) CUST_RC32K_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x32, *(unsigned char*) CUST_RC32K_CAP_INFO_ADDR );
-	 }
-}
-
 u32 tick_wakeup;
 int	mcu_uart_working;
 int	module_uart_working;
@@ -146,7 +125,7 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//闂備浇娉曢崰鎰板几婵犳艾绠紒灞炬剑dule闂備浇娉曢崰鎰板几婵犳艾绠紒宀�壃rt闂備浇娉曢崰鎰板几婵犳艾绠柣銈庡灠濞戭亪姊虹捄銊ユ瀾闁哄顭烽獮蹇涙倻閼恒儲娅㈤梺鍝勫�閸婃牜锟借ぐ鎺撶叆闁绘棁宕电粣娑㈡煕濮橆剙鍤辩紒杈ㄧ箞瀵剟濡堕崱妤婁紦GPIO_WAKEUP_MCU闂備浇娉曢崰鎰板几婵犳艾绠柣鎴ｅГ閺呮悂姊洪弶鍨倎缂侀硸鍣ｉ獮蹇涙倻閼恒儲娅㈤梺鍝勫�閸婃牜锟介敓浠嬫煕濞嗘劗澧甸柡浣规崌瀵剟濡堕崱妤婁紦闂備浇娉曢崰鎰板几婵犳艾绠紒宀�妼er闂備浇娉曢崰鎰板几婵犳艾绠柧姘�閻ゅ嫰姊虹捄銊ユ瀾闁哄顭烽獮蹇涙倻閼恒儲娅㈤梺璺ㄥ櫐閹凤拷	if(module_uart_data_flg && !module_uart_working){
+	//闂傚倷娴囧▔鏇㈠窗閹版澘鍑犲┑鐘宠壘缁狀垳绱掔仦鐐墤dule闂傚倷娴囧▔鏇㈠窗閹版澘鍑犲┑鐘宠壘缁狀垳绱掑畝锟藉rt闂傚倷娴囧▔鏇㈠窗閹版澘鍑犲┑鐘宠壘缁狀垶鏌ｉ妶搴＄仩婵炴埈浜铏规崉閵娿儲鐎鹃梺鍝勵儏椤兘鐛箛娑欏�闁兼亽鍎插▍銏ゆ⒑閸濆嫬锟介柛濠冪墱閿熷�銇愰幒鎾跺弳闂佺粯妫佸畷鐢电玻濞戙垺鐓曟慨姗嗗墮閸よ京绱掓潏銊х疄鐎殿噮鍓熸俊鍫曞幢濡ゅ﹣绱PIO_WAKEUP_MCU闂傚倷娴囧▔鏇㈠窗閹版澘鍑犲┑鐘宠壘缁狀垶鏌ｉ幋锝呅撻柡鍛倐濮婃椽寮堕崹顔藉�缂備線纭搁崳锝夌嵁韫囨稒鍊婚柤鎭掑劜濞呫垽姊洪崫鍕拷闁稿﹥鐗滈敓浠嬫晸娴犲鐓曟繛鍡樺姉婢х敻鏌℃担瑙勫磳鐎殿噮鍓熸俊鍫曞幢濡ゅ﹣绱﹂梻鍌欐祰濞夋洟宕伴幇鏉垮嚑濠电姵鑹剧粻顖滅磼瀹�拷濡糴r闂傚倷娴囧▔鏇㈠窗閹版澘鍑犲┑鐘宠壘缁狀垶鏌у顒�拷闁汇倕瀚板铏规崉閵娿儲鐎鹃梺鍝勵儏椤兘鐛箛娑欏�闁兼亽鍎插▍銏ゆ⒑鐠恒劌娅愰柟鍑ゆ嫹	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
 		GPIO_WAKEUP_MCU_LOW;
@@ -162,7 +141,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闂備浇娉曢崰鎰板几婵犳艾绠柣銈庡灱濞撲粙姊虹捄銊ユ瀾闁哄顭烽獮蹇涙晸缁辩丢IO_WAKEUP_MODULE 闂備浇娉曢崰鎰板几婵犳艾绠柣鎴ｅГ閺呮悂鏌￠崒妯猴拷閻庢熬鎷�}
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闂傚倷娴囧▔鏇㈠窗閹版澘鍑犲┑鐘宠壘缁狀垶鏌ｉ妶搴＄伇婵炴挷绮欏铏规崉閵娿儲鐎鹃梺鍝勵儏椤兘鐛箛娑欐櫢缂佽京涓O_WAKEUP_MODULE 闂傚倷娴囧▔鏇㈠窗閹版澘鍑犲┑鐘宠壘缁狀垶鏌ｉ幋锝呅撻柡鍛倐閺岋繝宕掑Ο鐚存嫹闁诲孩鐔幏锟絵
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
 	{
@@ -279,7 +258,7 @@ void spi_read_handler (void)
 
 void user_init()
 {
-	rf_customized_param_load();  //load customized freq_offset cap value and tp value
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
     led_init();
 

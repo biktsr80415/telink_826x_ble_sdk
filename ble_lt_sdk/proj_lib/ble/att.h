@@ -4,7 +4,7 @@
 #include "l2cap.h"
 
 
-#define ATT_MTU_SIZE                        L2CAP_MTU_SIZE //!< Minimum ATT MTU size
+#define ATT_MTU_SIZE                        23  //L2CAP_MTU_SIZE //!< Minimum ATT MTU size
 #define ATT_MAX_ATTR_HANDLE                 0xFFFF
 #define ATT_16BIT_UUID_LEN                  2
 #define ATT_128BIT_UUID_LEN                 16
@@ -411,7 +411,7 @@ typedef struct attProtocolRspPdu{
 
 
 
-
+typedef int (*att_mtuSizeExchange_callback_t)(u16, u16);
 typedef int (*att_handleValueConfirm_callback_t)(void);
 typedef int (*att_readwrite_callback_t)(void* p);
 
@@ -429,33 +429,59 @@ typedef struct attribute
 
 
 
-int 		l2cap_att_client_handler (u16 conn, u8 *p);
+
 
 
 extern u8	blt_indicate_handle;
 
-// att
+
+
+
+/******************************* User Interface  ************************************/
 ble_sts_t	bls_att_pushNotifyData (u16 attHandle, u8 *p, int len);
 ble_sts_t	bls_att_pushIndicateData (u16 attHandle, u8 *p, int len);
 void		bls_att_setAttributeTable (u8 *p);
 
 void 		bls_att_registerHandleValueConfirmCb (att_handleValueConfirm_callback_t cb);
 
-ble_sts_t 	bls_att_setDeviceName(u8* pName,u8 len);
+
+//mtu size
+ble_sts_t   blc_att_setRxMtuSize(u16 mtu_size);
+void        blc_att_registerMtuSizeExchangeCb (att_mtuSizeExchange_callback_t cb);
 ble_sts_t	blc_att_requestMtuSizeExchange (u16 connHandle, u16 mtu_size);
 
 
+
+
+		// 0x04: ATT_OP_FIND_INFO_REQ
+void 	att_req_find_info(u8 *dat, u16 start_attHandle, u16 end_attHandle);
+		// 0x06: ATT_OP_FIND_BY_TYPE_VALUE_REQ
+void 	att_req_find_by_type (u8 *dat, u16 start_attHandle, u16 end_attHandle, u8 *uuid, u8* attr_value, int len);
+		// 0x08: ATT_OP_READ_BY_TYPE_REQ
+void 	att_req_read_by_type (u8 *dat, u16 start_attHandle, u16 end_attHandle, u8 *uuid, int uuid_len);
+		// 0x0a: ATT_OP_READ_REQ
+void 	att_req_read (u8 *dat, u16 attHandle);
+		// 0x0c: ATT_OP_READ_BLOB_REQ
+void 	att_req_read_blob (u8 *dat, u16 attHandle, u16 offset);
+		// 0x10: ATT_OP_READ_BY_GROUP_TYPE_REQ
+void 	att_req_read_by_group_type (u8 *dat, u16 start_attHandle, u16 end_attHandle, u8 *uuid, int uuid_len);
+		// 0x12: ATT_OP_WRITE_REQ
+void 	att_req_write (u8 *dat, u16 attHandle, u8 *buf, int len);
+		// 0x52: ATT_OP_WRITE_CMD
+void 	att_req_write_cmd (u8 *dat, u16 attHandle, u8 *buf, int len);
+
+
+
+
+ble_sts_t 	bls_att_setDeviceName(u8* pName,u8 len);  //only module/mesh/hci use
+
+
 int 		att_register_idle_func (void *p);
+int 		l2cap_att_client_handler (u16 conn, u8 *p);
 
 
 
 
 
 
-void 		att_req_read_by_type (u8 *p, u16 start_attHandle, u16 end_attHandle, u8 *uuid, int uuid_len);
-void 		att_req_write_cmd (u8 *p, u16 attHandle, u8 *buf, int len);
-
-
-
-
-
+/************************* Stack Interface, user can not use!!! ***************************/

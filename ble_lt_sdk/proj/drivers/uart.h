@@ -218,7 +218,7 @@ extern void uart_RecBuffInit(unsigned char *recAddr, unsigned short recBuffLen);
 
 extern void uart_BuffInit(unsigned char *recAddr, unsigned short recBuffLen, unsigned char *txAddr);
 
-void uart_clr_tx_busy_flag();
+void uart_clr_tx_busy_flag(void);
 
 void uart_set_tx_done_delay (u32 t);		//for 8266 only
 

@@ -14,15 +14,9 @@
 #define			SUSPEND_DISABLE			0
 #define			SUSPEND_ADV				BIT(0)
 #define			SUSPEND_CONN			BIT(1)
-#define			DEEPSLEEP_ADV			BIT(2)
-#define			DEEPSLEEP_CONN			BIT(3)
 #define			MCU_STALL				BIT(6)
 
 
-
-#define 		LOWPOWER_ADV			( SUSPEND_ADV  | DEEPSLEEP_ADV  )
-#define 		LOWPOWER_CONN			( SUSPEND_CONN | DEEPSLEEP_CONN )
-#define			DEEPSLEEP_ENTER			( DEEPSLEEP_ADV | DEEPSLEEP_CONN )
 
 
 
@@ -46,6 +40,7 @@ typedef struct {
 
 	u8		conn_no_suspend;
 	u8 		timer_wakeup;
+	u8      ble_busy_pending;
 
 }st_ll_pm_t;
 

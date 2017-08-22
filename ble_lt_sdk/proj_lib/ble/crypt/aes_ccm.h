@@ -5,7 +5,7 @@
 #define AES_BLOCK_SIZE     16
 
 
-#define		SUCCESS			0
+//#define		SUCCESS			0
 enum {
     AES_SUCC = SUCCESS,
     AES_NO_BUF,               

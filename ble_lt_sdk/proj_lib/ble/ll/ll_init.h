@@ -24,7 +24,7 @@ typedef struct {
 
 //st_ll_init_t  blti;
 
-extern u32 blti_create_conn_timeout;
+extern u32 blm_timeout_connectDevice;
 
 
 

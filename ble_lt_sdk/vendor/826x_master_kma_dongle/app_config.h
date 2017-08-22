@@ -31,13 +31,22 @@ extern "C" {
 
 
 
+#if(__PROJECT_8261_MASTER_KMA_DONGLE__)
+	#define FLASH_ADR_PARING   0x1e000
+#else
+	#define FLASH_ADR_PARING   0x78000
+#endif
 
 
 /////////////////// MODULE /////////////////////////////////
-#define HOST_SIMPLE_SERVICE_DISCOVERY_ENABLE		1
-#define HOST_PAIRING_MANAGEMENT_ENABLE				1
-#define HOST_SECURITY_ENABLE						0  //do not support at present
-#define APPLICATION_DONGLE							1
+#define BLE_HOST_SMP_ENABLE							0  //1 for standard security management,  0 for telink referenced paring&bonding(no security)
+#define BLE_HOST_SIMPLE_SDP_ENABLE					1  //simple service discovery
+
+#define UI_AUDIO_ENABLE								1
+#define UI_BUTTON_ENABLE							1
+#define UI_LED_ENABLE								1
+
+
 
 #if (__PROJECT_8261_MASTER_KMA_DONGLE__)
 	#define KMA_DONGLE_OTA_ENABLE				    0 //slave ota test
@@ -47,10 +56,12 @@ extern "C" {
 
 
 
-#define LL_MASTER_SINGLE_CONNECTION			1
+
+#define LL_MASTER_SINGLE_CONNECTION					1
 
 
 
+#define APPLICATION_DONGLE							1
 #if(APPLICATION_DONGLE)
 	#define	USB_PRINTER_ENABLE 		1
 	#define	USB_SPEAKER_ENABLE 		0
@@ -67,13 +78,7 @@ extern "C" {
 #define MIC_CHANNLE_COUNT		1
 #define	MIC_ENOCDER_ENABLE		0
 
-#define	MIC_ADPCM_FRAME_SIZE		128 //128
-#define	MIC_SHORT_DEC_SIZE			248 //248
-
-#define	TL_MIC_BUFFER_SIZE				512
-
-
-
+#define AUDIO_SDM_ENBALE		0//if using sdm playback, should better disable USB MIC
 
 ////////////////////////////////////////////////////
 #define HCI_NONE		0    //ble host on app.c
@@ -90,8 +95,8 @@ extern "C" {
 
 ////////////////////////// MIC BUFFER /////////////////////////////
 #define BLE_DMIC_ENABLE					0  //0: Amic   1: Dmic
-#define	ADPCM_PACKET_LEN				128
-#define TL_MIC_ADPCM_UNIT_SIZE			248
+#define	MIC_ADPCM_FRAME_SIZE		128 //128
+#define	MIC_SHORT_DEC_SIZE			248 //248
 
 #if BLE_DMIC_ENABLE
 	#define	TL_MIC_32K_FIR_16K			0
@@ -99,6 +104,9 @@ extern "C" {
 	#define	TL_MIC_32K_FIR_16K			1
 #endif
 
+#if (AUDIO_SDM_ENBALE)
+#define TL_SDM_BUFFER_SIZE			1024
+#endif
 
 #if TL_MIC_32K_FIR_16K
 	#define	TL_MIC_BUFFER_SIZE				1984
@@ -143,8 +151,8 @@ extern "C" {
 	#define PD5_INPUT_ENABLE		1
 	#define	SW1_GPIO				GPIO_PD5
 	#define	SW2_GPIO				GPIO_PD4
-	#define PULL_WAKEUP_SRC_PD4		PM_PIN_PULLUP_1M	//btn
-	#define PULL_WAKEUP_SRC_PD5		PM_PIN_PULLUP_1M	//btn
+	#define PULL_WAKEUP_SRC_PD4		PM_PIN_PULLUP_10K	//btn
+	#define PULL_WAKEUP_SRC_PD5		PM_PIN_PULLUP_10K	//btn
 
 	#define	 GPIO_LED_GREEN			GPIO_PC0
 	#define	 GPIO_LED_RED			GPIO_PC4

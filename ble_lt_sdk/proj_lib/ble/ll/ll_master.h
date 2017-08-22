@@ -17,6 +17,7 @@
 #define			BLM_CONN_MASTER_TERMINATE		BIT(4)
 #define			BLM_CONN_SLAVE_TERMINATE		BIT(5)
 #define			BLM_CONN_TERMINATE_SEND			BIT(0)
+
 #define			BLM_CONN_ENC_CHANGE				BIT(9)
 #define			BLM_CONN_ENC_REFRESH			BIT(10)
 #define			BLM_CONN_ENC_REFRESH_T			BIT(11)
@@ -48,7 +49,7 @@ typedef struct {
 	u8		chn_idx;
 	u8		chn_tbl[40];
 
-	u8 		ll_localFeature;  //only 8 feature in core_4.2,  1 byte is enough
+	u8 		newRx;
 	u8 		ll_remoteFeature; //not only one for BLE master, use connHandle to identify
 	u8		remoteFeatureReq;
 	u8 		adv_filterPolicy;
@@ -56,7 +57,7 @@ typedef struct {
 	u8		macAddress_public[6];
 	u8		macAddress_random[6];   //host may set this
 
-	u8		state;;
+	u8		connState;
 	u8		peer_adr_type;
 	u8		peer_adr[6];
 
@@ -66,7 +67,9 @@ typedef struct {
 	u8		conn_chn;
 	u8		conn_update;
 
-	u16		connHandle;
+//	u16		connHandle;
+	u8 		smp_busy;
+	u8 		host_pkt_hold;
 	u16		rsvd3;
 
 	u32		conn_receive_packet;
@@ -109,7 +112,29 @@ typedef struct {
 
 } st_ll_conn_master_t;
 
-u8 * blm_l2cap_packet_pack (u16 conn, u8 * raw_pkt);
+
+ble_sts_t blm_ll_connectWhiteList (int en);
+ble_sts_t blm_ll_readRemoteVersion (u16 handle);
+ble_sts_t blm_ll_setScanEnable (u8 scan_enable, u8 filter_duplicate);
+ble_sts_t blm_ll_readRemoteFeature (u16 handle);
+ble_sts_t blm_ll_readChannelMap (u16 handle, u8 * map);
+ble_sts_t blm_ll_setHostChannel (u16 handle, u8 * map);
+
+
+
+ble_sts_t blm_ll_connectDevice (u8 adr_type, u8 *mac, u16 conn_min, u16 conn_max, u16 conn_latency, u16 timeout);
+ble_sts_t blm_ll_createConnection (u16 scan_interval, u16 scan_window, u8 initiator_filter_policy,
+							  u8 adr_type, u8 *mac, u8 own_adr_type,
+							  u16 conn_min, u16 conn_max, u16 conn_latency, u16 timeout,
+							  u16 ce_min, u16 ce_max );
+
+ble_sts_t blm_ll_createConnectionCancel ();
+
+
+
+
+
+
 
 #else
 
@@ -127,7 +152,7 @@ typedef struct {
 	u8		chn_idx;
 	u8		chn_tbl[40];
 
-	u8 		ll_localFeature;  //only 8 feature in core_4.2,  1 byte is enough
+	u8 		newRx;
 	u8 		ll_remoteFeature; //not only one for BLE master, use connHandle to identify
 	u8		remoteFeatureReq;
 	u8 		adv_filterPolicy;
@@ -195,7 +220,6 @@ typedef struct {
 
 
 
-rf_packet_l2cap_t * blm_l2cap_packet_pack (u16 conn, u8 * raw_pkt);
 
 
 /******************************* User Interface  ************************************/
@@ -213,12 +237,27 @@ bool blm_ll_isTxFifoAvailableForApp(u16 connHandle);
 
 
 
+ble_sts_t  blm_hci_reset(void);
+
+ble_sts_t blm_ll_disconnect (u16 handle, u8 reason);
+
+ble_sts_t blm_ll_updateConnection (u16 connHandle,
+							  u16 conn_min, u16 conn_max, u16 conn_latency, u16 timeout,
+							  u16 ce_min, u16 ce_max );
+
+
+
 extern 	int		blm_create_connection;
 
 
 
+
+rf_packet_l2cap_t * blm_l2cap_packet_pack (u16 conn, u8 * raw_pkt);
+
+
 st_ll_conn_master_t * blm_ll_getConnection (u16 h);
 
+bool blm_ll_deviceIsConnState (u8 addr_type, u8* mac_addr);
 
 //------------- ATT client function -------------------------------
 
@@ -232,32 +271,9 @@ u16 blm_att_discoveryHandleOfUUID (u8 *l2cap_data, u8 *uuid128);
 u8 blm_fifo_num (u16 h);
 
 
-bool 	  blm_push_fifo (int h, u8 *p);
+bool 	  blm_push_fifo (int connHandle, u8 *dat);
 
-
-ble_sts_t blm_ll_connectWhiteList (int en);
-ble_sts_t blm_ll_disconnect (u16 handle, u8 reason);
-ble_sts_t blm_ll_readRemoteVersion (u16 handle);
-ble_sts_t blm_ll_setScanEnable (u8 en, u8 duplicate);
-ble_sts_t blm_ll_setScanParameter (u8 scan_type, u16 interval, u16 window, u8  adr_type, u8 policy);
-ble_sts_t blm_ll_readRemoteFeature (u16 handle);
-ble_sts_t blm_ll_readChannelMap (u16 handle, u8 * map);
-ble_sts_t blm_ll_setHostChannel (u16 handle, u8 * map);
-
-
-
-ble_sts_t blm_ll_connectDevice (u8 adr_type, u8 *mac, u16 conn_min, u16 conn_max, u16 conn_latency, u16 timeout);
-ble_sts_t blm_ll_createConnection (u16 scan_interval, u16 scan_window, u8 policy,
-							  u8 adr_type, u8 *mac, u8 own_adr_type,
-							  u16 conn_min, u16 conn_max, u16 conn_latency, u16 timeout,
-							  u16 ce_min, u16 ce_max );
-
-ble_sts_t blm_ll_createConnectionCancel ();
-
-ble_sts_t blm_ll_updateConnection (u16 connHandle,
-							  u16 conn_min, u16 conn_max, u16 conn_latency, u16 timeout,
-							  u16 ce_min, u16 ce_max );
-
+void 	blm_main_loop (void);
 
 
 //------------	master security function -------------------

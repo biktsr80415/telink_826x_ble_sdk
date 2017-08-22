@@ -2,6 +2,10 @@
 #define		pga_H
 
 
+#define		PGA_POWER_ON	 (	analog_write(0x87, analog_read(0x87) & 0xF7) )
+#define		PGA_POWER_OFF	 (	analog_write(0x87, analog_read(0x87) | 0x08) )
+
+
 //set ANA_C<3> and ANA_C<2> as positive and minus input of the PGA
 #define		setPGAchannel_ONE			(*(volatile unsigned char  *)0x800028 &= 0xFE)
 
@@ -21,7 +25,7 @@ enum POSTAMPValue{
 };
 
 
-void setChannel(unsigned char chM){
+void inline setChannel(unsigned char chM){
 	//set ANA_C<5> and ANA_C<4> as positive and minus input of the PGA
 	if(chM){
 		*(volatile unsigned char  *)0x800028 |= 0x01;

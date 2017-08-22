@@ -235,7 +235,7 @@ typedef struct{
 #define VK_WAKEUP_V			0x04
 
 #define VK_W_SRCH_V			{0x21,0x02}
-#define VK_WEB_V			{0x23,0x02}
+#define VK_HOME_V			{0x23,0x02}
 #define VK_W_BACK_V			{0x24,0x02}
 #define VK_W_FORWRD_V		{0x25,0x02}
 #define VK_W_STOP_V			{0x26,0x02}
@@ -249,6 +249,21 @@ typedef struct{
 #define VK_MY_COMP_V		{0x94,0x01}
 // next track -- 01(mosue-ep/USB_EDP_MOUSE) 05(len) 03(kb-report-id/USB_HID_KB_MEDIA)
 // b5(val) 00 00 00
+#define VK_MENU_V			{0x40,0x00}
+#define VK_MENU_PICK_V		{0x41,0x00}
+#define VK_MENU_UP_V		{0x42,0x00}
+#define VK_MENU_DN_V		{0x43,0x00}
+#define VK_MENU_LEFT_V		{0x44,0x00}
+#define VK_MENU_RIGHT_V		{0x45,0x00}
+
+#define VK_CHN_UP_V			{0x9c,0x00}
+#define VK_CHN_DN_V			{0x9d,0x00}
+
+#define VK_PLAY_V			{0xb0,0x00}
+#define VK_PAUSE_V			{0xb1,0x00}
+#define VK_RECORD_V			{0xb2,0x00}
+#define VK_FAST_FORWARD_V	{0xb3,0x00}
+#define VK_REWIND_V			{0xb4,0x00}
 #define VK_NEXT_TRK_V		{0xb5,0x00}
 #define VK_PREV_TRK_V		{0xb6,0x00}
 #define VK_STOP_V			{0xb7,0x00}
@@ -257,3 +272,56 @@ typedef struct{
 #define VK_VOL_UP_V			{0xe9,0x00}
 #define VK_VOL_DN_V			{0xea,0x00}
 
+
+
+// media key, consumer key
+//reference:  <<HID Usage Tables>>  Consumer Page(0x0C)
+typedef enum {
+	MKEY_POWER 			= 0x0030,
+	MKEY_RESET 			= 0x0031,
+	MKEY_SLEEP 			= 0x0032,
+
+	MKEY_MENU 			= 0x0040,
+	MKEY_MENU_PICK 		= 0x0041,
+	MKEY_MENU_UP 		= 0x0042,
+	MKEY_MENU_DN 		= 0x0043,
+	MKEY_MENU_LEFT 		= 0x0044,
+	MKEY_MENU_RIGHT 	= 0x0045,
+
+
+	MKEY_CHN_UP 		= 0x009c,
+	MKEY_CHN_DN 		= 0x009d,
+
+	MKEY_PLAY 			= 0x00b0,
+	MKEY_PAUSE 			= 0x00b1,
+	MKEY_RECORD 		= 0x00b2,
+	MKEY_FAST_FORWARD 	= 0x00b3,
+	MKEY_REWIND 		= 0x00b4,
+	MKEY_NEXT_TRK		= 0x00b5,
+	MKEY_PREV_TRK	 	= 0x00b6,
+	MKEY_STOP 			= 0x00b7,
+	MKEY_EJECT 			= 0x00b8,
+
+	MKEY_PLAY_PAUSE 	= 0x00cd,
+	MKEY_PLAY_SKIP	 	= 0x00ce,
+
+	MKEY_VOLUME 		= 0x00e0,
+	MKEY_BALANCE 		= 0x00e1,
+	MKEY_MUTE 			= 0x00e2,
+	MKEY_VOL_UP 		= 0x00e9,
+	MKEY_VOL_DN 		= 0x00ea,
+
+	MKEY_AC_SEARCH 		= 0x0221,
+	MKEY_AC_GOTO 		= 0x0222,
+	MKEY_AC_HOME	 	= 0x0223,
+	MKEY_AC_BACK	 	= 0x0224,
+	MKEY_AC_FORWARD	 	= 0x0225,
+	MKEY_AC_STOP	 	= 0x0226,
+	MKEY_AC_REFRESH	 	= 0x0227,
+	MKEY_AC_BOOKMARK	= 0x022a,
+	MKEY_AC_HISTORY		= 0x022b,
+	MKEY_AC_ZOOM_IN		= 0x022d,
+	MKEY_AC_ZOOM_OUT	= 0x022e,
+	MKEY_AC_ZOOM		= 0x022f,
+
+} media_key_t;

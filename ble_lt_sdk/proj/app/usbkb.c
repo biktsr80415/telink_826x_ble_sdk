@@ -32,7 +32,7 @@ static u8 vk_sys_map[VK_SYS_CNT] = {
 
 static vk_ext_t vk_media_map[VK_MEDIA_CNT] = {
     {VK_W_SRCH_V},
-    {VK_WEB_V},
+    {VK_HOME_V},
     {VK_W_BACK_V},
     {VK_W_FORWRD_V},
     {VK_W_STOP_V},

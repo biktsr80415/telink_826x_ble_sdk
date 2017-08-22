@@ -14,7 +14,9 @@ extern "C" {
 	#define CHIP_TYPE				CHIP_TYPE_8266
 #endif
 
-/////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
+
+
+/////////////////////HCI ACCESS OPTIONS/////////////////////
 #define HCI_USE_UART	1
 #define HCI_USE_USB		0
 #define HCI_ACCESS		HCI_USE_UART
@@ -30,7 +32,29 @@ extern "C" {
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
 #endif
 #define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
+#define SIG_PROC_ENABLE 					1   //To known if the Master accepted or rejected Connection_Parameters_Update or not!
 
+/////////////////// DEBUG  /////////////////////////////////
+//826x module's pin simulate as a uart tx, Just for debugging
+#define PRINT_DEBUG_INFO               		1	//open/close myprintf
+
+
+//////////////// SMP SETTING  //////////////////////////////
+#define SMP_DISABLE			   				0
+#define SMP_JUST_WORK       				1
+#define SMP_PASSKEY_ENTRY   				0
+#if SMP_PASSKEY_ENTRY
+#define PINCODE_RANDOM_ENABLE               0//0:default: 123456
+#if PINCODE_RANDOM_ENABLE
+#define PRINT_DEBUG_INFO                    1
+#endif
+#endif
+
+
+
+
+#define     MY_APP_ADV_CHANNEL					BLT_ENABLE_ADV_ALL
+#define 	MY_DIRECT_ADV_TMIE					2000000  //us
 
 
 /////////////////// led pin /////////////////////////////////
@@ -50,9 +74,10 @@ extern "C" {
 
 
 
-/////////////////// PRINT DEBUG INFO ///////////////////////
-/* 826x module's pin simulate as a uart tx, Just for debugging */
-#define PRINT_DEBUG_INFO                    0//open/close myprintf
+//////////////////// PRINT DEBUG INFO ///////////////////////
+#ifndef PRINT_DEBUG_INFO
+#define PRINT_DEBUG_INFO                    0
+#endif
 #if PRINT_DEBUG_INFO
 //defination debug printf pin
 #define PRINT_BAUD_RATE             		1000000 //1M baud rate,should Not bigger than 1M, when system clock is 16M.

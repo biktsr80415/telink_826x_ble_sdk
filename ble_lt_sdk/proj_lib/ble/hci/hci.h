@@ -11,6 +11,7 @@ typedef int (*blc_hci_app_handler_t) (unsigned char *p);
 extern blc_hci_handler_t			blc_master_handler;
 
 
+#define			HCI_FLAG_EVENT_PHYTEST_2_WIRE_UART			(1<<23)
 #define			HCI_FLAG_EVENT_TLK_MODULE					(1<<24)
 #define			HCI_FLAG_EVENT_BT_STD						(1<<25)
 #define			HCI_FLAG_EVENT_STACK						(1<<26)
@@ -89,3 +90,4 @@ int blc_hci_handler (u8 *p, int n);
 int blm_hci_handler (u8 *p, int n);
 int blc_hci_send_event (u32 h, u8 *para, int n);
 
+int blc_hci_proc (void);

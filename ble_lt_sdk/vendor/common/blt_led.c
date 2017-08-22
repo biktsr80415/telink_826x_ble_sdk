@@ -6,7 +6,7 @@
  */
 
 #include "../../proj/tl_common.h"
-#include "../common/blt_led.h"
+#include "blt_led.h"
 
 device_led_t device_led;
 
@@ -65,7 +65,7 @@ int device_led_setup(led_cfg_t led_cfg)
 void led_proc(void)
 {
 	if(device_led.isOn){
-		if(clock_time_exceed(device_led.startTick,(device_led.onTime_ms-5)*1000)){
+		if(clock_time_exceed(device_led.startTick,device_led.onTime_ms*1000)){
 			device_led_on_off(0);
 			if(device_led.offTime_ms){ //offTime not zero
 				device_led.startTick += device_led.onTime_ms*CLOCK_SYS_CLOCK_1MS;
@@ -76,7 +76,7 @@ void led_proc(void)
 		}
 	}
 	else{
-		if(clock_time_exceed(device_led.startTick,(device_led.offTime_ms-5)*1000)){
+		if(clock_time_exceed(device_led.startTick,device_led.offTime_ms*1000)){
 			if(--device_led.repeatCount){
 				device_led_on_off(1);
 				device_led.startTick += device_led.offTime_ms*CLOCK_SYS_CLOCK_1MS;

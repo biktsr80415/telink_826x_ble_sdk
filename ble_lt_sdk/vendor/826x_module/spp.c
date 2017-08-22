@@ -4,6 +4,7 @@
 #include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "spp.h"
+#include "../../proj_lib/ble/ble_smp.h"
 
 extern int	module_uart_data_flg;
 extern u32 module_wakeup_module_tick;
@@ -26,8 +27,8 @@ int event_handler(u32 h, u8 *para, int n)
 				header = 0x0780 + BLT_EV_FLAG_CONNECT;		//state change event
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
+				printf("\n\r************** Connection event occured! **************\n\r");
 				task_connect();
-				printf("connection event occured!\n\r");
 			}
 				break;
 			case BLT_EV_FLAG_TERMINATE:
@@ -36,17 +37,62 @@ int event_handler(u32 h, u8 *para, int n)
 				header = 0x0780 + BLT_EV_FLAG_TERMINATE;		//state change event
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
-				printf("terminate event occured!\n\r");
+				printf("\n\r************** Terminate event occured! **************\n\r");
 #if 0
 				gpio_write(RED_LED, OFF);
 #else
 				gpio_write(GREEN_LED,OFF);
 #endif
+
+
+#if ( SMP_JUST_WORK || SMP_PASSKEY_ENTRY )
+				u8 bond_number = blc_smp_param_getCurrentBondingDeviceNumber();  //get bonded device number
+
+				if(bond_number)   //set direct adv
+				{
+					smp_param_save_t  bondInfo;
+					blc_smp_param_loadByIndex( bond_number - 1, &bondInfo);  //get the latest bonding device (index: bond_number-1 )
+					//set direct adv
+					 bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16,
+										ADV_TYPE_CONNECTABLE_DIRECTED_LOW_DUTY, OWN_ADDRESS_PUBLIC,
+										bondInfo.peer_addr_type,  bondInfo.peer_addr,
+										MY_APP_ADV_CHANNEL,
+										ADV_FP_NONE);
+
+					//it is recommended that direct adv only last for several seconds, then switch to indirect adv
+					bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE, 1);
+				}
+#endif
+
+
 			}
 				break;
 			case BLT_EV_FLAG_PAIRING_BEGIN:
+			{
+#if(SMP_PASSKEY_ENTRY)
+	#if (PINCODE_RANDOM_ENABLE)//Randomly generated PINCODE, need to have the ability to print out it //printf, here
+				u32 pinCode_random;
+				u8 pc[7] = { '0','0','0','0','0','0', '\0'};
+				generateRandomNum(4, (u8*)&pinCode_random);
+				pinCode_random &= 999999;//0~999999
+				pc[0] = (pinCode_random/100000) + '0';
+				pc[1] = (pinCode_random%100000)/10000 + '0';
+				pc[2] = ((pinCode_random%100000)%10000)/1000 + '0';
+				pc[3] = (((pinCode_random%100000)%10000)%1000)/100 + '0';
+				pc[4] = ((((pinCode_random%100000)%10000)%1000)%100)/10 + '0';
+				pc[5] = pinCode_random%10 + '0';
+				printf("PIN Code Number : %s\n", pc);
+
+				blc_smp_enableAuthMITM (1, pinCode_random);//pincode
+				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
+	#else//Popup dialog box on your phone , you need to enter the pincode:123456 to match
+				blc_smp_enableAuthMITM (1, 123456);//pincode
+				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
+	#endif
+#endif
+			}
 				break;
-			case BLT_EV_FLAG_PAIRING_FAIL:
+			case BLT_EV_FLAG_PAIRING_END:
 				break;
 			case BLT_EV_FLAG_ENCRYPTION_CONN_DONE:
 				break;
@@ -55,6 +101,14 @@ int event_handler(u32 h, u8 *para, int n)
 			case BLT_EV_FLAG_CHN_MAP_REQ:
 				break;
 			case BLT_EV_FLAG_CONN_PARA_REQ:
+			{
+				//Slave received Master's LL_Connect_Update_Req pkt.
+				rf_packet_ll_updateConnPara_t p;
+				memcpy((u8*)&p.winSize, para, 11);
+
+				printf("Receive Master's LL_Connect_Update_Req pkt.\n");
+				printf("Connection interval:%dus.\n", p.interval*1250);
+			}
 				break;
 			case BLT_EV_FLAG_CHN_MAP_UPDATE:
 			{
@@ -70,10 +124,21 @@ int event_handler(u32 h, u8 *para, int n)
 				header = 0x0780 + BLT_EV_FLAG_CONN_PARA_UPDATE;		//state change event
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
+
+				//Master send SIG_Connection_Param_Update_Rsp pkt,and the reply result is 0x0000. When connection event counter value is equal
+				//to the instant, a callback event BLT_EV_FLAG_CONN_PARA_UPDATE will generate. The connection interval at this time should be the
+				//currently updated and valid connection interval!
+				printf("Update param event occur.\n");
+				printf("Current Connection interval:%dus.\n", bls_ll_getConnectionInterval() * 1250);
 			}
 				break;
 			case BLT_EV_FLAG_ADV_DURATION_TIMEOUT:
+			{
+				app_switch_to_indirect_adv();
+			}
+
 				break;
+
 			case BLT_EV_FLAG_SUSPEND_ENTER:
 				ADC_MODULE_CLOSED;
 				break;
@@ -156,10 +221,15 @@ int bls_uart_handler (u8 *p, int n)
 	{
 		status = bls_ll_setAdvType(cmdPara[0]);
 	}
-	// set advertising direct address: 0e ff 07 00  00(public; 1 for random) 01 02 03 04 05 06
+	// set advertising addr type: 0e ff 01 00  00
+	else if (cmd == SPP_CMD_SET_ADV_ADDR_TYPE)
+	{
+		status = blt_set_adv_addrtype(cmdPara[0]);
+	}
+	// set advertising direct initiator address & addr type: 0e ff 07 00  00(public; 1 for random) 01 02 03 04 05 06
 	else if (cmd == SPP_CMD_SET_ADV_DIRECT_ADDR)
 	{
-		status = blt_set_adv_addrtype(cmdPara);
+		status = blt_set_adv_direct_init_addrtype(cmdPara);
 	}
 	// add white list entry: 0f ff 07 00 01 02 03 04 05 06
 	else if (cmd == SPP_CMD_ADD_WHITE_LST_ENTRY)
@@ -262,8 +332,8 @@ int hci_send_data (u32 h, u8 *para, int n)
 	}
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
-	if(!module_uart_data_flg){ //UART上空闲，新的数据发送
-		GPIO_WAKEUP_MCU_HIGH;  //通知MCU有数据了
+	if(!module_uart_data_flg){ //UART idle, new data is sent
+		GPIO_WAKEUP_MCU_HIGH;  //Notify MCU that there is data here
 		module_wakeup_module_tick = clock_time() | 1;
 		module_uart_data_flg = 1;
 	}
@@ -296,9 +366,10 @@ int tx_to_uart_cb (void)
 
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
-		//如果MCU端设计的有低功耗，而module有数据拉高GPIO_WAKEUP_MCU时只是将mcu唤醒，那么需要考虑
-		//mcu从唤醒到能够稳定的接收uart数据是否需要一个回复时间T。如果需要回复时间T的话，这里
-		//将下面的100us改为user实际需要的时间。
+		//If the MCU side is designed to have low power consumption and the module has data to pull up
+		//the GPIO_WAKEUP_MCU will only wake up the MCU, then you need to consider whether MCU needs a
+		//reply time T from wakeup to a stable receive UART data. If you need a response time of T, ch-
+		//ange the following 100US to the actual time required by user.
 		if(module_wakeup_module_tick){
 			while( !clock_time_exceed(module_wakeup_module_tick, 100) );
 		}

@@ -41,27 +41,6 @@ void	task_connect (void)
 }
 
 
-void rf_customized_param_load(void)
-{
-	  // customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
-	 if( (*(unsigned char*) CUST_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) CUST_CAP_INFO_ADDR)&0x1f) );
-	 }
-
-	 //customize TP0, flash 0x77041 customize TP1
-	 if( ((*(unsigned char*) (CUST_TP_INFO_ADDR)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+1)) != 0xff) ){
-		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
-	 }
-
-
-	 // customize 32k RC cap value, if not customized, default ana_32 is 0x80
-	 if( (*(unsigned char*) CUST_RC32K_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x32, *(unsigned char*) CUST_RC32K_CAP_INFO_ADDR );
-	 }
-}
-
 #if E2E_CRC_FLAG_ENABLE//Test [CDC Demo Continuous Glucose Monitoring Service CGMS_v1.0.1 P35 :computation for a sample
 u8 data[10] ={0x3e,1,2,3,4,5,6,7,8,9};
 volatile u16 crc;
@@ -69,7 +48,7 @@ volatile u16 crc;
 
 void user_init()
 {
-	rf_customized_param_load();  //load customized freq_offset cap value and tp value
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
 	///////////// BLE stack Initialization ////////////////
 	////// Controller Initialization  //////////
@@ -128,26 +107,26 @@ void user_init()
 	cgm_feature_packet_val.cgmFeature[1] = 0b10000000;//CGM Quality supported;
 	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
 	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
-	cgm_feature_packet_val.e2eCRC = 0xFFFF;//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
+	cgm_feature_packet_val.e2eCRC = 0xFFFF;//the device doesn妤规悤 support E2E-safety & cgmFeature bit12:0
 #else
 	cgm_feature_packet_val.cgmFeature[0] = 0b00000000;
 	cgm_feature_packet_val.cgmFeature[1] = 0b10010000;//CGM Quality supported;E2E-safety supported
 	cgm_feature_packet_val.cgmFeature[2] = 0b00000001;//CGM Trend Information supported;
 	cgm_feature_packet_val.cgmTypeSample = 3 | 2<<4 ;//cgmType-Capillary Whole blood ; cgmSample-Alternate Site Test (AST)
-	cgm_feature_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_feature_packet_val, sizeof(cgm_feature_packet)-2);//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
+	cgm_feature_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_feature_packet_val, sizeof(cgm_feature_packet)-2);//the device doesn妤规悤 support E2E-safety & cgmFeature bit12:0
 #endif
 
 	cgm_status_packet_val.timeOffset = 4;
 #if E2E_CRC_FLAG_ENABLE
-	cgm_status_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_status_packet_val, sizeof(cgm_status_packet)-2);//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
+	cgm_status_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_status_packet_val, sizeof(cgm_status_packet)-2);//the device doesn妤规悤 support E2E-safety & cgmFeature bit12:0
 #endif
 
 	cgm_session_run_time_packet_val.cgmSessionRunTime = 2;
 #if E2E_CRC_FLAG_ENABLE
-	cgm_session_run_time_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_session_run_time_packet_val, sizeof(cgm_session_run_time_packet)-2);//the device doesn楹搕 support E2E-safety & cgmFeature bit12:0
+	cgm_session_run_time_packet_val.e2eCRC = e2e_crc16((u8*)&cgm_session_run_time_packet_val, sizeof(cgm_session_run_time_packet)-2);//the device doesn妤规悤 support E2E-safety & cgmFeature bit12:0
 #endif
 
-	//模拟的测量数据
+	//妯℃嫙鐨勬祴閲忔暟鎹�
 	simulate_cgm_measurement_data();
 
 #endif
@@ -163,7 +142,7 @@ void key_proc(){
 				bls_ll_setAdvEnable(1);  //adv enable
 #endif
 #if WSP
-				smp_param_reset();//閹匡箓娅庣紒鎴濈暰娣団剝浼�
+				smp_param_reset();//闁瑰尅绠撳▍搴ｇ磼閹存繄鏆板ǎ鍥ｅ墲娴硷拷
 #endif
 			}
 	}
@@ -225,9 +204,9 @@ void key_proc(){
 			weightScale_measure_val.wmBMI = 22;
 			weightScale_measure_val.wmHeight = 173;
 
-#if WSP//test for WSP/SEN/WST/BI-01-I [Single User Weight Scale 閳ワ拷No Bond Relation]
+#if WSP//test for WSP/SEN/WST/BI-01-I [Single User Weight Scale 闁炽儻鎷種o Bond Relation]
 			extern int flash_exist_data (u32 flash_addr);
-			if(flash_exist_data(0x74000)){//閺屻儳婀匜LASH閺勵垰鎯侀張澶岀拨鐎规矮淇婇幁顖ょ礉濞屸剝婀佺亸鍙樼瑝閸欐垿锟介弫鐗堝祦
+			if(flash_exist_data(0x74000)){//闁哄被鍎冲﹢鍖淟ASH闁哄嫷鍨伴幆渚�嫉婢跺瞼鎷ㄩ悗瑙勭煯娣囧﹪骞侀銈囩婵炲备鍓濆﹢浣轰焊閸欐鐟濋柛娆愬灴閿熶粙寮悧鍫濈ウ
 				bls_att_pushIndicateData(10, (u8*)&weightScale_measure_val, sizeof(weight_measure_packet));
 			}
 			else{

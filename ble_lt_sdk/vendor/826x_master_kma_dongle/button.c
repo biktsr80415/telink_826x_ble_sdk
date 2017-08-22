@@ -24,7 +24,7 @@
 #include "../../proj/drivers/uart.h"
 
 
-#if (1)
+#if (UI_BUTTON_ENABLE)
 
 extern int 	dongle_pairing_enable;
 extern int  dongle_unpair_enable;
@@ -206,4 +206,4 @@ extern int 	master_ota_test_mode;
 
 
 	}
-#endif
+#endif   //end of UI_BUTTON_ENABLE

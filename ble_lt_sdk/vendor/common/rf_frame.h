@@ -7,7 +7,6 @@
 
 #ifndef _RF_FRAME_H_
 #define _RF_FRAME_H_
-#include "mouse_type.h"
 #include "../../proj/drivers/keyboard.h"
 
 #define		RF_PROTO_BYTE		0x51
@@ -53,6 +52,17 @@ enum{
 	PKT_FLOW_TOKEN	 = BIT(6),
 	PKT_FLOW_DIR	 = BIT(7),
 };
+
+
+#define MOUSE_FRAME_DATA_NUM   4
+
+typedef struct {
+	u8 btn;
+	s8 x;
+	s8 y;
+	s8 wheel;
+}mouse_data_t;
+
 
 typedef struct{
 	u32 dma_len;            //won't be a fixed number as previous, should adjust with the mouse package number

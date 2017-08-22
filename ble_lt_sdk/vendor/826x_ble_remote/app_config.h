@@ -27,11 +27,17 @@ extern "C" {
 #define BLE_REMOTE_OTA_ENABLE			1
 #define REMOTE_IR_ENABLE				0
 #define BATT_CHECK_ENABLE       		0   //enable or disable battery voltage detection
+#define BLE_PHYTEST_MODE				PHYTEST_MODE_DISABLE
 
 #if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 	#define BLE_AUDIO_ENABLE				1
 #else   //8261/8266  not support audio
 	#define BLE_AUDIO_ENABLE				0
+#endif
+
+
+#if (REMOTE_IR_ENABLE)
+	#define	BLE_IR_SHARING_TIMING_ENABLE				1
 #endif
 
 
@@ -78,25 +84,27 @@ extern "C" {
 #define KB_MAP_REPEAT					{VK_1, }
 
 
-#define			CR_VOL_UP		0xf0
-#define			CR_VOL_DN		0xf1
-#define			CR_VOL_MUTE		0xf2
-#define			CR_POWER		0xf3
-#define			CR_SEL			0xf4
-#define			CR_UP			0xf5
-#define			CR_DN			0xf6
-#define			CR_LEFT			0xf7
-#define			CR_RIGHT		0xf8
-#define			CR_HOME			0xf9
-#define			CR_REWIND		0xfa
-#define			CR_NEXT			0xfb
-#define			CR_PREV			0xfc
-#define			CR_STOP			0xfd
+#define			CR_VOL_UP				0xf0  ////
+#define			CR_VOL_DN				0xf1
+#define			CR_VOL_MUTE				0xf2
+#define			CR_CHN_UP				0xf3
+#define			CR_CHN_DN				0xf4  ////
+#define			CR_POWER				0xf5
+#define			CR_SEARCH				0xf6
+#define			CR_RECORD				0xf7
+#define			CR_PLAY					0xf8  ////
+#define			CR_PAUSE				0xf9
+#define			CR_STOP					0xfa
+#define			CR_FAST_BACKWARD		0xfb
+#define			CR_FAST_FORWARD			0xfc  ////
+#define			CR_HOME					0xfd
+#define			CR_BACK					0xfe
+#define			CR_MENU					0xff
 
-
+//special key
 #define		 	VOICE					0xc0
-#define 		VOICE_KEYCODE_OUT		0x40
 #define 		KEY_MODE_SWITCH			0xc1
+#define		 	PHY_TEST				0xc2
 
 
 #define 		IR_VK_0			0x00
@@ -152,26 +160,26 @@ extern "C" {
 
 	#define			GPIO_LED				GPIO_PC7
 
-	#if (BLE_IR_ENABLE)  //with IR keymap
+	#if (REMOTE_IR_ENABLE)  //with IR keymap
 			#define 		GPIO_IR_CONTROL			GPIO_PD0
 
 			#define		KB_MAP_NORMAL	{\
 							{0, 	1,		2,		3,		4,		5,		6,		}, \
-							{7,		8,		9,		10,		VOICE,	12,		13,		}, \
+							{7,		8,		9,		10,		11,		12,		13,		}, \
 							{14,	15,		16,		17,		18,		19, 	KEY_MODE_SWITCH, }, \
 							{21,	22,		23,		24,		25,		26,		27,		}, \
-							{28,	29,		30,		31,		32,		33,		34,		}, \
+							{28,	29,		VOICE,	31,		32,		33,		34,		}, \
 							{35,	36,		37,		38,		39,		40,		41,		}, \
 							{42,	43,		44,		45,		46,		47,		48,		}, }
 
 			#define		KB_MAP_BLE	{\
-							VK_7,		VK_4,			VK_1,		VK_NONE,			VK_VOL_DN,	VK_VOL_UP,	VK_ESC	, \
-							VK_LEFT,	VK_NONE,		VK_NONE,	VK_FAST_BACKWARD,	VK_NONE,	VK_NONE,	VK_POWER, \
-							VK_RIGHT,	VK_HOME,		VK_NONE,	VK_FAST_FORWARD,	VK_STOP,	VK_NONE,	KEY_MODE_SWITCH , \
-							VK_9,	 	VK_6,			VK_3,		VK_NONE,			VK_CH_DN,	VK_CH_UP,	VK_APP , \
-							VK_NONE,	VK_W_MUTE,		VK_NONE,	VK_DOWN,			VK_ENTER,	VK_UP,		VK_NONE , \
+							VK_7,		VK_4,			VK_1,		VK_NONE,			CR_VOL_DN,	CR_VOL_UP,	CR_BACK	, \
+							VK_LEFT,	VK_NONE,		VK_NONE,	VK_NONE,			CR_RECORD,	VK_NONE,	CR_POWER, \
+							VK_RIGHT,	CR_HOME,		VK_NONE,	CR_FAST_FORWARD,	CR_STOP,	CR_SEARCH,	KEY_MODE_SWITCH , \
+							VK_9,	 	VK_6,			VK_3,		VK_NONE,			CR_CHN_DN,	CR_CHN_UP,	CR_MENU , \
+							VK_NONE,	CR_VOL_MUTE,	VOICE,		VK_DOWN,			VK_ENTER,	VK_UP,		VK_NONE , \
 							VK_NONE,	VK_NONE,		VK_0,		VK_8,				VK_5,		VK_2,		VK_NONE , \
-							VK_W_STOP,	VK_PLAY_PAUSE,	VK_NONE,	VK_NONE,			VK_NONE,	VK_NONE,	VK_NONE, }
+							CR_PAUSE,	CR_PLAY,		VK_NONE,	VK_NONE,			VK_NONE,	VK_NONE,	VK_NONE, }
 
 
 			#define		KB_MAP_IR	{\
@@ -185,13 +193,13 @@ extern "C" {
 	#else   //key map
 
 			#define		KB_MAP_NORMAL	{\
-							VK_7,		VK_4,			VK_1,		VK_NONE,			VK_VOL_DN,	VK_VOL_UP,	VK_ESC	, \
-							VK_LEFT,	VK_NONE,		VK_NONE,	VK_FAST_BACKWARD,	VOICE,		VK_NONE,	VK_POWER, \
-							VK_RIGHT,	VK_HOME,		VK_NONE,	VK_FAST_FORWARD,	VK_STOP,	VK_NONE,	KEY_MODE_SWITCH , \
-							VK_9,	 	VK_6,			VK_3,		VK_NONE,			VK_CH_DN,	VK_CH_UP,	VK_APP , \
-							VK_NONE,	VK_W_MUTE,		VK_NONE,	VK_DOWN,			VK_ENTER,	VK_UP,		VK_NONE , \
+							VK_7,		VK_4,			VK_1,		VK_NONE,			CR_VOL_DN,	CR_VOL_UP,	CR_BACK	, \
+							VK_LEFT,	PHY_TEST,		VK_NONE,	VK_NONE,			CR_RECORD,	VK_NONE,	CR_POWER, \
+							VK_RIGHT,	CR_HOME,		VK_NONE,	CR_FAST_FORWARD,	CR_STOP,	CR_SEARCH,	KEY_MODE_SWITCH , \
+							VK_9,	 	VK_6,			VK_3,		VK_NONE,			CR_CHN_DN,	CR_CHN_UP,	CR_MENU , \
+							VK_NONE,	CR_VOL_MUTE,	VOICE,		VK_DOWN,			VK_ENTER,	VK_UP,		VK_NONE , \
 							VK_NONE,	VK_NONE,		VK_0,		VK_8,				VK_5,		VK_2,		VK_NONE , \
-							VK_W_STOP,	VK_PLAY_PAUSE,	VK_NONE,	VK_NONE,			VK_NONE,	VK_NONE,	VK_NONE, }
+							CR_PAUSE,	CR_PLAY,		VK_NONE,	VK_NONE,			VK_NONE,	VK_NONE,	VK_NONE, }
 
 	#endif  //end of REMOTE_IR_ENABLE
 
@@ -312,6 +320,148 @@ extern "C" {
 /////////////////// watchdog  //////////////////////////////
 #define MODULE_WATCHDOG_ENABLE		0
 #define WATCHDOG_INIT_TIMEOUT		500  //ms
+
+
+
+
+
+
+
+
+///////////////////////////////////// ATT  HANDLER define ///////////////////////////////////////
+typedef enum
+{
+	ATT_H_START = 0,
+
+
+	//// Gap ////
+	/**********************************************************************************************/
+	GenericAccess_PS_H, 					//UUID: 2800, 	VALUE: uuid 1800
+	GenericAccess_DeviceName_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	GenericAccess_DeviceName_DP_H,			//UUID: 2A00,   VALUE: device name
+	GenericAccess_Appearance_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read
+	GenericAccess_Appearance_DP_H,			//UUID: 2A01,	VALUE: appearance
+	CONN_PARAM_CD_H,						//UUID: 2803, 	VALUE:  			Prop: Read
+	CONN_PARAM_DP_H,						//UUID: 2A04,   VALUE: connParameter
+
+	
+	//// gatt ////
+	/**********************************************************************************************/
+	GenericAttribute_PS_H,					//UUID: 2800, 	VALUE: uuid 1801
+	GenericAttribute_ServiceChanged_CD_H,	//UUID: 2803, 	VALUE:  			Prop: Indicate
+	GenericAttribute_ServiceChanged_DP_H,   //UUID:	2A05,	VALUE: service change
+	GenericAttribute_ServiceChanged_CCB_H,	//UUID: 2902,	VALUE: serviceChangeCCC
+	
+
+	//// device information ////
+	/**********************************************************************************************/
+	DeviceInformation_PS_H,					//UUID: 2800, 	VALUE: uuid 180A
+	DeviceInformation_pnpID_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read
+	DeviceInformation_pnpID_DP_H,			//UUID: 2A50,	VALUE: PnPtrs
+	
+
+	//// HID ////
+	/**********************************************************************************************/
+	HID_PS_H, 								//UUID: 2800, 	VALUE: uuid 1812
+
+	//include
+	HID_INCLUDE_H,							//UUID: 2802, 	VALUE: include
+
+	//protocol
+	HID_PROTOCOL_MODE_CD_H,					//UUID: 2803, 	VALUE:  			Prop: read | write_without_rsp	
+	HID_PROTOCOL_MODE_DP_H,					//UUID: 2A4E,	VALUE: protocolMode
+	
+	//boot keyboard input report
+	HID_BOOT_KB_REPORT_INPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	HID_BOOT_KB_REPORT_INPUT_DP_H,			//UUID: 2A22, 	VALUE: bootKeyInReport
+	HID_BOOT_KB_REPORT_INPUT_CCB_H,			//UUID: 2902, 	VALUE: bootKeyInReportCCC
+
+	//boot keyboard output report
+	HID_BOOT_KB_REPORT_OUTPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | write| write_without_rsp
+	HID_BOOT_KB_REPORT_OUTPUT_CCB_H,		//UUID: 2A32, 	VALUE: bootKeyOutReport
+
+	//consume report in
+	HID_CONSUME_REPORT_INPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	HID_CONSUME_REPORT_INPUT_DP_H,			//UUID: 2A4D, 	VALUE: reportConsumerIn
+	HID_CONSUME_REPORT_INPUT_CCB_H,			//UUID: 2902, 	VALUE: reportConsumerInCCC
+	HID_CONSUME_REPORT_INPUT_REF_H, 		//UUID: 2908    VALUE: REPORT_ID_CONSUMER, TYPE_INPUT
+	
+	//keyboard report in
+	HID_NORMAL_KB_REPORT_INPUT_CD_H,		//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	HID_NORMAL_KB_REPORT_INPUT_DP_H,		//UUID: 2A4D, 	VALUE: reportKeyIn
+	HID_NORMAL_KB_REPORT_INPUT_CCB_H,		//UUID: 2902, 	VALUE: reportKeyInInCCC
+	HID_NORMAL_KB_REPORT_INPUT_REF_H, 		//UUID: 2908    VALUE: REPORT_ID_KEYBOARD, TYPE_INPUT
+
+	//keyboard report out
+	HID_NORMAL_KB_REPORT_OUTPUT_CD_H,		//UUID: 2803, 	VALUE:  			Prop: Read | write| write_without_rsp
+	HID_NORMAL_KB_REPORT_OUTPUT_DP_H,  		//UUID: 2A4D, 	VALUE: reportKeyOut
+	HID_NORMAL_KB_REPORT_OUTPUT_REF_H, 		//UUID: 2908    VALUE: REPORT_ID_KEYBOARD, TYPE_OUTPUT
+	
+	// report map
+	HID_REPORT_MAP_CD_H,					//UUID: 2803, 	VALUE:  			Prop: Read
+	HID_REPORT_MAP_DP_H,					//UUID: 2A4B, 	VALUE: reportKeyIn
+	HID_REPORT_MAP_EXT_REF_H,				//UUID: 2907 	VALUE: extService
+
+	//hid information
+	HID_INFORMATION_CD_H,					//UUID: 2803, 	VALUE:  			Prop: read
+	HID_INFORMATION_DP_H,					//UUID: 2A4A 	VALUE: hidInformation
+	
+	//control point
+	HID_CONTROL_POINT_CD_H,					//UUID: 2803, 	VALUE:  			Prop: write_without_rsp
+	HID_CONTROL_POINT_DP_H,					//UUID: 2A4C 	VALUE: controlPoint
+
+
+	//// battery service ////
+	/**********************************************************************************************/
+	BATT_PS_H, 								//UUID: 2800, 	VALUE: uuid 180f
+	BATT_LEVEL_INPUT_CD_H,					//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	BATT_LEVEL_INPUT_DP_H,					//UUID: 2A19 	VALUE: batVal
+	BATT_LEVEL_INPUT_CCB_H,					//UUID: 2902, 	VALUE: batValCCC
+
+
+	//// Ota ////
+	/**********************************************************************************************/
+	OTA_PS_H, 								//UUID: 2800, 	VALUE: telink ota service uuid
+	OTA_CMD_OUT_CD_H,						//UUID: 2803, 	VALUE:  			Prop: read | write_without_rsp	
+	OTA_CMD_OUT_DP_H,						//UUID: telink ota uuid,  VALUE: otaData
+	OTA_CMD_OUT_DESC_H,						//UUID: 2901, 	VALUE: otaName
+
+
+	
+#if (BLE_AUDIO_ENABLE)
+	//// Audio ////
+	/**********************************************************************************************/
+	AUDIO_PS_H, 							//UUID: 2800, 	VALUE: telink audio service uuid
+	
+	//mic
+	AUDIO_MIC_INPUT_CD_H,					//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	AUDIO_MIC_INPUT_DP_H,					//UUID: telink mic uuid,  VALUE: micData
+	AUDIO_MIC_INPUT_CCB_H,					//UUID: 2A19 	VALUE: micDataCCC
+	AUDIO_MIC_INPUT_DESC_H,					//UUID: 2901, 	VALUE: micName
+
+	//speaker
+	AUDIO_SPEAKER_OUT_CD_H,					//UUID: 2803, 	VALUE:  			Prop: write_without_rsp
+	AUDIO_SPEAKER_OUT_DP_H,					//UUID: telink speaker uuid,  VALUE: speakerData
+	AUDIO_SPEAKEROUT_DESC_H,				//UUID: 2901, 	VALUE: speakerName
+#endif
+
+
+
+	ATT_END_H,
+
+}ATT_HANDLE;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

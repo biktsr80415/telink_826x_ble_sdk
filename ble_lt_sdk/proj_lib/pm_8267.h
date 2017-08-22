@@ -35,7 +35,6 @@ static inline void usb_dp_pullup_en (int en)
 #define DEEP_ANA_REG1    0x3b
 #define DEEP_ANA_REG2    0x3c
 #define DEEP_ANA_REG3    0x3d
-#define DEEP_ANA_REG4  	 0x3e
 
 //these six below may have some problem when user enter deepsleep but ERR wakeup
 // for example, when set a GPIO PAD high wakeup deepsleep, but this gpio is high before
@@ -54,6 +53,8 @@ static inline void usb_dp_pullup_en (int en)
 
 
 
+#define SYS_DEEP_ANA_REG	0x3e  //ana_3e system use for external 32k mode, user can not use
+
 
 
 void cpu_stall_wakeup_by_timer0(u32 tick_stall);
@@ -65,7 +66,7 @@ void	bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
 
 
 //deepsleep mode must use this function for resume 1.8V analog register
-void cpu_wakeup_init(void);
+void cpu_wakeup_init(int);
 void cpu_set_gpio_wakeup (int pin, int pol, int en);
 
 int cpu_sleep_wakeup (int deepsleep, int wakeup_src, u32 wakeup_tick);
@@ -85,6 +86,8 @@ enum {
 	 WAKEUP_STATUS_TIMER  = BIT(1),
 	 WAKEUP_STATUS_CORE   = BIT(2),
 	 WAKEUP_STATUS_PAD    = BIT(3),
+
+	 STATUS_GPIO_ERR_NO_ENTER_PM  = BIT(7),
 };
 
 #define 	WAKEUP_STATUS_TIMER_CORE	( WAKEUP_STATUS_TIMER | WAKEUP_STATUS_CORE)

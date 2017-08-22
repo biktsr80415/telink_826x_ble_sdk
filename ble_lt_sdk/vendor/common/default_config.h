@@ -679,31 +679,6 @@ enum{
 #define	GPIO_CHARG_DET			0
 #endif
 
-///////////////////  IR  /////////////////////////////////
-#ifndef IR_USE_PWM
-#define IR_USE_PWM			0
-#endif
-
-#ifndef GPIO_IR
-#define	GPIO_IR			    0
-#endif
-
-#ifndef IR_PWM_ID
-#define IR_PWM_ID			0
-#endif
-
-#ifndef GPIO_IR_LEARN_IN
-#define GPIO_IR_LEARN_IN	0
-#endif
-
-enum{
-	IR_PROTOCOL_NEC,
-	IR_PROTOCOL_PHILIPS
-};
-
-#ifndef IR_PROTOCOL
-#define IR_PROTOCOL			IR_PROTOCOL_NEC
-#endif
 
 ///////////////////  Audio  /////////////////////////////////
 #if (APPLICATION_DONGLE)

@@ -352,7 +352,6 @@ void main_loop ()
 
 void user_init()
 {
-	//rf_customized_param_load();  //load customized freq_offset cap value and tp value
 
 	//set UAB ID
 	usb_log_init ();

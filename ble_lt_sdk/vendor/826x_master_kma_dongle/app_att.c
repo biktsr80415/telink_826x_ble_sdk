@@ -19,8 +19,11 @@
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj_lib/ble/blt_config.h"
+#include "../common/tl_audio.h"
+#include "../common/rf_frame.h"
 
 
+#define     TELINK_UNPAIR_KEYVALUE		0xFF  //conn state, unpair
 
 
 const u8 my_MicUUID[16]		= TELINK_MIC_DATA;
@@ -135,7 +138,7 @@ ble_sts_t  host_att_discoveryService (u16 handle, att_db_uuid16_t *p16, int n16,
 		att_req_read_by_type (dat, s, 0xffff, &uuid, 2);
 		if (host_att_service_wait_event(handle, dat, 1000000))
 		{
-			return  SERVICE_DISCOVERY_TIEMOUT;			//timeout
+			return  ATT_ERR_SERVICE_DISCOVERY_TIEMOUT;			//timeout
 		}
 
 		// process response data
@@ -191,7 +194,7 @@ ble_sts_t  host_att_discoveryService (u16 handle, att_db_uuid16_t *p16, int n16,
 			att_req_find_info (dat, p16->handle, 0xffff);
 			if (host_att_service_wait_event(handle, dat, 1000000))
 			{
-				return  SERVICE_DISCOVERY_TIEMOUT;			//timeout
+				return  ATT_ERR_SERVICE_DISCOVERY_TIEMOUT;			//timeout
 			}
 
 			att_findInfoRsp_t *p_rsp = (att_findInfoRsp_t *) dat;
@@ -214,7 +217,7 @@ ble_sts_t  host_att_discoveryService (u16 handle, att_db_uuid16_t *p16, int n16,
 						att_req_read (dat, pd[0]);
 						if (host_att_service_wait_event(handle, dat, 1000000))
 						{
-								return  SERVICE_DISCOVERY_TIEMOUT;			//timeout
+								return  ATT_ERR_SERVICE_DISCOVERY_TIEMOUT;			//timeout
 						}
 
 						att_readRsp_t *pr = (att_readRsp_t *) dat;
@@ -237,6 +240,246 @@ ble_sts_t  host_att_discoveryService (u16 handle, att_db_uuid16_t *p16, int n16,
 	return  BLE_SUCCESS;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+#define KEY_MASK_PRESS		0x10
+#define KEY_MASK_REPEAT		0x20
+#define KEY_MASK_RELEASE	0x30
+u8 release_key_pending;
+u32 release_key_tick;
+
+void    report_to_pc_tool(u8 len,u8 * keycode)
+{
+#if 1  //pc tool verison_1.9 or later
+		static u8 last_len = 0;
+		static u8 last_key = 0;
+		static u32 last_key_tick = 0;
+
+		u8 mask = 0;
+
+		if(!(read_reg8(0x8004)&0xf0)){ //pc tool cleared 0x8004
+			if(!len){  //release
+				write_reg8(0x8004,KEY_MASK_RELEASE);
+				write_reg8(0x8005,0);
+			}
+			else{//press or repeat
+				if(last_len==len && last_key==keycode[0]){//repeat
+					mask = KEY_MASK_REPEAT;
+				}
+				else{ //press
+					mask = KEY_MASK_PRESS;
+				}
+				write_reg8(0x8004,mask | len);
+				write_reg8(0x8005,keycode[0]);
+			}
+		}
+		else{  //pc tool not clear t0x8004, drop the key
+			if(!len){  //release can not drop
+				release_key_pending = 1;
+				release_key_tick = clock_time();
+			}
+		}
+
+		last_len = len;
+		last_key = keycode[0];
+#else //old pc tool
+		write_reg8(0x8004,len);
+		write_reg8(0x8005,keycode[0]);
+#endif
+}
+
+rf_packet_mouse_t	pkt_mouse = {
+		sizeof (rf_packet_mouse_t) - 4,	// dma_len
+
+		sizeof (rf_packet_mouse_t) - 5,	// rf_len
+		RF_PROTO_BYTE,		// proto
+		PKT_FLOW_DIR,		// flow
+		FRAME_TYPE_MOUSE,					// type
+
+//		U32_MAX,			// gid0
+
+		0,					// rssi
+		0,					// per
+		0,					// seq_no
+		1,					// number of frame
+};
+
+void	att_mouse (u16 conn, u8 *p)
+{
+	memcpy (pkt_mouse.data, p, 4);
+	pkt_mouse.seq_no++;
+    usbmouse_add_frame(&pkt_mouse);
+}
+
+
+//kb_data_t		kb_dat_debug = {1, 0, 0x04};
+//u8		cr_map_key[16] = {
+//		VK_VOL_UP, 	VK_VOL_DN,	VK_W_MUTE,	0,
+//		VK_ENTER,	VK_UP,		VK_DOWN,	VK_LEFT,
+//		VK_RIGHT,	VK_HOME,	0,			VK_NEXT_TRK,
+//		VK_PREV_TRK,VK_STOP,	0,			0
+//};
+
+
+extern 	void usbkb_hid_report(kb_data_t *data);
+void	att_keyboard_media (u16 conn, u8 *p)
+{
+#if 0
+	if (p->l2capLen >=2)
+	{
+		//send_packet_usb (p + 6, p[5]);
+
+		u16 bitmap = p->dat[0] + p->dat[1] * 256;
+		kb_dat_debug.cnt = 0;
+		kb_dat_debug.keycode[0] = 0;
+		for (int i=0; i<16; i++)
+		{
+			if (bitmap & BIT(i))
+			{
+				kb_dat_debug.cnt = 1;
+				kb_dat_debug.keycode[0] = cr_map_key[i];// cr_map_key[i];
+				break;
+			}
+		}
+
+
+		if(read_reg8(0) == 0x5a){ //report to pc_tool  mode
+			report_to_pc_tool(kb_dat_debug.cnt,kb_dat_debug.keycode);
+		}
+		else{
+			usbkb_hid_report((kb_data_t *) &kb_dat_debug);
+		}
+	}
+#endif
+}
+
+//////////////// keyboard ///////////////////////////////////////////////////
+int Adbg_att_kb_cnt = 0;
+kb_data_t		kb_dat_report = {1, 0, 0,0,0,0,0,0};
+int keyboard_not_release = 0;
+extern int 	dongle_unpair_enable;
+void	att_keyboard (u16 conn, u8 *p)
+{
+	Adbg_att_kb_cnt ++;
+
+	memcpy(&kb_dat_report, p, sizeof(kb_data_t));
+
+	if(kb_dat_report.keycode[0] == TELINK_UNPAIR_KEYVALUE){ //slave special unpair cmd
+
+		if(!dongle_unpair_enable){
+			dongle_unpair_enable = 1;
+		}
+
+		return;  //TELINK_UNPAIR_KEYVALUE not report
+	}
+
+
+	if (kb_dat_report.keycode[0])  			//keycode[0]
+	{
+		kb_dat_report.cnt = 1;  //1 key value
+		keyboard_not_release = 1;
+	}
+	else{
+		kb_dat_report.cnt = 0;  //key release
+		keyboard_not_release = 0;
+	}
+
+	usbkb_hid_report((kb_data_t *) &kb_dat_report);
+}
+
+void att_keyboard_release(void)
+{
+	kb_dat_report.cnt = 0;  //key release
+	usbkb_hid_report((kb_data_t *) &kb_dat_report);
+}
+
+
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+extern	void abuf_init ();
+extern	void abuf_mic_add (u8 *p);
+extern	void abuf_mic_dec (void);
+extern	void abuf_dec_usb (void);
+
+u8		att_mic_rcvd = 0;
+u32		tick_adpcm;
+u8		buff_mic_adpcm[MIC_ADPCM_FRAME_SIZE];
+
+u32		tick_iso_in;
+int		mode_iso_in;
+_attribute_ram_code_ void  usb_endpoints_irq_handler (void)
+{
+	u32 t = clock_time ();
+	/////////////////////////////////////
+	// ISO IN
+	/////////////////////////////////////
+	if (reg_usb_irq & BIT(7)) {
+		mode_iso_in = 1;
+		tick_iso_in = t;
+		reg_usb_irq = BIT(7);	//clear interrupt flag of endpoint 7
+
+		/////// get MIC input data ///////////////////////////////
+		//usb_iso_in_1k_square ();
+		//usb_iso_in_from_mic ();
+		abuf_dec_usb ();
+	}
+
+}
+
+#if (!AUDIO_SDM_ENBALE)
+void	att_mic (u16 conn, u8 *p)
+{
+	att_mic_rcvd = 1;
+	memcpy (buff_mic_adpcm, p, MIC_ADPCM_FRAME_SIZE);
+	abuf_mic_add ((u32 *)buff_mic_adpcm);
+}
+#else
+s16 temp_buf[248];
+void	att_mic (u16 conn, rf_packet_att_t *p)
+{
+	att_mic_rcvd = 1;
+	memcpy (buff_mic_adpcm, p->dat, MIC_ADPCM_FRAME_SIZE);
+	adpcm_to_pcm((s16 *)(buff_mic_adpcm),temp_buf,248);
+	pcm_to_sdm (temp_buf, 248);
+}
+#endif
+
+
+void proc_audio (void)
+{
+	if (att_mic_rcvd)
+	{
+		tick_adpcm = clock_time ();
+		att_mic_rcvd = 0;
+	}
+	if (clock_time_exceed (tick_adpcm, 200000))
+	{
+		tick_adpcm = clock_time ();
+		abuf_init ();
+	}
+	abuf_mic_dec ();
+}
+
+
+
+
+void host_att_data_clear(void)
+{
+	if(keyboard_not_release){
+		keyboard_not_release = 0;
+		att_keyboard_release();
+	}
+}
 
 
 

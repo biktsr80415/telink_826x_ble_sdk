@@ -60,15 +60,25 @@ enum{
 		GPIO_MAX_COUNT = 56,
 };
 
-#define reg_gpio_in(i)			REG_ADDR8(0x580+((i>>8)<<3))
-#define reg_gpio_ie(i)			REG_ADDR8(0x581+((i>>8)<<3))
-#define reg_gpio_oen(i)			REG_ADDR8(0x582+((i>>8)<<3))
-#define reg_gpio_out(i)			REG_ADDR8(0x583+((i>>8)<<3))
-#define reg_gpio_pol(i)			REG_ADDR8(0x584+((i>>8)<<3))
-#define reg_gpio_ds(i)			REG_ADDR8(0x585+((i>>8)<<3))
-#define reg_gpio_gpio_func(i)	REG_ADDR8(0x586+((i>>8)<<3))
-#define reg_gpio_irq_en0(i)		REG_ADDR8(0x587+((i>>8)<<3))	// 对应reg_irq_mask,reg_irq_src 中的FLD_IRQ_GPIO_EN
-#define reg_gpio_irq_en(i)		REG_ADDR8(0x5c8+(i>>8))			// 对应reg_irq_mask,reg_irq_src 中的FLD_IRQ_GPIO_RISC2_EN, 为了与5320,5328一致, 使用 FLD_IRQ_GPIO_RISC2_EN
+#define reg_gpio_in(i)				REG_ADDR8(0x580+((i>>8)<<3))
+#define reg_gpio_ie(i)				REG_ADDR8(0x581+((i>>8)<<3))
+#define reg_gpio_oen(i)				REG_ADDR8(0x582+((i>>8)<<3))
+#define reg_gpio_out(i)				REG_ADDR8(0x583+((i>>8)<<3))
+#define reg_gpio_pol(i)				REG_ADDR8(0x584+((i>>8)<<3))
+#define reg_gpio_ds(i)				REG_ADDR8(0x585+((i>>8)<<3))
+
+#define reg_gpio_gpio_func(i)		REG_ADDR8(0x586+((i>>8)<<3))
+#define reg_gpio_config_func(i)		REG_ADDR8(0x5b0 +(i>>8))  	  //5b0 5b1 5b2 5b3 5b4 5b5
+
+#define reg_gpio_irq_wakeup_en(i)	REG_ADDR8(0x587+((i>>8)<<3))  // reg_irq_mask: FLD_IRQ_GPIO_EN
+
+#define reg_gpio_irq_risc0_en(i)  REG_ADDR8(0x5b8 + (i >> 8))	  // reg_irq_mask: FLD_IRQ_GPIO_RISC0_EN
+#define reg_gpio_irq_risc1_en(i)  REG_ADDR8(0x5c0 + (i >> 8))	  // reg_irq_mask: FLD_IRQ_GPIO_RISC1_EN
+#define reg_gpio_irq_risc2_en(i)  REG_ADDR8(0x5c8 + (i >> 8))     // reg_irq_mask: FLD_IRQ_GPIO_RISC2_EN
+
+
+
+
 
 #define reg_gpio_wakeup_irq  REG_ADDR8(0x5b5)
 enum{
@@ -97,9 +107,6 @@ static inline void gpio_core_irq_enable_all (int en)
 }
 
 
-static inline int gpio_is_pe_pin(u32 pin){
-	return (pin >> 8) == 0x04;			// PE
-}
 
 static inline int gpio_is_output_en(u32 pin){
 	return !BM_IS_SET(reg_gpio_oen(pin), pin & 0xff);
@@ -136,34 +143,6 @@ static inline void gpio_set_data_strength(u32 pin, u32 value){
 	}
 }
 
-static inline void gpio_en_interrupt(u32 pin){
-	u8	bit = pin & 0xff;
-	BM_SET(reg_gpio_irq_en(pin), bit);
-}
-
-static inline void gpio_set_interrupt(u32 pin, u32 falling){
-	u8	bit = pin & 0xff;
-	BM_SET(reg_gpio_irq_en(pin), bit);
-	if(falling){
-		BM_SET(reg_gpio_pol(pin), bit);
-	}else{
-		BM_CLR(reg_gpio_pol(pin), bit);
-	}
-}
-
-static inline void gpio_set_interrupt_pol(u32 pin, u32 falling){
-	u8	bit = pin & 0xff;
-	if(falling){
-		BM_SET(reg_gpio_pol(pin), bit);
-	}else{
-		BM_CLR(reg_gpio_pol(pin), bit);
-	}
-}
-
-static inline void gpio_clr_interrupt(u32 pin){
-	u8	bit = pin & 0xff;
-	BM_CLR(reg_gpio_irq_en(pin), bit);
-}
 
 static inline void gpio_write(u32 pin, u32 value){
 	u8	bit = pin & 0xff;
@@ -173,6 +152,11 @@ static inline void gpio_write(u32 pin, u32 value){
 		BM_CLR(reg_gpio_out(pin), bit);
 	}
 }
+
+static inline void gpio_toggle(u32 pin) {
+	reg_gpio_out(pin) ^= (pin & 0xFF);
+}
+
 
 static inline u32 gpio_read(u32 pin){
 	return BM_IS_SET(reg_gpio_in(pin), pin & 0xff);
@@ -191,31 +175,107 @@ static inline void gpio_read_all(u8 *p){
 	p[5] = REG_ADDR8(0x5a8);
 }
 
-//enable interrupt wheel interrupt and wakeup
-static inline void gpio_enable_irq_wakeup_pin(u32 pins, u32 levels){
 
+
+static inline void gpio_set_interrupt_pol(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
 }
 
-static inline void gpio_enable_wakeup_pin(u32 pins, u32 levels, int en){
-#if 0
-	u32 flag_dm_pullup = DM_50K_PULLUP ? FLD_GPIO_DM_PULLUP : 0;
-	u32 flag_dp_pullup = DP_50K_PULLUP ? FLD_GPIO_DP_PULLUP : 0;
 
-	if (levels) {
-		reg_gpio_f_pol &= ~pins;
-	}
-	else {
-		reg_gpio_f_pol |= pins;
-	}
 
-	if (en) {
-		reg_gpio_f_wakeup_en |= pins | flag_dm_pullup|flag_dp_pullup;
+static inline void gpio_en_interrupt(u32 pin, int en){  // reg_irq_mask: FLD_IRQ_GPIO_EN
+	u8	bit = pin & 0xff;
+	if(en){
+		BM_SET(reg_gpio_irq_wakeup_en(pin), bit);
 	}
-	else {
-		reg_gpio_f_wakeup_en &= ~pins;
+	else{
+		BM_CLR(reg_gpio_irq_wakeup_en(pin), bit);
 	}
-#endif
 }
+
+static inline void gpio_set_interrupt(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	BM_SET(reg_gpio_irq_wakeup_en(pin), bit);
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
+}
+
+
+static inline void gpio_en_interrupt_risc0(u32 pin, int en){  // reg_irq_mask: FLD_IRQ_GPIO_RISC0_EN
+	u8	bit = pin & 0xff;
+	if(en){
+		BM_SET(reg_gpio_irq_risc0_en(pin), bit);
+	}
+	else{
+		BM_CLR(reg_gpio_irq_risc0_en(pin), bit);
+	}
+}
+
+static inline void gpio_set_interrupt_risc0(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	BM_SET(reg_gpio_irq_risc0_en(pin), bit);
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
+}
+
+static inline void gpio_en_interrupt_risc1(u32 pin, int en){  // reg_irq_mask: FLD_IRQ_GPIO_RISC1_EN
+	u8	bit = pin & 0xff;
+	if(en){
+		BM_SET(reg_gpio_irq_risc1_en(pin), bit);
+	}
+	else{
+		BM_CLR(reg_gpio_irq_risc1_en(pin), bit);
+	}
+}
+
+static inline void gpio_set_interrupt_risc1(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	BM_SET(reg_gpio_irq_risc1_en(pin), bit);
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
+}
+
+static inline void gpio_en_interrupt_risc2(u32 pin, int en){  // reg_irq_mask: FLD_IRQ_GPIO_RISC2_EN
+	u8	bit = pin & 0xff;
+	if(en){
+		BM_SET(reg_gpio_irq_risc2_en(pin), bit);
+	}
+	else{
+		BM_CLR(reg_gpio_irq_risc2_en(pin), bit);
+	}
+}
+
+static inline void gpio_set_interrupt_risc2(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	BM_SET(reg_gpio_irq_risc2_en(pin), bit);
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
+}
+
+
+
+
+
+
+
+
 
 static inline void gpio_init(void){
 	//return;
@@ -350,30 +410,6 @@ static inline void gpio_init(void){
 		analog_write (0x08,  areg | PULL_WAKEUP_SRC_PE2<<4 |
 							(PULL_WAKEUP_SRC_PE3<<6) );
 
-
-#if (__DEBUG_GPIO__)
-        /* Set GPIO function */
-		BM_SET(reg_gpio_gpio_func(DBG_PIN1), DBG_PIN1&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN2), DBG_PIN2&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN3), DBG_PIN3&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN4), DBG_PIN4&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN5), DBG_PIN5&0xff);
-		BM_SET(reg_gpio_gpio_func(DBG_PIN6), DBG_PIN6&0xff);
-
-		gpio_set_input_en(DBG_PIN1, 0);
-		gpio_set_input_en(DBG_PIN2, 0);
-		gpio_set_input_en(DBG_PIN3, 0);
-		gpio_set_input_en(DBG_PIN4, 0);
-		gpio_set_input_en(DBG_PIN5, 0);
-		gpio_set_input_en(DBG_PIN6, 0);
-
-		gpio_set_output_en(DBG_PIN1, 1);
-		gpio_set_output_en(DBG_PIN2, 1);
-		gpio_set_output_en(DBG_PIN3, 1);
-		gpio_set_output_en(DBG_PIN4, 1);
-		gpio_set_output_en(DBG_PIN5, 1);
-		gpio_set_output_en(DBG_PIN6, 1);
-#endif
 }
 
 
@@ -386,124 +422,215 @@ static inline void gpio_set_func(u32 pin, u32 func){
 		BM_CLR(reg_gpio_gpio_func(pin), bit);
 	}
 
-	/* special_func  do later
-	switch(pin){
-	case GPIO_PA0:
-	case GPIO_PA4:
-		if(func == AS_DMIC){
-			BM_SET(reg_gpio_config_func, BITS(0,7));
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(0,4));
-		}else if(func == AS_I2S){
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,4));
-			BM_CLR(reg_gpio_config_func, BITS(0,7));
-			BM_SET(reg_gpio_config_func, (BIT_RNG(21,23)|BIT_RNG(29,30)));
+
+	//config gpio special func
+	switch(pin)
+	{
+		case GPIO_PA0:
+		{
+			//1. DMIC(DI)
+			//2. PWM0
+			if(func == AS_DMIC){
+				BM_SET(reg_gpio_config_func(pin), bit);
+			}else if(func == AS_PWM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
 		}
 		break;
-	case GPIO_PA1:
-		if(func == AS_PWM){
-			BM_SET(reg_gpio_config_func, BIT(2));
-		}else if(func == AS_I2S){
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,4));
-			BM_CLR(reg_gpio_config_func, BIT(2));
-			BM_SET(reg_gpio_config_func, (BIT_RNG(21,23)|BIT_RNG(29,30)));
+
+		case GPIO_PA1:
+		{
+			//only DMIC(CLK) function, no need set
 		}
 		break;
-	case GPIO_PA2:
-		if(func == AS_UART){
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(2,3));
-			BM_SET(reg_gpio_config_func, BITS(3,5));
-		}else if(func == AS_PWM){
-			BM_CLR(reg_gpio_config_func, BITS(3,5));
-			BM_SET(reg_gpio_config_func, BIT(4));
-		}else if(func == AS_I2S){
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,4));
-			BM_CLR(reg_gpio_config_func, BIT_RNG(3,5));
-			BM_SET(reg_gpio_config_func, (BIT_RNG(21,23)|BIT_RNG(29,30)));
+
+		case GPIO_PA2:
+		case GPIO_PA3:
+		case GPIO_PA4:
+		case GPIO_PA5:
+		{
+			// 			PA2			PA3			PA4			PA5
+			//1. SPI: 	DO			DI			CK			CN
+			//2, PWM: 	PWM0_N		PWM1		PWM1_N		PWM2_N
+			if(func == AS_SPI){
+				BM_SET(reg_gpio_config_func(pin), bit);
+			}else if(func == AS_PWM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
 		}
 		break;
-	case GPIO_PA3:
-		if(func == AS_UART){
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(2,3));
-			BM_SET(reg_gpio_config_func, BITS(3,5));
-		}else if(func == AS_PWM){
-			BM_CLR(reg_gpio_config_func, BITS(3,5));
-			BM_SET(reg_gpio_config_func, BIT(6));
-		}else if(func == AS_I2S){
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,4));
-			BM_CLR(reg_gpio_config_func, BITS(3,5,6));
-			BM_SET(reg_gpio_config_func, (BIT_RNG(21,23)|BIT_RNG(29,30)));
+
+
+		case GPIO_PA6:
+		{
+			//only UART function, no need set
 		}
 		break;
-	case GPIO_PA5:
-	case GPIO_PA6:
-		if(func == AS_GPIO){
-			BM_SET(reg_gpio_gpio_func(pin), BITS(5,6));
-		}else{	// USB
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(5,6));
+
+		case GPIO_PA7:
+		{
+			//1. UART(TX)
+			//2. SWM
+			if(func == AS_UART){
+				BM_SET(reg_gpio_config_func(pin), bit);
+			}else if(func == AS_SWM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
 		}
 		break;
-	case GPIO_PA7:
-		break;
-	case GPIO_PB0:
-	case GPIO_PB1:
-	case GPIO_PB6:
-	case GPIO_PB7:
-		if(func == AS_GPIO){
-			BM_SET(reg_gpio_gpio_func(pin), BITS(0,1,6,7));
-		}else{	// SDM
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(0,1,6,7));
+
+		case GPIO_PB0:
+		{
+			//1. PWM2
+			//2. SWS
+			if(func == AS_PWM){
+				BM_SET(reg_gpio_config_func(pin), bit);
+			}else if(func == AS_SWS){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
 		}
 		break;
-	case GPIO_PD0:
-	case GPIO_PD1:
-	case GPIO_PD2:
-	case GPIO_PD3:
-		if(func == AS_GPIO){
-			BM_SET(reg_gpio_gpio_func(pin), BIT_RNG(0,3));
-		}else{	// SPI
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,3));
+
+
+		case GPIO_PB1:
+		{
+			// PWM2_N
+			if(func == AS_PWM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
 		}
 		break;
-	case GPIO_PD4:
-	case GPIO_PD5:
-	case GPIO_PD6:
-	case GPIO_PD7:
-		if(func == AS_GPIO){
-			BM_SET(reg_gpio_gpio_func(pin), BIT_RNG(4,7));
-		}else{	// MSPI
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(4,7));
+
+		case GPIO_PB2:
+		case GPIO_PB3:
+		{
+			// 			PB2			PB3
+			//1. UART: 	TX			RX
+			//2, PWM: 	PWM3		PWM3_N
+			if(func == AS_UART){
+				BM_SET(reg_gpio_config_func(pin), bit);
+			}else if(func == AS_PWM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
 		}
 		break;
+
+
+		case GPIO_PB4:
+		case GPIO_PB5:
+		case GPIO_PB6:
+		case GPIO_PB7:
+		{
+			// 			PB4			PB5			PB6			PB7
+			//1. SPI: 	CN			DO			DI			CK
+			//2, PWM: 	PWM4		PWM4_N		PWM5		PWM5_N
+			if(func == AS_SPI){
+				BM_SET(reg_gpio_config_func(pin), bit);
+			}else if(func == AS_PWM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
+		}
+		break;
+
+
+		case GPIO_PC0:
+		case GPIO_PC1:
+		{
+			// 			PC0			PC1
+			//1. I2C: 	DI			CK
+			//2, PWM: 	PWM0		PWM1
+			if(func == AS_I2C){
+				BM_SET(reg_gpio_config_func(pin), bit);
+			}else if(func == AS_PWM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
+		}
+		break;
+
+
+		case GPIO_PC2:
+		case GPIO_PC3:
+		case GPIO_PC4:
+		case GPIO_PC5:
+		{
+			// 			PC2			PC3			PC4			PC5
+			//1. UART: 	TX			RX			RTS			CTS
+			//2, PWM: 	PWM2		PWM3		PWM4		PWM5
+			if(func == AS_UART){
+				BM_SET(reg_gpio_config_func(pin), bit);
+			}else if(func == AS_PWM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
+		}
+		break;
+
+		case GPIO_PC6:
+		case GPIO_PC7:
+		case GPIO_PD0:
+		case GPIO_PD1:
+		case GPIO_PD2:
+		case GPIO_PD3:
+		case GPIO_PD4:
+		{
+			break;
+		}
+
+
+		case GPIO_PD5:
+		case GPIO_PD6:
+		case GPIO_PD7:
+		{
+			//PD5	PD6		PD7
+			//PWM0	PWM1	PWM2
+			if(func == AS_PWM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
+		}
+		break;
+
+		case GPIO_PE0:
+		case GPIO_PE1:
+		{
+			// 			PE0			PE1
+			//1. PWM: 	PWM0		PWM1
+			//2, SDM: 	SDM_P		SDM_N
+			if(func == AS_PWM){
+				BM_SET(reg_gpio_config_func(pin), bit);
+			}else if(func == AS_SDM){
+				BM_CLR(reg_gpio_config_func(pin), bit);
+			}
+		}
+		break;
+
+
+		case GPIO_PE2:
+		case GPIO_PE3:
+		{
+			//only USB func
+			//PE2	PE3
+			//DM	DP
+		}
+		break;
+
+
+		case GPIO_PE4:
+		case GPIO_PE5:
+		case GPIO_PE6:
+		case GPIO_PE7:
+		{
+			//only FLASH MSPI func
+			//PE4	PE5		PE6		PE7
+			//MSDO	MCLK	MSCN	MSDI
+		}
+		break;
+
+
+		default:
+			break;
+
 	}
-	*/
 }
 
-enum{
-	E_PA0_SWS = 0,
-	E_PA1_PWM3,
-	E_PA2_MSDI,
-	E_PA3_MCLK,
-
-	E_PB2_MSDO,
-	E_PB3_MSCN,
-	E_PB5_DM,
-	E_PB6_DP,
-
-	E_PC0_PWM0,
-	E_PC1_GP1,
-	E_PC2_PWM1,
-	E_PC4_PWM2,
-	E_PC5_GP3,
-	E_PC6_GP4,
-
-	E_PE0_GP14,
-	E_PE6_CN,
-	E_PE7_DI,
-
-	E_PF0_DO,
-	E_PF1_CK,
-};
-
-extern u32 mouse_gpio_table[];
 
 void gpio_set_wakeup(u32 pin, u32 level, int en);
+void gpio_setup_up_down_resistor(u32 gpio, u32 up_down);

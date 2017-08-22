@@ -10,6 +10,13 @@
 
 
 
+#define 		BLC_SCAN_DISABLE						0
+#define 		BLC_SCAN_ENABLE							1
+
+#define			FILTER_DUP_DISABLE						0
+#define 		FILTER_DUP_ENABLE						1
+
+
 #define			BLS_FLAG_SCAN_ENABLE					BIT(0)
 
 
@@ -27,15 +34,17 @@ typedef struct {
 
 	u8		scanDevice_num;
 	u8		scanRspDevice_num;
-	u8		advReport_en;
+	u8		scan_extension_mask;
 	s8		T_SCAN_REQ_INTVL;
 
-	u8		scan_extension_mask;
+
 
 	//u32		scan_interval;
 }st_ll_scan_t;
 
+st_ll_scan_t  blts;
 
+u32		blts_scan_interval;
 
 extern 			rf_packet_scan_req_t	pkt_scan_req;
 

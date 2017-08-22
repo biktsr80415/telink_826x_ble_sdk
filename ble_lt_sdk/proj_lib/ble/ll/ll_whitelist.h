@@ -12,10 +12,19 @@
 
 
 
-#define  	MAX_WHITE_LIST_SIZE    				4
-#define 	MAX_WHITE_IRK_LIST_SIZE          	4
 
-#define 	IS_RESOLVABLE_PRIVATE_ADDR(addr)  	((addr[5]&0xC0) == 0x40)
+
+#define  	MAX_WHITE_LIST_SIZE    				4
+
+#if (RAMCODE_OPTIMIZE_CONN_POWER_NEGLECT_ENABLE || BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN)
+	#define 	MAX_WHITE_IRK_LIST_SIZE          	1   //save ramcode
+#else
+	#define 	MAX_WHITE_IRK_LIST_SIZE          	2   //save ramcode
+#endif
+
+
+#define 	IRK_REVERT_TO_SAVE_AES_TMIE_ENABLE		1
+
 
 #define		MAC_MATCH8(md,ms)	(md[0]==ms[0] && md[1]==ms[1] && md[2]==ms[2] && md[3]==ms[3] && md[4]==ms[4] && md[5]==ms[5])
 #define		MAC_MATCH16(md,ms)	(md[0]==ms[0] && md[1]==ms[1] && md[2]==ms[2])
@@ -70,9 +79,14 @@ typedef struct {
 typedef struct {
 	rl_addr_t	tbl[MAX_WHITE_IRK_LIST_SIZE];
 	u8 			idx;
+	u8			en;
 } ll_ResolvingListTbl_t;
 
 
+
+
+
+/**************************************** User Interface  **********************************************/
 
 
 /*********************************************************************
@@ -96,8 +110,6 @@ ble_sts_t ll_whiteList_reset(void);
  * @return  LL Status
  */
 ble_sts_t ll_whiteList_add(u8 type, u8 *addr);
-ble_sts_t ll_whiteList_add2(u8 *p);
-u8 ll_whiteList_rsvd_field(u8 type, u8 *addr);
 
 /*********************************************************************
  * @fn      ll_whiteList_delete
@@ -123,31 +135,42 @@ ble_sts_t ll_whiteList_delete(u8 type, u8 *addr);
 ble_sts_t ll_whiteList_getSize(u8 *returnPublicAddrListSize) ;
 
 
-/*********************************************************************
- * @fn      ll_whiteList_search
- *
- * @brief   API to check if address is existed in white list table
- *
- * @param   None
- *
- * @return  BLE_SUCCESS(0, Exist in table)
- *              LL_ERR_ADDR_NOT_EXIST_IN_WHITE_LIST (0x46, Addr not exist in white list table)
- */
-ble_sts_t ll_whiteList_search(u8 type, u8 *addr) ;
 
-u8 * ll_searchAddrInWhiteListTbl(u8 type, u8 *addr);  //stack use
 
-ble_sts_t 	ll_whiteList_reset(void);
 
-ble_sts_t 	ll_resolvingList_reset(void);
 
-ble_sts_t  ll_resolvingList_add(u8 type, u8 *addr, u8 *irk);
+ble_sts_t  ll_resolvingList_add(u8 peerIdAddrType, u8 *peerIdAddr, u8 *peer_irk, u8 *local_irk);
+ble_sts_t  ll_resolvingList_delete(u8 peerIdAddrType, u8 *peerIdAddr);
 
-ble_sts_t  ll_resolvingList_delete(u8 type, u8 *addr);
+ble_sts_t  ll_resolvingList_reset(void);
+ble_sts_t  ll_resolvingList_getSize(u8 *Size);
 
-ble_sts_t ll_resolvingList_getSize(u8 *Size);
+ble_sts_t  ll_resolvingList_getPeerResolvableAddr (u8 peerIdAddrType, u8* peerIdAddr, u8* peerResolvableAddr); //not available now
+ble_sts_t  ll_resolvingList_getLocalResolvableAddr(u8 peerIdAddrType, u8* peerIdAddr, u8* LocalResolvableAddr); //not available now
+
+ble_sts_t  ll_resolvingList_setAddrResolutionEnable (u8 resolutionEn);
+
+ble_sts_t  ll_resolvingList_setResolvablePrivateAddrTimer (u16 timeout_s);   //not available now
+
+
+
+
+
+
+/********************************* Stack Interface, user can not use!!! ********************************/
+
+u8 * ll_searchAddrInWhiteListTbl(u8 type, u8 *addr);
+
+u8 * ll_searchAddrInResolvingListTbl(u8 *addr);  //addr must be RPA
+
+u8 * ll_searchAddr_in_WhiteList_and_ResolvingList(u8 type, u8 *addr);
+
+
+
 
 ll_whiteListTbl_t	ll_whiteList_tbl;
 ll_ResolvingListTbl_t	ll_resolvingList_tbl;
+
+
 
 #endif /* LL_WHITELIST_H_ */

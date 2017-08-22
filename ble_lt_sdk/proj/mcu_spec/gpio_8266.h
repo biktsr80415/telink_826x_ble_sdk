@@ -61,15 +61,24 @@ enum{
 		GPIO_MAX_COUNT = 56,
 };
 
-#define reg_gpio_in(i)			REG_ADDR8(0x580+((i>>8)<<3))
-#define reg_gpio_ie(i)			REG_ADDR8(0x581+((i>>8)<<3))
-#define reg_gpio_oen(i)			REG_ADDR8(0x582+((i>>8)<<3))
-#define reg_gpio_out(i)			REG_ADDR8(0x583+((i>>8)<<3))
-#define reg_gpio_pol(i)			REG_ADDR8(0x584+((i>>8)<<3))
-#define reg_gpio_ds(i)			REG_ADDR8(0x585+((i>>8)<<3))
-#define reg_gpio_gpio_func(i)	REG_ADDR8(0x586+((i>>8)<<3))
-#define reg_gpio_irq_en0(i)		REG_ADDR8(0x587+((i>>8)<<3))	// 对应reg_irq_mask,reg_irq_src 中的FLD_IRQ_GPIO_EN
-#define reg_gpio_irq_en(i)		REG_ADDR8(0x5c8+(i>>8))			// 对应reg_irq_mask,reg_irq_src 中的FLD_IRQ_GPIO_RISC2_EN, 为了与5320,5328一致, 使用 FLD_IRQ_GPIO_RISC2_EN
+#define reg_gpio_in(i)				REG_ADDR8(0x580+((i>>8)<<3))
+#define reg_gpio_ie(i)				REG_ADDR8(0x581+((i>>8)<<3))
+#define reg_gpio_oen(i)				REG_ADDR8(0x582+((i>>8)<<3))
+#define reg_gpio_out(i)				REG_ADDR8(0x583+((i>>8)<<3))
+#define reg_gpio_pol(i)				REG_ADDR8(0x584+((i>>8)<<3))
+#define reg_gpio_ds(i)				REG_ADDR8(0x585+((i>>8)<<3))
+
+#define reg_gpio_gpio_func(i)		REG_ADDR8(0x586+((i>>8)<<3))
+#define reg_gpio_config_func(i)		REG_ADDR8(0x5b0 +(i>>8))  	  //5b0 5b1 5b2 5b3 5b4 5b5
+
+#define reg_gpio_irq_wakeup_en(i)	REG_ADDR8(0x587+((i>>8)<<3))  // reg_irq_mask: FLD_IRQ_GPIO_EN
+
+#define reg_gpio_irq_risc0_en(i)  REG_ADDR8(0x5b8 + (i >> 8))	  // reg_irq_mask: FLD_IRQ_GPIO_RISC0_EN
+#define reg_gpio_irq_risc1_en(i)  REG_ADDR8(0x5c0 + (i >> 8))	  // reg_irq_mask: FLD_IRQ_GPIO_RISC1_EN
+#define reg_gpio_irq_risc2_en(i)  REG_ADDR8(0x5c8 + (i >> 8))     // reg_irq_mask: FLD_IRQ_GPIO_RISC2_EN
+
+
+
 
 #define reg_gpio_wakeup_irq  REG_ADDR8(0x5b5)
 enum{
@@ -95,10 +104,6 @@ static inline void gpio_core_irq_enable_all (int en)
     else {
         BM_CLR(reg_gpio_wakeup_irq, FLD_GPIO_CORE_INTERRUPT_EN);
     }
-}
-
-static inline int gpio_is_pe_pin(u32 pin){
-	return (pin >> 8) == 0x04;			// PE
 }
 
 static inline int gpio_is_output_en(u32 pin){
@@ -136,35 +141,6 @@ static inline void gpio_set_data_strength(u32 pin, u32 value){
 	}
 }
 
-static inline void gpio_en_interrupt(u32 pin){
-	u8	bit = pin & 0xff;
-	BM_SET(reg_gpio_irq_en(pin), bit);
-}
-
-static inline void gpio_set_interrupt(u32 pin, u32 falling){
-	u8	bit = pin & 0xff;
-	BM_SET(reg_gpio_irq_en(pin), bit);
-	if(falling){
-		BM_SET(reg_gpio_pol(pin), bit);
-	}else{
-		BM_CLR(reg_gpio_pol(pin), bit);
-	}
-}
-
-static inline void gpio_set_interrupt_pol(u32 pin, u32 falling){
-	u8	bit = pin & 0xff;
-	if(falling){
-		BM_SET(reg_gpio_pol(pin), bit);
-	}else{
-		BM_CLR(reg_gpio_pol(pin), bit);
-	}
-}
-
-static inline void gpio_clr_interrupt(u32 pin){
-	u8	bit = pin & 0xff;
-	BM_CLR(reg_gpio_irq_en(pin), bit);
-}
-
 static inline void gpio_write(u32 pin, u32 value){
 	u8	bit = pin & 0xff;
 	if(value){
@@ -172,6 +148,10 @@ static inline void gpio_write(u32 pin, u32 value){
 	}else{
 		BM_CLR(reg_gpio_out(pin), bit);
 	}
+}
+
+static inline void gpio_toggle(u32 pin) {
+	reg_gpio_out(pin) ^= (pin & 0xFF);
 }
 
 static inline u32 gpio_read(u32 pin){
@@ -191,31 +171,103 @@ static inline void gpio_read_all(u8 *p){
 	p[5] = REG_ADDR8(0x5a8);
 }
 
-//enable interrupt wheel interrupt and wakeup
-static inline void gpio_enable_irq_wakeup_pin(u32 pins, u32 levels){
 
+
+static inline void gpio_set_interrupt_pol(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
 }
 
-static inline void gpio_enable_wakeup_pin(u32 pins, u32 levels, int en){
-#if 0
-	u32 flag_dm_pullup = DM_50K_PULLUP ? FLD_GPIO_DM_PULLUP : 0;
-	u32 flag_dp_pullup = DP_50K_PULLUP ? FLD_GPIO_DP_PULLUP : 0;
 
-	if (levels) {
-		reg_gpio_f_pol &= ~pins;
-	}
-	else {
-		reg_gpio_f_pol |= pins;
-	}
 
-	if (en) {
-		reg_gpio_f_wakeup_en |= pins | flag_dm_pullup|flag_dp_pullup;
+static inline void gpio_en_interrupt(u32 pin, int en){  // reg_irq_mask: FLD_IRQ_GPIO_EN
+	u8	bit = pin & 0xff;
+	if(en){
+		BM_SET(reg_gpio_irq_wakeup_en(pin), bit);
 	}
-	else {
-		reg_gpio_f_wakeup_en &= ~pins;
+	else{
+		BM_CLR(reg_gpio_irq_wakeup_en(pin), bit);
 	}
-#endif
 }
+
+static inline void gpio_set_interrupt(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	BM_SET(reg_gpio_irq_wakeup_en(pin), bit);
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
+}
+
+
+static inline void gpio_en_interrupt_risc0(u32 pin, int en){  // reg_irq_mask: FLD_IRQ_GPIO_RISC0_EN
+	u8	bit = pin & 0xff;
+	if(en){
+		BM_SET(reg_gpio_irq_risc0_en(pin), bit);
+	}
+	else{
+		BM_CLR(reg_gpio_irq_risc0_en(pin), bit);
+	}
+}
+
+static inline void gpio_set_interrupt_risc0(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	BM_SET(reg_gpio_irq_risc0_en(pin), bit);
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
+}
+
+static inline void gpio_en_interrupt_risc1(u32 pin, int en){  // reg_irq_mask: FLD_IRQ_GPIO_RISC1_EN
+	u8	bit = pin & 0xff;
+	if(en){
+		BM_SET(reg_gpio_irq_risc1_en(pin), bit);
+	}
+	else{
+		BM_CLR(reg_gpio_irq_risc1_en(pin), bit);
+	}
+}
+
+static inline void gpio_set_interrupt_risc1(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	BM_SET(reg_gpio_irq_risc1_en(pin), bit);
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
+}
+
+static inline void gpio_en_interrupt_risc2(u32 pin, int en){  // reg_irq_mask: FLD_IRQ_GPIO_RISC2_EN
+	u8	bit = pin & 0xff;
+	if(en){
+		BM_SET(reg_gpio_irq_risc2_en(pin), bit);
+	}
+	else{
+		BM_CLR(reg_gpio_irq_risc2_en(pin), bit);
+	}
+}
+
+static inline void gpio_set_interrupt_risc2(u32 pin, u32 falling){
+	u8	bit = pin & 0xff;
+	BM_SET(reg_gpio_irq_risc2_en(pin), bit);
+	if(falling){
+		BM_SET(reg_gpio_pol(pin), bit);
+	}else{
+		BM_CLR(reg_gpio_pol(pin), bit);
+	}
+}
+
+
+
+
 
 static inline void gpio_init(void){
 	//return;

@@ -22,7 +22,7 @@
  */
 #define BLE_INVALID_CONNECTION_HANDLE    0xffff
 
-
+#define IS_CONNECTION_HANDLE_VALID(handle)  ( handle != BLE_INVALID_CONNECTION_HANDLE )
 
 
 
@@ -67,10 +67,27 @@ typedef enum {
 #define 		ADV_INTERVAL_3_125MS                        5
 #define 		ADV_INTERVAL_3_75MS                         6
 #define 		ADV_INTERVAL_10MS                           16
+#define 		ADV_INTERVAL_15MS                           24
 #define 		ADV_INTERVAL_20MS                           32
+#define 		ADV_INTERVAL_25MS                           40
 #define 		ADV_INTERVAL_30MS                           48
+#define 		ADV_INTERVAL_35MS                           56
+#define 		ADV_INTERVAL_40MS                           64
+#define 		ADV_INTERVAL_45MS                           72
+#define 		ADV_INTERVAL_50MS                           80
+#define 		ADV_INTERVAL_55MS                           88
+
 #define 		ADV_INTERVAL_100MS                          160
+#define 		ADV_INTERVAL_105MS                          168
+#define 		ADV_INTERVAL_200MS                          320
+#define 		ADV_INTERVAL_205MS                          328
+#define 		ADV_INTERVAL_300MS                          480
+#define 		ADV_INTERVAL_305MS                          488
 #define 		ADV_INTERVAL_400MS                          640
+#define 		ADV_INTERVAL_405MS                          648
+#define 		ADV_INTERVAL_500MS                          800
+#define 		ADV_INTERVAL_505MS                          808
+
 #define 		ADV_INTERVAL_1S                          	1600
 #define 		ADV_INTERVAL_1_28_S                         0x0800
 #define 		ADV_INTERVAL_10_24S                         16384
@@ -79,6 +96,7 @@ typedef enum {
 #define 		ADV_HIGH_LATENCY_DIRECT_INTERVAL            ADV_INTERVAL_3_75MS
 
 
+#define 		SCAN_INTERVAL_10MS                           16
 #define 		SCAN_INTERVAL_30MS                           48
 #define 		SCAN_INTERVAL_60MS                           96
 #define 		SCAN_INTERVAL_90MS                           144
@@ -180,18 +198,21 @@ typedef enum {
     //telink define
     HCI_ERR_CONTROLLER_TX_FIFO_NOT_ENOUGH						   = HCI_ERR_CONTROLLER_BUSY,  //0x3A
     HCI_ERR_CONN_NOT_ESTABLISH									   = HCI_ERR_CONN_FAILED_TO_ESTABLISH,  //0x3E
-
+	HCI_ERR_CURRENT_STATE_NOT_SUPPORTED_THIS_CMD 				   = HCI_ERR_CONTROLLER_BUSY,
     
+
+
     LL_ERR_START = 0x50,
 	LL_ERR_WHITE_LIST_PUBLIC_ADDR_TABLE_FULL,                        //!< The white list public addr table full
 	LL_ERR_WHITE_LIST_PRIVATE_RESOLVABLE_IRK_TABLE_FULL,
 	LL_EER_FEATURE_NOT_SUPPORTED,
 	LL_ERR_SUPVERVISION_TIMEOUT,
 	LL_ERR_IRK_NOT_FOUND_FOR_RANDOM_ADDR,
-	LL_ERR_ADDR_NOT_EXIST_IN_WHITE_LIST, //0x46
-	LL_ERR_ADDR_ALREADY_EXIST_IN_WHITE_LIST, //0x47
-	LL_ERR_WHITE_LIST_NV_DISABLED, //0x48
-	LL_ERR_CURRENT_STATE_NOT_SUPPORTED_THIS_CMD,
+	LL_ERR_ADDR_NOT_EXIST_IN_WHITE_LIST,
+	LL_ERR_ADDR_ALREADY_EXIST_IN_WHITE_LIST,
+	LL_ERR_WHITE_LIST_NV_DISABLED,
+	LL_ERR_CURRENT_DEVICE_ALREADY_IN_CONNECTION_STATE,
+
     
     
     L2CAP_ERR_START = 0x60,
@@ -231,6 +252,12 @@ typedef enum {
     ATT_ERR_ATTR_NUMBER_INVALID,                         //!< The attr number is 0 or too large to register
     ATT_ERR_ENQUEUE_FAILED,                              //!< register service failed when enqueue
     ATT_ERR_PREVIOUS_INDICATE_DATA_HAS_NOT_CONFIRMED,
+    ATT_ERR_INVALID_PARAMETER,
+	ATT_ERR_SERVICE_DISCOVERY_TIEMOUT,
+    ATT_ERR_NOTIFY_INDICATION_NOT_PERMITTED,
+    ATT_ERR_DATA_PENDING_DUE_TO_SERVICE_DISCOVERY_BUSY,
+
+
 
     GAP_ERR_START = 0x90,
     GAP_ERR_INVALID_ROLE,
@@ -240,10 +267,6 @@ typedef enum {
     GAP_ERR_LISTENER_FULL,
     GAP_ERR_ITEM_NOT_FOUND,
 
-    SERVICE_ERR_START,
-    SERVICE_ERR_INVALID_PARAMETER,
-	SERVICE_ERR_NOTI_NOT_PERMITTED,
-	SERVICE_DISCOVERY_TIEMOUT,
 
     
     SMP_EER_MUX_EXCCED = 0xA0,                          //!< The AUTOPEND pending all is turned on
@@ -267,9 +290,6 @@ typedef enum {
     SMP_EER_NO_SIGN_KEY,
     SMP_EER_ADDR_RESOLVE_FAIL,                          //!< The operation is time out 
 
-
-    SPP_ERR_START = 0xC0,
-    SPP_ERR_NO_HANDLER,
     
 
 	BLE_COMMON_ERR_START = 0xD0,
@@ -278,12 +298,6 @@ typedef enum {
 	BLE_ERR_INVALID_PARAMETER,
 	BLE_ERR_NO_RESOURCE,
 
-	NO_BONDED_MAC_ADDRESS_FOR_DIRCET_ADV,
-
-
-
-	SLAVE_TERMINATE_CONN_ACKED = 0xF0,
-	SLAVE_TERMINATE_CONN_TIMEOUT    = 0xF1,
 
 } ble_sts_t;
 
@@ -297,10 +311,17 @@ typedef enum {
  /* Device Address Type */
 #define BLE_ADDR_PUBLIC                  0
 #define BLE_ADDR_RANDOM                  1
-#define BLE_ADDR_STATIC                  1
-#define BLE_ADDR_PRIVATE_NONRESOLVE      2
-#define BLE_ADDR_PRIVATE_RESOLVE         3
 #define BLE_ADDR_INVALID                 0xff
+
+//static
+#define IS_STATIC_ADDR(type, addr)  					( (type)==BLE_ADDR_RANDOM && (addr[5] & 0xC0) == 0xC0 )
+
+//non-resolvable private
+#define IS_NON_RESOLVABLE_PRIVATE_ADDR(type, addr)  	( (type)==BLE_ADDR_RANDOM && (addr[5] & 0xC0) == 0x00 )
+
+//resolvable private
+#define IS_RESOLVABLE_PRIVATE_ADDR(type, addr)  		( (type)==BLE_ADDR_RANDOM && (addr[5] & 0xC0) == 0x40 )
+
 
 
 typedef enum{
@@ -351,6 +372,8 @@ typedef enum{
 #define			SMP_OP_PARING_DHKEY					0x0d
 #define			SMP_OP_KEYPRESS_NOTIFICATION		0x0e
 #define			SMP_OP_WAIT							0x0f
+
+#define			SMP_OP_ENC_END						0xFF
 
 
 
@@ -591,6 +614,30 @@ typedef struct{
 	u8  opcode;
 	u8 data[1];
 }rf_packet_l2cap_req_t;
+
+
+typedef struct{
+	u32 dma_len;
+	u8	type;
+	u8  rf_len;
+	u16	l2capLen;
+	u16	chanId;
+	u8  code;
+	u8  id;
+	u16 dataLen;
+	u16  result;
+}rf_pkt_l2cap_sig_connParaUpRsp_t;
+
+
+typedef struct{
+	u8	type;
+	u8  rf_len;
+	u16	l2capLen;
+	u16	chanId;
+	u8  opcode;
+	u8 data[1];
+}rf_pkt_l2cap_req_t;
+
 
 typedef struct{
 	u8	llid;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
@@ -1131,68 +1178,9 @@ typedef struct {
 
 
 ////////////////////////////////////////////////////////////////////////////
-typedef int (*smp_brx_handler_t)(u8 * p, int crcok);
-typedef void (*smp_init_handler_t)(u8 *p);
-typedef void (*smp_enc_handler_t)(u8 *p);
-
-typedef void (*pair_init_handler_t)(u8 *p);
-typedef void (*pair_handler_t)();
-typedef u8 *  (*pair_proc_t) ();
-typedef void (*user_task_handler_t)(void);
-
-
-#define SMP_STANDARD_PAIR   	0
-#define SMP_FAST_CONNECT   		1
-
-
-u8 *	bls_smp_pushPkt (int type);
-u8 * 	bls_smp_sendInfo ();
-
-
-//return 1 for OK, 0 for ERR(no paired key)
-//rand: 8 byte   ediv: 2 byte ltk: 16 byte
-int blt_get_smp_key(u8* rand,u8 *ediv, u8 *ltk);
 
 
 
-void	blt_brx_sleep ();
-
-
-/////////////////////////////////// master  config  ///////////////////////////////////////
-#define FAST_PARING_ENCRYPTION_ENABLE			0
-
-#define	PAIR_SLAVE_MAX_NUM            			1
-
-
-//  6 byte slave_MAC   8 byte rand  2 byte ediv
-// 16 byte ltk
-#define PAIR_INFO_SECTOR_SIZE	 				64
-
-#define PAIR_OFFSET_SLAVE_MAC	 				0
-#define PAIR_OFFSET_RAND_EDIV	 				6
-#define PAIR_OFFSET_LTK			 				16
-
-
-#define PAIR_LENGTH_SLAVE_MAC	 				6
-#define PAIR_LENGTH_RAND_EDIV	 				10
-#define PAIR_LENGTH_LTK			 				16
-
-
-#define FAST_PAIR_IDLE			0
-#define FAST_PAIR_GET_RAND		1
-#define FAST_PAIR_ENC_REQ		2
-#define FAST_PAIR_GET_LTK		3
-#define FAST_PAIR_OVER			4
-
-//typedef struct {
-//	u8 curNum;
-//	u8 curIndex;
-//	u8 fast_pair_enc;
-//	u8 rsvd2;
-//	u8 smpKey_exist[4];  //PAIR_SLAVE_MAX_NUM not bigger than 4
-//	u32 bond_flash_idx[PAIR_SLAVE_MAX_NUM];  //mark paired slave mac address in flash
-//	macAddr_t bond_device[PAIR_SLAVE_MAX_NUM];
-//} salveMac_t;
 
 
 

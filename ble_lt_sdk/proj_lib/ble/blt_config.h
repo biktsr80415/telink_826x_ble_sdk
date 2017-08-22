@@ -15,6 +15,16 @@
 
 
 
+#define RAMCODE_OPTIMIZE_CONN_POWER_NEGLECT_ENABLE			0
+
+
+
+#ifndef	BLE_USE_EXTERNAL_32K_CRYSTAL_ENABLE
+#define BLE_USE_EXTERNAL_32K_CRYSTAL_ENABLE				0
+#endif
+
+
+
 /////////////////// Flash  Address Config ////////////////////////////
 #if( __TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) )
 	#ifndef		CFG_ADR_MAC
@@ -29,8 +39,8 @@
 	#define		CUST_TP_INFO_ADDR				0x1E040
 	#endif
 
-	#ifndef		CUST_RC32K_CAP_INFO_ADDR
-	#define		CUST_RC32K_CAP_INFO_ADDR		0x1E080
+	#ifndef		CUST_32KPAD_CAP_INFO_ADDR
+	#define		CUST_32KPAD_CAP_INFO_ADDR		0x1E080
 	#endif
 #else  //8266 8267 8269
 	#ifndef		CFG_ADR_MAC
@@ -45,8 +55,8 @@
 	#define		CUST_TP_INFO_ADDR				0x77040
 	#endif
 
-	#ifndef		CUST_RC32K_CAP_INFO_ADDR
-	#define		CUST_RC32K_CAP_INFO_ADDR		0x77080
+	#ifndef		CUST_32KPAD_CAP_INFO_ADDR
+	#define		CUST_32KPAD_CAP_INFO_ADDR		0x77080
 	#endif
 #endif
 
@@ -59,24 +69,49 @@
 
 
 
+
+typedef struct{
+	u8 conn_mark;
+	u8 ext_crystal_en;
+	u8 pm_enter_en;
+}misc_para_t;
+
+misc_para_t blt_miscParam;
+
+
+
+static inline void blc_app_setExternalCrystalCapEnable(u8  en)
+{
+	blt_miscParam.ext_crystal_en = en;
+}
+
+
+
 static inline void blc_app_loadCustomizedParameters(void)
 {
-	  //customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
-	 if( (*(unsigned char*) CUST_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) CUST_CAP_INFO_ADDR)&0x1f) );
+	 if(!blt_miscParam.ext_crystal_en)
+	 {
+		 //customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
+		 if( (*(unsigned char*) CUST_CAP_INFO_ADDR) != 0xff ){
+			 //ana_81<4:0> is cap value(0x00 - 0x1f)
+			 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) CUST_CAP_INFO_ADDR)&0x1f) );
+		 }
 	 }
+
 
 	 // customize TP0/TP1
 	 if( ((*(unsigned char*) (CUST_TP_INFO_ADDR)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+1)) != 0xff) ){
 		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
 	 }
 
+
+#if	(BLE_USE_EXTERNAL_32K_CRYSTAL_ENABLE)
 	  //customize 32k RC cap, if not customized, default ana_32 is 0x80
-	 if( (*(unsigned char*) CUST_RC32K_CAP_INFO_ADDR) != 0xff ){
+	 if( (*(unsigned char*) CUST_32KPAD_CAP_INFO_ADDR) != 0xff ){
 		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x32, *(unsigned char*) CUST_RC32K_CAP_INFO_ADDR );
+		 analog_write(0x03, *(unsigned char*) CUST_32KPAD_CAP_INFO_ADDR );
 	 }
+#endif
 }
 
 
@@ -112,7 +147,9 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 
-
+#ifndef BLE_P256_PUBLIC_KEY_ENABLE
+#define BLE_P256_PUBLIC_KEY_ENABLE								0
+#endif
 
 
 
@@ -133,11 +170,15 @@ static inline void blc_app_loadCustomizedParameters(void)
 #define  LL_MASTER_SINGLE_CONNECTION					0
 #endif
 
-#if (LL_MASTER_SINGLE_CONNECTION )
-	#define  LL_MASTER_MULTI_CONNECTION					0
-#else
-	#define  LL_MASTER_MULTI_CONNECTION					1
+#ifndef  LL_MASTER_MULTI_CONNECTION
+#define  LL_MASTER_MULTI_CONNECTION						0
 #endif
+
+//#if (LL_MASTER_SINGLE_CONNECTION )
+//	#define  LL_MASTER_MULTI_CONNECTION					0
+//#else
+//	#define  LL_MASTER_MULTI_CONNECTION					1
+//#endif
 
 
 
@@ -192,6 +233,32 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 
+#ifndef BLE_LL_ADV_IN_MAINLOOP_ENABLE
+#define BLE_LL_ADV_IN_MAINLOOP_ENABLE					1
+#endif
+
+
+
+#ifndef BLE_IR_SHARING_TIMING_ENABLE
+#define BLE_IR_SHARING_TIMING_ENABLE					0
+#endif
+
+
+#if (BLE_IR_SHARING_TIMING_ENABLE)
+	#define	BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE	0
+	#define	BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN	0
+#endif
+
+
+//conn param update/map update
+#ifndef	BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE
+#define BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE		1
+#endif
+
+
+#ifndef BLS_PROC_LONG_SUSPEND_ENABLE
+#define BLS_PROC_LONG_SUSPEND_ENABLE					0
+#endif
 
 /////////////////////HCI UART variables///////////////////////////////////////
 #define UART_DATA_LEN    64      // data max 252
@@ -200,13 +267,6 @@ typedef struct{
     unsigned char data[UART_DATA_LEN];
 }uart_data_t;
 
-
-
-
-
-#ifndef BLE_LL_IRQTASK_RUN_IN_RAM
-#define BLE_LL_IRQTASK_RUN_IN_RAM				1
-#endif
 
 
 

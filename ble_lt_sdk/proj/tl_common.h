@@ -14,7 +14,6 @@
 #include "mcu/compiler.h"
 #include "mcu/register.h"
 #include "mcu/gpio.h"
-#include "mcu/pwm.h"
 
 #include "mcu/cpu.h"
 #include "mcu/dma.h"

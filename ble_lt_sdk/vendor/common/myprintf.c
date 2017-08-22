@@ -66,7 +66,7 @@ static int puts(char *s){
 	}
 }
 
-static void puti(int num, int base){
+static void puti(unsigned int num, int base){
 	char re[]="0123456789ABCDEF";
 
 	char buf[50];

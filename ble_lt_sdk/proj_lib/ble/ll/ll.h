@@ -24,6 +24,8 @@
 #include "ll_slave.h"
 #include "ll_master.h"
 
+#include "../../../proj/drivers/rf_pa.h"
+
 extern u8					blt_state;
 extern st_ll_scan_t  blts;
 
@@ -50,6 +52,8 @@ void blt_set_bluetooth_version (u8 v);
 
 
 /////////////////////////////////////////////////////////////////////////////
+#define 				CONTROLLER_ONLY				0//1//
+
 #define 				LL_ROLE_MASTER              0
 #define 				LL_ROLE_SLAVE               1
 
@@ -63,18 +67,27 @@ void blt_set_bluetooth_version (u8 v);
 #define					LL_TERMINATE_IND			0x02
 
 #define					LL_UNKNOWN_RSP				0x07
-
 #define 				LL_FEATURE_REQ              0x08
 #define 				LL_FEATURE_RSP              0x09
 
 #define 				LL_VERSION_IND              0x0C
 #define 				LL_REJECT_IND         		0x0D
 #define 				LL_SLAVE_FEATURE_REQ        0x0E
-
+#define 				LL_CONNECTION_PARAM_REQ		0x0F
+#define 				LL_CONNECTION_PARAM_RSP		0x10
+#define					LL_REJECT_IND_EXT			0x11
 #define 				LL_PING_REQ					0x12
 #define					LL_PING_RSP					0x13
 #define 				LL_LENGTH_REQ				0x14
 #define					LL_LENGTH_RSP				0x15
+
+#define					LL_ENC_REQ					0x03
+#define					LL_ENC_RSP					0x04
+#define					LL_START_ENC_REQ			0x05
+#define					LL_START_ENC_RSP			0x06
+
+#define					LL_PAUSE_ENC_REQ			0x0A
+#define					LL_PAUSE_ENC_RSP			0x0B
 
 #define					SLAVE_LL_ENC_OFF			0
 #define					SLAVE_LL_ENC_REQ			1
@@ -100,13 +113,7 @@ void blt_set_bluetooth_version (u8 v);
 #define					MASTER_LL_ENC_SMP_INFO_S		10
 #define					MASTER_LL_ENC_SMP_INFO_E		11
 
-#define					LL_ENC_REQ					0x03
-#define					LL_ENC_RSP					0x04
-#define					LL_START_ENC_REQ			0x05
-#define					LL_START_ENC_RSP			0x06
 
-#define					LL_PAUSE_ENC_REQ			0x0a
-#define					LL_PAUSE_ENC_RSP			0x0b
 
 
 
@@ -158,7 +165,18 @@ typedef struct {
 ll_mac_t  bltMac;
 
 typedef struct {
+	u8		adv_en;
+	u8		adv_extension_mask;
+	u8		adv_scanReq_connReq;
+	u8 		phy_en;
+
+
 	u8		ll_recentAvgRSSI;
+	u8		ll_localFeature;
+	u8		tx_irq_proc_en;
+
+
+	u8		conn_rx_num;  //slave: rx number in a new interval
 } st_ll_conn_t;
 
 st_ll_conn_t  bltParam;
@@ -195,7 +213,7 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_CONNECT					3    //
 #define			BLT_EV_FLAG_TERMINATE				4    //
 #define			BLT_EV_FLAG_PAIRING_BEGIN			5
-#define			BLT_EV_FLAG_PAIRING_FAIL			6
+#define			BLT_EV_FLAG_PAIRING_END				6	 //success or fail(with fail reason)
 #define			BLT_EV_FLAG_ENCRYPTION_CONN_DONE    7
 #define			BLT_EV_FLAG_DATA_LENGTH_EXCHANGE	8
 #define			BLT_EV_FLAG_GPIO_EARLY_WAKEUP		9
@@ -207,6 +225,7 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_SUSPEND_EXIT			15
 #define			BLT_EV_FLAG_READ_P256_KEY			16
 #define			BLT_EV_FLAG_GENERATE_DHKEY			17
+
 
 
 
@@ -232,13 +251,17 @@ typedef void (*ll_irq_systemTick_conn_callback_t)(void);
 
 
 typedef int (*blc_main_loop_data_callback_t)(u8 *);
+typedef int (*blc_main_loop_pre_callback_t)(void);
 typedef int (*blc_main_loop_post_callback_t)(void);
 
 
+typedef int (*blc_main_loop_phyTest_callback_t)(void);
 
 
 
-typedef int (*blt_LTK_req_callback_t)(u8* rand, u16 ediv);
+
+
+typedef int (*blt_LTK_req_callback_t)(u16 handle, u8* rand, u16 ediv);
 
 
 
@@ -279,18 +302,15 @@ void		bls_app_registerEventCallback (u8 e, blt_event_callback_t p);
 
 /************************* Stack Interface, user can not use!!! ***************************/
 //encryption
-ble_sts_t 		bls_ll_getLtkVsConnHandleFail (u16 connHandle);
-ble_sts_t  		bls_ll_setLtk (u16 connHandle,  u8*ltk);
+ble_sts_t 		blc_hci_ltkRequestNegativeReply (u16 connHandle);
+ble_sts_t  		blc_hci_ltkRequestReply (u16 connHandle,  u8*ltk);
 
 void 			blc_ll_setEncryptionBusy(u8 enc_busy);
 bool 			blc_ll_isEncryptionBusy(void);
 void 			blc_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
 
 void 			blc_ll_setIdleState(void);
-
-ble_sts_t 		bls_hci_le_getLocalSupportedFeatures(u8 *features);
-ble_sts_t 		bls_hci_le_getRemoteSupportedFeatures(u16 connHandle);
-
+ble_sts_t 		blc_hci_le_getLocalSupportedFeatures(u8 *features);
 
 ble_sts_t 		blc_hci_le_readBufferSize_cmd(u8 *pData);
 
@@ -342,7 +362,30 @@ static inline void blc_ll_recordRSSI(u8 rssi)
 
 
 
+/************************************************************* RF DMA RX\TX data strcut ***************************************************************************************
+----RF RX DMA buffer struct----:
+byte0    byte3   byte4    byte5   byte6  byte7  byte8    byte11   byte12      byte13   byte14 byte(14+w-1) byte(14+w) byte(16+w) byte(17+w) byte(18+w) byte(19+w)    byte(20+w)
+*-------------*----------*------*------*------*----------------*----------*------------*------------------*--------------------*---------------------*------------------------*
+| DMA_len(4B) | Rssi(1B) |xx(1B)|yy(1B)|zz(1B)| Stamp_time(4B) | type(1B) | Rf_len(1B) |    payload(wB)   |      CRC(3B)       |   Fre_offset(2B)    |  jj(1B)     0x40(1B)   |
+|             | rssi-110 |                    |                |         Header        |     Payload      |                    | (Fre_offset/8+25)/2 |          if CRC OK:0x40|
+|             |                               |                |<--               PDU                  -->|                    |                     |                        |
+*-------------*-------------------------------*----------------*------------------------------------------*--------------------*---------------------*------------------------*
+|<------------------------------------------------------   DMA len  -------------------|------------------|------------------->|
+|                                                                                      |                  |                    |
+|<----------------------------------- 14 byte ---------------------------------------->|<---- Rf_len ---->|<------ 3 Byte ---->|
+note: byte12 ->  type(1B):llid(2bit) nesn(1bit) sn(1bit) md(1bit)
+we can see: DMA_len = w(Rf_len) + 17.
+		    CRC_OK  = DMA_buffer[w(Rf_len) + 20] == 0x40 ? True : False.
 
+----RF TX DMA buffer struct----:
+byte0    byte3   byte4       byte5      byte6  byte(6+w-1)
+*-------------*----------*------------*------------------*
+| DMA_len(4B) | type(1B) | Rf_len(1B) |    payload(wB)   |
+|             |         Header        |     Payload      |
+|             |<--               PDU                  -->|
+*-------------*------------------------------------------*
+note: type(1B):llid(2bit) nesn(1bit) sn(1bit) md(1bit),实际向RF 硬件FIFO中压数据，type只表示llid,其他bit位为0！
+*******************************************************************************************************************************************************************************/
 
 
 

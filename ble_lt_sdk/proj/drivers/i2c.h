@@ -26,12 +26,12 @@ enum I2C_SLAVE_MODE{
 /*****
  * brief  judge what the irq source is. host write or host read.
  */
-I2C_I2CIrqSrcTypeDef i2c_slave_irq_get(void);
+I2C_I2CIrqSrcTypeDef I2C_SlaveIrqGet(void);
 
 /****
  * brief  clear the irq status bit.
  */
-void i2c_slave_irq_clr(I2C_I2CIrqSrcTypeDef src);
+void I2C_SlaveIrqClr(I2C_I2CIrqSrcTypeDef src);
 
 /*****
  * brief: the function initial the relevant gpio as i2c.

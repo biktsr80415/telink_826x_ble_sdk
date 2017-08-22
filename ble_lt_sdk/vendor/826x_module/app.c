@@ -17,15 +17,15 @@
 #include "../../proj/drivers/uart.h"
 #endif
 
-//一个连接间隔上报6个包时：
-//MYFIFO_INIT(hci_rx_fifo, 176, 2);//6个数据包  1*20+5*27 =155 留4B给DMA头和1B尾 +串口帧头6B，16字节对齐取176及以上
+
+
 MYFIFO_INIT(hci_rx_fifo, 72, 2);
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
-MYFIFO_INIT(blt_rxfifo, 64, 8);
 
-//MYFIFO_INIT(blt_txfifo, 40, 16);
-MYFIFO_INIT(blt_txfifo, 80, 8);
+MYFIFO_INIT(blt_rxfifo, 64, 8);
+MYFIFO_INIT(blt_txfifo, 40, 16);
+//MYFIFO_INIT(blt_txfifo, 80, 8);
 //////////////////////////////////////////////////////////////////////////////
 //	Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
@@ -43,11 +43,60 @@ u8 	ui_ota_is_working = 0;
 u8  ui_task_flg;
 u32	ui_advertise_begin_tick;
 
+#if SIG_PROC_ENABLE
+/*------------------------------------------------------------------- l2cap data pkt(SIG) ---------------------------------------------------*
+ | stamp_time(4B) |llid nesn sn md |  pdu-len   | l2cap_len(2B)| chanId(2B)| Code(1B)|Id(1B)|Data-Len(2B) |           Result(2B)             |
+ |                |   type(1B)     | rf_len(1B) |       L2CAP header       |          SIG pkt Header      |  SIG_Connection_param_Update_Rsp |
+ |                |                |            |     0x0006   |    0x05   |   0x13  | 0x01 |  0x0002     |             0x0000               |
+ |                |          data_headr         |                                                       payload                              |
+ *-------------------------------------------------------------------------------------------------------------------------------------------*/
+u8 conn_update_cnt;//连接参数table的当前index
+int att_sig_proc_handler (u16 connHandle, u8 * p)
+{
+	rf_pkt_l2cap_sig_connParaUpRsp_t* pp = (rf_pkt_l2cap_sig_connParaUpRsp_t*)p;
+
+#if 0//test debug
+	foreach(i, 16){PrintHex(*((u8*)pp + i));}printf(".\n");
+#endif
+
+	u8 sig_conn_param_update_rsp[9] = { 0x0A, 0x06, 0x00, 0x05, 0x00, 0x13, 0x01, 0x02, 0x00 };
+	if(!memcmp(sig_conn_param_update_rsp, &pp->rf_len, 9) && ((pp->type&0b11) == 2)){//l2cap data pkt, start pkt
+		if(pp->result == 0x0000){
+			printf("SIG: the LE master Host has accepted the connection parameters.\n");
+			conn_update_cnt = 0;
+		}
+		else if(pp->result == 0x0001)
+		{
+			printf("SIG: the LE master Host has rejected the connection parameters..\n");
+			printf("Current Connection interval:%dus.\n", bls_ll_getConnectionInterval() * 1250 );
+			conn_update_cnt++;
+            if(conn_update_cnt < 4){
+            	printf("Slave sent update connPara req!\n");
+            }
+			if(conn_update_cnt == 1){
+				bls_l2cap_requestConnParamUpdate (8, 16, 0, 400);//18.75ms iOS
+			}
+			else if(conn_update_cnt == 2){
+				bls_l2cap_requestConnParamUpdate (16,32, 0, 400);
+			}
+			else if(conn_update_cnt == 3){
+				bls_l2cap_requestConnParamUpdate (32,60, 0, 400);
+			}
+			else{
+				conn_update_cnt = 0;
+				printf("Slave Connection Parameters Update table all tested and failed!\n");
+			}
+		}
+	}
+
+}
+#endif
+
 void entry_ota_mode(void)
 {
 	ui_ota_is_working = 1;
 
-	bls_ota_setTimeout(30 * 1000000); //set OTA timeout  30 S
+	bls_ota_setTimeout(100 * 1000000); //set OTA timeout  100 S
 
 	//gpio_write(GPIO_LED, 1);  //LED on for indicate OTA mode
 }
@@ -80,15 +129,44 @@ void show_ota_result(int result)
 }
 
 
+#define MAX_INTERVAL_VAL		16
 void	task_connect (void)
 {
 	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
+
+	//update connParam
+	if(bls_ll_getConnectionInterval() > MAX_INTERVAL_VAL)//
+	{
+	    printf("ConnInterval > 20ms.\nSlave sent update connPara req!\n");
+	    bls_l2cap_requestConnParamUpdate(MAX_INTERVAL_VAL, MAX_INTERVAL_VAL, 0, 400);
+	}
+	else
+	{
+		printf("ConnInterval < 20ms.\nSlave NOT need sent update connPara req!\n");
+		printf("Connection interval:%dus.\n", bls_ll_getConnectionInterval() * 1250 );
+	}
+	
 #if 0
 	gpio_write(RED_LED, ON);
 #else
 	gpio_write(GREEN_LED,ON);
 #endif
 }
+
+
+void 	app_switch_to_indirect_adv(u8 e, u8 *p, int n)
+{
+
+	bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16,
+						ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC,
+						0,  NULL,
+						MY_APP_ADV_CHANNEL,
+						ADV_FP_NONE);
+
+	bls_ll_setAdvEnable(1);  //must: set adv enable
+}
+
+
 
 void led_init(void)
 {
@@ -119,8 +197,8 @@ u32 module_wakeup_module_tick;
 
 int app_module_busy ()
 {
-	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcu用GPIO_WAKEUP_MODULE指示 是否处于uart数据收发状
-	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module自己检查uart rx和tx是否都处理完毕
+	mcu_uart_working = gpio_read(GPIO_WAKEUP_MODULE);  //mcu use GPIO_WAKEUP_MODULE to indicate the UART data transmission or receiving state
+	module_uart_working = UART_TX_BUSY || UART_RX_BUSY; //module checks to see if UART rx and tX are all processed
 	module_task_busy = mcu_uart_working || module_uart_working;
 	return module_task_busy;
 }
@@ -151,8 +229,7 @@ void app_power_management ()
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
-
-	//当module的uart数据发送完毕后，将GPIO_WAKEUP_MCU拉低或悬浮(取决于user怎么设计)
+	//When module's UART data is sent, the GPIO_WAKEUP_MCU is lowered or suspended (depending on how the user is designed)
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
@@ -169,7 +246,7 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //需要被 GPIO_WAKEUP_MODULE 唤醒
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  // GPIO_WAKEUP_MODULE needs to be wakened
 	}
 
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
@@ -223,10 +300,20 @@ void user_init()
 	extern void my_att_init ();
 	my_att_init (); //gatt initialization
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
-
+#if SIG_PROC_ENABLE
+	blc_l2cap_reg_att_sig_hander(att_sig_proc_handler);         //register sig process handler
+#endif
 	//smp initialization
+#if ( SMP_DISABLE )
+	//bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
+#elif ( SMP_JUST_WORK || SMP_PASSKEY_ENTRY )
+	//Just work encryption: TK default is 0, that is, pin code defaults to 0, without setting
+	//Passkey entry encryption: generate random numbers, or set the default pin code, processed in the event_handler function
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
-
+	#if (SMP_PASSKEY_ENTRY )
+		blc_smp_enableAuthMITM (1, 123456);
+	#endif
+#endif
 
 	///////////////////// USER application initialization ///////////////////
 
@@ -234,17 +321,49 @@ void user_init()
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
 
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16, \
-			 	 	 	 	 	     ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
-			 	 	 	 	 	     0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
 
-	if(status != BLE_SUCCESS){  //adv setting err
-		write_reg8(0x8000, 0x11);  //debug
-		while(1);
+
+	////////////////// config adv packet /////////////////////
+#if ( SMP_JUST_WORK || SMP_PASSKEY_ENTRY )
+	u8 bond_number = blc_smp_param_getCurrentBondingDeviceNumber();  //get bonded device number
+	smp_param_save_t  bondInfo;
+	if(bond_number)   //at least 1 bonding device exist
+	{
+		blc_smp_param_loadByIndex( bond_number - 1, &bondInfo);  //get the latest bonding device (index: bond_number-1 )
+
 	}
-    printf("adv parameters setting success!\n\r");
+
+	if(bond_number)   //set direct adv
+	{
+		//set direct adv
+		u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16,
+										ADV_TYPE_CONNECTABLE_DIRECTED_LOW_DUTY, OWN_ADDRESS_PUBLIC,
+										bondInfo.peer_addr_type,  bondInfo.peer_addr,
+										MY_APP_ADV_CHANNEL,
+										ADV_FP_NONE);
+		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
+
+		//it is recommended that direct adv only last for several seconds, then switch to indirect adv
+		bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE, 1);
+
+	}
+	else   //set indirect adv
+#endif
+	{
+		u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16,
+										 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC,
+										 0,  NULL,
+										 MY_APP_ADV_CHANNEL,
+										 ADV_FP_NONE);
+		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
+	}
+
+
+
+
+    printf("\n\rAdv parameters setting success!\n\r");
 	bls_ll_setAdvEnable(1);  //adv enable
-	printf("enable ble adv!\n\r");
+	printf("Enable ble adv!\n\r");
 	rf_set_power_level_index (RF_POWER_8dBm);
 
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);//(SUSPEND_ADV | SUSPEND_CONN)
@@ -294,7 +413,7 @@ void user_init()
 
 
 #if (BLE_MODULE_PM_ENABLE)
-	//mcu 可以通过拉高GPIO_WAKEUP_MODULE将 module从低低功耗唤醒
+	//mcu can wake up module from suspend or deepsleep by pulling up GPIO_WAKEUP_MODULE
 	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
 	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 

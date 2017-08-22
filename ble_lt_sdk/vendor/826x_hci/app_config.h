@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 
+
 /////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
 #define HCI_USE_UART	1
 #define HCI_USE_USB		0

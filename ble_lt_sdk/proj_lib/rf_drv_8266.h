@@ -80,6 +80,10 @@ void SetRxMode (signed char chn, unsigned short set);
 void SetTxMode (signed char chn, unsigned short set);
 void TxPkt (void* addr);
 
+void rf_set_ble_channel (signed char chn);
+void rf_start_stx2rx  (void* addr, u32 tick);
+void rf_start_btx (void* addr, u32 tick);
+
 
 static inline void rf_set_tx_pipe_long_packet (u8 pipe)
 {
@@ -96,6 +100,11 @@ static inline void rf_set_ble_crc (u8 *p)
 	write_reg32 (0x80044c, p[0] | (p[1]<<8) | (p[2]<<16));
 }
 
+static inline void rf_set_ble_crc_value (u32 crc)
+{
+	write_reg32 (0x80044c, crc);
+}
+
 static inline void rf_set_ble_crc_adv ()
 {
 	write_reg32 (0x80044c, 0x555555);
@@ -104,6 +113,12 @@ static inline void rf_set_ble_crc_adv ()
 static inline void rf_set_ble_access_code (u8 *p)
 {
 	write_reg32 (0x800408, p[3] | (p[2]<<8) | (p[1]<<16) | (p[0]<<24));
+}
+
+
+static inline void rf_set_ble_access_code_value (u32 ac)
+{
+	write_reg32 (0x800408, ac);
 }
 
 static inline void rf_set_ble_access_code_adv ()

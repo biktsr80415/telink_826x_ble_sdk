@@ -68,6 +68,13 @@
 
 
 
+#define	L2CAP_RX_BUFF_LEN_MAX			  256
+#define	ATT_RX_MTU_SIZE_MAX		  		 (L2CAP_RX_BUFF_LEN_MAX - 14)
+
+#define L2CAP_RX_PDU_OFFSET				  12
+
+
+
 typedef struct{
 	u16 	connParaUpReq_minInterval;
 	u16 	connParaUpReq_maxInterval;
@@ -98,10 +105,13 @@ typedef enum{
 /******************************* User Interface  ************************************/
 void		bls_l2cap_requestConnParamUpdate (u16 min_interval, u16 max_interval, u16 latency, u16 timeout);  //Slave
 
+void        bls_l2cap_setMinimalUpdateReqSendingTime_after_connCreate(int time_ms);
+
 void		blc_l2cap_register_handler (void *p);
 int 		blc_l2cap_packet_receive (u16 connHandle, u8 * p);
 int 		blc_l2cap_send_data (u16 cid, u8 *p, int n);
 
+void 		blc_l2cap_reg_att_sig_hander(void *p);//signaling pkt proc
 
 
 

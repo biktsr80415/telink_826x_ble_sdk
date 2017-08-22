@@ -8,11 +8,72 @@
 #ifndef BLE_SMP_H_
 #define BLE_SMP_H_
 
+#include "ble_common.h"
 
-typedef struct {
-	u8 addr_type;
-	u8 addr_mac[6];
-}addr_info_t;
+
+
+#define 		BOND_DEVICE_WHITELIST_MANAGEMANT_ENABLE		1
+
+#define 		SMP_BONDING_DEVICE_MAX_NUM					4
+
+
+
+#if (LL_MASTER_MULTI_CONNECTION || LL_MASTER_SINGLE_CONNECTION)
+	#define 		SMP_SLAVE_SAVE_PERR_LTK_ENABLE				1
+#else
+	#define 		SMP_SLAVE_SAVE_PERR_LTK_ENABLE				0
+#endif
+
+
+#define 		SMP_SAVE_PEER_CSRK_ENABLE					0
+
+#if (SMP_SLAVE_SAVE_PERR_LTK_ENABLE)
+	#define 		SMP_PARAM_NV_UNIT						96
+
+	#define 		SMP_PARAM_INIT_CLEAR_MAGIN_ADDR 		3072
+	#define 		SMP_PARAM_LOOP_CLEAR_MAGIN_ADDR 		3584
+
+#else
+	#define 		SMP_PARAM_NV_UNIT						64
+
+	#define 		SMP_PARAM_INIT_CLEAR_MAGIN_ADDR 		3072  //64 * 48
+	#define 		SMP_PARAM_LOOP_CLEAR_MAGIN_ADDR 		3520  //64 * 55 (56 device most)
+#endif
+
+
+#define			SMP_PARAM_NV_MAX_LEN						4096
+
+
+extern 			int				SMP_PARAM_NV_ADDR_START;
+
+#define			SMP_PARAM_NV_SEC_ADDR_START				(SMP_PARAM_NV_ADDR_START + SMP_PARAM_NV_MAX_LEN)
+#define			SMP_PARAM_NV_SEC_ADDR_END				(SMP_PARAM_NV_SEC_ADDR_START + SMP_PARAM_NV_MAX_LEN - 1)
+
+
+
+
+
+#define		FLAG_SMP_PARAM_SAVE_PENDING				0x7B  // 0111 1011
+#define		FLAG_SMP_PARAM_SAVE_OK					0x5A  // 0101 1010
+#define		FLAG_SMP_PARAM_SAVE_ERASE				0x00  //
+
+
+#define		FLAG_SMP_SECTOR_USE						0x3C
+#define		FLAG_SMP_SECTOR_CLEAR					0x00
+
+#define     FLASH_SECTOR_OFFSET						4080
+
+#define		TYPE_WHITELIST							BIT(0)
+#define		TYPE_RESOLVINGLIST						BIT(1)
+
+
+
+
+
+#define SMP_STANDARD_PAIR   	0
+#define SMP_FAST_CONNECT   		1
+
+
 
 
 typedef union {
@@ -126,45 +187,55 @@ typedef struct{
  * smp parameter about peer device.
  * */
 typedef struct{
-	u8		conn_handle;
-	u8		role;
 	u8		paring_enable;
-	u8 		rsvd;
-//	u16 	rsvd2;
+	u8 		peer_addr_type;  //address used in link layer connection
 	u8		peer_addr[6];
-	u8 		peer_addr_type;
+
 	u8		peer_key_size;   // bond and key_size
-	u16 	peer_ediv;
-	u8		peer_random[8];
-	u8		is_bond;
-	u8 		smp_paring_sequence;
-	u8		peer_ltk[16];
+	u8		peer_id_address_type;  //peer identity address information in key distribution, used to identify
+	u8		peer_id_address[6];
+
 	u8		peer_csrk[16];
 	u8		peer_irk[16];
-	u8		paring_peer_rand[16];  //offset 80
+	u8		paring_peer_rand[16];
+
+#if (SMP_SLAVE_SAVE_PERR_LTK_ENABLE)
+	u16 	peer_ediv;
+	u8		peer_random[8];
+	u8		peer_ltk[16];
+#endif
 
 }smp_param_peer_t;
+
 
 /*
  * smp parameter need save to flash.
  * */
-#define		FLAG_SMP_PARAM_SAVE					0x5371
-#define		TYPE_WHITELIST						BIT(0)
-#define		TYPE_RESOLVINGLIST					BIT(1)
+
+
+
+
 
 typedef struct {  //82
-	u16		flag;
-	u8		type;
-	u8		peer_key_size;  // 0x00 for unpair,
-	u8		peer_addr_type;		//wl_addr_t: type-adr-rsvd
+	u8		flag;
+	u8		peer_addr_type;  //address used in link layer connection
 	u8		peer_addr[6];
-	u8		rsvd;
-	u16		peer_ediv;
-	u8		peer_random[8];
-	u8		peer_ltk[16];
-	u8		peer_csrk[16];
+
+	u8 		peer_key_size;
+	u8		peer_id_adrType; //peer identity address information in key distribution, used to identify
+	u8		peer_id_addr[6];
+
+	u8 		own_ltk[16];      //own_ltk[16]
 	u8		peer_irk[16];
-	u8 		own_ltk[16];
+	u8		peer_csrk[16];
+
+#if (SMP_SLAVE_SAVE_PERR_LTK_ENABLE)
+	u8		peer_ltk[16];
+	u8		peer_random[8];
+	u16		peer_ediv;
+#endif
+
+
 
 }smp_param_save_t;
 
@@ -172,7 +243,6 @@ typedef struct {  //82
  * smp parameter about own device.
  * */
 typedef struct{
-	u8  					conn_handle;
 	smp_paring_req_rsp_t  	paring_req;
 	smp_paring_req_rsp_t  	paring_rsp;
 	u8						own_conn_type;  //current connection peer own type
@@ -181,6 +251,8 @@ typedef struct{
 	u8						paring_tk[16];   // in security connection to keep own random
 	u8						paring_confirm[16];  // in security connection oob mode to keep peer random
 	u8						own_ltk[16];   //used for generate ediv and random
+
+	u8						save_key_flag;
 }smp_param_own_t;
 
 u8 cur_enc_keysize;
@@ -193,19 +265,43 @@ typedef struct {
 
 
 
+#define  ADDR_NOT_BONDED	0xFF
+#define  ADDR_NEW_BONDED	0xFE
+#define  ADDR_DELETE_BOND	0xFD
+
+#define  KEY_FLAG_IDLE		0xFF
+#define  KEY_FLAG_NEW		0xFE
+#define  KEY_FLAG_FAIL		0xFD
+
 
 typedef struct {
-	u8  secReq_disable;
-	u8	secReq_pending;
-	u8	secReq_laterSend;
-	u8  rsvd;
+	u8 maxNum;
+	u8 curNum;
+	u8 addrIndex;
+	u8 keyIndex;
+	//u8 dev_wl_en;
+	//u8 dev_wl_maxNum;  //device in whilteList max number
 
-	u32  secReq_sendTime_ms;
-} smp_ctrl_t;
+	u32 bond_flash_idx[SMP_BONDING_DEVICE_MAX_NUM];  //mark paired slave mac address in flash
+} bond_device_t;
 
-extern smp_ctrl_t 	blc_smp_ctrl;
 
-void blc_smp_checkSecurityReqeustSending(u32 connStart_tick);
+
+
+
+typedef void (*smp_check_handler_t)(u32);
+typedef void (*smp_init_handler_t)(u8 *p);
+typedef u8 * (*smp_info_handler_t)(void);
+typedef void (*smp_bond_clean_handler_t)(void);
+typedef int (*smp_enc_done_cb_t)(void);
+
+
+extern smp_check_handler_t		func_smp_check; //HID on android 7.0
+extern smp_init_handler_t		func_smp_init;
+extern smp_info_handler_t		func_smp_info;
+extern smp_bond_clean_handler_t  func_bond_check_clean;
+extern smp_enc_done_cb_t		func_smp_enc_done_cb;
+
 
 
 typedef enum {
@@ -275,6 +371,22 @@ typedef enum{
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//								SLAVE
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 /******************************* User Interface  ************************************/
 
 
@@ -284,22 +396,21 @@ typedef enum{
  * 				SMP_PARING_CONN_TRRIGER      -  paring process start once connect.
  * 				SMP_PARING_PEER_TRRIGER      -  paring process start once peer device start.
  */
-int bls_smp_enableParing (smp_paringTrriger_t encrypt_en);
+int 		bls_smp_enableParing (smp_paringTrriger_t encrypt_en);
 
 
-/**************************************************
- * API used for master enable the device paring within connhandle.
- * encrypt_en	SMP_PARING_DISABLE_TRRIGER   -  not allow encryption
- * 				SMP_PARING_CONN_TRRIGER      -  paring process start once connect.
- * 				SMP_PARING_PEER_TRRIGER      -  paring process start once peer device start.
- */
-int blm_smp_enableParing ( smp_paringTrriger_t encrypt_en);
 
 
-/**************************************************
- * API used for master start encryption within the connhandle.
- */
-int blm_smp_startEncryption (u16 connhandle);
+void 		bls_smp_configParingSecurityInfoStorageAddr (int addr);
+
+ble_sts_t  	blc_smp_param_setBondingDeviceMaxNumber ( int device_num);
+
+u8			blc_smp_param_getCurrentBondingDeviceNumber(void);
+
+
+u32 		blc_smp_param_loadByIndex(u8 index, smp_param_save_t* smp_param_load);
+
+u32			blc_smp_param_loadByAddr(u8 addr_type, u8* addr, smp_param_save_t* smp_param_load);
 
 
 
@@ -341,16 +452,13 @@ smp_keyDistribution_t blc_smp_setDistributeKey (u8 LTK_distributeEn, u8 IRK_dist
  * */
 smp_keyDistribution_t blc_smp_expectDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
 
-/**************************************************
- * API used for get peer address and address type in slave mode.
- * Parameter : peer_addr_info - [out]
- * Return : BLE_SUCCESS  - exist peer device.
- * 			Others - not exist peer device.
- */
-int bls_smp_getPeerAddrInfo (addr_info_t* peer_addr_info);
+
+
+
+
+
 
 /************************* Stack Interface, user can not use!!! ***************************/
-
 
 /*
  * Return STK generate method.
@@ -360,38 +468,20 @@ int blc_smp_getGenMethod ();
 /**************************************************
  * 	used for handle link layer callback (ltk event callback), packet LL_ENC_request .
  */
-int bls_smp_getLtkReq (u8 * random, u16 ediv);
+int bls_smp_getLtkReq (u16 connHandle, u8 * random, u16 ediv);
 
 /*
  * Used for set smp parameter to default.
  * */
 void blc_smp_paramInitDefault ( );
 
-/**************************************************
- * 	used for save parameter in paring buffer
- */
-int bls_smp_setAddress (u8 *p);
 
-/*************************************************
- * 	used for smp save in flash clean.
- */
-void blc_smp_paramFlashClean ();
 
 /*************************************************
  * 	@brief 		used for reset smp param to default value.
  */
 int blc_smp_paramInit ();
 
-/*
- * Used for handle master_self addr and addr type. called from gap
- *
- * */
-void blm_smp_setNewConnInfo(u8 role, u8 ownAddrType, u8* ownAddr, u8 peerAddrType, u8* peerAddr);
-
-/**************************************************
- * Used for handle connection complete event
- */
-void blm_smp_connComplete(u16 connhandle, u8* bd_addr, u8 link_type, u8 encrypt_en);
 
 
 /**************************************************
@@ -399,8 +489,116 @@ void blm_smp_connComplete(u16 connhandle, u8* bd_addr, u8 link_type, u8 encrypt_
  */
 int bls_smp_startEncryption ();
 
-/**************************************************
- * Used for notify sm layer the state change in ll;
- */
-void blm_smp_cryptStateChanged (u8 connhandle, u8 cur_crypt_state);
+
+
+
+
+
+
+
+
+
+typedef struct {
+	u8	secReq_pending;
+	u8	secReq_laterSend;
+	u16  rsvd;
+} smp_ctrl_t;
+
+extern smp_ctrl_t 	blc_smp_ctrl;
+
+void blc_smp_checkSecurityReqeustSending(u32 connStart_tick);
+void HID_service_on_android7p0_init(void);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//	MATER
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+typedef int (*smp_finish_callback_t)(void);
+void blm_smp_registerSmpFinishCb (smp_finish_callback_t cb);
+
+
+
+
+//  6 byte slave_MAC   8 byte rand  2 byte ediv
+// 16 byte ltk
+#define PAIR_INFO_SECTOR_SIZE	 				64
+
+#define PAIR_OFFSET_SLAVE_MAC	 				2
+
+#define PAIR_OFFSET_RAND		 				8
+#define PAIR_OFFSET_EDIV		 				16
+#define PAIR_OFFSET_ATT			 				18   //ATT handle
+#define PAIR_OFFSET_LTK			 				32
+#define PAIR_OFFSET_IRK			 				48
+
+#if (LL_MASTER_MULTI_CONNECTION)
+	#define	PAIR_SLAVE_MAX_NUM            			8
+#else
+	#define	PAIR_SLAVE_MAX_NUM            			1
+#endif
+
+typedef struct {
+	u8 bond_mark;
+	u8 adr_type;
+	u8 address[6];
+} mac_adr_t;
+
+
+#define FlAG_BOND				BIT(0)
+#define FLAG_FASTSMP			BIT(4)
+
+typedef struct {
+	u8 curNum;
+	u8 curIndex;
+	u8 isBond_fastSmp;
+	u8 rsvd;  //auto smp, no need SEC_REQ
+	u32 bond_flash_idx[PAIR_SLAVE_MAX_NUM];  //mark paired slave mac address in flash
+	mac_adr_t bond_device[PAIR_SLAVE_MAX_NUM];
+} bond_slave_t;
+
+
+
+
+#define SLAVE_TRIGGER_SMP_FIRST_PAIRING				0   	//first pair, slave send security_request to trigger master's pairing&encryption
+#define MASTER_TRIGGER_SMP_FIRST_PAIRING			BIT(0)
+
+#define SLAVE_TRIGGER_SMP_AUTO_CONNECT				0   	//auto connect, slave send security_request to trigger master's encryption
+#define MASTER_TRIGGER_SMP_AUTO_CONNECT				BIT(1)
+
+
+void	blm_host_smp_init (u32 adr);
+
+void    blm_host_smp_setSecurityTrigger(u8 trigger);
+u8		blm_host_smp_getSecurityTrigger(void);
+void 	blm_host_smp_procSecurityTrigger(u16 connHandle);
+
+void 	blm_host_smp_handler(u16 conn_handle, u8 *p);
+int 	tbl_bond_slave_search(u8 adr_type, u8 * addr);
+int 	tbl_bond_slave_delete_by_adr(u8 adr_type, u8 *addr);
+void 	tbl_bond_slave_unpair_proc(u8 adr_type, u8 *addr);
+
+void	blm_smp_encChangeEvt(u8 status, u16 connhandle, u8 enc_enable);
+
+
+
+
+
 #endif /* BLE_SMP_H_ */

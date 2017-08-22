@@ -14,7 +14,7 @@
 /*****
  * brief  judge what the irq source is. host write or host read.
  */
-I2C_I2CIrqSrcTypeDef i2c_slave_irq_get(void){
+I2C_I2CIrqSrcTypeDef I2C_SlaveIrqGet(void){
 	unsigned char hostStatus = reg_i2c_irq_status;
 	if(hostStatus&FLD_I2C_STATUS_RD){
 		return I2C_IRQ_HOST_READ_ONLY;
@@ -31,7 +31,7 @@ I2C_I2CIrqSrcTypeDef i2c_slave_irq_get(void){
 /****
  * brief  clear the irq status bit.
  */
-void i2c_slave_irq_clr(I2C_I2CIrqSrcTypeDef src){
+void I2C_SlaveIrqClr(I2C_I2CIrqSrcTypeDef src){
 	if(src==I2C_IRQ_HOST_READ_ONLY){
 		BM_SET(reg_i2c_clr_status, FLD_I2C_STATUS_WR|FLD_I2C_STATUS_RD);
 	}

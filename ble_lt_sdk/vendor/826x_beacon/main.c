@@ -42,7 +42,7 @@ _attribute_ram_code_ void irq_handler(void)
 }
 
 int main (void) {
-	cpu_wakeup_init();
+	cpu_wakeup_init(CRYSTAL_TYPE);
 
 	set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
 	clock_init();

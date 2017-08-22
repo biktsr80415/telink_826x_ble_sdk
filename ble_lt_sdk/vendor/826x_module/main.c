@@ -4,6 +4,7 @@
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/blt_config.h"
+#include "../../proj_lib/ble/ll/ll.h"
 
 extern my_fifo_t hci_rx_fifo;
 extern void user_init();
@@ -37,7 +38,7 @@ _attribute_ram_code_ void irq_handler(void)
 }
 
 int main (void) {
-	cpu_wakeup_init();
+	cpu_wakeup_init(CRYSTAL_TYPE);
 
 	set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
 	clock_init();

@@ -21,10 +21,10 @@ void gpio_set_wakeup(u32 pin, u32 level, int en)
 {
     u8 bit = pin & 0xff;
     if (en) {
-        BM_SET(reg_gpio_irq_en0(pin), bit);
+        BM_SET(reg_gpio_irq_wakeup_en(pin), bit);
     }
     else {
-        BM_CLR(reg_gpio_irq_en0(pin), bit);
+        BM_CLR(reg_gpio_irq_wakeup_en(pin), bit);
     }
     if(level){
         BM_CLR(reg_gpio_pol(pin), bit);
