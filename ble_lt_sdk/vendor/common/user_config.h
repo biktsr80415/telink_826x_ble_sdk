@@ -31,6 +31,8 @@
 	#include "../826x_master_kma_dongle/app_config.h"
 #elif (__PROJECT_8261_FEATURE_TEST__ || __PROJECT_8266_FEATURE_TEST__ || __PROJECT_8267_FEATURE_TEST__ || __PROJECT_8269_FEATURE_TEST__)
 	#include "../826x_feature_test/app_config.h"
+#elif (__PROJECT_8261_DRIVER_TEST__ || __PROJECT_8266_DRIVER_TEST__ || __PROJECT_8267_DRIVER_TEST__ || __PROJECT_8269_DRIVER_TEST__)
+	#include "../826x_driver_test/app_config.h"
 #elif (__PROJECT_8266_OTA_BOOT__ || __PROJECT_8261_OTA_BOOT__)
 	#include "../826x_ota_boot/app_config.h"
 #elif (__PROJECT_USB_HOST__)
