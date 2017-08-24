@@ -19,11 +19,6 @@
 
 
 
-#ifndef	BLE_USE_EXTERNAL_32K_CRYSTAL_ENABLE
-#define BLE_USE_EXTERNAL_32K_CRYSTAL_ENABLE				0
-#endif
-
-
 
 /////////////////// Flash  Address Config ////////////////////////////
 #if( __TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) )
@@ -72,7 +67,8 @@
 
 typedef struct{
 	u8 conn_mark;
-	u8 ext_crystal_en;
+	u8 ext_cap_en;
+	u8 pad32k_en;
 	u8 pm_enter_en;
 }misc_para_t;
 
@@ -82,14 +78,14 @@ misc_para_t blt_miscParam;
 
 static inline void blc_app_setExternalCrystalCapEnable(u8  en)
 {
-	blt_miscParam.ext_crystal_en = en;
+	blt_miscParam.ext_cap_en = en;
 }
 
 
 
 static inline void blc_app_loadCustomizedParameters(void)
 {
-	 if(!blt_miscParam.ext_crystal_en)
+	 if(!blt_miscParam.ext_cap_en)
 	 {
 		 //customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
 		 if( (*(unsigned char*) CUST_CAP_INFO_ADDR) != 0xff ){
@@ -105,13 +101,13 @@ static inline void blc_app_loadCustomizedParameters(void)
 	 }
 
 
-#if	(BLE_USE_EXTERNAL_32K_CRYSTAL_ENABLE)
-	  //customize 32k RC cap, if not customized, default ana_32 is 0x80
-	 if( (*(unsigned char*) CUST_32KPAD_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x03, *(unsigned char*) CUST_32KPAD_CAP_INFO_ADDR );
+	 if(blt_miscParam.pad32k_en){
+		  //customize 32k RC cap, if not customized, default ana_32 is 0x80
+		 if( (*(unsigned char*) CUST_32KPAD_CAP_INFO_ADDR) != 0xff ){
+			 //ana_81<4:0> is cap value(0x00 - 0x1f)
+			 analog_write(0x03, *(unsigned char*) CUST_32KPAD_CAP_INFO_ADDR );
+		 }
 	 }
-#endif
 }
 
 

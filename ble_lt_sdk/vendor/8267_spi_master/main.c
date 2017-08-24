@@ -29,6 +29,8 @@ extern void user_init();
 
 // .\tcdb.exe wf 40000 -eb -i "xxx.binÎÄ¼şÂ·¾¶\xxx.bin"
 int main (void) {
+	blc_pm_select_internal_32k_crystal();
+
 	cpu_wakeup_init();
 	clock_init();
 	gpio_init();
