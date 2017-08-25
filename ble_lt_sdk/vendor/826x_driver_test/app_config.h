@@ -50,7 +50,11 @@ extern "C" {
 
 
 
-#define DRIVER_TEST_MODE								TEST_IIC
+#define DRIVER_TEST_MODE								TEST_PWM
+
+
+
+
 
 #if(DRIVER_TEST_MODE == TEST_UART)
 	#define UART_DMA_MODE_EN     1  //1:dma mode ; ; ; 0: not dma mode
@@ -84,11 +88,12 @@ extern "C" {
 
 
 
-#define DEBUG_GPIO_ENABLE							1
+#define DEBUG_GPIO_ENABLE							0
 
 #if(DEBUG_GPIO_ENABLE)
 	#if (__PROJECT_8266_DRIVER_TEST__)
-		//ch0-ch7: B0 A5 E5 F0 F1 E7 E6 E4
+		//define debug GPIO here according to your hardware
+		//ch0-ch5: B0 A5 E5 F0 F1 E7
 		#define GPIO_CHN0							GPIO_PB0
 		#define GPIO_CHN1							GPIO_PA5
 		#define GPIO_CHN2							GPIO_PE5
@@ -103,7 +108,8 @@ extern "C" {
 		#define PF1_OUTPUT_ENABLE					1
 		#define PE7_OUTPUT_ENABLE					1
 	#else  //8261/8267/8269
-		//ch0-ch7: A7 A4 A3 E0 A1 A0 E1 D3
+	    //define debug GPIO here according to your hardware
+		//ch0-ch5: A7 A4 A3 E0 A1 A0
 		#define GPIO_CHN0							GPIO_PA7
 		#define GPIO_CHN1							GPIO_PA4
 		#define GPIO_CHN2							GPIO_PA3

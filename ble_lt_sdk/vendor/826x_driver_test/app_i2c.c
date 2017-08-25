@@ -1,5 +1,10 @@
 #include "../../proj/tl_common.h"
+#include "../../proj_lib/rf_drv.h"
+#include "../../proj_lib/pm.h"
+#include "../../proj/drivers/adc.h"
+#include "../../proj/drivers/uart.h"
 #include "../../proj/drivers/i2c.h"
+#include "../../proj/drivers/spi.h"
 
 #if (DRIVER_TEST_MODE == TEST_IIC)
 
@@ -57,7 +62,7 @@ void app_i2c_test_start(void){
 }
 
 
-void app_i2c_test_irq_proc(void){
+_attribute_ram_code_ void app_i2c_test_irq_proc(void){
 
 	I2C_I2CIrqSrcTypeDef i2c_irq_flag = I2C_SlaveIrqGet();//i2c slave can distinguish the operation host write or read.
 	I2C_SlaveIrqClr(i2c_irq_flag);
