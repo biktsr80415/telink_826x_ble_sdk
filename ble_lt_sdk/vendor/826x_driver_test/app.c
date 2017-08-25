@@ -1,16 +1,10 @@
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ll/ll.h"
-#include "../../proj_lib/ble/hci/hci.h"
-#include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/service/ble_ll_ota.h"
 #include "../../proj/drivers/adc.h"
-#include "../../proj_lib/ble/ble_smp.h"
-#include "../../proj_lib/ble/ble_phy.h"
-#include "../common/blt_soft_timer.h"
-
 #include "../../proj/drivers/uart.h"
+#include "../../proj/drivers/i2c.h"
+#include "../../proj/drivers/spi.h"
 
 
 #if (__PROJECT_8261_DRIVER_TEST__ || __PROJECT_8266_DRIVER_TEST__ || __PROJECT_8267_DRIVER_TEST__ || __PROJECT_8269_DRIVER_TEST__)
@@ -26,6 +20,9 @@ extern void app_uart_test_start(void);
 
 extern void app_adc_test_init(void);
 extern void app_adc_test_start(void);
+
+extern void app_pwm_test(void);
+
 
 
 void user_init()
@@ -49,6 +46,13 @@ void user_init()
 #elif (DRIVER_TEST_MODE == TEST_ADC)
 
 	app_adc_test_init();
+
+#elif (DRIVER_TEST_MODE == TEST_PWM)
+
+	app_pwm_test();
+
+#else
+
 
 #endif
 
@@ -74,8 +78,8 @@ void main_loop (void)
 	app_spi_test_start();
 
 #elif (DRIVER_TEST_MODE == TEST_ADC)
-
 	app_adc_test_start();
+#else
 
 #endif
 }

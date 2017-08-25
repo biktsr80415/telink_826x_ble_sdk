@@ -1,4 +1,10 @@
 #include "../../proj/tl_common.h"
+#include "../../proj_lib/rf_drv.h"
+#include "../../proj_lib/pm.h"
+#include "../../proj/drivers/adc.h"
+#include "../../proj/drivers/uart.h"
+#include "../../proj/drivers/i2c.h"
+#include "../../proj/drivers/spi.h"
 
 #if (DRIVER_TEST_MODE == TEST_HW_TIMER)
 
@@ -34,7 +40,7 @@ void app_timer_test_init(void){
 }
 
 
-void app_timer_test_irq_proc(void){
+_attribute_ram_code_ void app_timer_test_irq_proc(void){
 	if(reg_tmr_sta & FLD_TMR_STA_TMR0){
 		reg_tmr_sta = FLD_TMR_STA_TMR0; //clear irq status
 		timer0_irq_cnt ++;

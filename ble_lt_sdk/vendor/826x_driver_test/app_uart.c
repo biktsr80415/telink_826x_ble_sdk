@@ -1,5 +1,10 @@
 #include "../../proj/tl_common.h"
+#include "../../proj_lib/rf_drv.h"
+#include "../../proj_lib/pm.h"
+#include "../../proj/drivers/adc.h"
 #include "../../proj/drivers/uart.h"
+#include "../../proj/drivers/i2c.h"
+#include "../../proj/drivers/spi.h"
 
 #if (DRIVER_TEST_MODE == TEST_UART)
 
@@ -54,7 +59,7 @@ void app_uart_test_start(void){
 }
 
 
-void app_uart_test_irq_proc(void){
+_attribute_ram_code_ void app_uart_test_irq_proc(void){
 	static unsigned char irqS;
 	static unsigned char idx = 0;
 	#if UART_DMA_MODE_EN
