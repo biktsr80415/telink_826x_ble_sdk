@@ -70,6 +70,7 @@ enum{
 
 #define reg_gpio_gpio_func(i)		REG_ADDR8(0x586+((i>>8)<<3))
 #define reg_gpio_config_func(i)		REG_ADDR8(0x5b0 +(i>>8))  	  //5b0 5b1 5b2 5b3 5b4 5b5
+#define reg_gpio_config_func1       REG_ADDR16(0x5b6)
 
 #define reg_gpio_irq_wakeup_en(i)	REG_ADDR8(0x587+((i>>8)<<3))  // reg_irq_mask: FLD_IRQ_GPIO_EN
 
@@ -419,96 +420,162 @@ static inline void gpio_set_func(u32 pin, u32 func){
 		BM_CLR(reg_gpio_gpio_func(pin), bit);
 	}
 
-	/* special_func  do later
 	switch(pin){
-	case GPIO_PA0:
+	case GPIO_PA0:   //as sws
+	case GPIO_PA2:   //as spi DI
+	case GPIO_PA3:   //as spi clk
+	case GPIO_PB2:   //as spi DO
+	case GPIO_PB3:   //as spi CN/CS
+	case GPIO_PB4:   //only gpio function
+	case GPIO_PB5:   //as usb DM
+	case GPIO_PB6:   //as usb DP
+	case GPIO_PB7:   //as pwm
+	case GPIO_PF1:   //as i2c_scl or spi_ck
+
+		break;
+	case GPIO_PA1:   //
 	case GPIO_PA4:
-		if(func == AS_DMIC){
-			BM_SET(reg_gpio_config_func, BITS(0,7));
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(0,4));
-		}else if(func == AS_I2S){
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,4));
-			BM_CLR(reg_gpio_config_func, BITS(0,7));
-			BM_SET(reg_gpio_config_func, (BIT_RNG(21,23)|BIT_RNG(29,30)));
-		}
-		break;
-	case GPIO_PA1:
-		if(func == AS_PWM){
-			BM_SET(reg_gpio_config_func, BIT(2));
-		}else if(func == AS_I2S){
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,4));
-			BM_CLR(reg_gpio_config_func, BIT(2));
-			BM_SET(reg_gpio_config_func, (BIT_RNG(21,23)|BIT_RNG(29,30)));
-		}
-		break;
-	case GPIO_PA2:
-		if(func == AS_UART){
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(2,3));
-			BM_SET(reg_gpio_config_func, BITS(3,5));
-		}else if(func == AS_PWM){
-			BM_CLR(reg_gpio_config_func, BITS(3,5));
-			BM_SET(reg_gpio_config_func, BIT(4));
-		}else if(func == AS_I2S){
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,4));
-			BM_CLR(reg_gpio_config_func, BIT_RNG(3,5));
-			BM_SET(reg_gpio_config_func, (BIT_RNG(21,23)|BIT_RNG(29,30)));
-		}
-		break;
-	case GPIO_PA3:
-		if(func == AS_UART){
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(2,3));
-			BM_SET(reg_gpio_config_func, BITS(3,5));
-		}else if(func == AS_PWM){
-			BM_CLR(reg_gpio_config_func, BITS(3,5));
-			BM_SET(reg_gpio_config_func, BIT(6));
-		}else if(func == AS_I2S){
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,4));
-			BM_CLR(reg_gpio_config_func, BITS(3,5,6));
-			BM_SET(reg_gpio_config_func, (BIT_RNG(21,23)|BIT_RNG(29,30)));
-		}
-		break;
 	case GPIO_PA5:
 	case GPIO_PA6:
-		if(func == AS_GPIO){
-			BM_SET(reg_gpio_gpio_func(pin), BITS(5,6));
-		}else{	// USB
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(5,6));
-		}
-		break;
-	case GPIO_PA7:
-		break;
-	case GPIO_PB0:
-	case GPIO_PB1:
-	case GPIO_PB6:
-	case GPIO_PB7:
-		if(func == AS_GPIO){
-			BM_SET(reg_gpio_gpio_func(pin), BITS(0,1,6,7));
-		}else{	// SDM
-			BM_CLR(reg_gpio_gpio_func(pin), BITS(0,1,6,7));
-		}
-		break;
-	case GPIO_PD0:
-	case GPIO_PD1:
+	case GPIO_PC5:
 	case GPIO_PD2:
 	case GPIO_PD3:
-		if(func == AS_GPIO){
-			BM_SET(reg_gpio_gpio_func(pin), BIT_RNG(0,3));
-		}else{	// SPI
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(0,3));
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if(func == AS_DEBUG){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+			BM_SET(reg_gpio_config_func1, BIT(4));
+		}
+		else if(func == AS_PWM){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+			BM_CLR(reg_gpio_config_func1, BIT(4));   //clear 0x5b6[4]
 		}
 		break;
+
 	case GPIO_PD4:
 	case GPIO_PD5:
-	case GPIO_PD6:
 	case GPIO_PD7:
-		if(func == AS_GPIO){
-			BM_SET(reg_gpio_gpio_func(pin), BIT_RNG(4,7));
-		}else{	// MSPI
-			BM_CLR(reg_gpio_gpio_func(pin), BIT_RNG(4,7));
+	case GPIO_PE0:
+	case GPIO_PE3:
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if(func == AS_DEBUG){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+			BM_SET(reg_gpio_config_func1, BIT(4));
+		}
+		break;
+	case GPIO_PE4:
+	case GPIO_PE5:
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if(func == AS_DEBUG){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+			BM_SET(reg_gpio_config_func1, BIT(4));   //clear 0x5b6[4]
+		}
+		else if(func == AS_SDM){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+			BM_CLR(reg_gpio_config_func1, BIT(4));   //clear 0x5b6[4]
+		}
+		break;
+	case GPIO_PA7:   //as ks
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if(func == AS_SWM){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+		}
+
+	case GPIO_PC2:
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if (func == AS_PWM){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+		}
+	case GPIO_PC6:
+	case GPIO_PC7:
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if (func == AS_UART){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+		}
+	case GPIO_PD0:  //NOTE, not sure
+	case GPIO_PD1:
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if(func == AS_UART){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+			BM_SET(reg_gpio_config_func1, BIT(1));
+		}
+		break;
+	case GPIO_PD6:
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+	case GPIO_PE1:
+	case GPIO_PE2:
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if (func == AS_DMIC){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+		}
+	case GPIO_PE7:
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if ((func == AS_I2C) || (func == AS_SPI)){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+		}
+		break;
+
+	case GPIO_PB0:
+	case GPIO_PB1:
+		if (func == AS_PWM){
+			BM_CLR(reg_gpio_config_func1, BIT(0)|BIT(8));   //clear 0x5b6[0] and 0x5b6[8]
+		}
+		break;
+
+	case GPIO_PC0:
+	case GPIO_PC1:
+	case GPIO_PC3:
+	case GPIO_PC4:
+		if (func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if(func == AS_PWM){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+			BM_CLR(reg_gpio_config_func1, BIT(6)|BIT(7));   //clear 0x5b6[6] and 0x5b6[7]
+		}
+		break;
+
+	case GPIO_PE6:
+		if(func == AS_KS){
+			BM_SET(reg_gpio_config_func(pin), bit);
+		}
+		else if(func == AS_UART){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+			BM_SET(reg_gpio_config_func1, BIT(5));
+		}
+		else if((func == AS_I2C) || (func == AS_SPI)){
+			BM_CLR(reg_gpio_config_func(pin), bit);
+			BM_CLR(reg_gpio_config_func1, BIT(5));
+		}
+		break;
+	case GPIO_PF0:
+		if(func == AS_UART){
+			BM_SET(reg_gpio_config_func1, BIT(5));
+		}
+		else if(func == AS_SPI){
+			BM_CLR(reg_gpio_config_func1, BIT(5));
 		}
 		break;
 	}
-	*/
 }
 
 

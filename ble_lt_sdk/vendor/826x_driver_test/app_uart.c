@@ -8,16 +8,18 @@
 
 #if (DRIVER_TEST_MODE == TEST_UART)
 
-	#if UART_DMA_MODE_EN
-		unsigned char uart_rx_irq = 0, uart_tx_irq = 0;
-		#define UART_RX_BUFF_SIZE      16
-		#define UART_TX_BUFF_SIZE      16
+#define UART_DMA_MODE_EN     1  //1:dma mode ; ; ; 0: not dma mode
 
-		__attribute__((aligned(4))) unsigned char uart_rec_buff[UART_RX_BUFF_SIZE] = {0x00,0x00,0x00,0x00,}; // the first four byte is length to receive data.
-		__attribute__((aligned(4))) unsigned char uart_tx_buff[UART_TX_BUFF_SIZE]  = {0x0b,0x00,0x00,0x00,'t','e','l','i','n','k','-','s','e','m','i'}; // the first four byte is length to send data.
-	#else
-		unsigned char uart_no_dma_rev_data = 0, uart_no_dma_rev_flag = 0;
-	#endif
+#if UART_DMA_MODE_EN
+	unsigned char uart_rx_irq = 0, uart_tx_irq = 0;
+	#define UART_RX_BUFF_SIZE      16
+	#define UART_TX_BUFF_SIZE      16
+
+	__attribute__((aligned(4))) unsigned char uart_rec_buff[UART_RX_BUFF_SIZE] = {0x00,0x00,0x00,0x00,}; // the first four byte is length to receive data.
+	__attribute__((aligned(4))) unsigned char uart_tx_buff[UART_TX_BUFF_SIZE]  = {0x0b,0x00,0x00,0x00,'t','e','l','i','n','k','-','s','e','m','i'}; // the first four byte is length to send data.
+#else
+	unsigned char uart_no_dma_rev_data = 0, uart_no_dma_rev_flag = 0;
+#endif
 
 void app_uart_test_init(void){
 

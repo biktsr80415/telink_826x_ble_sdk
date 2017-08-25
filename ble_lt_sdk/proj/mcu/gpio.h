@@ -24,6 +24,8 @@ enum{
 #define AS_SWM		13
 #define AS_TEST		14
 #define AS_ADC		15
+#define AS_KS       16
+#define AS_DEBUG    17
 
 #include "../common/static_assert.h"
 
