@@ -11,7 +11,7 @@
 #include "../../proj/drivers/battery.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
-#include "../../vendor/common/tl_audio.h"
+#include "my_audio.h"
 
 #define			SDM_SAMPLE_RATE						16000
 //#define			SDM_SAMPLE_RATE						8000
@@ -242,15 +242,15 @@ u8			mute = 0;
 
 void task_audio(void)
 {
-	if ( sdm_decode_ready (256) )
+	if ( mysdm_decode_ready (256) )
 	{
 		if (mute)
 		{
-			silence2sdm (256);
+			mysilence2sdm (256);
 		}
 		else
 		{
-			adpcm_offset += adpcm2sdm((s16 *)(ADPCM_FLASH_ADR + adpcm_offset));
+			adpcm_offset += myadpcm2sdm((s16 *)(ADPCM_FLASH_ADR + adpcm_offset));
 
 			if (adpcm_offset >=  ADPCM_FLASH_SIZE)
 			{

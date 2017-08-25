@@ -57,19 +57,59 @@ static inline void usb_dp_pullup_en (int en)
 
 
 
-void cpu_stall_wakeup_by_timer0(u32 tick_stall);
-void cpu_stall_wakeup_by_timer1(u32 tick_stall);
-void cpu_stall_wakeup_by_timer2(u32 tick_stall);
+
+
+
+#define 	BLT_RESET_WAKEUP_TIME_2000		1
+
+#if (BLT_RESET_WAKEUP_TIME_2000)
+	#define RESET_TIME_US	    	  2000
+	#define EARLYWAKEUP_TIME_US       2100
+	#define EMPTYRUN_TIME_US       	  2400
+#elif(BLT_RESET_WAKEUP_TIME_2200)
+	#define RESET_TIME_US	    	  2200
+	#define EARLYWAKEUP_TIME_US       2300
+	#define EMPTYRUN_TIME_US       	  2600
+#elif(BLT_RESET_WAKEUP_TIME_2400)
+	#define RESET_TIME_US	    	  2400
+	#define EARLYWAKEUP_TIME_US       2500
+	#define EMPTYRUN_TIME_US       	  2800
+#elif(BLT_RESET_WAKEUP_TIME_2600)
+	#define RESET_TIME_US	    	  2600
+	#define EARLYWAKEUP_TIME_US       2700
+	#define EMPTYRUN_TIME_US       	  3000
+#elif(BLT_RESET_WAKEUP_TIME_2800)
+	#define RESET_TIME_US	    	  2800
+	#define EARLYWAKEUP_TIME_US       2900
+	#define EMPTYRUN_TIME_US       	  3200
+#else
+#endif
+
+
+
+#define SWAP_BIT0_BIT6(x)     ( ((x)&0xbe) | ( ((x)&0x01)<<6 ) | ( ((x)&0x40)>>6 )  )
+
+
 
 typedef int (*suspend_handler_t)(void);
-void	bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
+extern suspend_handler_t func_before_suspend;
 
 
-//deepsleep mode must use this function for resume 1.8V analog register
+
 void cpu_wakeup_init(int);
-void cpu_set_gpio_wakeup (int pin, int pol, int en);
 
-int cpu_sleep_wakeup (int deepsleep, int wakeup_src, u32 wakeup_tick);
+
+
+typedef int (*cpu_pm_handler_t)(int,int, u32);
+extern cpu_pm_handler_t cpu_sleep_wakeup;
+//int cpu_sleep_wakeup (int deepsleep, int wakeup_src, u32 wakeup_tick);
+
+int cpu_sleep_wakeup_32krc (int deepsleep, int wakeup_src, u32 wakeup_tick);
+int cpu_sleep_wakeup_32kpad (int deepsleep, int wakeup_src, u32 wakeup_tick);
+
+
+void blt_pm_ext32k_crystal_init(void);
+
 
 //set wakeup source
 enum {
@@ -91,6 +131,28 @@ enum {
 };
 
 #define 	WAKEUP_STATUS_TIMER_CORE	( WAKEUP_STATUS_TIMER | WAKEUP_STATUS_CORE)
+
+
+
+
+
+
+
+/******************************* User Interface  ************************************/
+
+
+void blc_pm_select_internal_32k_crystal(void);
+void blc_pm_select_external_32k_crystal(void);
+
+void bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
+
+void cpu_set_gpio_wakeup (int pin, int pol, int en);
+
+
+
+void cpu_stall_wakeup_by_timer0(u32 tick_stall);
+void cpu_stall_wakeup_by_timer1(u32 tick_stall);
+void cpu_stall_wakeup_by_timer2(u32 tick_stall);
 
 
 

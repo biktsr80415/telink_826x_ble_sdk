@@ -251,7 +251,6 @@ typedef void (*ll_irq_systemTick_conn_callback_t)(void);
 
 
 typedef int (*blc_main_loop_data_callback_t)(u8 *);
-typedef int (*blc_main_loop_pre_callback_t)(void);
 typedef int (*blc_main_loop_post_callback_t)(void);
 
 

@@ -25,8 +25,7 @@
 #define 	ADV_IDLE_ENTER_DEEP_TIME			60  //60 s
 #define 	CONN_IDLE_ENTER_DEEP_TIME			60  //60 s
 
-#define 	MY_DIRECT_ADV_TMIE_INIT				3000000
-#define 	MY_DIRECT_ADV_TMIE_DISCONNECT		2000000
+#define 	MY_DIRECT_ADV_TMIE					2000000
 
 
 #define     MY_APP_ADV_CHANNEL					BLT_ENABLE_ADV_ALL
@@ -324,30 +323,6 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 	else{
 
 	}
-
-
-
-#if (BLE_REMOTE_SECURITY_ENABLE)
-	u8 bond_number = blc_smp_param_getCurrentBondingDeviceNumber();  //get bonded device number
-
-	if(bond_number)   //set direct adv
-	{
-		smp_param_save_t  bondInfo;
-		blc_smp_param_loadByIndex( bond_number - 1, &bondInfo);  //get the latest bonding device (index: bond_number-1 )
-		//set direct adv
-		 bls_ll_setAdvParam( MY_ADV_INTERVAL_MIN, MY_ADV_INTERVAL_MAX,
-							ADV_TYPE_CONNECTABLE_DIRECTED_LOW_DUTY, OWN_ADDRESS_PUBLIC,
-							bondInfo.peer_addr_type,  bondInfo.peer_addr,
-							MY_APP_ADV_CHANNEL,
-							ADV_FP_NONE);
-
-		//it is recommended that direct adv only last for several seconds, then switch to indirect adv
-		bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE_DISCONNECT, 1);
-		bls_app_registerEventCallback (BLT_EV_FLAG_ADV_DURATION_TIMEOUT, &app_switch_to_indirect_adv);
-	}
-#endif
-
-
 
 
 
@@ -809,7 +784,7 @@ void user_init()
 		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
 
 		//it is recommended that direct adv only last for several seconds, then switch to indirect adv
-		bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE_INIT, 1);
+		bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE, 1);
 		bls_app_registerEventCallback (BLT_EV_FLAG_ADV_DURATION_TIMEOUT, &app_switch_to_indirect_adv);
 
 	}

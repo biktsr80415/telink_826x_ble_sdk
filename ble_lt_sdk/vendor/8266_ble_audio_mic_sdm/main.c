@@ -13,6 +13,8 @@ _attribute_ram_code_ void irq_handler(void)
 }
 
 int main (void) {
+	blc_pm_select_internal_32k_crystal();
+
 	cpu_wakeup_init(CRYSTAL_TYPE);
 
 	set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
