@@ -49,17 +49,22 @@ void I2C_SlaveIrqClr(I2C_I2CIrqSrcTypeDef src){
  * param[in] gpio_scl -- the pin as clock line of i2c.
  * return none
  */
-void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
-{
+void i2c_pin_initial(I2C_GPIO_GroupTypeDef i2c_pin_group){
+	u32 gpio_sda, gpio_scl;
+#if (MCU_CORE_TYPE == MCU_CORE_8266)
+	gpio_sda = GPIO_PE7;
+	gpio_scl = GPIO_PF1;
+
 	gpio_set_func(gpio_sda,AS_I2C);  //disable gpio function
 	gpio_set_func(gpio_scl,AS_I2C);  //disable gpio function
-#if (MCU_CORE_TYPE == MCU_CORE_8266)
-	analog_write(20, analog_read(20) | (GPIO_PULL_UP_10K<<2) | (GPIO_PULL_UP_10K<<6));	//  CK, DI, pullup 10K
-#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-	unsigned char gpio_num = (unsigned char)(gpio_sda>>8);
-	switch(gpio_num){
-	/**** A3 and A4 as i2c function. default gpio function****/
-	case 0x00:
+
+	gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);
+	gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);
+#elif ((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+	switch(i2c_pin_group){
+	case I2C_GPIO_GROUP_A3A4:
+		gpio_sda = GPIO_PA3;
+		gpio_scl = GPIO_PA4;
 		if(BM_IS_SET(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff)){
 			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);     //disable B6/B7 as i2c function
 			gpio_set_func(GPIO_PB6|GPIO_PB7, AS_GPIO);                   //enable B6/B7 as gpio function
@@ -68,10 +73,12 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
 			gpio_set_func(GPIO_PC0|GPIO_PC1, AS_GPIO);                  //enable C0/C1 as gpio function
 		}
-		analog_write (0x0b,(analog_read(0x0b)&0xC3)|0x28);                     //10k pull_up resistor
+		gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);       //10k pull_up resistor
+		gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);       //10k pull_up resistor
 		break;
-	/**** B6 and B7 as i2c function. default i2c function ****/
-	case 0x01:
+	case I2C_GPIO_GROUP_B6B7:
+		gpio_sda = GPIO_PB6;
+		gpio_scl = GPIO_PB7;
 		if(BM_IS_SET(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff)){
 			BM_CLR(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff);     // disable A3/A4 as i2c function
 			gpio_set_func(GPIO_PA3|GPIO_PA4,AS_GPIO);                    // enable A3/A4 as gpio function
@@ -80,11 +87,12 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
 			gpio_set_func(GPIO_PC0|GPIO_PC1,AS_GPIO);                   //enable C0/C1 as gpio function
 		}
-		analog_write (0x0e,(analog_read(0x0e)&0xf0)|0x0a);                     //10k pull_up resistor
+		gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);       //10k pull_up resistor
+		gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);       //10k pull_up resistor
 		break;
-
-	/**** C0 and C1 as i2c function. default gpio function ****/
-	case 0x02:
+	case I2C_GPIO_GROUP_C0C1:
+		gpio_sda = GPIO_PC0;
+		gpio_scl = GPIO_PC1;
 		if(BM_IS_SET(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff)){
 			BM_CLR(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff);    //disable A3/A4 as i2c function
 			gpio_set_func(GPIO_PA3|GPIO_PA4,AS_GPIO);                   // enable A3/A4 as gpio function
@@ -93,16 +101,21 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);    // disable B6/B7 as i2c function
 			gpio_set_func(GPIO_PB6|GPIO_PB7,AS_GPIO);                   // enable B6/B7 as gpio function
 		}
-		analog_write (0x0e,(analog_read(0x0e)&0x0f)|0xa0);                     //10k pull_up resistor
-		break;
-
-	default:
+		gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);       //10k pull_up resistor
+		gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);       //10k pull_up resistor
 		break;
 	}
+	gpio_set_func(gpio_sda,AS_I2C);  //disable gpio function
+	gpio_set_func(gpio_scl,AS_I2C);  //disable gpio function
 #endif
-	gpio_set_input_en(gpio_sda, 1); //enable input
-	gpio_set_input_en(gpio_scl, 1); //enable input
+
+	gpio_set_input_en(gpio_sda, 1);  //enable input
+	gpio_set_input_en(gpio_scl, 1);  //enable input
+
+	gpio_set_output_en(gpio_sda, 1); //enable output
+	gpio_set_output_en(gpio_scl, 1); //enable output
 }
+
 /**
  * @brief      This function set the id of slave device and the speed of I2C interface
  *             note: the param ID contain the bit of writting or reading.
@@ -112,7 +125,7 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
  *             I2C clock = System clock / (4*div_clock);if the datasheet you look at is 2*,pls modify it.
  * @return     none
  */
-void i2c_master_init0(unsigned char slave_id, unsigned char div_clock)
+void i2c_master_init_div(unsigned char slave_id, unsigned char div_clock)
 {
 	reg_i2c_speed = div_clock;                 //configure the i2c's clock
 
@@ -133,7 +146,7 @@ void i2c_master_init0(unsigned char slave_id, unsigned char div_clock)
  * @param[in]  i2c_speed is in Khz. for example: i2c_speed is 200, indicate 200k          
  * @return     none
  */
-void i2c_master_init1(unsigned char slave_id, unsigned int i2c_speed)
+void i2c_master_init_khz(unsigned char slave_id, unsigned int i2c_speed)
 {
 	reg_i2c_speed = (CLOCK_SYS_CLOCK_1MS/(4*i2c_speed)); //set i2c clock
 
