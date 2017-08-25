@@ -20,8 +20,7 @@ I2C_I2CIrqSrcTypeDef I2C_SlaveIrqGet(void){
 		return I2C_IRQ_HOST_READ_ONLY;
 	}
 	else if(hostStatus&FLD_I2C_STATUS_WR){
-		////the bit actually indicate read and write,but because the "return read_only"is before "read_write",
-		////so if return"read_write" indicate write only
+		/*the bit actually indicate read and write,but because the "return read_only"is before "read_write",so if return"read_write" indicate write only*/
 		return I2C_IRQ_HOST_WRITE_ONLY;
 	}
 	else{
@@ -59,63 +58,50 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl)
 #elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 	unsigned char gpio_num = (unsigned char)(gpio_sda>>8);
 	switch(gpio_num){
-
 	/**** A3 and A4 as i2c function. default gpio function****/
 	case 0x00:
-		BM_SET(reg_gpio_config_func0, ((GPIO_PA3|GPIO_PA4)&0xff));       //enable A3/A4 as i2c function
-
 		if(BM_IS_SET(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff)){
 			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);     //disable B6/B7 as i2c function
 			gpio_set_func(GPIO_PB6|GPIO_PB7, AS_GPIO);                   //enable B6/B7 as gpio function
-
 		}
-
 		if(BM_IS_SET(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff)){
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
 			gpio_set_func(GPIO_PC0|GPIO_PC1, AS_GPIO);                  //enable C0/C1 as gpio function
 		}
 		analog_write (0x0b,(analog_read(0x0b)&0xC3)|0x28);                     //10k pull_up resistor
-
 		break;
 	/**** B6 and B7 as i2c function. default i2c function ****/
 	case 0x01:
-		BM_SET(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);         //enable B6/B7 i2c function
-
 		if(BM_IS_SET(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff)){
 			BM_CLR(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff);     // disable A3/A4 as i2c function
 			gpio_set_func(GPIO_PA3|GPIO_PA4,AS_GPIO);                    // enable A3/A4 as gpio function
 		}
-
 		if(BM_IS_SET(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff)){
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
 			gpio_set_func(GPIO_PC0|GPIO_PC1,AS_GPIO);                   //enable C0/C1 as gpio function
 		}
 		analog_write (0x0e,(analog_read(0x0e)&0xf0)|0x0a);                     //10k pull_up resistor
-
 		break;
 
 	/**** C0 and C1 as i2c function. default gpio function ****/
 	case 0x02:
-		BM_SET(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);        //enable C0/C1 as i2c function
-
 		if(BM_IS_SET(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff)){
 			BM_CLR(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff);    //disable A3/A4 as i2c function
 			gpio_set_func(GPIO_PA3|GPIO_PA4,AS_GPIO);                   // enable A3/A4 as gpio function
 		}
-
 		if(BM_IS_SET(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff)){
 			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);    // disable B6/B7 as i2c function
 			gpio_set_func(GPIO_PB6|GPIO_PB7,AS_GPIO);                   // enable B6/B7 as gpio function
 		}
 		analog_write (0x0e,(analog_read(0x0e)&0x0f)|0xa0);                     //10k pull_up resistor
-
 		break;
+
 	default:
 		break;
 	}
 #endif
-	gpio_set_input_en(gpio_sda,1); //enable input
-	gpio_set_input_en(gpio_scl,1); //enable input
+	gpio_set_input_en(gpio_sda, 1); //enable input
+	gpio_set_input_en(gpio_scl, 1); //enable input
 }
 /**
  * @brief      This function set the id of slave device and the speed of I2C interface
@@ -132,7 +118,8 @@ void i2c_master_init0(unsigned char slave_id, unsigned char div_clock)
 
 	reg_i2c_id = MASK_VAL(FLD_I2C_ID,slave_id);//set the id of i2c module.
 
-	BM_SET(reg_i2c_mode,FLD_I2C_MODE_MASTER);  //enable master mode.
+//	BM_SET(reg_i2c_mode,FLD_I2C_MODE_MASTER|FLD_I2C_HOLD_MASTER);  //enable master mode.
+	BM_SET(reg_i2c_mode,FLD_I2C_MODE_MASTER);
 
 	BM_SET(reg_rst_clk0,FLD_CLK_I2C_EN);       //enable i2c clock
 

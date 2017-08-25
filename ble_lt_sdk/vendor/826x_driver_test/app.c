@@ -15,49 +15,43 @@
 
 #if (__PROJECT_8261_DRIVER_TEST__ || __PROJECT_8266_DRIVER_TEST__ || __PROJECT_8267_DRIVER_TEST__ || __PROJECT_8269_DRIVER_TEST__)
 
+extern void app_i2c_test_init(void);
+extern void app_i2c_test_start(void);
 
+extern void app_spi_test_init(void);
+extern void app_spi_test_start(void);
 
+extern void app_uart_test_init(void);
+extern void app_uart_test_start(void);
 
-
-
-
-
-
+extern void app_adc_test_init(void);
+extern void app_adc_test_start(void);
 
 
 void user_init()
 {
 
-
 #if (DRIVER_TEST_MODE == TEST_HW_TIMER)
-	//timer0 10ms interval irq
-	reg_irq_mask |= FLD_IRQ_TMR0_EN;
-	reg_tmr0_tick = 0; //claer counter
-	reg_tmr0_capt = 10 * CLOCK_SYS_CLOCK_1MS;
-	reg_tmr_sta = FLD_TMR_STA_TMR0; //clear irq status
-	reg_tmr_ctrl |= FLD_TMR0_EN;  //start timer
 
-	//timer1 15ms interval irq
-	reg_irq_mask |= FLD_IRQ_TMR1_EN;
-	reg_tmr1_tick = 0; //claer counter
-	reg_tmr1_capt = 15 * CLOCK_SYS_CLOCK_1MS;
-	reg_tmr_sta = FLD_TMR_STA_TMR1; //clear irq status
-	reg_tmr_ctrl |= FLD_TMR1_EN;  //start timer
-
-
-	//timer1 20ms interval irq
-	reg_irq_mask |= FLD_IRQ_TMR2_EN;
-	reg_tmr2_tick = 0; //claer counter
-	reg_tmr2_capt = 20 * CLOCK_SYS_CLOCK_1MS;
-	reg_tmr_sta = FLD_TMR_STA_TMR2; //clear irq status
-	reg_tmr_ctrl |= FLD_TMR2_EN;  //start timer
-
-	irq_enable();
 #elif (DRIVER_TEST_MODE == TEST_GPIO_IRQ)
+#elif (DRIVER_TEST_MODE == TEST_UART)
 
+	app_uart_test_init();
 
+#elif (DRIVER_TEST_MODE == TEST_IIC)
+
+	app_i2c_test_init();
+
+#elif (DRIVER_TEST_MODE == TEST_SPI)
+
+	app_spi_test_init();
+
+#elif (DRIVER_TEST_MODE == TEST_ADC)
+
+	app_adc_test_init();
 
 #endif
+
 }
 
 
@@ -67,7 +61,23 @@ void user_init()
 u32 tick_wakeup;
 void main_loop (void)
 {
+#if (DRIVER_TEST_MODE == TEST_UART)
 
+	app_uart_test_start();
+
+#elif (DRIVER_TEST_MODE == TEST_IIC)
+
+	app_i2c_test_start();
+
+#elif (DRIVER_TEST_MODE == TEST_SPI)
+
+	app_spi_test_start();
+
+#elif (DRIVER_TEST_MODE == TEST_ADC)
+
+	app_adc_test_start();
+
+#endif
 }
 
 

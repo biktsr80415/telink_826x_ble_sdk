@@ -9,9 +9,10 @@
 typedef void (*spi_callback_func)(u8 *);
 
 ///spi irq handler
-#define SPI_IRQ_EN        BM_SET(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
-#define SPI_IRQ_DIS       BM_CLR(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
-#define SPI_IRQ_CLR       BM_SET(reg_spi_clr_status, FLD_SPI_STATUS_WR)
+#define SPI_IRQ_EN()        BM_SET(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
+#define SPI_IRQ_DIS()       BM_CLR(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
+#define SPI_IRQ_GET()       ( (reg_spi_irq_status & FLD_SPI_STATUS_WR) ? 1: 0 )
+#define SPI_IRQ_CLR()       BM_SET(reg_spi_clr_status, FLD_SPI_STATUS_WR)
 
 #if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 enum spi_pin_t{

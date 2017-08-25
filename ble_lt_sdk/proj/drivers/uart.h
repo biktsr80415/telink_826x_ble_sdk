@@ -33,8 +33,9 @@ typedef enum {
 } UART_StopBitTypeDef;
 
 enum UARTIRQSOURCE{
-	UARTRXIRQ,
-	UARTTXIRQ,
+	UARTNONEIRQ = 0,
+	UARTRXIRQ = BIT(0),
+	UARTTXIRQ = BIT(1),
 };
 
 enum{
@@ -51,42 +52,77 @@ enum {
     UART_RTS_MODE_MANUAL,
 };
 
+enum {
+	UART_DMA_RX_IRQ_DIS = 0,
+	UART_DMA_RX_IRQ_EN  = 1,
+	UART_DMA_TX_IRQ_DIS = 0,
+	UART_DMA_TX_IRQ_EN  = 1,
+};
+
+enum {
+	UART_NODMA_RX_IRQ_DIS = 0,
+	UART_NODMA_RX_IRQ_EN  = 1,
+	UART_NODMA_TX_IRQ_DIS = 0,
+	UART_NODMA_TX_IRQ_EN  = 1,
+};
+
 #define CLK32M_UART9600         do{\
 									uart_Init(237,13,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(1,1);\
+									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
 								}while(0)
 #define CLK32M_UART115200       do{\
 									uart_Init(19,13,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(1,1);\
+									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
 								}while(0)
 #define CLK16M_UART115200       do{\
 									uart_Init(9,13,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(1,1);\
+									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
 								}while(0)
 #define CLK16M_UART9600         do{\
 									uart_Init(103,15,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(1,1);\
+									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
 								}while(0)
 
 //UART_TX/UART_RX gpio pin config
-#define    UART_GPIO_CFG_PA6_PA7()  do{\
-										reg_gpio_pa_gpio &= 0x3f;\
-										reg_gpio_config_func0 |= 0x80;\
-                                    }while(0)
-#define    UART_GPIO_CFG_PB2_PB3()  do{\
-										reg_gpio_pb_gpio &= 0xf3;\
-										reg_gpio_config_func1 |= 0x0c;\
-									}while(0)
-#define    UART_GPIO_CFG_PC2_PC3()  do{\
-										reg_gpio_pc_gpio &= 0xf3;\
-										reg_gpio_config_func2 |= 0x0c;\
-									}while(0)
+//#define    UART_GPIO_CFG_PA6_PA7()  do{\
+//										reg_gpio_pa_gpio &= 0x3f;\
+//										reg_gpio_config_func0 |= 0x80;\
+//                                    }while(0)
+//#define    UART_GPIO_CFG_PB2_PB3()  do{\
+//										reg_gpio_pb_gpio &= 0xf3;\
+//										reg_gpio_config_func1 |= 0x0c;\
+//									}while(0)
+//#define    UART_GPIO_CFG_PC2_PC3()  do{\
+//										reg_gpio_pc_gpio &= 0xf3;\
+//										reg_gpio_config_func2 |= 0x0c;\
+//									}while(0)
+#define    UART_GPIO_CFG_PA6_PA7()    do{\
+	                                    gpio_set_func(GPIO_PA6, AS_UART);\
+									    gpio_set_func(GPIO_PA7, AS_UART);\
+									    gpio_set_input_en(GPIO_PA6|GPIO_PA7, 1);\
+                                      }while(0)
+#define    UART_GPIO_CFG_PB2_PB3()    do{\
+	                                    gpio_set_func(GPIO_PB2, AS_UART);\
+									    gpio_set_func(GPIO_PB3, AS_UART);\
+									    gpio_set_input_en(GPIO_PB2|GPIO_PB3, 1);\
+                                      }while(0)
+#define    UART_GPIO_CFG_PC2_PC3()    do{\
+	                                    gpio_set_func(GPIO_PC2, AS_UART);\
+									    gpio_set_func(GPIO_PC3, AS_UART);\
+									    gpio_set_input_en(GPIO_PC2|GPIO_PC3, 1);\
+                                      }while(0)
 
 #define UART_GPIO_8267_PA6_PA7      1
 #define UART_GPIO_8267_PC2_PC3      2
 #define UART_GPIO_8267_PB2_PB3      3
 
-#define GET_UART_IRQ_NOT_DMA       ((reg_uart_status0&FLD_UART_IRQ_FLAG) ? 1:0)  //not dma mode,1: occur uart irq; 0:not uart irq
+/**
+ * @brief     get the status of uart irq.
+ * @param[in] none
+ * @return    0: not uart irq ;
+ *            not 0: indicate tx or rx irq
+ */
+#define GET_UART_NOT_DMA_IRQ()       ((reg_uart_status0&FLD_UART_IRQ_FLAG) ? 1:0)  //not dma mode,1: occur uart irq; 0:not uart irq
 /**********************************************************
 *
 *	@brief	reset uart module

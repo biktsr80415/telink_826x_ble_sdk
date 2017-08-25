@@ -114,7 +114,6 @@ void spi_slave_init(enum spi_pin_t spi_grp, enum spi_mode_t spi_mode)
 	/***config the spi woking mode.For spi mode spec, pls refer to datasheet***/
 	BM_CLR(reg_spi_inv_clk, FLD_INVERT_SPI_CLK|FLD_DAT_DLY_HALF_CLK); //clear the mode bits
 	BM_SET(reg_spi_inv_clk, spi_mode);                         //set the mode
-
 }
 
 /**

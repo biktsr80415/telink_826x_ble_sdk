@@ -20,23 +20,12 @@ u8 adc_chn_m_input = 0;
 
 static inline void adc_SetClkFreq(u8 mhz){
 	reg_adc_step_l = mhz*4;
-	reg_adc_mod = MASK_VAL(FLD_ADC_MOD, 192*4);
+	reg_adc_mod = MASK_VAL(FLD_ADC_MOD, 192*4, FLD_ADC_CLK_EN, 1);
 }
 
 static inline void adc_SetPeriod(void){
 	reg_adc_period_chn0 = 77;
 	reg_adc_period_chn12 = 8;
-}
-
-void adc_ClkEn(int en){
-	if (en) {
-		BM_SET(reg_adc_mod, FLD_ADC_CLK_EN);         // Eanble the clock
-		analog_write(0x06,(analog_read(0x06)&0xfe)); // Enable ADC LDO
-	} else {
-	    BM_CLR(reg_adc_mod, FLD_ADC_CLK_EN);         // Disable ADC clock
-		analog_write(0x06,(analog_read(0x06)|0x01)); // Disable ADC LDO
-	}
-	adc_clk_poweron ();
 }
 
 /********************************************************
@@ -133,7 +122,7 @@ static inline void adc_AnaModeSet( ADC_INPUTMODE_t inM){
  */
 void adc_Init(ADC_CLK_t adc_clock, ADC_INPUTCHN_t chn, ADC_INPUTMODE_t mode, ADC_REFVOL_t ref_vol, ADC_RESOLUTION_t resolution, ADC_SAMPCYC_t sample_cycle)
 {
-	/**set adc clock**/
+	/**set adc clock and enable adc clock**/
 	adc_SetClkFreq(adc_clock);
 
 	/**select the input channel**/
@@ -147,7 +136,6 @@ void adc_Init(ADC_CLK_t adc_clock, ADC_INPUTCHN_t chn, ADC_INPUTMODE_t mode, ADC
 	/**set sample cycle**/
 	adc_SampleTimeSet(sample_cycle);
 
-	adc_ClkEn(1);    // enable ADC clock
 	EN_MANUALM;      // enable manual mode
 }
 

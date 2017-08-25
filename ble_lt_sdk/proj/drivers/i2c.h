@@ -11,8 +11,8 @@ typedef enum {
 }I2C_I2CIrqSrcTypeDef;
 
 
-#define I2C_IRQ_EN    BM_SET(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
-#define I2C_IRQ_DIS   BM_CLR(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
+#define I2C_IRQ_EN()    BM_SET(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
+#define I2C_IRQ_DIS()   BM_CLR(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
 
 /**
  *  @brief when device as I2C slave

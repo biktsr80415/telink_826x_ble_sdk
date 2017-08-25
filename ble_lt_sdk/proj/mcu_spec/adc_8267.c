@@ -45,26 +45,7 @@ enum {
 
 static inline void adc_SetClkFreq(u8 mhz){
 	reg_adc_step_l = mhz*4;
-	reg_adc_mod = MASK_VAL(FLD_ADC_MOD, 192*4);
-}
-
-/********************************************************
-*
-*	@brief		power on SAR ADC
-*
-*	@param		en - 1: power on; 0: power down
-*
-*	@return		None
-*/
-static inline void adc_ClkEn(int en){
-	if (en) {
-		BM_SET(reg_adc_mod, FLD_ADC_CLK_EN);         // Eanble the clock
-		analog_write(0x06,(analog_read(0x06)&0xfe)); // Enable ADC LDO
-	} else {
-	    BM_CLR(reg_adc_mod, FLD_ADC_CLK_EN);         // Disable ADC clock
-		analog_write(0x06,(analog_read(0x06)|0x01)); // Disable ADC LDO
-	}
-	adc_clk_poweron ();
+	reg_adc_mod = MASK_VAL(FLD_ADC_MOD, 192*4, FLD_ADC_CLK_EN, 1);
 }
 
 /********************************************************
@@ -214,7 +195,6 @@ void adc_Init(enum ADCCLOCK adc_clk,enum ADCINPUTCH chn,enum ADCINPUTMODE mode,e
 	/***7.set misc channel sample and convert period***/
 //	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
 
-	adc_ClkEn(1);    // enable ADC clock
 	/***enable adc auto mode***/
 	EN_ADC_AUTO;
 }
@@ -272,7 +252,7 @@ void adc_BatteryCheckInit(enum ADCCLOCK adc_clk,unsigned char div_en,enum ONETHI
 
 	/***7.set misc channel sample and convert period***/
 //	reg_adc_period_chn0 = (0xE2<<2);//set M channel period with 0xE2, the adc convert frequency is: system_clock/(4*0xE2);
-	adc_ClkEn(1);    // enable ADC clock
+
 	/***enable adc auto mode***/
 	EN_ADC_AUTO;
 }

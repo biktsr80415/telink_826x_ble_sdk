@@ -50,6 +50,7 @@ enum{
 	FLD_I2C_ADDR_AUTO 		=	BIT(0),
 	FLD_I2C_MODE_MASTER		= 	BIT(1),		// 1: master, 0: slave
 	FLD_I2C_MEM_MAP 		=	BIT(2), 	// write i2c data to predefined memory address which set by other register
+	FLD_I2C_HOLD_MASTER     =   BIT(3),
 };
 
 #define reg_i2c_adr_dat			REG_ADDR16(0x04)
@@ -137,13 +138,16 @@ enum{
 #define reg_otp_blk_code		REG_ADDR8(0x18)
 
 #define reg_i2c_irq_status		REG_ADDR8(0x21)
-#define reg_i2c_clr_status		REG_ADDR8(0x22)
-#define reg_spi_clr_status      reg_i2c_clr_status
+#define reg_spi_irq_status      reg_i2c_irq_status
 enum{
 	FLD_I2C_STATUS_WR = 		BIT(1),
 	FLD_SPI_STATUS_WR =         BIT(1),
 	FLD_I2C_STATUS_RD = 		BIT(2),
 };
+
+#define reg_i2c_clr_status		REG_ADDR8(0x22)
+#define reg_spi_clr_status      reg_i2c_clr_status
+
 
 /****************************************************
  adc regs struct: begin  addr : 0x28
@@ -518,12 +522,8 @@ enum {
 #define reg_uart_rx_timeout		REG_ADDR16(0x9a)
 enum{
 	FLD_UART_TIMEOUT_BW = 		BIT_RNG(0,7),		//  timeout bit width
-	FLD_UART_TIMEOUT_MUL = 		BIT_RNG(8,15),
+	FLD_UART_TIMEOUT_MUL = 		BIT_RNG(8,9),
 };
-#define  FLD_UART_BW_MUL1  0             // timeout is bit_width*1
-#define  FLD_UART_BW_MUL2  BIT(8)        // timeout is bit_width*1
-#define  FLD_UART_BW_MUL3  BIT(9)        // timeout is bit_width*3
-#define  FLD_UART_BW_MUL4  BIT_RNG(8,9)  // timeout is bit_width*4
 
 
 #define reg_uart_status0       REG_ADDR8(0x9d)

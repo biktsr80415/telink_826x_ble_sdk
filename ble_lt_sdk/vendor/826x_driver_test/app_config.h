@@ -50,7 +50,21 @@ extern "C" {
 
 
 
-#define DRIVER_TEST_MODE								TEST_HW_TIMER
+#define DRIVER_TEST_MODE								TEST_IIC
+
+#if(DRIVER_TEST_MODE == TEST_UART)
+	#define UART_DMA_MODE_EN     1  //1:dma mode ; ; ; 0: not dma mode
+#endif
+#if(DRIVER_TEST_MODE == TEST_IIC)
+	#define I2C_MASTER_EN        0  //1:dma mode ; ; ; 0: not dma mode
+#endif
+#if(DRIVER_TEST_MODE == TEST_SPI)
+	#define SPI_MASTER_EN        1  //1:dma mode ; ; ; 0: not dma mode
+#endif
+
+#if (DRIVER_TEST_MODE == TEST_ADC)
+	#define BATT_CHECK_ENABLE    1
+#endif
 
 
 /////////////////// Clock  /////////////////////////////////

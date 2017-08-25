@@ -13,59 +13,32 @@ extern my_fifo_t hci_rx_fifo;
 extern void user_init();
 extern void main_loop (void);
 
+extern void app_i2c_test_irq_proc(void);
+extern void app_uart_test_irq_proc(void);
+extern void app_spi_test_irq_proc(void);
+extern void app_timer_test_irq_proc(void);
 
 
-int timer0_irq_cnt = 0;
-int timer1_irq_cnt = 0;
-int timer2_irq_cnt = 0;
 _attribute_ram_code_ void irq_handler(void)
 {
 
-
-
+/***timer demo***/
 #if (DRIVER_TEST_MODE == TEST_HW_TIMER)
-	if(reg_tmr_sta & FLD_TMR_STA_TMR0){
-		reg_tmr_sta = FLD_TMR_STA_TMR0; //clear irq status
-		timer0_irq_cnt ++;
-		DBG_CHN0_TOGGLE;
-	}
+	app_timer_test_irq_proc();
 
-	if(reg_tmr_sta & FLD_TMR_STA_TMR1){
-		reg_tmr_sta = FLD_TMR_STA_TMR1; //clear irq status
-		timer1_irq_cnt ++;
-		DBG_CHN1_TOGGLE;
-	}
+/***uart demo***/
+#elif (DRIVER_TEST_MODE == TEST_UART)
+	app_uart_test_irq_proc();
 
-	if(reg_tmr_sta & FLD_TMR_STA_TMR2){
-		reg_tmr_sta = FLD_TMR_STA_TMR2; //clear irq status
-		timer2_irq_cnt ++;
-		DBG_CHN2_TOGGLE;
-	}
+/***i2c demo***/
+#elif (DRIVER_TEST_MODE == TEST_IIC)
+	app_i2c_test_irq_proc();
+
+/***spi demo ***/
+#elif (DRIVER_TEST_MODE == TEST_SPI)
+	app_spi_test_irq_proc();
 #endif
 
-
-#if (0)
-	unsigned char irqS = reg_dma_rx_rdy0;
-    if(irqS & FLD_DMA_UART_RX)	//rx
-    {
-    	reg_dma_rx_rdy0 = FLD_DMA_UART_RX;
-    	u8* w = hci_rx_fifo.p + (hci_rx_fifo.wptr & (hci_rx_fifo.num-1)) * hci_rx_fifo.size;
-    	if(w[0]!=0)
-    	{
-    		my_fifo_next(&hci_rx_fifo);
-    		u8* p = hci_rx_fifo.p + (hci_rx_fifo.wptr & (hci_rx_fifo.num-1)) * hci_rx_fifo.size;
-    		reg_dma0_addr = (u16)((u32)p);
-    	}
-    }
-
-    if(irqS & FLD_DMA_UART_TX)	//tx
-    {
-    	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
-		#if (MCU_CORE_TYPE == MCU_CORE_8266)
-				uart_clr_tx_busy_flag();
-		#endif
-    }
-#endif
 }
 
 int main (void) {

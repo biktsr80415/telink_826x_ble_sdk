@@ -8,43 +8,47 @@
 
 
 **************************************************************************************************/
-
+//BM_CLR
 #include "uart.h"
 #include "../../proj/tl_common.h"
-//#include "../mcu/watchdog_i.h"
 
-#define     STARTTX         reg_dma_tx_rdy0 |= BIT(1) //trigger dma1 channel to transfer.dma1 is the uart tx channel
-#define     TXDONE          ((reg_uart_status1 & FLD_UART_TX_DONE) ? 1:0) //1:uart module has send all data.0:still has data to send
-#define     RXERRORCLR      reg_uart_status0 |= FLD_UART_RX_ERR_CLR       //if uart module occur error,this bit can clear error flag bit.
-#define     RXERROR         ((reg_uart_status0 &FLD_UART_RX_ERR_FLAG)? 1:0)//uart module error status flag bit.
+#define     STARTTX         (reg_dma_tx_rdy0 |= BIT(1))                     //trigger dma1 channel to transfer.dma1 is the uart tx channel
+#define     TXDONE          ((reg_uart_status1 & FLD_UART_TX_DONE) ? 1:0)   //1:uart module has send all data.0:still has data to send
+#define     RXERRORCLR      (reg_uart_status0  |= FLD_UART_RX_ERR_CLR)      //if uart module occur error,this bit can clear error flag bit.
+#define     RXERROR         ((reg_uart_status0 & FLD_UART_RX_ERR_FLAG)? 1:0)//uart module error status flag bit.
+
+#define  FLD_UART_BW_MUL1  0        // timeout is bit_width*1
+#define  FLD_UART_BW_MUL2  1        // timeout is bit_width*2
+#define  FLD_UART_BW_MUL3  2        // timeout is bit_width*3
+#define  FLD_UART_BW_MUL4  3        // timeout is bit_width*4
 
 
 #if(MCU_CORE_TYPE == MCU_CORE_8266)
-#define UART_CONTINUE_DELAY_EN          1
+	#define UART_CONTINUE_DELAY_EN          1
 #else
-#define UART_CONTINUE_DELAY_EN          0
+	#define UART_CONTINUE_DELAY_EN          0
 #endif
 
 volatile unsigned char uart_tx_busy_flag = 0;                   // must "volatile"
-static unsigned char *tx_buff = NULL;
+static unsigned char   *tx_buff = NULL;
+
 #if(UART_CONTINUE_DELAY_EN)
-static volatile unsigned int uart_continue_delay_time = 0;      // must "volatile"
-static unsigned int uart_tx_done_delay_us = 900;
+	static volatile unsigned int uart_continue_delay_time = 0;      // must "volatile"
+	static unsigned int uart_tx_done_delay_us = 900;
 #endif
 
 void uart_set_tx_busy_flag(){
     uart_tx_busy_flag = 1;
     #if(UART_CONTINUE_DELAY_EN)
-    uart_continue_delay_time = 0;
+    	uart_continue_delay_time = 0;
     #endif
 }
 
-void uart_clr_tx_busy_flag(void)
-{
+void uart_clr_tx_busy_flag(){
     #if(UART_CONTINUE_DELAY_EN)
-    uart_continue_delay_time = clock_time() | 1; // make sure not zero
+    	uart_continue_delay_time = clock_time() | 1; // make sure not zero
     #else
-    uart_tx_busy_flag = 0;
+    	uart_tx_busy_flag = 0;
     #endif
 }
 
@@ -78,8 +82,8 @@ unsigned char uart_tx_is_busy(){
 */
 void uart_Reset(void){
 
-	reg_rst_clk0 |= FLD_RST_UART;
-	reg_rst_clk0 &= (~FLD_RST_UART);
+	BM_SET(reg_rst_clk0, FLD_RST_UART);
+	BM_CLR(reg_rst_clk0, FLD_RST_UART);
 }
 /**********************************************************
 *
@@ -120,32 +124,39 @@ unsigned char uart_ErrorCLR(void){
 
 unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc, UART_ParityTypeDef Parity,UART_StopBitTypeDef StopBit)
 {
-
 	if(bwpc<3)
 		return 0;
-	//1.config bautrate and timeout
-	reg_uart_clk_div = (uartCLKdiv|FLD_UART_CLK_DIV_EN); //set uart clk divider and enable clock divider
-	reg_uart_ctrl0 = (FLD_UART_RX_DMA_EN|FLD_UART_TX_DMA_EN|bwpc); //set bit width and enable rx/tx DMA
-	reg_uart_rx_timeout = (((bwpc+1)*12)|FLD_UART_BW_MUL2);
+	/*******************1.config bautrate and timeout********************************/
+	//set uart clk divider and enable clock divider
+	reg_uart_clk_div = MASK_VAL(FLD_UART_CLK_DIV, uartCLKdiv, FLD_UART_CLK_DIV_EN, 1);
 
-	//2.config parity function
-	if(Parity){ // if need parity, config parity function
-		reg_uart_ctrl0 |= FLD_UART_PARITY_EN; //enable parity
+	//set bit width
+	reg_uart_ctrl0   = MASK_VAL( FLD_UART_BPWC, bwpc);
+	//set timeout period
+	reg_uart_rx_timeout = MASK_VAL(FLD_UART_TIMEOUT_BW, (bwpc+1)*12, FLD_UART_TIMEOUT_MUL, FLD_UART_BW_MUL2);
+
+	/*******************2.config parity function*************************************/
+	if(Parity){                                          // if need parity, config parity function
+		BM_SET(reg_uart_ctrl0, FLD_UART_PARITY_EN);      //enable parity
+
 		if(PARITY_EVEN == Parity){
-			reg_uart_ctrl0 &= (~FLD_UART_PARITY_SEL); //enable even parity
+			BM_CLR(reg_uart_ctrl0, FLD_UART_PARITY_SEL); //enable even parity
 		}
 		else if(PARITY_ODD == Parity){
-			reg_uart_ctrl0 |= FLD_UART_PARITY_SEL; //enable odd parity
-		}else{
+			BM_SET(reg_uart_ctrl0, FLD_UART_PARITY_SEL); //enable odd parity
+		}
+		else{
 			return 0;
 		}
-	}else{ //if not parity,close the parity function
-		reg_uart_ctrl0 &= (~FLD_UART_PARITY_EN); //close parity function
+	}
+	else{ //if not parity,close the parity function
+		BM_CLR(reg_uart_ctrl0, FLD_UART_PARITY_EN);  //close parity function
 	}
 
-	//3.config stop bit
-	reg_uart_ctrl0 &= (~FLD_UART_STOP_BIT);
-	reg_uart_ctrl0 |= StopBit;
+	/******************3.config stop bit**********************************************/
+	BM_CLR(reg_uart_ctrl0, FLD_UART_STOP_BIT);
+	reg_uart_ctrl0 |= MASK_VAL(FLD_UART_STOP_BIT, StopBit);
+
 	return 1;
 }
 
@@ -158,23 +169,25 @@ unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc, UART_Pari
 void uart_DmaModeInit(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn)
 {
 	//1.enable UART DMA mode
-	reg_uart_ctrl0 |= (FLD_UART_RX_DMA_EN | FLD_UART_TX_DMA_EN);
+	BM_SET(reg_uart_ctrl0, FLD_UART_RX_DMA_EN | FLD_UART_TX_DMA_EN);
+
     //2.config DMAx mode
-	reg_dma0_ctrl |= FLD_DMA_WR_MEM;    //set DMA0 mode to 0x01 for receive.write to memory
-	reg_dma1_ctrl &= (~FLD_DMA_WR_MEM); //set DMA1 mode to 0x00 for send. read from memory
+	BM_SET(reg_dma0_ctrl, FLD_DMA_WR_MEM); //set DMA0 mode to 0x01 for receive.write to memory
+	BM_CLR(reg_dma1_ctrl, FLD_DMA_WR_MEM); //set DMA1 mode to 0x00 for send. read from memory
+
 	//3.config dma irq
 	if(dmaRxIrqEn){
-		reg_dma_chn_irq_msk |= FLD_DMA_UART_RX;    //enable uart rx dma interrupt
-		reg_irq_mask |= FLD_IRQ_DMA_EN;
+		BM_SET(reg_dma_chn_irq_msk, FLD_DMA_UART_RX); //enable uart rx dma interrupt
+		BM_SET(reg_irq_mask, FLD_IRQ_DMA_EN);
 	}else{
-		reg_dma_chn_irq_msk &= (~FLD_DMA_UART_RX); //disable uart rx dma interrupt
+		BM_CLR(reg_dma_chn_irq_msk, FLD_DMA_UART_RX); //disable uart rx dma interrupt
 	}
 
 	if(dmaTxIrqEn){
-		reg_dma_chn_irq_msk |= FLD_DMA_UART_TX;    //enable uart tx dma interrupt
-		reg_irq_mask |= FLD_IRQ_DMA_EN;
+		BM_SET(reg_dma_chn_irq_msk, FLD_DMA_UART_TX);  //enable uart tx dma interrupt
+		BM_SET(reg_irq_mask, FLD_IRQ_DMA_EN);
 	}else{
-		reg_dma_chn_irq_msk &= (~FLD_DMA_UART_TX); //disable uart tx dma interrupt
+		BM_CLR(reg_dma_chn_irq_msk, FLD_DMA_UART_TX);  //disable uart tx dma interrupt
 	}
 }
 
@@ -191,37 +204,42 @@ void uart_DmaModeInit(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn)
  * @return    none
  * @notice    suggust closing tx irq.
  */
-void uart_NotDmaModeInit(unsigned char rx_level,unsigned char tx_level,unsigned char rx_irq_en,unsigned char tx_irq_en)
+void uart_notDmaModeInit(unsigned char rx_level,unsigned char tx_level,unsigned char rx_irq_en,unsigned char tx_irq_en)
 {
 	//1.set the trig level.
-	reg_uart_ctrl2 &= (~BIT_RNG(8,15));
-	reg_uart_ctrl2 |= (((rx_level&0x0f)<<8)|((tx_level&0x0f)<<12));
+	BM_CLR(reg_uart_ctrl2, FLD_UART_CTRL3_RX_IRQ_TRIG_LEVEL);
+	reg_uart_ctrl2 |= MASK_VAL(FLD_UART_CTRL3_RX_IRQ_TRIG_LEVEL, rx_level);
+
+	BM_CLR(reg_uart_ctrl2, FLD_UART_CTRL3_TX_IRQ_TRIG_LEVEL);
+	reg_uart_ctrl2 |= MASK_VAL(FLD_UART_CTRL3_TX_IRQ_TRIG_LEVEL, tx_level);
+
 	//2.config the irq.
 	if(rx_irq_en){
-		reg_uart_ctrl0 |= FLD_UART_RX_IRQ_EN; //enable uart rx irq.
-		reg_irq_mask |= FLD_IRQ_UART_EN;      //enable uart irq.
+		BM_SET(reg_uart_ctrl0, FLD_UART_RX_IRQ_EN); //enable uart rx irq
+		BM_SET(reg_irq_mask, FLD_IRQ_UART_EN);      //enable uart irq.
 	}else{
-		reg_uart_ctrl0 &= (~FLD_UART_RX_IRQ_EN);//disable uart rx irq.
+		BM_CLR(reg_uart_ctrl0, FLD_UART_RX_IRQ_EN); //disable uart rx irq
 	}
 	if(tx_irq_en){
-		reg_uart_ctrl0 |= FLD_UART_TX_IRQ_EN; //enable uart tx irq
-		reg_irq_mask |= FLD_IRQ_UART_EN;      //enable uart irq.
+		BM_SET(reg_uart_ctrl0, FLD_UART_TX_IRQ_EN);  //enable uart tx irq
+		BM_SET(reg_irq_mask, FLD_IRQ_UART_EN);       //enable uart irq
 	}else{
-		reg_uart_ctrl0 &= (~FLD_UART_TX_IRQ_EN);//disable uart tx irq.
+		BM_CLR(reg_uart_ctrl0, FLD_UART_TX_IRQ_EN);  //disable uart tx irq
 	}
 }
 /********
  * @ brief   in not dma mode, receive the data.
- *           the method to read data should be like this: read receive data in the order from 0x90 to 0x93.
+ *           the method to read data should be like this: read received data in the order from 0x90 to 0x93.
  *           then repeat the order.
  * @ param[in] none
  * @ return    the data received from the uart.
  */
-unsigned char uart_NotDmaModeRevData(void)
+unsigned char uart_notDmaModeRevData(void)
 {
 	static unsigned char uart_RevIndex = 0;
 	unsigned char tmpRevData = 0;
-	tmpRevData = read_reg8(0x90+uart_RevIndex);
+
+	tmpRevData = read_reg8(0x90 + uart_RevIndex);
 	uart_RevIndex++;
 	uart_RevIndex &= 0x03;
 	return tmpRevData;
@@ -229,17 +247,18 @@ unsigned char uart_NotDmaModeRevData(void)
 
 /**
  * @brief     uart send data function with not DMA method.
- *            variable uart_TxIndex,it must cycle the four registers 0x90 0x91 0x92 0x93 for the design of SOC.
+ *            variable uart_TxIndex,it must loop the four registers 0x90 0x91 0x92 0x93 for the design of SOC.
  *            so we need variable to remember the index.
  * @param[in] uartData - the data to be send.
  * @return    1: send success ; 0: uart busy
  */
-unsigned char UART_NotDmaModeSendByte(unsigned char uartData)
+unsigned char uart_notDmaModeSendByte(unsigned char uartData)
 {
 	static unsigned char uart_TxIndex = 0;
+
 	write_reg8(0x90+uart_TxIndex,uartData);
 	uart_TxIndex++;
-	uart_TxIndex &= 0x03;// cycle the four register 0x90 0x91 0x92 0x93.
+	uart_TxIndex &= 0x03;    //cycle the four register 0x90 0x91 0x92 0x93.
 }
 
 /********************************************************************************
@@ -257,6 +276,105 @@ unsigned char uart_Send(unsigned char* addr){
 	reg_dma1_addr = addr;   //packet data, start address is sendBuff+1
 	STARTTX;
 	return 1;
+}
+
+/****************************************************************************************
+*
+*	@brief	data receive buffer initiate function. DMA would move received uart data to the address space, uart packet length
+*			needs to be no larger than (recBuffLen - 4).
+*
+*	@param	*recAddr:	receive buffer's address info.
+*			recBuffLen:	receive buffer's length, the maximum uart packet length should be smaller than (recBuffLen - 4)
+*
+*	@return	none
+*/
+
+void uart_RecBuffInit(unsigned char *recAddr, unsigned short recBuffLen){
+	unsigned char bufLen;
+	bufLen = recBuffLen>>4;
+	reg_dma0_addr = (unsigned short)(recAddr);//set receive buffer address
+
+	BM_CLR(reg_dma0_ctrl, FLD_DMA_BUF_SIZE);
+	reg_dma0_ctrl |= MASK_VAL(FLD_DMA_BUF_SIZE, bufLen);  //set receive buffer size
+}
+
+void uart_txBuffInit(unsigned short txBuffLen){
+	unsigned char bufLen;
+	bufLen = txBuffLen >> 4;
+
+	BM_CLR(reg_dma1_ctrl, FLD_DMA_BUF_SIZE);
+	reg_dma1_ctrl |= MASK_VAL(FLD_DMA_BUF_SIZE, bufLen); //set receive buffer size
+}
+/****************************************************************************************
+*
+*	@brief	data receive buffer initiate function. DMA would move received uart data to the address space, uart packet length
+*			needs to be no larger than (recBuffLen - 4).
+*
+*	@param	*recAddr:	receive buffer's address info.
+*			recBuffLen:	receive buffer's length, the maximum uart packet length should be smaller than (recBuffLen - 4)
+*
+*	@return	none
+*/
+
+void uart_BuffInit(unsigned char *recAddr, unsigned short recBuffLen, unsigned char *txAddr){
+	unsigned char bufLen;
+	bufLen = recBuffLen>>4;
+	reg_dma0_addr = (unsigned short)((unsigned int)(recAddr)); //set receive buffer address
+
+	BM_CLR(reg_dma0_ctrl, FLD_DMA_BUF_SIZE);
+	reg_dma0_ctrl |= MASK_VAL(FLD_DMA_BUF_SIZE, bufLen); //set receive buffer size
+
+    tx_buff = txAddr;
+}
+
+/******************************************************************************
+*
+*	@brief		get the uart IRQ source and clear the IRQ status, need to be called in the irq process function
+*
+*	@return		uart_irq_src- enum variable of uart IRQ source, 'UARTRXIRQ' or 'UARTTXIRQ'
+*
+*/
+enum UARTIRQSOURCE uart_IRQSourceGet(void){
+	unsigned char irqS;
+
+	irqS = reg_dma_irq_src;
+	reg_dma_irq_src = irqS; //clear irq source
+
+	if(irqS & 0x01){
+		return UARTRXIRQ;
+	}
+	else if(irqS & 0x02){
+		return UARTTXIRQ;
+	}
+	else{
+		return UARTNONEIRQ;
+	}
+}
+
+
+/************************Application Example******************
+unsigned char recBuff[128];//Declare a receive buffer
+void uart_useExample(void ){
+	CLK32M_UART9600;
+	uart_RecBuffInit(&recBuff,128);
+	//Initial IO,UART rx & tx declare
+	write_reg8(0x800596,0xC3);
+	write_reg8(0x8005B2,0x3C);
+}
+*/
+
+enum UARTIRQSOURCE uart_IRQSourceGet_kma(void){
+	unsigned char irqS;
+	irqS = reg_dma_irq_src;
+	reg_dma_irq_src = irqS; //clear irq source
+#if(!UART_CONTINUE_DELAY_EN)
+	if(irqS & 0x01)	return UARTRXIRQ;
+	if(irqS & 0x02)	return UARTTXIRQ;
+
+	return UARTRXIRQ;
+#else
+	return (irqS & UARTIRQ_MASK);
+#endif
 }
 
 /********************************************************************************
@@ -288,89 +406,6 @@ unsigned char uart_Send_kma(unsigned char* addr){
 	return 1;
 }
 
-/****************************************************************************************
-*
-*	@brief	data receive buffer initiate function. DMA would move received uart data to the address space, uart packet length
-*			needs to be no larger than (recBuffLen - 4).
-*
-*	@param	*recAddr:	receive buffer's address info.
-*			recBuffLen:	receive buffer's length, the maximum uart packet length should be smaller than (recBuffLen - 4)
-*
-*	@return	none
-*/
-
-void uart_RecBuffInit(unsigned char *recAddr, unsigned short recBuffLen){
-	unsigned char bufLen;
-	bufLen = recBuffLen/16;
-	reg_dma0_addr = (unsigned short)(recAddr);//set receive buffer address
-
-	reg_dma0_ctrl &= (~FLD_DMA_BUF_SIZE);
-	reg_dma0_ctrl |= bufLen;  //set receive buffer size
-}
-
-/****************************************************************************************
-*
-*	@brief	data receive buffer initiate function. DMA would move received uart data to the address space, uart packet length
-*			needs to be no larger than (recBuffLen - 4).
-*
-*	@param	*recAddr:	receive buffer's address info.
-*			recBuffLen:	receive buffer's length, the maximum uart packet length should be smaller than (recBuffLen - 4)
-*
-*	@return	none
-*/
-
-void uart_BuffInit(unsigned char *recAddr, unsigned short recBuffLen, unsigned char *txAddr){
-	unsigned char bufLen;
-	bufLen = recBuffLen/16;
-	reg_dma0_addr = (unsigned short)((unsigned int)(recAddr)); //set receive buffer address
-
-	reg_dma0_ctrl &= (~FLD_DMA_BUF_SIZE);
-	reg_dma0_ctrl |= bufLen;  //set receive buffer size
-
-    tx_buff = txAddr;
-}
-
-/******************************************************************************
-*
-*	@brief		get the uart IRQ source and clear the IRQ status, need to be called in the irq process function
-*
-*	@return		uart_irq_src- enum variable of uart IRQ source, 'UARTRXIRQ' or 'UARTTXIRQ'
-*
-*/
-enum UARTIRQSOURCE uart_IRQSourceGet(void){
-	unsigned char irqS;
-
-	irqS = reg_dma_irq_src;
-	reg_dma_irq_src = irqS; //clear irq source
-
-	return (irqS & UARTIRQ_MASK);
-}
-/************************Application Example******************
-unsigned char recBuff[128];//Declare a receive buffer
-void uart_useExample(void ){
-	CLK32M_UART9600;
-	uart_RecBuffInit(&recBuff,128);
-	//Initial IO,UART rx & tx declare
-	write_reg8(0x800596,0xC3);
-	write_reg8(0x8005B2,0x3C);
-}
-*/
-
-enum UARTIRQSOURCE uart_IRQSourceGet_kma(void){
-	unsigned char irqS;
-	irqS = reg_dma_irq_src;
-	reg_dma_irq_src = irqS; //clear irq source
-#if(!UART_CONTINUE_DELAY_EN)
-	if(irqS & 0x01)	return UARTRXIRQ;
-	if(irqS & 0x02)	return UARTTXIRQ;
-
-	return UARTRXIRQ;
-#else
-	return (irqS & UARTIRQ_MASK);
-#endif
-}
-
-
 //////////////////////////////////////////////////////////////////////
 void uart_io_init(unsigned char uart_io_sel){
 #if(MCU_CORE_TYPE == MCU_CORE_8266)
@@ -388,7 +423,9 @@ void uart_io_init(unsigned char uart_io_sel){
 #endif
 }
 
-#if(MCU_CORE_TYPE == MCU_CORE_8267)
+#if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
+	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
+	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269))
 /**
  * @brief UART hardware flow control configuration. Configure RTS pin.
  * @param[in]   enable: enable or disable RTS function.
@@ -401,32 +438,32 @@ void uart_io_init(unsigned char uart_io_sel){
 void uart_RTSCfg(unsigned char enable, unsigned char mode, unsigned char thrsh, unsigned char invert)
 {
     if (enable) {
-    	reg_gpio_pc_gpio &= (~BIT(4)); //disable GPIOC_GP4 Pin's GPIO function
-        reg_gpio_config_func2 |= FLD_UART_RTS_PWM4;//BIT(4);// enable GPIOC_GP4 Pin as RTS Pin.BIT4:FLD_UART_RTS_PWM4
-        reg_uart_ctrl2 |= FLD_UART_CTRL2_RTS_EN; //enable RTS function
+    	gpio_set_func(GPIO_PC4, AS_UART);   //disable GPIOC_GP4 Pin's GPIO function
+        BM_SET(reg_gpio_config_func2, FLD_UART_RTS_PWM4);// enable GPIOC_GP4 Pin as RTS Pin.BIT4:FLD_UART_RTS_PWM4
+        BM_SET(reg_uart_ctrl2, FLD_UART_CTRL2_RTS_EN);   //enable RTS function
     }
     else {
-    	reg_gpio_pc_gpio |= BIT(4);   //enable GPIOC_GP4 Pin as GPIO function.
-    	reg_uart_ctrl2 &= (~FLD_UART_CTRL2_RTS_EN); //disable RTS function
+    	gpio_set_func(GPIO_PC4, AS_GPIO);  //enable GPIOC_GP4 Pin as GPIO function.
+    	BM_CLR(reg_uart_ctrl2, FLD_UART_CTRL2_RTS_EN); //disable RTS function
     }
 
     if (mode) {
-    	reg_uart_ctrl2 |= FLD_UART_CTRL2_RTS_MANUAL_EN;   //enable manual mode
+    	BM_SET(reg_uart_ctrl2, FLD_UART_CTRL2_RTS_MANUAL_EN); //enable manual mode
     }
     else {
-    	reg_uart_ctrl2 &= (~FLD_UART_CTRL2_RTS_MANUAL_EN);//enable auto mode
+    	BM_CLR(reg_uart_ctrl2, FLD_UART_CTRL2_RTS_MANUAL_EN); //enable auto mode
     }
 
     if (invert) {
-    	reg_uart_ctrl2 |= FLD_UART_CTRL2_RTS_PARITY;     //invert RTS parity
+    	BM_SET(reg_uart_ctrl2, FLD_UART_CTRL2_RTS_PARITY);    //invert RTS parity
     }
     else {
-    	reg_uart_ctrl2 &= (~FLD_UART_CTRL2_RTS_PARITY);
+    	BM_CLR(reg_uart_ctrl2, FLD_UART_CTRL2_RTS_PARITY);
     }
 
     //set threshold
-    reg_uart_ctrl2 &= (~FLD_UART_CTRL2_RTS_TRIG_LVL);
-    reg_uart_ctrl2 |= (thrsh&0xff);
+    BM_CLR(reg_uart_ctrl2, FLD_UART_CTRL2_RTS_TRIG_LVL);
+    reg_uart_ctrl2 |= MASK_VAL(FLD_UART_CTRL2_RTS_TRIG_LVL, (thrsh&0xff));
 }
 
 /**
@@ -437,10 +474,10 @@ void uart_RTSCfg(unsigned char enable, unsigned char mode, unsigned char thrsh, 
 void uart_RTSLvlSet(unsigned char polarity)
 {
     if (polarity) {
-    	reg_uart_ctrl2 |= FLD_UART_CTRL2_RTS_MANUAL_VAL;
+    	BM_SET(reg_uart_ctrl2, FLD_UART_CTRL2_RTS_MANUAL_VAL);
     }
     else {
-    	reg_uart_ctrl2 &= (~FLD_UART_CTRL2_RTS_MANUAL_VAL);
+    	BM_CLR(reg_uart_ctrl2, FLD_UART_CTRL2_RTS_MANUAL_VAL);
     }
 }
 
@@ -453,20 +490,20 @@ void uart_RTSLvlSet(unsigned char polarity)
 void uart_CTSCfg(unsigned char enable, unsigned char select)
 {
     if (enable) {
-    	reg_gpio_pc_gpio &= (~BIT(5)); //disable GPIOC_GP5 Pin's GPIO function
-    	reg_gpio_config_func2 |= FLD_UART_CTS_PWM5;//BIT(5);//enable GPIOC_GP5 Pin as CTS Pin.BIT5:FLD_UART_CTS_PWM5
-    	reg_uart_ctrl0 |= FLD_UART_CTS_EN;  //enable CTS function
+    	gpio_set_func(GPIO_PC5, AS_UART);                 //disable GPIOC_GP5 Pin's GPIO function
+    	BM_SET(reg_gpio_config_func2, FLD_UART_CTS_PWM5); //enable GPIOC_GP5 Pin as CTS Pin.BIT5:FLD_UART_CTS_PWM5
+    	BM_SET(reg_uart_ctrl0, FLD_UART_CTS_EN);          //enable CTS function
     }
     else {
-    	reg_gpio_pc_gpio |= BIT(5);//enable GPIO_GP5 Pin's GPIO function
-    	reg_uart_ctrl0 &= (~FLD_UART_CTS_EN); //disable CTS function
+    	gpio_set_func(GPIO_PC5, AS_GPIO);        //enable GPIO_GP5 Pin's GPIO function
+    	BM_CLR(reg_uart_ctrl0, FLD_UART_CTS_EN); //disable CTS function
     }
 
     if (select) {
-    	reg_uart_ctrl0 |= FLD_UART_CTS_I_SELECT; //
+    	BM_SET(reg_uart_ctrl0, FLD_UART_CTS_I_SELECT);
     }
     else {
-    	reg_uart_ctrl0 &= (~FLD_UART_CTS_I_SELECT); //invert CTS
+    	BM_CLR(reg_uart_ctrl0, FLD_UART_CTS_I_SELECT); //invert CTS
     }
 }
 #endif
