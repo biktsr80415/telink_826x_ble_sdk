@@ -5,6 +5,7 @@
 #include "../../proj/drivers/uart.h"
 #include "../../proj/drivers/i2c.h"
 #include "../../proj/drivers/spi.h"
+#include "app_gpio_irq.h"
 
 
 #if (__PROJECT_8261_DRIVER_TEST__ || __PROJECT_8266_DRIVER_TEST__ || __PROJECT_8267_DRIVER_TEST__ || __PROJECT_8269_DRIVER_TEST__)
@@ -31,6 +32,10 @@ void user_init()
 #if (DRIVER_TEST_MODE == TEST_HW_TIMER)
 
 #elif (DRIVER_TEST_MODE == TEST_GPIO_IRQ)
+
+	app_gpio_irq_test_init(GPIO_TEST_PIN, pol_falling, irq_gpio); // pull up resistor
+	app_led_init();
+
 #elif (DRIVER_TEST_MODE == TEST_UART)
 
 	app_uart_test_init();
