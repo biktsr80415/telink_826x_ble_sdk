@@ -43,28 +43,6 @@ int event_handler(u32 h, u8 *para, int n)
 #else
 				gpio_write(GREEN_LED,OFF);
 #endif
-
-
-#if ( SMP_JUST_WORK || SMP_PASSKEY_ENTRY )
-				u8 bond_number = blc_smp_param_getCurrentBondingDeviceNumber();  //get bonded device number
-
-				if(bond_number)   //set direct adv
-				{
-					smp_param_save_t  bondInfo;
-					blc_smp_param_loadByIndex( bond_number - 1, &bondInfo);  //get the latest bonding device (index: bond_number-1 )
-					//set direct adv
-					 bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16,
-										ADV_TYPE_CONNECTABLE_DIRECTED_LOW_DUTY, OWN_ADDRESS_PUBLIC,
-										bondInfo.peer_addr_type,  bondInfo.peer_addr,
-										MY_APP_ADV_CHANNEL,
-										ADV_FP_NONE);
-
-					//it is recommended that direct adv only last for several seconds, then switch to indirect adv
-					bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE, 1);
-				}
-#endif
-
-
 			}
 				break;
 			case BLT_EV_FLAG_PAIRING_BEGIN:

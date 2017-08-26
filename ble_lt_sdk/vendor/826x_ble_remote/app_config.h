@@ -37,7 +37,7 @@ extern "C" {
 
 
 #if (REMOTE_IR_ENABLE)
-	#define	BLE_IR_SHARING_TIMING_ENABLE				1
+	#define	BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE
 #endif
 
 

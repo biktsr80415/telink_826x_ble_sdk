@@ -32,11 +32,11 @@ extern "C" {
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
 #endif
 #define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
-#define SIG_PROC_ENABLE 					1   //To known if the Master accepted or rejected Connection_Parameters_Update or not!
+#define SIG_PROC_ENABLE 					0   //To known if the Master accepted or rejected Connection_Parameters_Update or not!
 
 /////////////////// DEBUG  /////////////////////////////////
 //826x module's pin simulate as a uart tx, Just for debugging
-#define PRINT_DEBUG_INFO               		1	//open/close myprintf
+#define PRINT_DEBUG_INFO               		0	//open/close myprintf
 
 
 //////////////// SMP SETTING  //////////////////////////////

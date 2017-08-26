@@ -235,15 +235,8 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 
-#ifndef BLE_IR_SHARING_TIMING_ENABLE
-#define BLE_IR_SHARING_TIMING_ENABLE					0
-#endif
+#define	BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN		0
 
-
-#if (BLE_IR_SHARING_TIMING_ENABLE)
-	#define	BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE	0
-	#define	BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN	0
-#endif
 
 
 //conn param update/map update

@@ -18,14 +18,11 @@
 #endif
 
 
-
 MYFIFO_INIT(hci_rx_fifo, 72, 2);
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
-
 MYFIFO_INIT(blt_rxfifo, 64, 8);
 MYFIFO_INIT(blt_txfifo, 40, 16);
-//MYFIFO_INIT(blt_txfifo, 80, 8);
 //////////////////////////////////////////////////////////////////////////////
 //	Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
@@ -40,8 +37,6 @@ const u8	tbl_scanRsp [] = {
 
 
 u8 	ui_ota_is_working = 0;
-u8  ui_task_flg;
-u32	ui_advertise_begin_tick;
 
 #if SIG_PROC_ENABLE
 /*------------------------------------------------------------------- l2cap data pkt(SIG) ---------------------------------------------------*
@@ -290,7 +285,6 @@ void user_init()
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU(tbl_mac);   //mandatory
 
-	//blc_ll_initScanning_module(tbl_mac);		//scan module: 		 optional
 	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
 	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
 	blc_ll_initPowerManagement_module();        //pm module:      	 optional
@@ -324,41 +318,17 @@ void user_init()
 
 
 	////////////////// config adv packet /////////////////////
-#if ( SMP_JUST_WORK || SMP_PASSKEY_ENTRY )
-	u8 bond_number = blc_smp_param_getCurrentBondingDeviceNumber();  //get bonded device number
-	smp_param_save_t  bondInfo;
-	if(bond_number)   //at least 1 bonding device exist
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16,
+								 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC,
+								 0,  NULL,
+								 MY_APP_ADV_CHANNEL,
+								 ADV_FP_NONE);
+
+	if(status != BLE_SUCCESS)
 	{
-		blc_smp_param_loadByIndex( bond_number - 1, &bondInfo);  //get the latest bonding device (index: bond_number-1 )
-
-	}
-
-	if(bond_number)   //set direct adv
-	{
-		//set direct adv
-		u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16,
-										ADV_TYPE_CONNECTABLE_DIRECTED_LOW_DUTY, OWN_ADDRESS_PUBLIC,
-										bondInfo.peer_addr_type,  bondInfo.peer_addr,
-										MY_APP_ADV_CHANNEL,
-										ADV_FP_NONE);
-		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
-
-		//it is recommended that direct adv only last for several seconds, then switch to indirect adv
-		bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE, 1);
-
-	}
-	else   //set indirect adv
-#endif
-	{
-		u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16,
-										 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC,
-										 0,  NULL,
-										 MY_APP_ADV_CHANNEL,
-										 ADV_FP_NONE);
-		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
-	}
-
-
+		write_reg8(0x8000, 0x11);
+		while(1);
+	}  //debug: adv setting err
 
 
     printf("\n\rAdv parameters setting success!\n\r");
@@ -396,11 +366,11 @@ void user_init()
 		reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX; //clear uart rx/tx status
 		CLK16M_UART115200;
 		uart_BuffInit(hci_rx_fifo_b, hci_rx_fifo.size, hci_tx_fifo_b);
-//		blc_register_hci_handler (blc_rx_from_uart, blc_hci_tx_to_uart);		//default handler
 		extern int rx_from_uart_cb (void);
 		extern int tx_to_uart_cb (void);
 		blc_register_hci_handler(rx_from_uart_cb,tx_to_uart_cb);				//customized uart handler
 	#endif
+
 	extern int event_handler(u32 h, u8 *para, int n);
 	blc_hci_registerControllerEventHandler(event_handler);		//register event callback
 	bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
@@ -429,7 +399,6 @@ void user_init()
 		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
 	#endif
 #endif
-	ui_advertise_begin_tick = clock_time();
 }
 
 extern void battery_power_check(void);
@@ -439,16 +408,18 @@ extern void battery_power_check(void);
 void main_loop ()
 {
 	static u32 tick_loop;
-
 	tick_loop ++;
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	blt_sdk_main_loop();
 
-
 	////////////////////////////////////// UI entry /////////////////////////////////
 #if (BATT_CHECK_ENABLE)
-	battery_power_check();
+	if(tick_loop%300 == 0)
+	{
+		ADC_MODULE_ENABLE;
+		battery_power_check();
+	}
 #endif
 	//  add spp UI task
 	app_power_management ();
