@@ -8,12 +8,14 @@
 
 #if (DRIVER_TEST_MODE == TEST_IIC)
 
+#define I2C_MASTER_EN        0  //1:dma mode ; ; ; 0: not dma mode
+
 #define  SLAVE_RAM_ADDR      0x8001
 #define  SPI_DMA_WRITE_SIZE  16
 
 #define  I2C_SLAVE_MAP_MODE   0
 #define  I2C_SLAVE_DMA_MODE   1
-#define  I2C_SLAVE_MODE_SEL  I2C_SLAVE_MAP_MODE
+#define  I2C_SLAVE_MODE_SEL  I2C_SLAVE_DMA_MODE
 
 unsigned char i2c_read_operation = 0, i2c_write_operation = 0;   // indicate i2c irq
 
@@ -25,9 +27,9 @@ unsigned char i2c_read_buff[SPI_DMA_WRITE_SIZE] = {0x00};
 
 void app_i2c_test_init(void){
 
-	i2c_pin_initial(GPIO_PC0, GPIO_PC1);
+	i2c_pin_initial(I2C_GPIO_GROUP_C0C1);
 #if I2C_MASTER_EN
-	i2c_master_init0(0x5c,0x14);//para1:ID;para2:DivClock,i2c clock = system_clock/4*DivClock
+	i2c_master_init_div(0x5c,0x14);//para1:ID;para2:DivClock,i2c clock = system_clock/4*DivClock
 #else
 	#if(I2C_SLAVE_MODE_SEL == I2C_SLAVE_DMA_MODE)
 		i2c_slave_init(0x5c,I2C_SLAVE_DMA,NULL); // ID, slave mode,don't care
@@ -52,9 +54,9 @@ void app_i2c_test_start(void){
 	#elif (I2C_SLAVE_MODE_SEL == I2C_SLAVE_MAP_MODE)
 		i2c_mapping_write_data[0] += 1;
 		i2c_mapping_write_data[0] &= 0xff;
-		i2c_write_mapping(i2c_mapping_write_data,sizeof(i2c_mapping_write_data));///0x0b
+		i2c_write_mapping(i2c_mapping_write_data, 0x0b);///0x0b sizeof(i2c_mapping_write_data)
 		WaitMs(1000);
-		i2c_read_mapping(i2c_read_buff,sizeof(i2c_read_buff));///0x0b
+		i2c_read_mapping(i2c_read_buff,0x0b);///  sizeof(i2c_read_buff)
 	#endif
 #else
 	WaitMs(100);

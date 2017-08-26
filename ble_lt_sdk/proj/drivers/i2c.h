@@ -3,6 +3,16 @@
 
 #include "../common/types.h"
 
+typedef enum {
+#if ((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+	I2C_GPIO_GROUP_A3A4,
+	I2C_GPIO_GROUP_B6B7,
+	I2C_GPIO_GROUP_C0C1,
+#elif (MCU_CORE_TYPE == MCU_CORE_8266)
+	I2C_GPIO_GROUP_E7F1,
+#endif
+}I2C_GPIO_GroupTypeDef;
+
 //I2C irq handler
 typedef enum {
 	I2C_IRQ_NONE = 0,
@@ -41,7 +51,7 @@ void I2C_SlaveIrqClr(I2C_I2CIrqSrcTypeDef src);
  * param[in] gpio_scl -- the pin as clock line of i2c.
  * return none
  */
-void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl);
+void i2c_pin_initial(I2C_GPIO_GroupTypeDef i2c_pin_group);
 /**
  * @brief      This function set the id of slave device and the speed of I2C interface
  *             note: the param ID contain the bit of writting or reading.
@@ -52,7 +62,7 @@ void i2c_pin_initial(u32 gpio_sda, u32 gpio_scl);
  *             I2C clock = System clock / (4*DivClock);if the datasheet you look at is 2*,pls modify it.
  * @return     none
  */
-void i2c_master_init0(unsigned char slave_id, unsigned char div_clock);
+void i2c_master_init_div(unsigned char slave_id, unsigned char div_clock);
 
 /**
  * @brief      This function set the id of slave device and the speed of I2C interface
@@ -63,7 +73,7 @@ void i2c_master_init0(unsigned char slave_id, unsigned char div_clock);
  * @param[in]  i2c_speed is in Khz. for example: i2c_speed is 200, indicate 200k
  * @return     none
  */
-void i2c_master_init1(unsigned char slave_id, unsigned int i2c_speed);
+void i2c_master_init_khz(unsigned char slave_id, unsigned int i2c_speed);
 /**
  *  @brief      the function config the ID of slave and mode of slave.
  *  @param[in]  device_id - it contains write or read bit,the lsb is write or read bit.

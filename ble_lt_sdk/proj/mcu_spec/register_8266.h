@@ -137,13 +137,15 @@ enum{
 #define reg_otp_blk_code		REG_ADDR8(0x18)
 
 #define reg_i2c_irq_status		REG_ADDR8(0x21)
-#define reg_i2c_clr_status		REG_ADDR8(0x22)
-#define reg_spi_clr_status      reg_i2c_clr_status
+#define reg_spi_irq_status      reg_i2c_irq_status
 enum{
 	FLD_I2C_STATUS_WR = 		BIT(1),
 	FLD_SPI_STATUS_WR =         BIT(1),
 	FLD_I2C_STATUS_RD = 		BIT(2),
 };
+#define reg_i2c_clr_status		REG_ADDR8(0x22)
+#define reg_spi_clr_status      reg_i2c_clr_status
+
 /****************************************************
  adc regs struct: begin  addr : 0x28
  *****************************************************/

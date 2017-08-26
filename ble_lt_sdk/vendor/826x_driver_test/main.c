@@ -17,6 +17,7 @@ extern void app_i2c_test_irq_proc(void);
 extern void app_uart_test_irq_proc(void);
 extern void app_spi_test_irq_proc(void);
 extern void app_timer_test_irq_proc(void);
+extern void app_gpio_irq_test_proc(void);
 
 
 _attribute_ram_code_ void irq_handler(void)
@@ -37,6 +38,11 @@ _attribute_ram_code_ void irq_handler(void)
 /***spi demo ***/
 #elif (DRIVER_TEST_MODE == TEST_SPI)
 	app_spi_test_irq_proc();
+
+#elif (DRIVER_TEST_MODE == TEST_GPIO_IRQ)
+
+	app_gpio_irq_test_proc();
+
 #endif
 
 }
