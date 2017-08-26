@@ -62,7 +62,7 @@ extern "C" {
 	#define BLE_PM_ENABLE								1
 #endif
 
-#define USB_ADV_REPORT_TO_PC_ENABLE					1  //display adv report on pc
+#define USB_ADV_REPORT_TO_PC_ENABLE						1  //display adv report on pc
 
 /////////////////////HCI ACCESS OPTIONS///////////////////////////////////////
 #define HCI_NONE		0
@@ -212,92 +212,58 @@ typedef enum
 
 #if(DEBUG_GPIO_ENABLE)
 	#if (__PROJECT_8266_FEATURE_TEST__)
-		//ch0-ch7: B0 A5 E5 F0 F1 E7 E6 E4
-		#define PB0_INPUT_ENABLE					0
-		#define PA5_INPUT_ENABLE					0
-		#define PE5_INPUT_ENABLE					0
-		#define PF0_INPUT_ENABLE					0
-		#define PF1_INPUT_ENABLE					0
-		#define PE7_INPUT_ENABLE					0
-		#define PE6_INPUT_ENABLE					0
-		#define PE4_INPUT_ENABLE					0
+		//ch0-ch5: B0 A5 E5 F0 F1 E7
+		//define debug GPIO here according to your hardware
+		#define GPIO_CHN0							GPIO_PB0
+		#define GPIO_CHN1							GPIO_PA5
+		#define GPIO_CHN2							GPIO_PE5
+		#define GPIO_CHN3							GPIO_PF0
+		#define GPIO_CHN4							GPIO_PF1
+		#define GPIO_CHN5							GPIO_PE7
+
 		#define PB0_OUTPUT_ENABLE					1
 		#define PA5_OUTPUT_ENABLE					1
 		#define PE5_OUTPUT_ENABLE					1
 		#define PF0_OUTPUT_ENABLE					1
 		#define PF1_OUTPUT_ENABLE					1
 		#define PE7_OUTPUT_ENABLE					1
-		#define PE6_OUTPUT_ENABLE					1
-		#define PE4_OUTPUT_ENABLE					1
-
-		#define DBG_CHN0_LOW		( *(unsigned char *)0x80058b &= (~0x01) )   //PB0
-		#define DBG_CHN0_HIGH		( *(unsigned char *)0x80058b |= 0x01 )
-		#define DBG_CHN0_TOGGLE		( *(unsigned char *)0x80058b ^= 0x01 )
-		#define DBG_CHN1_LOW		( *(unsigned char *)0x800583 &= (~0x20) )   //PA5
-		#define DBG_CHN1_HIGH		( *(unsigned char *)0x800583 |= 0x20 )
-		#define DBG_CHN1_TOGGLE		( *(unsigned char *)0x800583 ^= 0x20 )
-		#define DBG_CHN2_LOW		( *(unsigned char *)0x8005a3 &= (~0x20) )   //PE5
-		#define DBG_CHN2_HIGH		( *(unsigned char *)0x8005a3 |= 0x20 )
-		#define DBG_CHN2_TOGGLE		( *(unsigned char *)0x8005a3 ^= 0x20 )
-		#define DBG_CHN3_LOW		( *(unsigned char *)0x8005ab &= (~0x01) )   //PF0
-		#define DBG_CHN3_HIGH		( *(unsigned char *)0x8005ab |= 0x01 )
-		#define DBG_CHN3_TOGGLE		( *(unsigned char *)0x8005ab ^= 0x01 )
-		#define DBG_CHN4_LOW		( *(unsigned char *)0x8005ab &= (~0x02) )   //PF1
-		#define DBG_CHN4_HIGH		( *(unsigned char *)0x8005ab |= 0x02 )
-		#define DBG_CHN4_TOGGLE		( *(unsigned char *)0x8005ab ^= 0x02 )
-		#define DBG_CHN5_LOW		( *(unsigned char *)0x8005a3 &= (~0x80) )   //PE7
-		#define DBG_CHN5_HIGH		( *(unsigned char *)0x8005a3 |= 0x80 )
-		#define DBG_CHN5_TOGGLE		( *(unsigned char *)0x8005a3 ^= 0x80 )
-		#define DBG_CHN6_LOW		( *(unsigned char *)0x8005a3 &= (~0x40) )   //PE6
-		#define DBG_CHN6_HIGH		( *(unsigned char *)0x8005a3 |= 0x40 )
-		#define DBG_CHN6_TOGGLE		( *(unsigned char *)0x8005a3 ^= 0x40 )
-		#define DBG_CHN7_LOW		( *(unsigned char *)0x8005a3 &= (~0x10) )   //PE4
-		#define DBG_CHN7_HIGH		( *(unsigned char *)0x8005a3 |= 0x10 )
-		#define DBG_CHN7_TOGGLE		( *(unsigned char *)0x8005a3 ^= 0x10 )
 	#else  //8261/8267/8269
-		//ch0-ch7: A7 A4 A3 E0 A1 A0 E1 D3
-		#define PA0_INPUT_ENABLE					0
-		#define PA1_INPUT_ENABLE					0
-		#define PA3_INPUT_ENABLE					0
-		#define PA4_INPUT_ENABLE					0
-		#define PA7_INPUT_ENABLE					0
-		#define PD3_INPUT_ENABLE					0
-		#define PE0_INPUT_ENABLE					0
-		#define PE1_INPUT_ENABLE					0
-		#define PA0_OUTPUT_ENABLE					1
-		#define PA1_OUTPUT_ENABLE					1
-		#define PA3_OUTPUT_ENABLE					1
-		#define PA4_OUTPUT_ENABLE					1
-		#define PA7_OUTPUT_ENABLE					1
-		#define PD3_OUTPUT_ENABLE					1
-		#define PE0_OUTPUT_ENABLE					1
-		#define PE1_OUTPUT_ENABLE					1
+		//define debug GPIO here according to your hardware
+		//ch0-ch5: A7 A4 A3 E0 A1 A0
+		#define GPIO_CHN0							GPIO_PA7
+		#define GPIO_CHN1							GPIO_PA4
+		#define GPIO_CHN2							GPIO_PE3
+		#define GPIO_CHN3							GPIO_PE0
+		#define GPIO_CHN4							GPIO_PA1
+		#define GPIO_CHN5							GPIO_PA0
 
-		#define DBG_CHN0_LOW		( *(unsigned char *)0x800583 &= (~0x80) )   //PA7
-		#define DBG_CHN0_HIGH		( *(unsigned char *)0x800583 |= 0x80 )
-		#define DBG_CHN0_TOGGLE		( *(unsigned char *)0x800583 ^= 0x80 )
-		#define DBG_CHN1_LOW		( *(unsigned char *)0x800583 &= (~0x10) )   //PA4
-		#define DBG_CHN1_HIGH		( *(unsigned char *)0x800583 |= 0x10 )
-		#define DBG_CHN1_TOGGLE		( *(unsigned char *)0x800583 ^= 0x10 )
-		#define DBG_CHN2_LOW		( *(unsigned char *)0x800583 &= (~0x08) )   //PA3
-		#define DBG_CHN2_HIGH		( *(unsigned char *)0x800583 |= 0x08 )
-		#define DBG_CHN2_TOGGLE		( *(unsigned char *)0x800583 ^= 0x08 )
-		#define DBG_CHN3_LOW		( *(unsigned char *)0x8005a3 &= (~0x01) )   //PE0
-		#define DBG_CHN3_HIGH		( *(unsigned char *)0x8005a3 |= 0x01 )
-		#define DBG_CHN3_TOGGLE		( *(unsigned char *)0x8005a3 ^= 0x01 )
-		#define DBG_CHN4_LOW		( *(unsigned char *)0x800583 &= (~0x02) )   //PA1
-		#define DBG_CHN4_HIGH		( *(unsigned char *)0x800583 |= 0x02 )
-		#define DBG_CHN4_TOGGLE		( *(unsigned char *)0x800583 ^= 0x02 )
-		#define DBG_CHN5_LOW		( *(unsigned char *)0x800583 &= (~0x01) )   //PA0
-		#define DBG_CHN5_HIGH		( *(unsigned char *)0x800583 |= 0x01 )
-		#define DBG_CHN5_TOGGLE		( *(unsigned char *)0x800583 ^= 0x01 )
-		#define DBG_CHN6_LOW		( *(unsigned char *)0x8005a3 &= (~0x02) )   //PE1
-		#define DBG_CHN6_HIGH		( *(unsigned char *)0x8005a3 |= 0x02 )
-		#define DBG_CHN6_TOGGLE		( *(unsigned char *)0x8005a3 ^= 0x02 )
-		#define DBG_CHN7_LOW		( *(unsigned char *)0x80059b &= (~0x08) )   //PD3
-		#define DBG_CHN7_HIGH		( *(unsigned char *)0x80059b |= 0x08 )
-		#define DBG_CHN7_TOGGLE		( *(unsigned char *)0x80059b ^= 0x08 )
+		#define PA7_OUTPUT_ENABLE					1
+		#define PA4_OUTPUT_ENABLE					1
+		#define PA3_OUTPUT_ENABLE					1
+		#define PE0_OUTPUT_ENABLE					1
+		#define PA1_OUTPUT_ENABLE					1
+		#define PA0_OUTPUT_ENABLE					1
 	#endif
+
+
+	#define DBG_CHN0_LOW		gpio_write(GPIO_CHN0, 0)
+	#define DBG_CHN0_HIGH		gpio_write(GPIO_CHN0, 0)
+	#define DBG_CHN0_TOGGLE		gpio_toggle(GPIO_CHN0)
+	#define DBG_CHN1_LOW		gpio_write(GPIO_CHN1, 0)
+	#define DBG_CHN1_HIGH		gpio_write(GPIO_CHN1, 0)
+	#define DBG_CHN1_TOGGLE		gpio_toggle(GPIO_CHN1)
+	#define DBG_CHN2_LOW		gpio_write(GPIO_CHN2, 0)
+	#define DBG_CHN2_HIGH		gpio_write(GPIO_CHN2, 0)
+	#define DBG_CHN2_TOGGLE		gpio_toggle(GPIO_CHN2)
+	#define DBG_CHN3_LOW		gpio_write(GPIO_CHN3, 0)
+	#define DBG_CHN3_HIGH		gpio_write(GPIO_CHN3, 0)
+	#define DBG_CHN3_TOGGLE		gpio_toggle(GPIO_CHN3)
+	#define DBG_CHN4_LOW		gpio_write(GPIO_CHN4, 0)
+	#define DBG_CHN4_HIGH		gpio_write(GPIO_CHN4, 0)
+	#define DBG_CHN4_TOGGLE		gpio_toggle(GPIO_CHN4)
+	#define DBG_CHN5_LOW		gpio_write(GPIO_CHN5, 0)
+	#define DBG_CHN5_HIGH		gpio_write(GPIO_CHN5, 0)
+	#define DBG_CHN5_TOGGLE		gpio_toggle(GPIO_CHN5)
 #else
 	#define DBG_CHN0_LOW
 	#define DBG_CHN0_HIGH
@@ -317,12 +283,6 @@ typedef enum
 	#define DBG_CHN5_LOW
 	#define DBG_CHN5_HIGH
 	#define DBG_CHN5_TOGGLE
-	#define DBG_CHN6_LOW
-	#define DBG_CHN6_HIGH
-	#define DBG_CHN6_TOGGLE
-	#define DBG_CHN7_LOW
-	#define DBG_CHN7_HIGH
-	#define DBG_CHN7_TOGGLE
 #endif  //end of DEBUG_GPIO_ENABLE
 
 

@@ -406,7 +406,7 @@ void user_init()
 	bls_ll_setAdvEnable(1);  //adv enable
 
 
-
+	//add advertising in connection slave role
 	u8 tbl_advData_test[] = {
 		 0x09, 0x09, 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
 		 0x02, 0x01, 0x05,
@@ -469,7 +469,7 @@ void user_init()
 								  OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_ANY);
 	#else //report adv only in whitelist
 		ll_whiteList_reset();
-		u8 test_adv[6] = {0x00, 0x33, 0x33, 0x33, 0x33, 0x33};
+		u8 test_adv[6] = {0x33, 0x33, 0x33, 0x33, 0x33, 0x33};
 		ll_whiteList_add(BLE_ADDR_PUBLIC, test_adv);
 		blc_ll_setScanParameter(SCAN_TYPE_PASSIVE, SCAN_INTERVAL_100MS, SCAN_INTERVAL_100MS,
 								  OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_WL);
@@ -488,7 +488,80 @@ void user_init()
 
 
 #elif (FEATURE_TEST_MODE == TEST_ADVERTISING_SCANNING_IN_CONN_SLAVE_ROLE)
+	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
 
+
+	////// Host Initialization  //////////
+	extern void my_att_init ();
+	my_att_init (); //gatt initialization
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
+	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER ); 	//smp initialization
+	//HID_service_on_android7p0_init();  //hid device on android 7.0
+
+///////////////////// USER application initialization ///////////////////
+	u8 tbl_advData[] = {
+		 0x0A, 0x09, 's', 'l', 'a', 'v', 'e', 's', 'c', 'a', 'n',
+		 0x02, 0x01, 0x05,
+		};
+	u8	tbl_scanRsp [] = {
+			 0x0A, 0x09, 'S', 'L', 'A', 'V', 'E', 'S', 'C', 'A','N'
+		};
+	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
+	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
+
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
+									 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
+									 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
+	if(status != BLE_SUCCESS){  //adv setting err
+		write_reg8(0x8000, 0x11);  //debug
+		while(1);
+	}
+
+
+	bls_ll_setAdvEnable(1);  //adv enable
+
+
+
+	//add advertising in connection slave role
+	u8 tbl_advData_test[] = {
+			 0x09, 0x09, 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+			 0x02, 0x01, 0x05,
+			};
+		u8	tbl_scanRsp_test [] = {
+				 0x09, 0x09, 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B',
+			};
+		blc_ll_addAdvertisingInConnSlaveRole();  //adv in conn slave role
+		blc_ll_setAdvParamInConnSlaveRole(  (u8 *)tbl_advData_test, sizeof(tbl_advData_test), \
+											(u8 *)tbl_scanRsp_test, sizeof(tbl_scanRsp_test), \
+											ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
+
+
+
+	//scan setting
+	blc_ll_initScanning_module(tbl_mac);
+	blc_hci_le_setEventMask_cmd(HCI_LE_EVT_MASK_ADVERTISING_REPORT);
+	blc_hci_registerControllerEventHandler(app_event_callback);
+
+	#if 0  //report all adv
+		blc_ll_setScanParameter(SCAN_TYPE_PASSIVE, SCAN_INTERVAL_100MS, SCAN_INTERVAL_100MS,
+								  OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_ANY);
+	#else //report adv only in whitelist
+		ll_whiteList_reset();
+		u8 test_adv[6] = {0x33, 0x33, 0x33, 0x33, 0x33, 0x33};
+		ll_whiteList_add(BLE_ADDR_PUBLIC, test_adv);
+		blc_ll_setScanParameter(SCAN_TYPE_PASSIVE, SCAN_INTERVAL_100MS, SCAN_INTERVAL_100MS,
+								  OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_WL);
+	#endif
+
+	blc_ll_addScanningInConnSlaveRole();  //add scan in conn slave role
+
+
+
+
+	//ble event call back
+	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
+	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &task_terminate);
 
 #elif (FEATURE_TEST_MODE == TEST_POWER_ADV)
 
@@ -566,9 +639,9 @@ void user_init()
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS,
-									 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC,
-									 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
+	bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS,
+						ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC,
+						0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
 
 	bls_ll_setAdvEnable(1);  //adv enable
 
@@ -745,6 +818,13 @@ void user_init()
 #if (BLE_PM_ENABLE)
 	blc_ll_initPowerManagement_module();
 	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+
+	#if (FEATURE_TEST_MODE == TEST_ADVERTISING_SCANNING_IN_CONN_SLAVE_ROLE)
+		bls_pm_setSuspendMask (SUSPEND_ADV);
+	#else
+		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+	#endif
+
 	//bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &func_suspend_enter);
 	//bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_EXIT, &func_suspend_exit);
 #endif

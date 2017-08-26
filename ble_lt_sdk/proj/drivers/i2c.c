@@ -67,11 +67,13 @@ void i2c_pin_initial(I2C_GPIO_GroupTypeDef i2c_pin_group){
 		gpio_scl = GPIO_PA4;
 		if(BM_IS_SET(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff)){
 			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);     //disable B6/B7 as i2c function
-			gpio_set_func(GPIO_PB6|GPIO_PB7, AS_GPIO);                   //enable B6/B7 as gpio function
+			gpio_set_func(GPIO_PB6, AS_GPIO);                   		 //enable B6/B7 as gpio function
+			gpio_set_func(GPIO_PB7, AS_GPIO);
 		}
 		if(BM_IS_SET(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff)){
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
-			gpio_set_func(GPIO_PC0|GPIO_PC1, AS_GPIO);                  //enable C0/C1 as gpio function
+			gpio_set_func(GPIO_PC0, AS_GPIO);                  			//enable C0/C1 as gpio function
+			gpio_set_func(GPIO_PC1, AS_GPIO);
 		}
 		gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);       //10k pull_up resistor
 		gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);       //10k pull_up resistor
@@ -81,11 +83,13 @@ void i2c_pin_initial(I2C_GPIO_GroupTypeDef i2c_pin_group){
 		gpio_scl = GPIO_PB7;
 		if(BM_IS_SET(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff)){
 			BM_CLR(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff);     // disable A3/A4 as i2c function
-			gpio_set_func(GPIO_PA3|GPIO_PA4,AS_GPIO);                    // enable A3/A4 as gpio function
+			gpio_set_func(GPIO_PA3,	AS_GPIO);                    		 // enable A3/A4 as gpio function
+			gpio_set_func(GPIO_PA4,	AS_GPIO);
 		}
 		if(BM_IS_SET(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff)){
 			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
-			gpio_set_func(GPIO_PC0|GPIO_PC1,AS_GPIO);                   //enable C0/C1 as gpio function
+			gpio_set_func(GPIO_PC0,	AS_GPIO);                   		//enable C0/C1 as gpio function
+			gpio_set_func(GPIO_PC1,	AS_GPIO);
 		}
 		gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);       //10k pull_up resistor
 		gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);       //10k pull_up resistor
@@ -95,11 +99,13 @@ void i2c_pin_initial(I2C_GPIO_GroupTypeDef i2c_pin_group){
 		gpio_scl = GPIO_PC1;
 		if(BM_IS_SET(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff)){
 			BM_CLR(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff);    //disable A3/A4 as i2c function
-			gpio_set_func(GPIO_PA3|GPIO_PA4,AS_GPIO);                   // enable A3/A4 as gpio function
+			gpio_set_func(GPIO_PA3,	AS_GPIO);                   		// enable A3/A4 as gpio function
+			gpio_set_func(GPIO_PA4,	AS_GPIO);
 		}
 		if(BM_IS_SET(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff)){
 			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);    // disable B6/B7 as i2c function
-			gpio_set_func(GPIO_PB6|GPIO_PB7,AS_GPIO);                   // enable B6/B7 as gpio function
+			gpio_set_func(GPIO_PB6,	AS_GPIO);                   		// enable B6/B7 as gpio function
+			gpio_set_func(GPIO_PB7,	AS_GPIO);
 		}
 		gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);       //10k pull_up resistor
 		gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);       //10k pull_up resistor

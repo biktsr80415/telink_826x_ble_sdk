@@ -97,19 +97,22 @@ enum {
 //										reg_gpio_config_func2 |= 0x0c;\
 //									}while(0)
 #define    UART_GPIO_CFG_PA6_PA7()    do{\
-	                                    gpio_set_func(GPIO_PA6, AS_UART);\
-									    gpio_set_func(GPIO_PA7, AS_UART);\
-									    gpio_set_input_en(GPIO_PA6|GPIO_PA7, 1);\
+										gpio_set_func(GPIO_PA6, AS_UART);\
+										gpio_set_func(GPIO_PA7, AS_UART);\
+										gpio_set_input_en(GPIO_PA6, 1);\
+										gpio_set_input_en(GPIO_PA7, 1);\
                                       }while(0)
 #define    UART_GPIO_CFG_PB2_PB3()    do{\
 	                                    gpio_set_func(GPIO_PB2, AS_UART);\
 									    gpio_set_func(GPIO_PB3, AS_UART);\
-									    gpio_set_input_en(GPIO_PB2|GPIO_PB3, 1);\
+									    gpio_set_input_en(GPIO_PB2, 1);\
+									    gpio_set_input_en(GPIO_PB3, 1);\
                                       }while(0)
 #define    UART_GPIO_CFG_PC2_PC3()    do{\
 	                                    gpio_set_func(GPIO_PC2, AS_UART);\
 									    gpio_set_func(GPIO_PC3, AS_UART);\
-									    gpio_set_input_en(GPIO_PC2|GPIO_PC3, 1);\
+									    gpio_set_input_en(GPIO_PC2, 1);\
+									    gpio_set_input_en(GPIO_PC3, 1);\
                                       }while(0)
 
 #define UART_GPIO_8267_PA6_PA7      1
