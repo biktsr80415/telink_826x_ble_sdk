@@ -232,7 +232,7 @@ typedef enum
 		//ch0-ch5: A7 A4 A3 E0 A1 A0
 		#define GPIO_CHN0							GPIO_PA7
 		#define GPIO_CHN1							GPIO_PA4
-		#define GPIO_CHN2							GPIO_PE3
+		#define GPIO_CHN2							GPIO_PA3
 		#define GPIO_CHN3							GPIO_PE0
 		#define GPIO_CHN4							GPIO_PA1
 		#define GPIO_CHN5							GPIO_PA0

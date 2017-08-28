@@ -177,6 +177,8 @@ static inline void gpio_read_all(u8 *p){
 
 
 
+
+
 static inline void gpio_set_interrupt_pol(u32 pin, u32 falling){
 	u8	bit = pin & 0xff;
 	if(falling){

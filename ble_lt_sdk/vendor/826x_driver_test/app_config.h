@@ -77,7 +77,7 @@ extern "C" {
 
 
 
-#define DEBUG_GPIO_ENABLE							0
+#define DEBUG_GPIO_ENABLE							1
 
 #if(DEBUG_GPIO_ENABLE)
 	#if (__PROJECT_8266_DRIVER_TEST__)
