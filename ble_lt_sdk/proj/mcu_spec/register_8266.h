@@ -50,7 +50,9 @@ enum{
 	FLD_I2C_ADDR_AUTO 		=	BIT(0),
 	FLD_I2C_MODE_MASTER		= 	BIT(1),		// 1: master, 0: slave
 	FLD_I2C_MEM_MAP 		=	BIT(2), 	// write i2c data to predefined memory address which set by other register
+	FLD_I2C_HOLD_MASTER     =   BIT(3),
 };
+
 
 #define reg_i2c_adr_dat			REG_ADDR16(0x04)
 #define reg_i2c_dat_ctrl		REG_ADDR32(0x04)
@@ -1206,7 +1208,8 @@ enum{
 	FLD_GPIO_WAKEUP_EN		=	BIT(2),
 	FLD_GPIO_INTERRUPT_EN	=	BIT(3),
 };
-#define reg_gpio_config_func5   REG_ADDR8(0x5b6)
+#define reg_gpio_config_func6   REG_ADDR8(0x5b6)
+#define reg_gpio_config_func7   REG_ADDR8(0x5b7)
 /****************************************************
  timer regs struct: begin  0x620
  *****************************************************/

@@ -150,9 +150,10 @@ void gpio_set_func(u32 pin, u32 func)
 			//1. DMIC(DI)
 			//2. PWM0
 			if(func == AS_DMIC){
-				BM_SET(reg_gpio_config_func(pin), bit);
+				BM_SET(reg_gpio_config_func(GPIO_PA0), bit);
+				BM_SET(reg_gpio_ie(GPIO_PA0), BIT(0));     //enable input
 			}else if(func == AS_PWM){
-				BM_CLR(reg_gpio_config_func(pin), bit);
+				BM_CLR(reg_gpio_config_func(GPIO_PA0), bit);
 			}
 		}
 		break;
@@ -171,8 +172,10 @@ void gpio_set_func(u32 pin, u32 func)
 			// 			PA2			PA3			PA4			PA5
 			//1. SPI: 	DO			DI			CK			CN
 			//2, PWM: 	PWM0_N		PWM1		PWM1_N		PWM2_N
-			if(func == AS_SPI){
+			if((func == AS_SPI) || (func == AS_I2C)){
 				BM_SET(reg_gpio_config_func(pin), bit);
+				BM_SET(reg_gpio_ie(pin), bit);   //enable input
+				BM_CLR(reg_gpio_oen(pin), bit);  //enable output
 			}else if(func == AS_PWM){
 				BM_CLR(reg_gpio_config_func(pin), bit);
 			}
@@ -192,6 +195,7 @@ void gpio_set_func(u32 pin, u32 func)
 			//2. SWM
 			if(func == AS_UART){
 				BM_SET(reg_gpio_config_func(pin), bit);
+				BM_SET(reg_gpio_ie(GPIO_PA7), BIT(7));   //enable input
 			}else if(func == AS_SWM){
 				BM_CLR(reg_gpio_config_func(pin), bit);
 			}
@@ -228,6 +232,7 @@ void gpio_set_func(u32 pin, u32 func)
 			//2, PWM: 	PWM3		PWM3_N
 			if(func == AS_UART){
 				BM_SET(reg_gpio_config_func(pin), bit);
+				BM_SET(reg_gpio_ie(pin), bit);  //enable input
 			}else if(func == AS_PWM){
 				BM_CLR(reg_gpio_config_func(pin), bit);
 			}
@@ -243,8 +248,10 @@ void gpio_set_func(u32 pin, u32 func)
 			// 			PB4			PB5			PB6			PB7
 			//1. SPI: 	CN			DO			DI			CK
 			//2, PWM: 	PWM4		PWM4_N		PWM5		PWM5_N
-			if(func == AS_SPI){
+			if((func == AS_SPI) || (func == AS_I2C)){
 				BM_SET(reg_gpio_config_func(pin), bit);
+				BM_SET(reg_gpio_ie(pin), bit);  //enable input
+				BM_CLR(reg_gpio_oen(pin), bit); //enable output
 			}else if(func == AS_PWM){
 				BM_CLR(reg_gpio_config_func(pin), bit);
 			}
@@ -260,6 +267,8 @@ void gpio_set_func(u32 pin, u32 func)
 			//2, PWM: 	PWM0		PWM1
 			if(func == AS_I2C){
 				BM_SET(reg_gpio_config_func(pin), bit);
+				BM_SET(reg_gpio_ie(pin), bit);  //enable input
+				BM_CLR(reg_gpio_oen(pin), bit); //enable output
 			}else if(func == AS_PWM){
 				BM_CLR(reg_gpio_config_func(pin), bit);
 			}
@@ -277,6 +286,7 @@ void gpio_set_func(u32 pin, u32 func)
 			//2, PWM: 	PWM2		PWM3		PWM4		PWM5
 			if(func == AS_UART){
 				BM_SET(reg_gpio_config_func(pin), bit);
+				BM_SET(reg_gpio_ie(pin), bit);  //enable input
 			}else if(func == AS_PWM){
 				BM_CLR(reg_gpio_config_func(pin), bit);
 			}
@@ -317,6 +327,7 @@ void gpio_set_func(u32 pin, u32 func)
 				BM_SET(reg_gpio_config_func(pin), bit);
 			}else if(func == AS_SDM){
 				BM_CLR(reg_gpio_config_func(pin), bit);
+				BM_SET(reg_gpio_ie(pin), bit);  //enable input
 			}
 		}
 		break;

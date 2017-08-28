@@ -8,26 +8,26 @@
 
 #if (DRIVER_TEST_MODE == TEST_IIC)
 
-#define I2C_MASTER_EN        0  //1:dma mode ; ; ; 0: not dma mode
+#define  I2C_MASTER_EN        1  //1:dma mode ; ; ; 0: not dma mode
 
-#define  SLAVE_RAM_ADDR      0x8001
-#define  SPI_DMA_WRITE_SIZE  16
+#define  SLAVE_RAM_ADDR       0x8001
+#define  SPI_DMA_WRITE_SIZE   16
 
 #define  I2C_SLAVE_MAP_MODE   0
 #define  I2C_SLAVE_DMA_MODE   1
-#define  I2C_SLAVE_MODE_SEL  I2C_SLAVE_DMA_MODE
+#define  I2C_SLAVE_MODE_SEL   I2C_SLAVE_DMA_MODE
 
 unsigned char i2c_read_operation = 0, i2c_write_operation = 0;   // indicate i2c irq
 
 __attribute__((aligned(128))) unsigned char mapping_buf[128]={0x00};
 
-unsigned char i2c_dma_write_data[SPI_DMA_WRITE_SIZE] = {0x01,0x12,0x34,0x45,0x56,0x67,0x78,0x89,0x90,0x0a,0xab,0xbc,0xcd,0xde,0xef,0x99};
+unsigned char i2c_dma_write_data[SPI_DMA_WRITE_SIZE]     = {0x01,0x12,0x34,0x45,0x56,0x67,0x78,0x89,0x90,0x0a,0xab,0xbc,0xcd,0xde,0xef,0x99};
 unsigned char i2c_mapping_write_data[SPI_DMA_WRITE_SIZE] = {0x10,0x21,0x43,0x54,0x65,0x76,0x87,0x98,0x09,0xa0,0xba,0xcb,0xdc,0xed,0xfe,0x88};
 unsigned char i2c_read_buff[SPI_DMA_WRITE_SIZE] = {0x00};
 
 void app_i2c_test_init(void){
 
-	i2c_pin_initial(I2C_GPIO_GROUP_C0C1);
+	i2c_pin_init(I2C_GPIO_GROUP_C0C1);
 #if I2C_MASTER_EN
 	i2c_master_init_div(0x5c,0x14);//para1:ID;para2:DivClock,i2c clock = system_clock/4*DivClock
 #else

@@ -84,18 +84,6 @@ enum {
 								}while(0)
 
 //UART_TX/UART_RX gpio pin config
-//#define    UART_GPIO_CFG_PA6_PA7()  do{\
-//										reg_gpio_pa_gpio &= 0x3f;\
-//										reg_gpio_config_func0 |= 0x80;\
-//                                    }while(0)
-//#define    UART_GPIO_CFG_PB2_PB3()  do{\
-//										reg_gpio_pb_gpio &= 0xf3;\
-//										reg_gpio_config_func1 |= 0x0c;\
-//									}while(0)
-//#define    UART_GPIO_CFG_PC2_PC3()  do{\
-//										reg_gpio_pc_gpio &= 0xf3;\
-//										reg_gpio_config_func2 |= 0x0c;\
-//									}while(0)
 #define    UART_GPIO_CFG_PA6_PA7()    do{\
 										gpio_set_func(GPIO_PA6, AS_UART);\
 										gpio_set_func(GPIO_PA7, AS_UART);\

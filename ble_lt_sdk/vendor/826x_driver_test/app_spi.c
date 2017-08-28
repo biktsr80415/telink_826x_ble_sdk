@@ -8,21 +8,21 @@
 
 #if (DRIVER_TEST_MODE == TEST_SPI)
 
-#define SPI_MASTER_EN        0  //1:dma mode ; ; ; 0: not dma mode
+#define SPI_MASTER_EN        1  //1:dma mode , 0: not dma mode
 
 unsigned char spi_interrupt_flag = 0;
 
 #if SPI_MASTER_EN
-	#define SPI_CS_PIN    GPIO_PA5
-	#define  elementNum(v)   (sizeof(v)/sizeof(v[0]))
+	#define  SPI_CS_PIN         GPIO_PA5
+	#define  elementNum(v)      (sizeof(v)/sizeof(v[0]))
 
 	unsigned char spi_write_buff[16]= {0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xaa,0xbb,0xcc,0xdd,0xee,0xff};
 	unsigned char spi_read_buff[16] = {0x00};
 
-	#define SLAVE_REG_ADD_H     0x80
-	#define SLAVE_REG_ADD_L     0x00
-	#define SPI_READ_CMD  0x80   // refer to the read format of spi in datasheet.
-	#define SPI_WRITE_CMD 0x00   // refer to the write format of spi in datasheet.
+	#define  SLAVE_REG_ADD_H     0x80
+	#define  SLAVE_REG_ADD_L     0x00
+	#define  SPI_READ_CMD        0x80   // refer to the read format of spi in datasheet.
+	#define  SPI_WRITE_CMD       0x00   // refer to the write format of spi in datasheet.
 	unsigned char   slaveRegAddr_WriteCMD[] = {SLAVE_REG_ADD_H,SLAVE_REG_ADD_L,SPI_WRITE_CMD};
 	unsigned char   slaveRegAddr_ReadCMD[]  = {SLAVE_REG_ADD_H,SLAVE_REG_ADD_L,SPI_READ_CMD};
 #endif
