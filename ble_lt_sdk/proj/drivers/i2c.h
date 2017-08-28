@@ -51,7 +51,7 @@ void I2C_SlaveIrqClr(I2C_I2CIrqSrcTypeDef src);
  * param[in] gpio_scl -- the pin as clock line of i2c.
  * return none
  */
-void i2c_pin_initial(I2C_GPIO_GroupTypeDef i2c_pin_group);
+void i2c_pin_init(I2C_GPIO_GroupTypeDef i2c_pin_group);
 /**
  * @brief      This function set the id of slave device and the speed of I2C interface
  *             note: the param ID contain the bit of writting or reading.

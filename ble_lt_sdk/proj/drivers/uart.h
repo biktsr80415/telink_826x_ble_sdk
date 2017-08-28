@@ -84,36 +84,26 @@ enum {
 								}while(0)
 
 //UART_TX/UART_RX gpio pin config
-//#define    UART_GPIO_CFG_PA6_PA7()  do{\
-//										reg_gpio_pa_gpio &= 0x3f;\
-//										reg_gpio_config_func0 |= 0x80;\
-//                                    }while(0)
-//#define    UART_GPIO_CFG_PB2_PB3()  do{\
-//										reg_gpio_pb_gpio &= 0xf3;\
-//										reg_gpio_config_func1 |= 0x0c;\
-//									}while(0)
-//#define    UART_GPIO_CFG_PC2_PC3()  do{\
-//										reg_gpio_pc_gpio &= 0xf3;\
-//										reg_gpio_config_func2 |= 0x0c;\
-//									}while(0)
+#if ((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 #define    UART_GPIO_CFG_PA6_PA7()    do{\
 										gpio_set_func(GPIO_PA6, AS_UART);\
 										gpio_set_func(GPIO_PA7, AS_UART);\
-										gpio_set_input_en(GPIO_PA6, 1);\
-										gpio_set_input_en(GPIO_PA7, 1);\
                                       }while(0)
 #define    UART_GPIO_CFG_PB2_PB3()    do{\
 	                                    gpio_set_func(GPIO_PB2, AS_UART);\
 									    gpio_set_func(GPIO_PB3, AS_UART);\
-									    gpio_set_input_en(GPIO_PB2, 1);\
-									    gpio_set_input_en(GPIO_PB3, 1);\
                                       }while(0)
 #define    UART_GPIO_CFG_PC2_PC3()    do{\
 	                                    gpio_set_func(GPIO_PC2, AS_UART);\
 									    gpio_set_func(GPIO_PC3, AS_UART);\
-									    gpio_set_input_en(GPIO_PC2, 1);\
-									    gpio_set_input_en(GPIO_PC3, 1);\
                                       }while(0)
+#elif (MCU_CORE_TYPE == MCU_CORE_8266)
+#define    UART_GPIO_CFG_PC6_PC7()    do{\
+										gpio_set_func(GPIO_PC6, AS_UART);\
+										gpio_set_func(GPIO_PC7, AS_UART);\
+                                      }while(0)
+
+#endif
 
 #define UART_GPIO_8267_PA6_PA7      1
 #define UART_GPIO_8267_PC2_PC3      2

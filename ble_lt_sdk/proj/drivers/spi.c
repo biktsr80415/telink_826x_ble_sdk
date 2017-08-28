@@ -19,40 +19,30 @@ void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin)
 	#if(MCU_CORE_TYPE == MCU_CORE_8266)
 		//disable the other function and the gpio will be spi.
 		BM_CLR(reg_gpio_config_func4, (GPIO_PE7)&0xff);   //disable E6/E7 keyscan function   //(GPIO_PE6|GPIO_PE7)
-		BM_CLR(reg_gpio_config_func5, BIT(5));            //disable E6/F0 as uart function
+		BM_CLR(reg_gpio_config_func6, BIT(5));            //disable E6/F0 as uart function
 		gpio_set_func(GPIO_PE7, AS_SPI);         		  //disable E7 as gpio
 		gpio_set_func(GPIO_PF0, AS_SPI);         		  //disable F0/F1 as gpio
 		gpio_set_func(GPIO_PF1, AS_SPI);
-		gpio_set_input_en(GPIO_PE7, 1);          		  //enable input   //GPIO_PE6|GPIO_PE7
-		gpio_set_input_en(GPIO_PF0, 1);          		  //enable input
-		gpio_set_input_en(GPIO_PF1, 1);
+
 	#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 		if(data_clk_pin == SPI_PIN_GROUPB)
 		{
-			gpio_set_func(GPIO_PB5,	AS_SPI); //disable gpio function
+			gpio_set_func(GPIO_PB5,	AS_SPI); ////enable B4/B5/B6 spi function and disable gpio function
 			gpio_set_func(GPIO_PB6,	AS_SPI);
 			gpio_set_func(GPIO_PB7,	AS_SPI);
-			reg_gpio_config_func1 |= MASK_VAL(FLD_SPI_DO_PWM4N, 1, FLD_SPI_DI_PWM5, 1, FLD_SPI_CK_PWM5N, 1);//enable B4/B5/B6 spi function
 			BM_CLR(reg_gpio_config_func0, FLD_SPI_DO_PWM0_N|FLD_SPI_DI_PWM1|FLD_SPI_CK_PWM1_N|FLD_SPI_CN_PWM2_N); //disable A2/A3/A4/A5 as spi function
-			gpio_set_input_en(GPIO_PB5,	1); //enable input function
-			gpio_set_input_en(GPIO_PB6,	1);
-			gpio_set_input_en(GPIO_PB7,	1);
 		}
 		else if(data_clk_pin == SPI_PIN_GROUPA)
 		{
-			gpio_set_func(GPIO_PA2, AS_SPI); //disable gpio function
+			gpio_set_func(GPIO_PA2, AS_SPI); //enable spi function and disable gpio function
 			gpio_set_func(GPIO_PA3, AS_SPI);
 			gpio_set_func(GPIO_PA4, AS_SPI);
-			reg_gpio_config_func0 |= MASK_VAL(FLD_SPI_DO_PWM0_N, 1, FLD_SPI_DI_PWM1, 1, FLD_SPI_CK_PWM1_N, 1);//enable spi function
 			BM_CLR(reg_gpio_config_func1, FLD_SPI_CN_PWM4|FLD_SPI_DO_PWM4N|FLD_SPI_DI_PWM5|FLD_SPI_CK_PWM5N);//disable B4/B5/B6/B7 as spi function.
+
 			gpio_set_func(GPIO_PB4, AS_GPIO); //enable B4/B5/B6/B7 gpio function,or they will be pwm function
 			gpio_set_func(GPIO_PB5, AS_GPIO);
 			gpio_set_func(GPIO_PB6, AS_GPIO);
 			gpio_set_func(GPIO_PB7, AS_GPIO);
-			gpio_set_input_en(GPIO_PA2, 1); //enable input
-			gpio_set_input_en(GPIO_PA3, 1);
-			gpio_set_input_en(GPIO_PA4, 1);
-
 		}
 	#endif
 
@@ -98,7 +88,7 @@ void spi_slave_init(enum spi_pin_t spi_grp, enum spi_mode_t spi_mode)
 	#if(MCU_CORE_TYPE == MCU_CORE_8266)
 		//disable the other function and the gpio will be spi.
 		BM_CLR(reg_gpio_config_func4, (GPIO_PE6|GPIO_PE7)&0xff);  //disable E6/E7 keyscan function
-		BM_CLR(reg_gpio_config_func5, BIT(5));                    //disable E6/F0 as uart function
+		BM_CLR(reg_gpio_config_func6, BIT(5));                    //disable E6/F0 as uart function
 		gpio_set_func(GPIO_PE7, AS_SPI);                          //disable E7 as gpio
 		gpio_set_func(GPIO_PF0, AS_SPI);                 		  //disable F0/F1 as gpio
 		gpio_set_func(GPIO_PF1, AS_SPI);
@@ -109,35 +99,25 @@ void spi_slave_init(enum spi_pin_t spi_grp, enum spi_mode_t spi_mode)
 
 	#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 		if(spi_grp == SPI_PIN_GROUPB){
-			gpio_set_func(GPIO_PB4,	AS_SPI); //disable gpio function
+			gpio_set_func(GPIO_PB4,	AS_SPI); //enable B4/B5/B6 spi function and disable gpio function
 			gpio_set_func(GPIO_PB5,	AS_SPI);
 			gpio_set_func(GPIO_PB6,	AS_SPI);
 			gpio_set_func(GPIO_PB7,	AS_SPI);
-			//enable B4/B5/B6 spi function
-			reg_gpio_config_func1 |= MASK_VAL(FLD_SPI_CN_PWM4, 1, FLD_SPI_DO_PWM4N, 1, FLD_SPI_DI_PWM5, 1, FLD_SPI_CK_PWM5N, 1);
+
 			BM_CLR(reg_gpio_config_func0, (GPIO_PA2|GPIO_PA3|GPIO_PA4|GPIO_PA5)&0xff);  //disable A2/A3/A4/A5 as spi function
-			gpio_set_input_en(GPIO_PB4, 1); //enable input
-			gpio_set_input_en(GPIO_PB5, 1); //enable input
-			gpio_set_input_en(GPIO_PB6, 1); //enable input
-			gpio_set_input_en(GPIO_PB7, 1); //enable input
 		}
 		else if(spi_grp == SPI_PIN_GROUPA){
-			gpio_set_func(GPIO_PA2, AS_SPI); //disable gpio function
+			gpio_set_func(GPIO_PA2, AS_SPI); ////enable spi function and disable gpio function
 			gpio_set_func(GPIO_PA3, AS_SPI);
 			gpio_set_func(GPIO_PA4,	AS_SPI);
 			gpio_set_func(GPIO_PA5,	AS_SPI);
-			//enable spi function
-			reg_gpio_config_func0 |= MASK_VAL(FLD_SPI_DO_PWM0_N, 1, FLD_SPI_DI_PWM1, 1, FLD_SPI_CK_PWM1_N, 1, FLD_SPI_CN_PWM2_N, 1);
+
 			BM_CLR(reg_gpio_config_func1, (GPIO_PB4|GPIO_PB5|GPIO_PB6|GPIO_PB7)&0xff);  //disable B4/B5/B6 as spi function.
+
 			gpio_set_func(GPIO_PB4,	AS_GPIO); //enable B4/B5/B6/B7 gpio function,or they will be pwm function
 			gpio_set_func(GPIO_PB5,	AS_GPIO);
 			gpio_set_func(GPIO_PB6,	AS_GPIO);
 			gpio_set_func(GPIO_PB7,	AS_GPIO);
-
-			gpio_set_input_en(GPIO_PA2, 1);  //enable input
-			gpio_set_input_en(GPIO_PA3, 1);
-			gpio_set_input_en(GPIO_PA4, 1);
-			gpio_set_input_en(GPIO_PA5, 1);
 		}
 	#endif
 	/***enable slave***/
