@@ -32,6 +32,8 @@ void user_init()
 
 #if (DRIVER_TEST_MODE == TEST_HW_TIMER)
 
+	app_timer_test_init();
+
 #elif (DRIVER_TEST_MODE == TEST_GPIO_IRQ)
 
 	app_gpio_irq_test_init();
