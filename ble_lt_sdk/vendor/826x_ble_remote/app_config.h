@@ -266,7 +266,7 @@ extern "C" {
 					{VK_2,	 		VK_5,	  	VK_NONE,	VK_4,	 	}, \
 					{VK_NONE,	 	VK_NONE,	VK_NONE,	VK_NONE,	}, \
 					{VK_NONE,	 	VK_NONE,	VK_NONE,	VK_NONE,	}, \
-					{VK_VOL_UP,	 	VK_NONE,	VK_NONE,	VK_VOL_DN,	}, \
+					{CR_VOL_UP,	 	VK_NONE,	VK_NONE,	CR_VOL_DN,	}, \
 					{VK_NONE,		VK_NONE,	VK_NONE,	VK_NONE,	}, }
 
 	#define  KB_DRIVE_PINS  {GPIO_PA1, GPIO_PA5, GPIO_PA6, GPIO_PA7}

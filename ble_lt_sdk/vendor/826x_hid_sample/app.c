@@ -78,32 +78,6 @@ u8 		ota_is_working = 0;
 
 
 
-static u16 vk_consumer_map[16] = {
-		MKEY_VOL_UP,
-		MKEY_VOL_DN,
-		MKEY_MUTE,
-		MKEY_CHN_UP,
-
-		MKEY_CHN_DN,
-		MKEY_POWER,
-		MKEY_AC_SEARCH,
-		MKEY_RECORD,
-
-		MKEY_PLAY,
-		MKEY_PAUSE,
-		MKEY_STOP,
-		MKEY_FAST_FORWARD,  //can not find fast_backword in <<HID Usage Tables>>
-
-		MKEY_FAST_FORWARD,
-		MKEY_AC_HOME,
-		MKEY_AC_BACK,
-		MKEY_MENU,
-};
-
-
-
-
-
 void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 {
 
@@ -388,12 +362,10 @@ void main_loop (void)
 	proc_button();
 
 
-	static u8 led = 0;
 	if (tick_led_config && clock_time_exceed (tick_led_config, 300000))
 	{
 		tick_led_config = clock_time () | 1;
-		gpio_write (GPIO_LED_WHITE, led);
-		led = !led;
+		gpio_toggle (GPIO_LED_WHITE);
 	}
 
 
