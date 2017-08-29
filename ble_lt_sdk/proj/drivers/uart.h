@@ -67,11 +67,11 @@ enum {
 };
 
 #define CLK32M_UART9600         do{\
-									uart_Init(237,13,PARITY_NONE,STOP_BIT_ONE);\
+									uart_Init(302,10,PARITY_NONE,STOP_BIT_ONE);\
 									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
 								}while(0)
 #define CLK32M_UART115200       do{\
-									uart_Init(19,13,PARITY_NONE,STOP_BIT_ONE);\
+									uart_Init(30,8,PARITY_NONE,STOP_BIT_ONE);\
 									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
 								}while(0)
 #define CLK16M_UART115200       do{\
@@ -79,7 +79,7 @@ enum {
 									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
 								}while(0)
 #define CLK16M_UART9600         do{\
-									uart_Init(103,15,PARITY_NONE,STOP_BIT_ONE);\
+									uart_Init(118,13,PARITY_NONE,STOP_BIT_ONE);\
 									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
 								}while(0)
 
