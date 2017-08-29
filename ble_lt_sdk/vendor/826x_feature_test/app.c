@@ -811,6 +811,8 @@ void user_init()
 
 			blc_register_hci_handler (phy_test_2_wire_rx_from_uart, phy_test_2_wire_tx_to_uart);
 	#endif
+#elif (FEATURE_TEST_MODE == TEST_EMI)
+	 emi_test();
 #endif
 
 

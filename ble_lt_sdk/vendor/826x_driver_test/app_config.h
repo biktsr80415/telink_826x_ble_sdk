@@ -25,11 +25,7 @@ extern "C" {
 
 
 
-#define	TEST_GPIO_IRQ									6
-#define	TEST_GPIO_IRQ_RISC0								7
-#define	TEST_GPIO_IRQ_RISC1								8
-#define	TEST_GPIO_IRQ_RISC2								9
-
+#define	TEST_GPIO_IRQ									10
 
 
 

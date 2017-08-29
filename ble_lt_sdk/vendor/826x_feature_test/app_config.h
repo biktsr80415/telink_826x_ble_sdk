@@ -44,13 +44,13 @@ extern "C" {
 #define TEST_WHITELIST									31
  //phy test
 #define TEST_BLE_PHY									32
+#define TEST_EMI										33
 
 
 
 
 
-
-#define FEATURE_TEST_MODE								TEST_BLE_PHY
+#define FEATURE_TEST_MODE								TEST_ADVERTISING_IN_CONN_SLAVE_ROLE
 
 
 

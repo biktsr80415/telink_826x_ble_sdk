@@ -36,10 +36,6 @@ extern "C" {
 #endif
 
 
-#if (REMOTE_IR_ENABLE)
-	#define	BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE
-#endif
-
 
 
 ////////////////////////// AUDIO CONFIG /////////////////////////////
