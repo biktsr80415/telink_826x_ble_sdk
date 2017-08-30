@@ -339,9 +339,11 @@ u32 kb_scan_row(int drv_ind, u8 * gpio){
 	return matrix;
 }
 
+
+#if (KEY_MATRIX_BUFFER_ENABLE)
 u32 	matrix_buff[4][ARRAY_SIZE(drive_pins)];
 int		matrix_wptr, matrix_rptr;
-
+#endif
 
 u32 kb_key_pressed(u8 * gpio)
 {
@@ -421,6 +423,7 @@ u32 kb_scan_key_value (int numlock_status, int read_key,u8 * gpio)
 		//	insert buffer here
 		//       key mapping requires NUMLOCK status
 		///////////////////////////////////////////////////////////////////
+#if (KEY_MATRIX_BUFFER_ENABLE)
 		u32 *pd;
 		if (key_changed) {
 
@@ -448,6 +451,13 @@ u32 kb_scan_key_value (int numlock_status, int read_key,u8 * gpio)
 
 		///////////////////////////////////////////////////////////////////
 		kb_remap_key_code(pd, KB_RETURN_KEY_MAX, &kb_event, numlock_status);
+#else
+		if(!key_changed){
+			return 0;
+		}
+
+		kb_remap_key_code(pressed_matrix, KB_RETURN_KEY_MAX, &kb_event, numlock_status);
+#endif
 
 #if (KB_REPEAT_KEY_ENABLE)
 		if(repeat_key.key_change_flg == KEY_CHANGE){
