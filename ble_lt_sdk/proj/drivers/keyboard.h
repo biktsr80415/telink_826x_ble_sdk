@@ -58,6 +58,10 @@ extern u32 deepback_key_tick;
 
 
 
+#ifndef		KEY_MATRIX_BUFFER_ENABLE
+#define		KEY_MATRIX_BUFFER_ENABLE			0
+#endif
+
 
 
 int kb_is_data_same(kb_data_t *a, kb_data_t *b);

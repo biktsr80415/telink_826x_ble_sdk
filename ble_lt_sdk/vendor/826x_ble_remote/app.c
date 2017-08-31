@@ -597,7 +597,9 @@ void proc_keyboard (u8 e, u8 *p, int n)
 
 #if (BLE_AUDIO_ENABLE)
 	 //long press voice 1 second
-		if(key_voice_press && !ui_mic_enable && clock_time_exceed(key_voice_pressTick,1000000)){
+		if(key_voice_press && !ui_mic_enable && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && \
+			clock_time_exceed(key_voice_pressTick,1000000)){
+
 			voice_press_proc();
 		}
 #endif
