@@ -74,10 +74,10 @@ void battery_power_check(void)
 #if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 	tem_batteryVol = 3*(1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
 #elif(MCU_CORE_TYPE == MCU_CORE_8266)
-	tem_batteryVol = ((1300*average_data)>>14);
+	tem_batteryVol = 3*((1300*average_data)>>14);
 #endif
 
-	if(tem_batteryVol < 1900){  //when battery voltage is lower than 1.9v, chip will enter deep sleep mode
+	if(tem_batteryVol < 2000){  //when battery voltage is lower than 2.0v, chip will enter deep sleep mode
 		cpu_sleep_wakeup(1, PM_WAKEUP_PAD, 0);
 	}
 }

@@ -181,7 +181,7 @@ extern void uart_DmaModeInit(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn)
  * @return    none
  * @notice    suggust closing tx irq.
  */
-extern void uart_NotDmaModeInit(unsigned char rx_level,unsigned char tx_level,unsigned char rx_irq_en,unsigned char tx_irq_en);
+extern void uart_notDmaModeInit(unsigned char rx_level,unsigned char tx_level,unsigned char rx_irq_en,unsigned char tx_irq_en);
 
 /********
  * @ brief   in not dma mode, receive the data.
@@ -190,7 +190,7 @@ extern void uart_NotDmaModeInit(unsigned char rx_level,unsigned char tx_level,un
  * @ param[in] none
  * @ return    the data received from the uart.
  */
-extern unsigned char uart_NotDmaModeRevData(void);
+extern unsigned char uart_notDmaModeRevData(void);
 
 /**
  * @brief     uart send data function with not DMA method.
@@ -199,7 +199,7 @@ extern unsigned char uart_NotDmaModeRevData(void);
  * @param[in] uartData - the data to be send.
  * @return    1: send success ; 0: uart busy
  */
-extern unsigned char UART_NotDmaModeSendByte(unsigned char uartData);
+extern unsigned char UART_notDmaModeSendByte(unsigned char uartData);
 
 /********************************************************************************
 *	@brief	uart send data function, this  function tell the DMA to get data from the RAM and start

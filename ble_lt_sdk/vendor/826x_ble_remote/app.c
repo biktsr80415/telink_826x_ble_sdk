@@ -90,7 +90,7 @@ u32		advertise_begin_tick;
 u8		ui_mic_enable = 0;
 u8 		key_voice_press = 0;
 
-int 	lowBattDet_enable = 0;
+int 	lowBattDet_enable = 1;
 int		lowBatt_alarmFlag = 0;
 
 
@@ -878,7 +878,7 @@ void user_init()
 	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
 	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
+		adc_Init(ADC_CLK_4M, ADC_CHN_C4, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
 	#endif
 #endif
 
@@ -979,7 +979,7 @@ void main_loop (void)
 
 	#if (BATT_CHECK_ENABLE)
 		if(lowBattDet_enable){
-			battery_power_check();
+			battery_power_check();//whether or not entry battery check
 		}
 	#endif
 	//lowBatt_alarmFlag =  //low battery detect
