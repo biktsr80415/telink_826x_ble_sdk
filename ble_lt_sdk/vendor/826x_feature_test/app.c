@@ -9,6 +9,7 @@
 #include "../../proj_lib/ble/ble_smp.h"
 #include "../../proj_lib/ble/ble_phy.h"
 #include "../../proj/drivers/uart.h"
+#include "../../proj/drivers/emi.h"
 #include "../common/blt_soft_timer.h"
 
 
@@ -812,7 +813,7 @@ void user_init()
 			blc_register_hci_handler (phy_test_2_wire_rx_from_uart, phy_test_2_wire_tx_to_uart);
 	#endif
 #elif (FEATURE_TEST_MODE == TEST_EMI)
-	 emi_test();
+			emi_test();
 #endif
 
 
