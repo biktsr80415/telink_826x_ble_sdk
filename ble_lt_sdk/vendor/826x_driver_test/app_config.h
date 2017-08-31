@@ -45,14 +45,14 @@ extern "C" {
 
 
 
-#define DRIVER_TEST_MODE								TEST_PWM
+#define DRIVER_TEST_MODE								TEST_SPI
 
 
 
 
 
 #if (DRIVER_TEST_MODE == TEST_ADC)
-	#define BATT_CHECK_ENABLE    1
+	#define BATT_CHECK_ENABLE    0
 #endif
 
 

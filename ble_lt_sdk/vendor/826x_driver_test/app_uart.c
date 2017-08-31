@@ -30,11 +30,23 @@ void app_uart_test_init(void){
 
 	uart_RecBuffInit(uart_rec_buff, UART_RX_BUFF_SIZE);  //set uart rev buffer and buffer size
 	uart_txBuffInit(UART_TX_BUFF_SIZE);
-	UART_GPIO_CFG_PC2_PC3();  //enable uart function and enable input
+
+	#if ((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+		UART_GPIO_CFG_PC2_PC3();  //enable uart function and enable input
+	#elif CHIP_TYPE == CHIP_TYPE_8266
+		UART_GPIO_CFG_PC6_PC7();
+	#endif
+
 #else
 	uart_Init(9, 13, PARITY_NONE, STOP_BIT_ONE); //set baud rate, parity bit and stop bit.(9,13,115200) other baud rate can get from tool
 	uart_notDmaModeInit(1, 0, UART_NODMA_RX_IRQ_EN, UART_NODMA_TX_IRQ_DIS);
-	UART_GPIO_CFG_PC2_PC3();  //enable uart function and enable input
+
+	#if ((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+		UART_GPIO_CFG_PC2_PC3();  //enable uart function and enable input
+	#elif CHIP_TYPE == CHIP_TYPE_8266
+		UART_GPIO_CFG_PC6_PC7();
+	#endif
+
 #endif
 	irq_enable();
 }

@@ -15,16 +15,18 @@ unsigned char ref_vol = 0;
 
 
 void app_adc_test_init(void){
+
 #if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-	adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
-	ref_vol = RV_1P428;
-//	adc_Init(ADC_CLK_4M, C0, SINGLEEND, RV_AVDD, RES14, S_3);
-//	ref_vol = RV_AVDD;
-
+	#if BATT_CHECK_ENABLE
+		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
+		ref_vol = RV_1P428;
+	#else
+		adc_Init(ADC_CLK_4M, B6, SINGLEEND, RV_AVDD, RES14, S_3);
+		ref_vol = RV_AVDD;
+	#endif
 #elif(MCU_CORE_TYPE == MCU_CORE_8266)
-	adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
-	ref_vol = ADC_REF_VOL_1V3;
-
+	adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_AVDD, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
+	ref_vol = ADC_REF_VOL_AVDD;
 #endif
 }
 
@@ -68,7 +70,7 @@ void app_adc_test_start(void){
 	int adc_idx = 0;
 	unsigned short adcValue[ADC_SAMPLE_CNT] = {0};
 	unsigned short average_data;
-	average_data = app_adc_test_filter_data(adcValue,ADC_SAMPLE_CNT);
+
 
 	if(clock_time_exceed(battCheckTick, 100000)){
 		battCheckTick = clock_time();
@@ -80,6 +82,11 @@ void app_adc_test_start(void){
 	for(adc_idx=0;adc_idx<ADC_SAMPLE_CNT;adc_idx++){
 		adcValue[adc_idx] = adc_SampleValueGet();
 	}
+
+	average_data = app_adc_test_filter_data(adcValue,ADC_SAMPLE_CNT);
+
+	if(average_data < 128)
+		average_data = 128;
 
 	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 
@@ -116,12 +123,10 @@ void app_adc_test_start(void){
 				app_adc_test_Vol = ((3300*average_data)>>14);
 				break;
 			}
-
 	#endif
-
-	if(app_adc_test_Vol < 1900){  //when battery voltage is lower than 1.9v, chip will enter deep sleep mode
-		cpu_sleep_wakeup(1, PM_WAKEUP_PAD, 0);  // chip enter deep sleep mode
-	}
+//	if(app_adc_test_Vol < 1900){  //when battery voltage is lower than 1.9v, chip will enter deep sleep mode
+//		cpu_sleep_wakeup(1, PM_WAKEUP_PAD, 0);  // chip enter deep sleep mode
+//	}
 }
 
 

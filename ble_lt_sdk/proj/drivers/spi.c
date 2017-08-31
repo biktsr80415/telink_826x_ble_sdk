@@ -23,7 +23,9 @@ void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin)
 		gpio_set_func(GPIO_PE7, AS_SPI);         		  //disable E7 as gpio
 		gpio_set_func(GPIO_PF0, AS_SPI);         		  //disable F0/F1 as gpio
 		gpio_set_func(GPIO_PF1, AS_SPI);
-
+		gpio_set_input_en(GPIO_PE7, 1);                   //enable input
+		gpio_set_input_en(GPIO_PF0, 1);                   //enable input
+		gpio_set_input_en(GPIO_PF1, 1);			          //enable input
 	#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 		if(data_clk_pin == SPI_PIN_GROUPB)
 		{

@@ -10,14 +10,14 @@
 
 #define SPI_MASTER_EN        1  //1:dma mode , 0: not dma mode
 
-unsigned char spi_interrupt_flag = 0;
+volatile unsigned char spi_interrupt_flag = 0;
 
 #if SPI_MASTER_EN
-	#define  SPI_CS_PIN         GPIO_PA5
+	#define  SPI_CS_PIN         GPIO_PC0
 	#define  elementNum(v)      (sizeof(v)/sizeof(v[0]))
 
-	unsigned char spi_write_buff[16]= {0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xaa,0xbb,0xcc,0xdd,0xee,0xff};
-	unsigned char spi_read_buff[16] = {0x00};
+	unsigned char spi_write_buff[10]= {0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99};
+	unsigned char spi_read_buff[10] = {0x00};
 
 	#define  SLAVE_REG_ADD_H     0x80
 	#define  SLAVE_REG_ADD_L     0x00
@@ -33,7 +33,7 @@ void app_spi_test_init(void){
 #if(MCU_CORE_TYPE == MCU_CORE_8266)
 	#if SPI_MASTER_EN
 		spi_master_init(0x0f,SPI_MODE0);
-		spi_master_pin_init(SPI_CS_PIN);//  //GPIO_PE6  GPIO_PD3
+		spi_master_pin_init(SPI_CS_PIN);//  //GPIO_PE6  GPIO_PC0
 	#else
 		spi_slave_init(SPI_MODE0);     //SPI_MODE0
 		SPI_IRQ_EN();
@@ -42,7 +42,7 @@ void app_spi_test_init(void){
 #elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 	#if SPI_MASTER_EN
 		spi_master_init(0x0f,SPI_MODE0);  //SPI clock = System clock / ((div_clk+1)*2);
-		spi_master_pin_init(SPI_PIN_GROUPA, SPI_CS_PIN);//  //GPIO_PE6  GPIO_PD3
+		spi_master_pin_init(SPI_PIN_GROUPA, SPI_CS_PIN);//  //GPIO_PA5  GPIO_PC0
 	#else
 		spi_slave_init(SPI_PIN_GROUPA, SPI_MODE0);     //SPI_MODE0
 		SPI_IRQ_EN();

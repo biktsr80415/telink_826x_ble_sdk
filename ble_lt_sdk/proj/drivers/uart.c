@@ -256,6 +256,7 @@ unsigned char uart_notDmaModeSendByte(unsigned char uartData)
 {
 	static unsigned char uart_TxIndex = 0;
 
+	while((read_reg8(0x9e) & 0x01) == 0);
 	write_reg8(0x90+uart_TxIndex,uartData);
 	uart_TxIndex++;
 	uart_TxIndex &= 0x03;    //cycle the four register 0x90 0x91 0x92 0x93.

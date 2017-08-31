@@ -16,10 +16,10 @@
  */
 I2C_I2CIrqSrcTypeDef I2C_SlaveIrqGet(void){
 	unsigned char hostStatus = reg_i2c_irq_status;
-	if(hostStatus&FLD_I2C_STATUS_RD){
+	if(hostStatus & FLD_I2C_STATUS_RD){
 		return I2C_IRQ_HOST_READ_ONLY;
 	}
-	else if(hostStatus&FLD_I2C_STATUS_WR){
+	else if(hostStatus & FLD_I2C_STATUS_WR){
 		/*the bit actually indicate read and write,but because the "return read_only"is before "read_write",so if return"read_write" indicate write only*/
 		return I2C_IRQ_HOST_WRITE_ONLY;
 	}
@@ -60,6 +60,10 @@ void i2c_pin_init(I2C_GPIO_GroupTypeDef i2c_pin_group){
 
 	gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);
 	gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);
+
+	gpio_set_input_en(gpio_sda,1);
+	gpio_set_input_en(gpio_scl,1);
+
 #elif ((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 	switch(i2c_pin_group){
 	case I2C_GPIO_GROUP_A3A4:
