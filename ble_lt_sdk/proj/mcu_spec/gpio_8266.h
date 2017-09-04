@@ -70,7 +70,7 @@ enum{
 
 #define reg_gpio_gpio_func(i)		REG_ADDR8(0x586+((i>>8)<<3))
 #define reg_gpio_config_func(i)		REG_ADDR8(0x5b0 +(i>>8))  	  //5b0 5b1 5b2 5b3 5b4 5b5
-#define reg_gpio_config_func1       REG_ADDR16(0x5b6)
+//#define reg_gpio_config_func1       REG_ADDR16(0x5b6)
 
 #define reg_gpio_irq_wakeup_en(i)	REG_ADDR8(0x587+((i>>8)<<3))  // reg_irq_mask: FLD_IRQ_GPIO_EN
 

@@ -8,7 +8,7 @@
 
 #if (DRIVER_TEST_MODE == TEST_IIC)
 
-#define  I2C_MASTER_EN        1  //1:dma mode ; ; ; 0: not dma mode
+#define  I2C_MASTER_EN        0  //1:dma mode ; ; ; 0: not dma mode
 
 #define  SLAVE_RAM_ADDR       0x8001
 #define  SPI_DMA_WRITE_SIZE   11
@@ -27,7 +27,12 @@ unsigned char i2c_read_buff[SPI_DMA_WRITE_SIZE] = {0x00};
 
 void app_i2c_test_init(void){
 
+#if MCU_CORE_TYPE == MCU_CORE_8266
+	i2c_pin_init(I2C_GPIO_GROUP_E7F1);
+#else
 	i2c_pin_init(I2C_GPIO_GROUP_C0C1);
+#endif
+
 #if I2C_MASTER_EN
 	i2c_master_init_div(0x5c>>1, 0x14);//para1:ID;para2:DivClock,i2c clock = system_clock/4*DivClock
 #else

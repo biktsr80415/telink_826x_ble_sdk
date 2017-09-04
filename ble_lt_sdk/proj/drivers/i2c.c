@@ -61,8 +61,6 @@ void i2c_pin_init(I2C_GPIO_GroupTypeDef i2c_pin_group){
 	gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);
 	gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);
 
-	gpio_set_input_en(gpio_sda,1);
-	gpio_set_input_en(gpio_scl,1);
 
 #elif ((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 	switch(i2c_pin_group){

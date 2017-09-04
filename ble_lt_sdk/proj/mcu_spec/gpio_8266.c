@@ -128,7 +128,6 @@ void gpio_set_func(u32 pin, u32 func)
 	case GPIO_PB5:   //as usb DM
 	case GPIO_PB6:   //as usb DP
 	case GPIO_PB7:   //as pwm
-	case GPIO_PF1:   //as i2c_scl or spi_ck
 		break;
 
 	case GPIO_PA1:   //
@@ -295,8 +294,18 @@ void gpio_set_func(u32 pin, u32 func)
 		else if(func == AS_SPI){
 			BM_CLR(reg_gpio_config_func6, BIT(5));
 			BM_SET(reg_gpio_ie(GPIO_PF0), BIT(0));  //enable input
-			BM_CLR(reg_gpio_oen(GPIO_PF0), BIT(0)); //enable output
+			//BM_CLR(reg_gpio_oen(GPIO_PF0), BIT(0)); //enable output
 		}
+		break;
+	case GPIO_PF1:
+		if(func == AS_I2C)
+		{
+			BM_CLR(reg_gpio_config_func6, BIT(5));
+			BM_SET(reg_gpio_ie(GPIO_PF1), BIT(1));  //enable input
+			//BM_CLR(reg_gpio_oen(GPIO_PF1), BIT(1)); //enable output
+		}
+		break;
+	default :
 		break;
 	}
 }
