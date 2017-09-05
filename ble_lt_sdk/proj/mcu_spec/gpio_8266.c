@@ -300,7 +300,7 @@ void gpio_set_func(u32 pin, u32 func)
 	case GPIO_PF1:
 		if(func == AS_I2C)
 		{
-			BM_CLR(reg_gpio_config_func6, BIT(5));
+			//BM_CLR(reg_gpio_config_func6, BIT(5));
 			BM_SET(reg_gpio_ie(GPIO_PF1), BIT(1));  //enable input
 			//BM_CLR(reg_gpio_oen(GPIO_PF1), BIT(1)); //enable output
 		}

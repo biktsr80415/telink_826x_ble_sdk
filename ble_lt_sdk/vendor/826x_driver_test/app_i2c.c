@@ -8,7 +8,7 @@
 
 #if (DRIVER_TEST_MODE == TEST_IIC)
 
-#define  I2C_MASTER_EN        0  //1:dma mode ; ; ; 0: not dma mode
+#define  I2C_MASTER_EN        1  //1:dma mode ; ; ; 0: not dma mode
 
 #define  SLAVE_RAM_ADDR       0x8001
 #define  SPI_DMA_WRITE_SIZE   11
