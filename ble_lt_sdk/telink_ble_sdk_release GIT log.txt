@@ -1,5 +1,3 @@
-826x module sdk release log
-
 1、ble_module_sdk_release_v1.0_20161121
      对应的git 源码时间点信息：sihui.wang 2016/11/21 10:56:36 
      SHA-1: 4bb6c20dcef598d4ddf0954dde872131e15e9386
@@ -17,8 +15,8 @@
      3、修复bug：申请更新参数在irq中push fifo加密和 mainloop中加密重入。
 
 3、telink_ble_sdk_release_v3.0.0_20170331
-   对应的git源码时间点信息：sihui.wang  2017/5/8 14:02:29
-   SHA-1: 1bb2c141cec73b4e58e23fed56a3f6612b18b55c
+   对应的git源码时间点信息：	wzt  2017/3/28 18:56:37
+   SHA-1: b019bf07a347dadd1f9409be5232d5db3d1790a2
    APP的时间点信息：		qiuwei.chen  2017/3/31 11:54:07
    SHA-1：fca8afbf851311f979ee66b61d0ff61499b37372
    ------------------------------------------------------------------------------------
