@@ -8,6 +8,7 @@
 #include "spp.h"
 #include "../../proj/drivers/spi.h"
 #include "../../proj/mcu_spec/gpio_8267.h"
+#include "../../proj/drivers/spi.h"
 #include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 /**********************************************************************
@@ -38,14 +39,14 @@ void spi_pin_init_8267(enum SPI_PIN gpio_pin_x){
 	write_reg8(0x0a,read_reg8(0x0a)|0x80);////enable spi
 }
 
-void spi_master_init_8267(unsigned char div_clock,enum SPI_MODE mode){
+void spi_master_init_8267(unsigned char div_clock, enum spi_mode_t mode){
 	write_reg8(0x0a,read_reg8(0x0a)|div_clock);/////spi clock=system clock/((div_clock+1)*2)
 	write_reg8(0x09,read_reg8(0x09)|0x02);////enable master mode
 
 	write_reg8(0x0b,read_reg8(0x0b)|mode);////select SPI mode,surpport four modes
 }
 
-void spi_slave_init_8267(unsigned char div_clock,enum SPI_MODE mode){
+void spi_slave_init_8267(unsigned char div_clock,enum spi_mode_t mode){
 	write_reg8(0x0a,read_reg8(0x0a)|div_clock);/////spi clock=system clock/((div_clock+1)*2)
 	write_reg8(0x09,read_reg8(0x09)&0xfd);////disable master mode
 

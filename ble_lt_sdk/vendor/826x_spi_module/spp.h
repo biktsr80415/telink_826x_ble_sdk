@@ -169,13 +169,6 @@ void spp_onModuleCmd(u8* p, int n);
 u8	host_push_status (u16 st, int n, u8 *p);
 
 ///////////////////////////////8267_spi.h////////////////////////////////////////////
-enum SPI_MODE{
-	SPI_MODE0=0,
-	SPI_MODE2,
-	SPI_MODE1,
-	SPI_MODE3,
-};
-
 enum SPI_PIN{
 	SPI_PIN_GPIOA=0,
 	SPI_PIN_GPIOB,
@@ -186,8 +179,8 @@ enum SPI_PIN{
 
 void spi_pin_init_8267(enum SPI_PIN gpio_pin_x);
 
-void spi_master_init_8267(unsigned char div_clock,enum SPI_MODE mode);
-void spi_slave_init_8267(unsigned char div_clock,enum SPI_MODE mode);
+//void spi_master_init_8267(unsigned char div_clock,enum spi_mode_t mode);
+//void spi_slave_init_8267(unsigned char div_clock,enum spi_mode_t mode);
 #if 1
 void spi_write_buff_8267(unsigned short addr ,unsigned char* pbuff,unsigned int len);
 void spi_read_buff_8267(unsigned short addr,unsigned char* pbuff,unsigned int len);
