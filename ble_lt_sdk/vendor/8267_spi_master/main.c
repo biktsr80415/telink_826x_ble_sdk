@@ -31,11 +31,17 @@ extern void user_init();
 int main (void) {
 	blc_pm_select_internal_32k_crystal();
 
-	cpu_wakeup_init();
+	cpu_wakeup_init(CRYSTAL_TYPE);
+
+	set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
 	clock_init();
+
 	gpio_init();
-	rf_drv_init(0);
+
+	rf_drv_init(CRYSTAL_TYPE);
+
 	user_init ();
+
 	irq_enable();//Note:when loading 8269 ram code,the processing should not be disturbed!
 
 	while (1) {
