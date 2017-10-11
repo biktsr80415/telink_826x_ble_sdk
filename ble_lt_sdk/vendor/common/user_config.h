@@ -41,6 +41,8 @@
 	#include "../8267_usb_host/app_config.h"
 #elif (__PROJECT_8266_AUDIO_MIC_SDM__)
 	#include "../8266_ble_audio_mic_sdm/app_config.h"
+#elif (__PROJECT_BEACON_8261__ || __PROJECT_BEACON_8267__)
+	#include "../826x_beacon/app_config.h"
 #else
 	#include "../common/default_config.h"
 #endif

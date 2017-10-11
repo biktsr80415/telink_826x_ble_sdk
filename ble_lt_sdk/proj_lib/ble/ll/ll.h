@@ -225,6 +225,7 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_SUSPEND_EXIT			15
 #define			BLT_EV_FLAG_READ_P256_KEY			16
 #define			BLT_EV_FLAG_GENERATE_DHKEY			17
+#define			BLT_EV_FLAG_BEACON_DONE				18
 
 
 
