@@ -330,13 +330,16 @@ u8 ir_is_sending()
 
 u8 ir_sending_check()
 {
-    u8 r = irq_disable();
+    //u8 r = irq_disable();
+    //DBG_CHN2_HIGH;
     if (ir_is_sending()) {
-        irq_restore(r);
+        //irq_restore(r);
+       // DBG_CHN2_LOW;
         return 1;
     }
     g_ir_send_ctrl.is_sending = 1;
-    irq_restore(r);
+    //irq_restore(r);
+    //DBG_CHN2_LOW;
 
     return 0;
 }
@@ -776,7 +779,7 @@ static int ir_find_learnkey_data(u8 key_value)
     return -1;
 }
 
-static void ir_learn_send(u8 local_data_code)
+_attribute_ram_code_ static void ir_learn_send(u8 local_data_code)
 {
     u32 carrier_cycle = 0;
     if (ir_sending_check()) {
@@ -805,8 +808,8 @@ static void ir_learn_send(u8 local_data_code)
 
 
     pwmm_clk(CLOCK_SYS_CLOCK_HZ, CLOCK_SYS_CLOCK_HZ);
-    carrier_cycle = g_ir_learn_pattern->carr_high_tm + g_ir_learn_pattern->carr_low_tm;
-	if((CLOCK_TICK_TO_US(carrier_cycle)<20)&&(CLOCK_TICK_TO_US(carrier_cycle)>24)){//    38k-> cycle= 26us
+    carrier_cycle = (g_ir_learn_pattern->carr_high_tm + g_ir_learn_pattern->carr_low_tm)/2;
+	if((CLOCK_TICK_TO_US(carrier_cycle)<=36)&&(CLOCK_TICK_TO_US(carrier_cycle)>=16)){//    38k-> cycle= 26us
 		//38K PWM, 占空比33.3%
 		pwmm_set_duty(IR_PWM_ID, PWM_CYCLE_VALUE, PWM_HIGH_VALUE);  //set cycle and high
 	}
@@ -896,12 +899,12 @@ _attribute_ram_code_ void ir_record(u32 tm, int pol)
     if (g_ir_learn_ctrl->ir_int_cnt > 1) {//载波间隔
         g_ir_learn_ctrl->time_interval = g_ir_learn_ctrl->curr_trigger_tm - g_ir_learn_ctrl->last_trigger_tm;
         // record carrier time
-        //<200us, carrier
-        if (g_ir_learn_ctrl->time_interval < IR_LEARN_NONE_CARR_MIN && g_ir_learn_ctrl->time_interval > IR_LEARN_CARR_GLITCH_MIN) {   // removing glitch  // receiving carrier
+        //<200us, carrier                                               //去掉毛刺判断，默认红外学习IO拉高
+        if (g_ir_learn_ctrl->time_interval < IR_LEARN_NONE_CARR_MIN && (1 || g_ir_learn_ctrl->time_interval > IR_LEARN_CARR_GLITCH_MIN)) {   // removing glitch  // receiving carrier
             if (!g_ir_learn_ctrl->is_carr) {//default:is carrier 0
                 g_ir_learn_ctrl->carr_first = g_ir_learn_ctrl->time_interval;
                 if (g_ir_learn_ctrl->series_cnt > 0) {  //  Do not record leading none-carrier
-                    g_ir_learn_ctrl->series_tm[(g_ir_learn_ctrl->series_cnt)] = g_ir_learn_ctrl->curr_trigger_tm - g_ir_learn_ctrl->carr_switch_start_tm - g_ir_learn_ctrl->carr_first;
+                    g_ir_learn_ctrl->series_tm[(g_ir_learn_ctrl->series_cnt)] = g_ir_learn_ctrl->curr_trigger_tm - g_ir_learn_ctrl->carr_switch_start_tm - 5*g_ir_learn_ctrl->carr_first/2;
                     ++ g_ir_learn_ctrl->series_cnt;
                 }
                 g_ir_learn_ctrl->carr_switch_start_tm = g_ir_learn_ctrl->curr_trigger_tm;
@@ -918,6 +921,7 @@ _attribute_ram_code_ void ir_record(u32 tm, int pol)
                 ++ g_ir_learn_ctrl->carr_check_cnt;
                 // we are receiving carrier
                 //红外载波的频率，红外学习按键发送时，则使用如下的值计算PWM载波频率！
+                if(g_ir_learn_ctrl->carr_check_cnt == 2)g_ir_learn_ctrl->carr_high_tm = g_ir_learn_ctrl->time_interval;//规避红外学习第一个波形
                 if (pol) {
                     if (g_ir_learn_ctrl->time_interval < g_ir_learn_ctrl->carr_high_tm || 0 == g_ir_learn_ctrl->carr_high_tm)     //  record the shortest cycle
                         g_ir_learn_ctrl->carr_high_tm = g_ir_learn_ctrl->time_interval;
@@ -932,7 +936,7 @@ _attribute_ram_code_ void ir_record(u32 tm, int pol)
             // record carrier time
             if (g_ir_learn_ctrl->is_carr) {
                 // It decrease one cycle with actually calculate, so add it.
-                g_ir_learn_ctrl->series_tm[(g_ir_learn_ctrl->series_cnt)] = (g_ir_learn_ctrl->last_trigger_tm - g_ir_learn_ctrl->carr_switch_start_tm) + g_ir_learn_ctrl->carr_first;
+                g_ir_learn_ctrl->series_tm[(g_ir_learn_ctrl->series_cnt)] = (g_ir_learn_ctrl->last_trigger_tm - g_ir_learn_ctrl->carr_switch_start_tm) + 2*g_ir_learn_ctrl->carr_first;
                 if (g_ir_learn_ctrl->series_tm[0] < IR_LEARN_START_MINLEN ) {
                     memset((u8*)g_ir_learn_ctrl, 0, sizeof(ir_learn_ctrl_t));
                     //g_ir_learn_state = IR_LEARN_KEY;
@@ -994,9 +998,11 @@ void ir_exit_learn(void)
     BM_CLR(reg_gpio_irq_en0(GPIO_IR_LEARN_IN), GPIO_IR_LEARN_IN & 0xff);//关闭外学习引脚的中断使能寄存器//Modified by tyf
     //gpio_clr_interrupt(GPIO_IR_LEARN_IN);
 
-    //recover IR_out and IR_control to default mode.
-    gpio_set_func(GPIO_IR_OUT, AS_PWM);
-    pwmm_stop(IR_PWM_ID);//add by tuyf
+    //pwmm_stop(IR_PWM_ID);//add by tuyf
+    //reg_tmr_ctrl &= ~(FLD_TMR2_EN|FLD_TMR1_EN);//add by tuyf
+
+    ir_record_end();
+    ir_restore_keyboard();
 
     //TL_IRcontrol output high,close IR learning function
     gpio_set_output_en(GPIO_IR_CONTROL, 1);
@@ -1004,8 +1010,7 @@ void ir_exit_learn(void)
 
     ir_get_index_addr();//更新红外学习记录信息在FLASH中的index.
 
-    ir_record_end();
-    ir_restore_keyboard();
+
 }
 
 void ir_check_tick()

@@ -19,6 +19,7 @@ extern void deep_wakeup_proc(void);
 
 _attribute_ram_code_ void irq_handler(void)
 {
+	DBG_CHN3_HIGH;
 #if (REMOTE_IR_ENABLE)
 	extern u8 user_key_mode;
 	if (user_key_mode == KEY_MODE_IR){
@@ -37,12 +38,14 @@ _attribute_ram_code_ void irq_handler(void)
 			if (!gpio_read(GPIO_IR_LEARN_IN)) {//Low level
 				ir_learn_irq_handler();
 			}
+			else//按键GPIO中断
+				return;
 		}
 	}
 #endif
 
 	irq_blt_sdk_handler ();
-
+	DBG_CHN3_LOW;
 }
 
 //.\tcdb.exe  wf 00000 -eb -i "E:\Telink BLE 项目\UEI项目\uei_complete_fm\ble_lt_app\ble_lt_sdk\8267_ble_remote\8267_remote.bin"

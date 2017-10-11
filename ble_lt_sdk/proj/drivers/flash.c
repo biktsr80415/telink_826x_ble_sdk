@@ -42,7 +42,7 @@ _attribute_ram_code_ static void flash_wait_done()
 
 _attribute_ram_code_ void flash_erase_sector(u32 addr){
 	u8 r = irq_disable();
-
+	DBG_CHN2_HIGH;
 	flash_send_cmd(FLASH_WRITE_ENABLE_CMD);
 	flash_send_cmd(FLASH_SECT_ERASE_CMD);
 	flash_send_addr(addr);
@@ -50,11 +50,12 @@ _attribute_ram_code_ void flash_erase_sector(u32 addr){
 	flash_wait_done();
 
 	irq_restore(r);
+	DBG_CHN2_LOW;
 }
 
 _attribute_ram_code_ void flash_write_page(u32 addr, u32 len, u8 *buf){
 	u8 r = irq_disable();
-
+	DBG_CHN2_HIGH;
 	// important:  buf must not reside at flash, such as constant string.  If that case, pls copy to memory first before write
 	flash_send_cmd(FLASH_WRITE_ENABLE_CMD);
 	flash_send_cmd(FLASH_WRITE_CMD);
@@ -69,11 +70,12 @@ _attribute_ram_code_ void flash_write_page(u32 addr, u32 len, u8 *buf){
 	flash_wait_done();
 
 	irq_restore(r);
+	DBG_CHN2_LOW;
 }
 
 _attribute_ram_code_ void flash_read_page(u32 addr, u32 len, u8 *buf){
 	u8 r = irq_disable();
-
+	DBG_CHN2_HIGH;
 
 	flash_send_cmd(FLASH_READ_CMD);
 	flash_send_addr(addr);
@@ -90,6 +92,7 @@ _attribute_ram_code_ void flash_read_page(u32 addr, u32 len, u8 *buf){
 	mspi_high();
 
 	irq_restore(r);
+	DBG_CHN2_LOW;
 }
 
 #if 0

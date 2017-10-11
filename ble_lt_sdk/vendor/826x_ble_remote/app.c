@@ -28,7 +28,7 @@
 
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
-MYFIFO_INIT(blt_txfifo, 40, 12);//fifo size set smaller,  avoid RAM overflow...
+MYFIFO_INIT(blt_txfifo, 40, 16);//fifo size set smaller,  avoid RAM overflow...
 ////////////////////////////////////////////////////////////////////
 
 #define			HID_HANDLE_CONSUME_REPORT			25
@@ -58,7 +58,7 @@ enum{
 	LED_AUDIO_OFF,	//2
 	LED_SHINE_SLOW, //3
 	LED_SHINE_FAST, //4
-	LED_SHINE_OTA, //5
+	LED_SHINE_OTA,  //5
 	LED_IR_NOT_READY,
 };
 
@@ -499,8 +499,13 @@ void key_change_proc(void)
 				ui_enable_mic (0);
 			}
 			else{ //if voice not on, mark voice key press tick
-				key_voice_press = 1;
-				key_voice_pressTick = clock_time();
+            #if (REMOTE_IR_ENABLE)
+				if (user_key_mode != KEY_MODE_IR)//if BLE mode. if IR mode, audio should be closed.
+            #endif
+				{
+					key_voice_press = 1;
+					key_voice_pressTick = clock_time();
+				}
 			}
 		}
 #endif
@@ -946,8 +951,8 @@ void user_init()
 	extern ir_universal_pattern_t *g_ir_learn_pattern_extend;//256bytes
 	u8* p = (u8*)&buffer_mic[0];
 	g_ir_learn_ctrl = (ir_learn_ctrl_t*)p;
-	g_ir_learn_pattern = (ir_universal_pattern_t*)(p + sizeof(ir_learn_ctrl_t));
-	g_ir_learn_pattern_extend = (ir_universal_pattern_t*)(p + sizeof(ir_learn_ctrl_t)+ sizeof(ir_universal_pattern_t));;
+	g_ir_learn_pattern = (ir_universal_pattern_t*)(p + sizeof(ir_learn_ctrl_t)+1);
+	g_ir_learn_pattern_extend = (ir_universal_pattern_t*)(p + sizeof(ir_learn_ctrl_t)+ sizeof(ir_universal_pattern_t)+1);;
 
 	rc_ir_init();
 

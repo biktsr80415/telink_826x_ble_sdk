@@ -297,6 +297,7 @@ u32 kb_scan_row(int drv_ind, u8 * gpio){
 	 * set as gpio mode if using spi flash pin
 	 * */
 	u8 sr = irq_disable();
+	DBG_CHN2_HIGH;
 #if	(KB_KEY_FLASH_PIN_MULTI_USE)
 	MSPI_AS_GPIO;
 #endif
@@ -336,6 +337,7 @@ u32 kb_scan_row(int drv_ind, u8 * gpio){
 #endif
 
 	irq_restore(sr);
+	DBG_CHN2_LOW;
 	return matrix;
 }
 

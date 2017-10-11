@@ -18,7 +18,7 @@ static inline void analog_wait(){
 
 _attribute_ram_code_ u8 analog_read(u8 addr){
 	u8 r = irq_disable();
-
+	DBG_CHN2_HIGH;
 	reg_ana_addr = addr;
 	reg_ana_ctrl = (FLD_ANA_START);
 //   Can't use one line setting "reg_ana_ctrl32 = ((FLD_ANA_START | FLD_ANA_RSV) << 16) | addr;"
@@ -32,13 +32,13 @@ _attribute_ram_code_ u8 analog_read(u8 addr){
 	reg_ana_ctrl = 0;		// finish
 
 	irq_restore(r);
-
+	DBG_CHN2_LOW;
 	return data;
 }
 
 _attribute_ram_code_ void analog_write(u8 addr, u8 v){
 	u8 r = irq_disable();
-
+	DBG_CHN2_HIGH;
 	reg_ana_addr = addr;
 	reg_ana_data = v;
 	reg_ana_ctrl = (FLD_ANA_START | FLD_ANA_RW);
@@ -51,11 +51,12 @@ _attribute_ram_code_ void analog_write(u8 addr, u8 v){
 #endif
 	
 	irq_restore(r);
+	DBG_CHN2_LOW;
 }
 
 void analog_read_multi(u8 addr, u8 *v, int len){
 	u8 r = irq_disable();
-
+	DBG_CHN2_HIGH;
 	reg_ana_ctrl = 0;		// issue clock
 	reg_ana_addr = addr;
 	while(len--){
@@ -70,11 +71,12 @@ void analog_read_multi(u8 addr, u8 *v, int len){
 	reg_ana_ctrl = 0; 		// finish
 
 	irq_restore(r);
+	DBG_CHN2_LOW;
 }
 
 void analog_write_multi(u8 addr, u8 *v, int len){
 	u8 r = irq_disable();
-
+	DBG_CHN2_HIGH;
 	reg_ana_addr = addr;
 	while(len--){
 		reg_ana_data = *v++;
@@ -87,6 +89,7 @@ void analog_write_multi(u8 addr, u8 *v, int len){
 	reg_ana_ctrl = 0; 		// finish
 
 	irq_restore(r);
+	DBG_CHN2_LOW;
 }
 
 #endif
