@@ -347,20 +347,6 @@ void beacon_nextBeacon(u8 e,u8 *p, int n){
 	updateAdvDataPointer( (u8*)beacon_advPDUAddrBuf[firstAdvType]);
 }
 
-void rf_customized_param_load(void)
-{
-	  //flash 0x77000 customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
-	 if( (*(unsigned char*) CUST_CAP_INFO_ADDR) != 0xff ){
-		 //ana_81<4:0> is cap value(0x00 - 0x1f)
-		 analog_write(0x81, (analog_read(0x81)&0xe0) | ((*(unsigned char*) CUST_CAP_INFO_ADDR)&0x1f) );
-	 }
-
-	 //flash 0x77040 customize TP0, flash 0x77041 customize TP1
-	 if( ((*(unsigned char*) (CUST_TP_INFO_ADDR)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+1)) != 0xff) ){
-		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
-	 }
-}
-
 //reserved
 void blt_system_power_optimize(void)  //to lower system power
 {
