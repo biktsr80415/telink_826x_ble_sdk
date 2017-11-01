@@ -259,7 +259,8 @@ int bls_uart_handler (u8 *p, int n)
 	// restart module: 18 ff 00 00
 	else if (cmd == SPP_CMD_RESTART_MOD)
 	{
-		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 10000 * sys_tick_per_us);
+		//cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 10000 * sys_tick_per_us);
+		cpu_reboot();
 	}
 	// enable/disable MAC binding function: 19 ff 01 00 00(disable, 01 enable)
 	else if (cmd == 0x19)
