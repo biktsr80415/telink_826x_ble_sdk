@@ -448,7 +448,7 @@ int app_event_callback (u32 h, u8 *p, int n)
 				if(pa->mac[0] == 0x11 && pa->mac[1] == 0x11){
 					beacon_count++;
 					static s8 beacon_rssi = 0;
-					beacon_rssi = RSSI_OFFSET - pa->data[pa->len];
+					beacon_rssi = pa->data[pa->len];
 				}
 			}
 		}
