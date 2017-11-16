@@ -22,6 +22,8 @@ extern u16 *	blt_p_mac;
 /************************************************************************
  * 				Global Variable and Definitions
  */
+MYFIFO_INIT(blt_rxfifo, 64, 8);
+MYFIFO_INIT(blt_txfifo, 40, 16);
 
 /*Default beacon state after system start*/
 u8 current_state = BEACON_INVALIAD_STAUS;
@@ -290,26 +292,17 @@ void app_power_management ()
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
 u8  tbl_mac [] = {0xef, 0xe1, 0xe2, 0x11, 0x12, 0xc5};
+const u8	tbl_advData[] = {
+	0x02, 0x01, 0x05,					   //BLE litmited discoverable mode and BR/EDR not supported
+	0x02, 0x0A, 0x07,					   //Tx transmission power 7dBm
+	0x05,0x02, 0x0a, 0x18,0x00,0x18,	   //incomplete list of service class UUIDS (0x1812, 0x180f)
+	0x06, 0x09,  't', 'l', 'B', 'c', 'n'
+};
 
-u8	tbl_adv [ ] =
-		{0x00,	25,
-		 0x10, 0x08, 0x10, 0x20, 0x00, 0x09,	//mac address
-		 0x02, 0x01, 0x05,					    //BLE litmited discoverable mode and BR/EDR not supported
-		 0x02, 0x0A, 0x07, 						//Tx transmission power 7dBm
-		 0x05,0x02, 0x0a, 0x18,0x00,0x18,		//incomplete list of service class UUIDS (0x1812, 0x180f)
-		 0x06, 0x09,  'S', 'e', 'l', 'f', 'i'
-		};
+const u8	tbl_scanRsp [] = {
+	0x07, 0x09, 'b', 'e', 'a', 'c', 'o', 'n',	//scan name " beacon"
+};
 
-u8	tbl_rsp [ ] =
-		{0x00, 0x0e,					        //type len
-		 0x19, 0x88, 0x12, 0x29, 0x01, 0x02,    //mac address
-		 0x07, 0x09, 'b', 'e', 'a', 'c', 'o', 'n',
-		};
-
-void set_adv_data(u8 *src_addr, u8 len){
-	memcpy(&tbl_adv[8],src_addr,len);
-	tbl_adv[1] = len+6;//mac addr 6 octets
-}
 
 /*Call back function if connection terminated (configuration finished)*/
 void on_connection_terminate(u8 e,u8 *p, int n){
@@ -417,6 +410,11 @@ void user_init()
 	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
 	blc_ll_initPowerManagement_module();        //pm module:      	 optional
 
+	blc_l2cap_register_handler (blc_l2cap_packet_receive);
+
+	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
+	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
+
 	extern void	beacon_att_init ();
 	beacon_att_init ();
 
@@ -456,9 +454,6 @@ void user_init()
 
 	bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
 #endif
-
-	extern ll_module_adv_callback_t	   ll_module_adv_cb;
-	ll_module_adv_cb = 0;
 }
 
 void beacon_para_init()
