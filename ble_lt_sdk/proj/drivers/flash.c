@@ -8,7 +8,6 @@
 #define FLASH_PROTECT_ENABLE    0
 #endif
 
-u8 flash_protect_en = FLASH_PROTECT_ENABLE;
 
 
 _attribute_ram_code_ static inline int flash_is_busy(){
@@ -101,27 +100,7 @@ _attribute_ram_code_ void flash_read_page(u32 addr, u32 len, u8 *buf){
 	irq_restore(r);
 }
 
-
-#if 1
-_attribute_ram_code_ u32 flash_get_jedec_id(){
-	u8 r = irq_disable();
-	flash_send_cmd(FLASH_GET_JEDEC_ID);
-	u8 manufacturer = mspi_read();
-	u8 mem_type = mspi_read();
-	u8 cap_id = mspi_read();
-	mspi_high();
-	irq_restore(r);
-	return (u32)((manufacturer << 24 | mem_type << 16 | cap_id));
-}
-
-#endif
-
-static u16 T_flash_status = -1;
-u32 flash_get_id(void)
-{
-    return flash_get_jedec_id();
-}
-
+#if 0//The internal flash model of the TLSR8261F512ET32 MCU is PN25F04C, which contains the uid register.
 /*The Read Unique ID Number instruction accesses a factory-set read-only 96-bit number that is
  *unique to each PN25F04C device. The ID number can be used in conjunction with user software
  *unique methods to help prevent copying or cloning of a system.*/
@@ -158,6 +137,27 @@ _attribute_ram_code_ void flash_get_uid(u8* p)//add by tuyf
 	irq_restore(r);
 #endif
 
+}
+#endif
+
+#if FLASH_PROTECT_ENABLE
+u8 flash_protect_en = FLASH_PROTECT_ENABLE;
+
+_attribute_ram_code_ u32 flash_get_jedec_id(){
+	u8 r = irq_disable();
+	flash_send_cmd(FLASH_GET_JEDEC_ID);
+	u8 manufacturer = mspi_read();
+	u8 mem_type = mspi_read();
+	u8 cap_id = mspi_read();
+	mspi_high();
+	irq_restore(r);
+	return (u32)((manufacturer << 24 | mem_type << 16 | cap_id));
+}
+
+static u16 T_flash_status = -1;
+u32 flash_get_id(void)
+{
+    return flash_get_jedec_id();
 }
 
 _attribute_ram_code_ u16 flash_status_read(){
@@ -569,6 +569,6 @@ int flash_protect_8267_normal(void){
     return -1;
 }
 
-
+#endif
 
 
