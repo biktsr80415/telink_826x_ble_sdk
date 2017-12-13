@@ -21,6 +21,7 @@ enum{
 
 };
 
+#if FLASH_PROTECT_ENABLE
 enum{
 	FLASH_NONE	                   =	0,
 	//GD25Q40
@@ -64,6 +65,19 @@ enum{
 
 };
 
+_attribute_ram_code_ u32 flash_get_jedec_id();
+_attribute_ram_code_ u16 flash_read_manufacture_id();
+u32 flash_get_id(void);
+int flash_protect_up256k(void);
+int flash_protect_disable(void);
+int flash_protect_down256k(void);
+int flash_protect_8267_normal(void);
+int flash_protect_up64k(void);
+int flash_protect_down64k(void);
+int flash_protect_up128k(void);
+int flash_protect_down128k(void);
+#endif
+
 enum{
 	FLASH_ID_GD25Q40  = 0xc8400013,
 	FLASH_ID_MD25D40  = 0x51400013,
@@ -74,18 +88,12 @@ enum{
 _attribute_ram_code_ void flash_erase_sector(u32 addr);
 _attribute_ram_code_ void flash_write_page(u32 addr, u32 len, u8 *buf);
 _attribute_ram_code_ void flash_read_page(u32 addr, u32 len, u8 *buf);
-_attribute_ram_code_ u32 flash_get_jedec_id();
-_attribute_ram_code_ u16 flash_read_manufacture_id();
 
-u32 flash_get_id(void);
-void flash_get_uid(u8* p);//add by tuyf
-int flash_protect_up256k(void);
-int flash_protect_disable(void);
-int flash_protect_down256k(void);
-int flash_protect_8267_normal(void);
-int flash_protect_up64k(void);  //add by tuyf
-int flash_protect_down64k(void);//add by tuyf
-int flash_protect_up128k(void);//add by tuyf
-int flash_protect_down128k(void);//add by tuyf
+#if 0//The internal flash model of the TLSR8261F512ET32 MCU is PN25F04C, which contains the uid register.
+/*The Read Unique ID Number instruction accesses a factory-set read-only 96-bit number that is
+ *unique to each PN25F04C device. The ID number can be used in conjunction with user software
+ *unique methods to help prevent copying or cloning of a system.*/
+_attribute_ram_code_ void flash_get_uid(u8* p);//FLASH mode: PN25F04C
+#endif
 
 
