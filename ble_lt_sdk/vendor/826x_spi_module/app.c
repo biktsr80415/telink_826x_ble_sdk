@@ -126,7 +126,6 @@ void app_power_management ()
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
 
-	//闂傚倸鍊峰ù鍥р枖閺囥垹绐楅柟鐗堟緲閸戠姴鈹戦悩瀹犲缂佺媭鍨崇槐鎺斾沪閻愵剙澧ule闂傚倸鍊峰ù鍥р枖閺囥垹绐楅柟鐗堟緲閸戠姴鈹戦悩瀹犲缂佺媭鍨崇槐鎺戠暆閿熻棄顥攔t闂傚倸鍊峰ù鍥р枖閺囥垹绐楅柟鐗堟緲閸戠姴鈹戦悩瀹犲缂佺媭鍨堕弻锝夊Χ鎼达紕浠╁┑鐐村焾娴滎亜顬夐搹瑙勫磯闁靛鍎查悗楣冩⒑閸濆嫷鍎忔い顓犲厴閻涱喛绠涘☉娆忥拷闂佸吋浜介崕鎻掆枍閵忋倖鈷戦柛婵嗗閿熶粙鏌涙繝鍐⒈闁跨喎锟介妵鎰板箳閹捐泛寮抽梻浣虹帛濡礁鐣烽悽鐢电幓婵炴垯鍨洪悡鏇熸叏濮楀棗澧柛銈堜含缁辨帗娼忛妸褏鐤勯悗娈垮櫘閸撶喐淇婇崼鏇炲耿婵°倕锕ｇ槐顩孭IO_WAKEUP_MCU闂傚倸鍊峰ù鍥р枖閺囥垹绐楅柟鐗堟緲閸戠姴鈹戦悩瀹犲缂佺媭鍨堕弻锝夊箣閿濆憛鎾绘煛閸涱喗鍊愭慨濠冩そ瀵爼宕归钘夛拷缂傚倷绶氱涵鎼佸闯閿濆宓侀煫鍥ㄧ♁閸婂鏌ら幁鎺戝姕婵炲懌鍨藉娲传閸曨偓鎷烽梺绋匡攻閻楁粓鏁撴禒瀣櫢濞寸姴顑嗛悡鏇熺箾閸℃ê濮夊褏鏁婚弻鈩冩媴鐟欏嫬纾抽悗娈垮櫘閸撶喐淇婇崼鏇炲耿婵°倕锕ｇ槐锕傛⒒閸屾瑦绁版繛澶嬫礋瀹曚即骞囬弶鍨殤婵犵數濮甸懝鍓х不椤栨粎纾肩�锟芥嫹婵＄炒r闂傚倸鍊峰ù鍥р枖閺囥垹绐楅柟鐗堟緲閸戠姴鈹戦悩瀹犲缂佺媭鍨堕弻褍顬楅锟芥嫹闂佹眹鍊曠�鏉款瀴閾忚宕夐柕濞垮劜閻庨箖姊洪崫鍕靛剰妞ゎ厾鍏橀悰顔跨疀濞戞瑥锟介梺鍏间航閸庢彃鈻嶉姀銈嗏拺閻犳亽鍔屽▍鎰版煙閸戙倖瀚�if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
 		module_wakeup_module_tick = 0;
 		GPIO_WAKEUP_MCU_LOW;
@@ -142,8 +141,8 @@ void app_power_management ()
 	if (!app_module_busy() && !tick_wakeup)
 	{
 		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
-		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //闂傚倸鍊峰ù鍥р枖閺囥垹绐楅柟鐗堟緲閸戠姴鈹戦悩瀹犲缂佺媭鍨堕弻锝夊Χ鎼达紕浼囧┑鐐存尫缁瑥顬夐搹瑙勫磯闁靛鍎查悗楣冩⒑閸濆嫷鍎忔い顓犲厴閻涱喛绠涘☉娆愭缂備浇浜稉顢疧_WAKEUP_MODULE 闂傚倸鍊峰ù鍥р枖閺囥垹绐楅柟鐗堟緲閸戠姴鈹戦悩瀹犲缂佺媭鍨堕弻锝夊箣閿濆憛鎾绘煛閸涱喗鍊愰柡宀嬬節瀹曟帒螣閻氬瓨瀚归梺璇插閻旑剟骞忛敓绲�
-
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  
+	}
 	if (tick_wakeup && clock_time_exceed (tick_wakeup, 500))
 	{
 		GPIO_WAKEUP_MODULE_LOW;
@@ -342,7 +341,7 @@ void user_init()
 void blt_pm_proc(void){
 //Wakeup source setting
 #if PM_ENABLE
-	if((spp_task_finished_flg) || gpio_read(SSPI_PM_WAKEUP_PIN)){
+	if( gpio_read(SSPI_PM_WAKEUP_PIN)){
 		bls_pm_setSuspendMask(SUSPEND_DISABLE);
 	}
 	else{
