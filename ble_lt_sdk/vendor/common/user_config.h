@@ -45,6 +45,8 @@
 	#include "../826x_beacon/app_config.h"
 #elif (__PROJECT_BEACON_DETECTOR_8261__ || __PROJECT_BEACON_DETECTOR_8267__)
 	#include "../826x_beacon_detector/app_config.h"
+#elif (__826x_PTS_TEST__)
+	#include "../826x_pts_test/app_config.h"
 #else
 	#include "../common/default_config.h"
 #endif
