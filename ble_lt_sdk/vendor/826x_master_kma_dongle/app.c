@@ -73,6 +73,9 @@ extern u8 read_by_type_req_uuid[16];
 
 extern void	att_keyboard (u16 conn, u8 *p);
 
+#if(USB_MOUSE_ENABLE)
+extern void att_mouse(u16 conn, u8 *p);
+#endif
 
 int main_idle_loop (void);
 
@@ -146,7 +149,9 @@ int main_idle_loop (void);
 		main_service = p;
 	}
 
-
+#if(USB_MOUSE_ENABLE)
+	#define			HID_HANDLE_MOUSE_REPORT				conn_char_handler[5]
+#endif
 	#define			HID_HANDLE_CONSUME_REPORT			conn_char_handler[3]
 	#define			HID_HANDLE_KEYBOARD_REPORT			conn_char_handler[4]
 	#define			AUDIO_HANDLE_MIC					conn_char_handler[0]
@@ -250,6 +255,13 @@ int app_l2cap_handler (u16 conn_handle, u8 *raw_pkt)
 				att_keyboard (conn_handle, pAtt->dat);
 
 			}
+#if(USB_MOUSE_ENABLE)
+			else if(HID_HANDLE_MOUSE_REPORT){
+				static u32 app_mouse_dat;
+				app_mouse_dat++;
+				att_mouse(conn_handle,pAtt->dat);
+			}
+#endif
 			else if(attHandle == AUDIO_HANDLE_MIC)
 			{
 				static u32 app_mic;
