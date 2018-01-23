@@ -306,6 +306,7 @@ void user_init()
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
 	#if (SMP_PASSKEY_ENTRY )
 		blc_smp_enableAuthMITM (1, 123456);
+		blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);   //Responder displays PK, initiator inputs PK
 	#endif
 #endif
 
