@@ -62,10 +62,8 @@ int event_handler(u32 h, u8 *para, int n)
 				printf("PIN Code Number : %s\n", pc);
 
 				blc_smp_enableAuthMITM (1, pinCode_random);//pincode
-				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
 	#else//Popup dialog box on your phone , you need to enter the pincode:123456 to match
 				blc_smp_enableAuthMITM (1, 123456);//pincode
-				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
 	#endif
 #endif
 			}
