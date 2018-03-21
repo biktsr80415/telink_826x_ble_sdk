@@ -114,7 +114,7 @@ void gpio_set_wakeup(u32 pin, u32 level, int en)
 void gpio_set_input_en(u32 pin, u32 value)
 {
 	u8	bit = pin & 0xff;
-	u8 group = pin & 0xf00;
+	u16 group = pin & 0xf00;
 
 	if(group == GPIO_GROUPA || group == GPIO_GROUPD || group == GPIO_GROUPE)
 	{
@@ -152,7 +152,7 @@ void gpio_set_input_en(u32 pin, u32 value)
 void gpio_set_data_strength(u32 pin, u32 value)
 {
     u8 bit = pin & 0xff;
-    u8 group = pin & 0xf00;
+    u16 group = pin & 0xf00;
     if( (group == GPIO_GROUPA) || (group==GPIO_GROUPD) || (group == GPIO_GROUPE))
     {
     	if(value){
