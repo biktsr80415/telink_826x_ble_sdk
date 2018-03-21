@@ -78,25 +78,6 @@ enum {
 	RF_POWER_20m3NdBm	= 26, // -20.3
 };
 
-#ifndef RF_POWER_2dBm
-#define RF_POWER_2dBm   RF_POWER_0dBm
-#endif
-
-#define FR_TX_PA_MAX_POWER	0x40
-#define FR_TX_PA_MIN_POWER	0x41
-
-//#define	RF_TX_PA_POWER_LOW		WriteAnalogReg (0x9e, 0x02)
-//#define	RF_TX_PA_POWER_HIGH		WriteAnalogReg (0x9e, 0xf2)
-#define	RF_TX_PA_POWER_LEVEL(high)		WriteAnalogReg (0x9e, high ? 0xbf : 0x02)
-#define	RF_TX_PA_POWER_LOW		rfhw_tx_power = FR_TX_PA_MIN_POWER
-#define	RF_TX_PA_POWER_HIGH		rfhw_tx_power = FR_TX_PA_MAX_POWER
-//#define	RF_TX_PA_POWER_LEVEL(high)		rfhw_tx_power = high ? FR_TX_PA_MAX_POWER : FR_TX_PA_MIN_POWER;
-#define	SET_RF_TX_DMA_ADR(a)	write_reg16 (0x800c0c, a)
-
-extern u8 rf_tx_mode;
-#define RF_TX_MODE_CARRIER_ENABLE			do {rf_tx_mode = RF_TX_MODE_CARRIER;} while(0)
-#define RF_TX_MODE_CONTINUE_ENABLE			do {rf_tx_mode = RF_TX_MODE_CONTINUE;} while(0)
-#define RF_TX_MODE_NORMAL_ENABLE			do {rf_tx_mode = RF_TX_MODE_NORMAL;} while(0)
 
 
 extern int 		sar_adc_pwdn_en;
@@ -445,6 +426,9 @@ void 	rf_receiving_pipe_enble(u8 channel_mask);
 #define				STOP_RF_STATE_MACHINE	( REG_ADDR8(0xf00) = 0x80 )
 
 
+void rf_doubler_calibration(void);
+
+
 static inline void rf_ble_tx_on ()
 {
 	write_reg8  (0x800f02, RF_TRX_OFF | BIT(4));	// TX enable
@@ -483,42 +467,6 @@ static inline void rf_ble_stx  (void* addr, u32 tick)
 void rf_start_stx  (void* addr, u32 tick);
 
 void rf_update_tp_value (u8 tp0, u8 tp1);
-
-
-static inline void rf_set_12M_Crystal_1m_mode(void)
-{
-	write_reg8 (0x8004eb, 0xe0);
-	analog_write(0x99, 0xb1);
-	analog_write(0x82, 0x20);
-	analog_write(0x9e, 0x56);
-}
-
-
-static inline void rf_set_12M_Crystal_2m_mode(void)
-{
-	write_reg8 (0x8004eb, 0xe0);
-	analog_write(0x99, 0xb1);
-	analog_write(0x82, 0x20);
-	analog_write(0x9e, 0xad);
-}
-
-static inline void rf_set_16M_Crystal_1m_mode(void)
-{
-	write_reg8 (0x8004eb, 0x60);
-	analog_write(0x99, 0x31);
-	analog_write(0x82, 0x34);
-	analog_write(0x9e, 0x41);
-}
-
-
-static inline void rf_set_16M_Crystal_2m_mode(void)
-{
-	write_reg8 (0x8004eb, 0x60);
-	analog_write(0x99, 0x31);
-	analog_write(0x82, 0x34);
-	analog_write(0x9e, 0x82);
-}
-
 
 
 /////////////////////  RF BaseBand ///////////////////////////////

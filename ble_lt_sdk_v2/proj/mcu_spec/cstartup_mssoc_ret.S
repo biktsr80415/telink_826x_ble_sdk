@@ -45,7 +45,7 @@ __start:					@ MUST,  referenced by boot.link
 	.word	(BUILD_VERSION)
 	.org 0x8
 	.word	(0x544c4e4b)
-	.word	(0x00880000 + 0x08)    @_ramcode_size_div_16_align_256_
+	.word	(0x00800000 + 0x08)    @_ramcode_size_div_16_align_256_
 	@.word	(0x00880000 + _ramcode_size_div_16_align_256_)
 
 	.org 0x10

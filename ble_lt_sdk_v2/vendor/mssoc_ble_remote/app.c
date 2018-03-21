@@ -34,7 +34,7 @@
 #define 	MY_ADV_INTERVAL_MAX					ADV_INTERVAL_35MS
 
 
-#define		MY_RF_POWER_INDEX					RF_POWER_0m28NdBm
+#define		MY_RF_POWER_INDEX					RF_POWER_9m34PdBm
 
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
@@ -46,14 +46,14 @@ MYFIFO_INIT(blt_txfifo, 40, 16);
 //	 Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
 const u8	tbl_advData[] = {
-	 0x05, 0x09, 't', 'h', 'i', 'd',
+	 0x05, 0x09, 'X', 'h', 'i', 'd',
 	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
 	 0x03, 0x19, 0x80, 0x01, 					// 384, Generic Remote Control, Generic category
 	 0x05, 0x02, 0x12, 0x18, 0x0F, 0x18,		// incomplete list of service class UUIDs (0x1812, 0x180F)
 };
 
 const u8	tbl_scanRsp [] = {
-		 0x08, 0x09, 't', 'R', 'e', 'm', 'o', 't', 'e',
+		 0x08, 0x09, 'X', 'R', 'e', 'm', 'o', 't', 'e',
 	};
 
 
@@ -345,7 +345,7 @@ void	task_connect (u8 e, u8 *p, int n)
 {
 	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);  //interval=10ms latency=99 timeout=4s
 	bls_l2cap_setMinimalUpdateReqSendingTime_after_connCreate(5000);
-//	asm("tnop");asm("tnop");asm("tnop");asm("tnop");
+
 
 	latest_user_event_tick = clock_time();
 
@@ -354,6 +354,17 @@ void	task_connect (u8 e, u8 *p, int n)
 	device_in_connection_state = 1;//
 
 	interval_update_tick = clock_time() | 1; //none zero
+}
+
+
+void	task_conn_update_req (u8 e, u8 *p, int n)
+{
+
+}
+
+void	task_conn_update_done (u8 e, u8 *p, int n)
+{
+
 }
 
 
@@ -549,7 +560,8 @@ void key_change_proc(void)
 
 #define GPIO_WAKEUP_KEYPROC_CNT				3
 
-_attribute_ram_code_ void proc_keyboard (u8 e, u8 *p, int n)
+
+void proc_keyboard (u8 e, u8 *p, int n)
 {
 	static int gpioWakeup_keyProc_cnt = 0;
 	static u32 keyScanTick = 0;
@@ -611,7 +623,7 @@ _attribute_ram_code_ void proc_keyboard (u8 e, u8 *p, int n)
 extern u32	scan_pin_need;
 
 
-_attribute_ram_code_
+//_attribute_ram_code_
 void blt_pm_proc(void)
 {
 
@@ -804,11 +816,16 @@ void user_init_normal()
 	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
 
 
+	bls_app_registerEventCallback (BLT_EV_FLAG_CONN_PARA_REQ, &task_conn_update_req);
+	bls_app_registerEventCallback (BLT_EV_FLAG_CONN_PARA_UPDATE, &task_conn_update_done);
+
+
+
 	///////////////////// keyboard matrix initialization///////////////////
 	u32 pin[] = KB_DRIVE_PINS;
 	for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
 	{
-		if((pin[i] & 0xf00) != GPIO_GROUPB){  //A1°æ±¾ PBx deep»½ÐÑÒì³£
+		if((pin[i] & 0xf00) != GPIO_GROUPB){   //PBx  wakeup deep ERR
 			gpio_set_wakeup(pin[i],1,1);  	   //drive pin core(gpio) high wakeup suspend
 			cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
 		}
@@ -938,7 +955,7 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 	u32 pin[] = KB_DRIVE_PINS;
 	for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
 	{
-		if((pin[i] & 0xf00) != GPIO_GROUPB){  //A1°æ±¾ PBx deep»½ÐÑÒì³£
+		if((pin[i] & 0xf00) != GPIO_GROUPB){   //PBx  wakeup deep ERR
 			//gpio_set_wakeup(pin[i],1,1);  	   //drive pin core(gpio) high wakeup suspend
 			cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
 		}
@@ -947,35 +964,9 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 
 	blc_ll_recoverDeepRetention();
 
-	//test key
-#if 0
-
-	if(clock_time_exceed(deep_ret_tick, 1000000)){
-		deep_ret_tick = clock_time();
-
-		deep_ret_cnt ++;
-		if(deep_ret_cnt & 1){
-			key_buf[2] = VK_2;
-		}
-		else{
-			key_buf[2] = 0;
-		}
-		bls_att_pushNotifyData (HID_NORMAL_KB_REPORT_INPUT_DP_H, key_buf, 8);
-	}
 
 
-#elif 0
-	deep_ret_cnt ++;
-	if(deep_ret_cnt & 1){
-		key_buf[2] = VK_2;
-	}
-	else{
-		key_buf[2] = 0;
-	}
-	bls_att_pushNotifyData (HID_NORMAL_KB_REPORT_INPUT_DP_H, key_buf, 8);
-#endif
-
-	DBG_CHN4_HIGH;
+//	DBG_CHN7_HIGH;   //debug   PB7 high
 }
 
 
@@ -986,14 +977,15 @@ u32 tick_loop;
 //unsigned short battValue[20];
 
 
-_attribute_ram_code_ void main_loop (void)
+
+
+void main_loop (void)
 {
 	tick_loop ++;
 
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	blt_sdk_main_loop();
-
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////
@@ -1013,7 +1005,7 @@ _attribute_ram_code_ void main_loop (void)
 
 	proc_keyboard (0,0, 0);
 
-//	device_led_process();
+	device_led_process();
 
 	blt_pm_proc();
 }

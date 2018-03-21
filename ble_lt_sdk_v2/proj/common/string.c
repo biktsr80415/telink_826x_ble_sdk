@@ -1,6 +1,7 @@
 #include "types.h"
 #include "string.h"
 #include "../common/assert.h"
+#include "../tl_common.h"
 
 char* strcpy(char * dst0, const char * src0) {
 	char *s = dst0;
@@ -182,5 +183,38 @@ void * memset4(void * dest, int val, unsigned int len) {
 void zeromem4(void *data, unsigned int len){
 	memset4(data, 0, len);
 }
+
+
+
+#if 0
+_attribute_session_(".ram_code")
+__attribute__((noinline)) volatile void  smemset(register char * dest,register int val,register unsigned int len)
+{
+	while(len--)
+	   *(dest++) = val;
+}
+
+
+_attribute_session_(".ram_code")
+__attribute__((noinline)) volatile void * smemcpy(register char * out, register char * in, register unsigned int len)
+{
+	while(len--)
+		*(out++)=*(in++);
+}
+
+_attribute_session_(".ram_code")
+__attribute__((noinline)) volatile int smemcmp(register char * s1, register char *s2, unsigned int n)
+{
+	while (n--) {
+		if (*s1 != *s2) {
+			return *s1 - *s2;
+		}
+		s1++;
+		s2++;
+	}
+	return 0;
+}
+#endif
+
 
 

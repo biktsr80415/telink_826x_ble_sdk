@@ -25,10 +25,10 @@ _attribute_ram_code_ void irq_handler(void)
 
 
 
-_attribute_ram_code_
+//_attribute_ram_code_
 int main (void) {
 
-//	gpio_write(GPIO_CHN4, 0);  //debug
+//	DBG_CHN7_LOW;   //debug   PB7 low
 
 	cpu_wakeup_init();
 
@@ -37,9 +37,9 @@ int main (void) {
 
 	rf_drv_init(CRYSTAL_TYPE);
 
-	analog_write(0x08, 0x44);  //0x44:3.3V  0x4c:1.4V
-
 	gpio_init();
+
+//	DBG_CHN0_HIGH;  //debug
 
 	deep_wakeup_proc();
 
