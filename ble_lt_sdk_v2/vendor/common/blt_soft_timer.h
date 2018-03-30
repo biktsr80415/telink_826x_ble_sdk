@@ -28,8 +28,8 @@
 #define		TIME_COMPARE_BIG(t1,t2)   ( (u32)((t1) - (t2)) < BIT(30)  )
 
 
-#define		BLT_TIMER_SAFE_MARGIN_PRE	  (CLOCK_SYS_CLOCK_1US<<8)  //256 us
-#define		BLT_TIMER_SAFE_MARGIN_POST	  (CLOCK_SYS_CLOCK_1S<<2)   // 4S
+#define		BLT_TIMER_SAFE_MARGIN_PRE	  (CLOCK_16M_SYS_TIMER_CLK_1US<<8)  //256 us
+#define		BLT_TIMER_SAFE_MARGIN_POST	  (CLOCK_16M_SYS_TIMER_CLK_1S<<2)   // 4S
 static int inline blt_is_timer_expired(u32 t, u32 now) {
 	//return ((u32)(now - t) < BLT_TIMER_SAFE_MARGIN_POST);
 	return ((u32)(now + BLT_TIMER_SAFE_MARGIN_PRE - t) < BLT_TIMER_SAFE_MARGIN_POST);

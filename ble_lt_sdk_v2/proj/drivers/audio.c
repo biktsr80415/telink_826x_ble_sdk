@@ -12,304 +12,355 @@
 #include "../../proj/tl_common.h"
 #include "audio.h"
 #include "pga.h"
-//set period for Misc
-#define		SET_PFM(v)			write_reg16(0x800030,(v<<2)&0x0FFF)
-//set period for L
-#define		SET_PFL(v)			write_reg8(0x800032,v)
+#include "adc.h"
 
 
-unsigned char audio_mode;
-static unsigned char adc_IOPowerSupplySet(unsigned char IOp){
-	unsigned char vv1;
-	if(IOp>2||IOp<1){
 
-		return 0;
-	}
-	else{
-		vv1 = ReadAnalogReg(0x02);
-		vv1 = vv1 & 0xcf;
-		vv1 = vv1 | (IOp<<4);
-		WriteAnalogReg(0x02,vv1);
-		return 1;
-	}
+
+
+unsigned char AMIC_ADC_SampleLength[2] = {0xf0/*96K*/,0xab/*132K*/};
+
+unsigned char DMIC_CLK_Mode[RATE_SIZE] = {47/*8	k	1021.277*/,	47/*16k	1021.277*/,
+										  34/*22k	1411.765*/,	47/*32k	1021.277*/,
+										  34/*44k	1411.765*/,	32/*48k	1500	*/,
+										  32/*96k	1500	*/};
+
+unsigned char DMIC_CIC_Rate[RATE_SIZE] = {0x23/*8k 7.978723		CIC_MODE 0*/,	0x22/*16k 15.95745	CIC_MODE 0*/,
+										  0x32/*22k 22.05882	CIC_MODE 0*/,	0x11/*32k 31.91489	CIC_MODE 0*/,
+										  0x11/*44k 44.11765	CIC_MODE 0*/,	0x11/*48k 46.875	CIC_MODE 0*/,
+										  0x00/*96k 93.75 		CIC_MODE 0*/};
+
+unsigned char AMIC_CIC_Rate[RATE_SIZE] = {0xab/*8k  96/12	*/,	0x85/*16k 96/6	*/,
+										  0x85/*22k 132/6	*/,	0x42/*32k 96/3	*/,
+										  0x42/*44k 132/3	*/,	0x31/*48k 96/2	*/,
+										  0x20/*96k			*/};
+
+/*  matrix used under condition: I2S = 2 MHz  */
+unsigned long ASDM_Rate_Matching[RATE_SIZE] = {0x00832001/*8k */,0x01063001/*16k*/,
+											   0x01687001/*22k*/,0x020C5001/*32k*/,
+											   0x02D4D001/*44k*/,0x03127001/*48k*/,
+											   0x0624d001/*96k*/};
+
+/*  matrix used under condition: I2S = 2 MHz  */
+unsigned long DSDM_Rate_Matching[RATE_SIZE] = {0x00820001/*8 k*/,0x01058001/*16k*/,
+											   0x01697001/*22k*/,0x020AF001/*32k*/,
+											   0x02D2E001/*44k*/,0x03000001/*48k*/,
+											   0x06000001/*96k*/};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+enum {
+	AUD_DMIC,
+	AUD_AMIC,
+};
+
+#define SET_PFM(v)     do{\
+                           BM_CLR(reg_adc_period_chn0,FLD_ADC_CHNM_PERIOD);\
+	              	   	   reg_adc_period_chn0 |= MASK_VAL(FLD_ADC_CHNM_PERIOD,v);\
+                       }while(0)
+#define SET_PFL(v)     do{\
+                           BM_CLR(reg_adc_period_chn12,FLD_ADC_CHNLR_PERIOD);\
+                           reg_adc_period_chn12 |= MASK_VAL(FLD_ADC_CHNLR_PERIOD,v);\
+                       }while(0)
+/**
+ * @brief     configure the mic buffer's address and size
+ * @param[in] pbuff - the first address of SRAM buffer to store MIC data.
+ * @param[in] size_buff - the size of pbuff.
+ * @return    none
+ */
+void audio_config_mic_buf(signed short* pbuff,unsigned char size_buff)
+{
+	reg_dfifo0_addr = pbuff;
+	reg_dfifo0_size = (size_buff>>4)-1;
+}
+/**
+ * @brief     configure the SDM buffer's address and size
+ * @param[in] pbuff - the first address of buffer SDM read data from.
+ * @param[in] size_buff - the size of pbuff.
+ * @return    none
+ */
+void audio_config_sdm_buf(signed short* pbuff, unsigned char size_buff)
+{
+	reg_aud_base_adr = pbuff;
+	reg_aud_buff_size = (size_buff>>4)-1;
 }
 
-/**************************************************
+/****
+* brief: audio amic initial function. configure ADC corresponding parameters. set hpf,lpf and decimation ratio.
+* param[in] mode_flag -- '1' differ mode ; '0' signal end mode
+* param[in] misc_sys_tick -- system ticks of adc misc channel.
+* param[in] l_sys_tick -- system tick of adc left channel CLOCK_SYS_TYPE
+* param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
 *
-*	@brief	battery check init function used when enabling audio, use 7 bits resolution, the adc refernce voltage
-*			set to 1.428V.
-*
-*	@param	bcm_inputCh:		battery check mode and input channel selection, bit[7] indicates the battery check mode, if bit[7]
-*							equals to 1, the lower 5 bits assign an adc sample input channel (enum ADCINPUTCH).
-*	@return	none
+* return none
 */
-void Audio_BatteryCheckInit(unsigned char checkM){//add to audio_Init
-	/***1.set adc mode and input***/
-	write_reg8(0x80002e,0x12);       //select "1/3 voltage division detection" as single-end input
-    write_reg8(0x80002c,0x12);
-	/***2.set battery check mode***/
-	if(!checkM)
-		adc_IOPowerSupplySet(1);
-	else
-		adc_IOPowerSupplySet(2);
+void audio_amic_init(AudioRate_Typedef Audio_Rate)
+{
 
-	//SETB(0x800033, 0x02);// Enable Misc channel to sample battery's voltage
-	SETB(0x800033, 0x08);// Enable Misc channel to sample battery's voltage
-	//adc_RefVoltageSet(RV_1P428);//Set reference voltage (V_REF)as  RV_AVDD
-	//adc_RefVoltageSet(RV_AVDD);//Set reference voltage (V_REF)as  RV_AVDD
-	*(volatile unsigned char  *)0x80002b &= 0xCF;
-    *(volatile unsigned char  *)0x80002b &= 0xFC;
-
-	//adc_ResSet(RES7);//Set adc resolution to 7 bits, bit[14] to bit bit[8]
-	*(volatile unsigned char  *)0x80003C &= 0xC7;
-    *(volatile unsigned char  *)0x80002f &= 0xC7;
-
-	//adc_SampleTimeSet(MISC,S_3);//set sample time
-	//*(volatile unsigned char  *)(0x80003c) &= 0xF8;
-
-}
+	//Dfifo setting
+	reg_clk_en2 |= FLD_CLK2_DFIFO_EN; //enable dfifo clock
+	reg_audio_dfifo_mode = FLD_AUD_DFIFO0_IN;
 
 
-/***************************************************************
-*	@brief	audio init function, call the adc init function, configure ADC, PGA and filter parameters used for audio sample
-*			and process
-*
-*	@param	mFlag - audio input mode flag, '1' differ mode; '0' single end mode.
-*			bcm_inputCh - battery check mode and input channel selection byte, the largest bit indicates mode, the lower
-*						7 bits indicates input channel
-*			audio_channel - enum variable, indicates the audio input source Analog MIC or Digital MIC
-*			adc_max_m - Misc period set parameter, T_Misc = 2 * adc_max_m
-*			adc_max_l - Left channel period set, T_Left = 16*adc_max_l
-*			d_samp - decimation filter down sample rate
-*
-*	@return	None
-*/
+	//amic input, mono mode, enable decimation filter
 #if 0
-void Audio_Init(unsigned char mFlag,unsigned char checkM,enum AUDIOINPUTCH audio_channel,unsigned short adc_max_m, unsigned char adc_max_l,enum AUDIODSR d_samp){
-	unsigned char tem;
-	/******config FHS as 192M PLL******/
-	write_reg8(0x800070,0x00);// sel fhs clk source as 192M pll
-	WriteAnalogReg(0x88,0x0f);// select 192M clk output
-	WriteAnalogReg(0x05,0x60);// power on pll
-	WriteAnalogReg(0x06,0xfe);// power on sar
-	write_reg8(0x800065,read_reg8(0x800065)|0x04);//Enable dfifo CLK
-
-	if(audio_channel == AMIC){
-		/*******config adc clk as 4MHz*****/
-		write_reg8(0x800069,0x04); // adc clk step as 4
-		write_reg8(0x80006a,0xc0); // adc clk mode as 192
-		*(volatile unsigned char  *)0x80006b |= 0x80;//Enable adc CLK
-
-		/****************************ADC setting for analog audio sample*************************************/
-		/****Set reference voltage for sampling AVDD****/
-		*(volatile unsigned char  *)0x80002b &= 0xF3;//Set reference voltage (V_REF)as  RV_AVDD
-		// *(volatile unsigned char  *)0x80002b |= 0x04;
-		/****signed adc data****/
-		*(volatile unsigned char  *)0x80002d |= 0x80;
-		/****set adc resolution to 14 bits****/
-		*(volatile unsigned char  *)0x80002f &= 0xF8;
-		*(volatile unsigned char  *)0x80002f |= 0x07;
-		/****set adc sample time to 3 cycles****/
-		*(volatile unsigned char  *)0x80003d &= 0xF8;
-
-		if(mFlag){//diff mode
-			//L channel pga-vom input
-			*(volatile unsigned char  *)(0x80002d) &= 0xE0;
-			*(volatile unsigned char  *)(0x80002d) |= 0x0D;
-			//adc_AnaChSet(LCHANNEL,PGAVOM);
-			//adc_AnaModeSet(LCHANNEL,PGAVOPM);
-			*(volatile unsigned char  *)(0x80002d) &= 0x9F;
-			*(volatile unsigned char  *)(0x80002d) |= 0x60;
-			audio_mode = 1;//start PGA
-		}
-		else{//single end mode
-			audio_mode = 0;
-			//set L channel single end mode
-			*(volatile unsigned char  *)(0x80002d) &= 0x1F;
-		}
-
-		write_reg8(0x800b03,0x32);//audio input select AMIC, enable dfifo, enable wptr
-		SET_PFM(adc_max_m);//set Misc channel period
-		SET_PFL(adc_max_l);//set L channel period
-		//write_reg8(0x800033,0x15);//mono mode; L channel enable; audio adc output enable
-	    write_reg8(0x800033,0x2f);//mono mode; L channel enable; audio adc output enable
-	}
-	else if(audio_channel == DMIC){
-		/*******config DMIC clk as 1MHz*****/
-		write_reg8(0x80006c,0x01); // dmic clk step as 1
-		write_reg8(0x80006d,0xc0); // dmic clk mode as 192
-		*(volatile unsigned char  *)0x80006c |= 0x80;//Enable dmic CLK
-		write_reg8(0x800b03,0x30);//audio input select DMIC, enable dfifo, enable wptr
-		write_reg8(0x800b06,0x40);//enable DMIC input volume auto control
-	}
-
-	write_reg8(0x800b04,d_samp);//setting down sample rate
-
-	/********************************************Filter setting*****************************/
-#if (BLE_DMIC_ENABLE)
-	tem = read_reg8(0x800b04);//low pass filter setting
-	tem = tem & 0x8F;
-	tem = tem | 0x10;
-	write_reg8(0x800b04,tem);
+	reg_audio_dfifo_ain &= ~AIDIO_DECIMATION_FILTER_BYPASS;
+	reg_audio_dfifo_ain |= AUDIO_INPUT_MONO_MODE;
+	SET_AUDIO_INPUT_CTRL(AUDIO_INPUT_AMIC);
 #else
-    write_reg8(0x800b04,0x21);// reg0xb04[6:4] cic filter output select 1 , cic[22:5] , reg0xb04[3:0] down scale by 2,
-#endif
-
-	tem = read_reg8(0x800b05);
-	tem = tem & 0xF0;
-	tem = tem | 0x0B;
-	write_reg8(0x800b05,tem);//hpf 11
-	//write_reg8(0x800b06,0x1c);//ALC Volume setting
-	write_reg8(0x800b06,0x24);//ALC Volume setting
-
-	Audio_BatteryCheckInit(checkM);
-}
-#endif
-
-void Audio_Init(unsigned char mFlag,unsigned char checkM,enum AUDIOINPUTCH audio_channel,unsigned short adc_max_m, unsigned char adc_max_l,enum AUDIODSR d_samp){
-	unsigned char tem;
-	/******config FHS as 192M PLL******/
-	write_reg8(0x800070,0x00);// sel fhs clk source as 192M pll
-	WriteAnalogReg(0x88,0x0f);// select 192M clk output
-	WriteAnalogReg(0x05,0x62);// power on pll
-	WriteAnalogReg(0x06,0xfe);// power on sar
-	write_reg8(0x800065,read_reg8(0x800065)|0x04);//Enable dfifo CLK
-
-	if(audio_channel == AMIC){
-		/*******config adc clk as 4MHz*****/
-		write_reg8(0x800069,0x04); // adc clk step as 4
-		write_reg8(0x80006a,0xc0); // adc clk mode as 192
-		*(volatile unsigned char  *)0x80006b |= 0x80;//Enable adc CLK
-
-		/****************************ADC setting for analog audio sample*************************************/
-		/****Set reference voltage for sampling AVDD****/
-		*(volatile unsigned char  *)0x80002b &= 0xF3;//Set reference voltage (V_REF)as  RV_AVDD 1.428v
-		*(volatile unsigned char  *)0x80002b |= 0x04;///reference voltage:AVDD  L_channel
-		/****signed adc data****/
-		*(volatile unsigned char  *)0x80002d |= 0x80;
-		/****set adc resolution to 14 bits****/
-		*(volatile unsigned char  *)0x80002f &= 0xF8;
-		*(volatile unsigned char  *)0x80002f |= 0x07;
-		/****set adc sample time to 3 cycles****/
-		*(volatile unsigned char  *)0x80003d &= 0xF8;
-
-		if(mFlag){//diff mode
-			//L channel pga-vom input
-			*(volatile unsigned char  *)(0x80002d) &= 0xE0;
-			*(volatile unsigned char  *)(0x80002d) |= 0x0D;
-			//adc_AnaChSet(LCHANNEL,PGAVOM);
-			//adc_AnaModeSet(LCHANNEL,PGAVOPM);
-			*(volatile unsigned char  *)(0x80002d) &= 0x9F;
-			*(volatile unsigned char  *)(0x80002d) |= 0x60;
-			audio_mode = 1;//start PGA
-		}
-		else{//single end mode
-			audio_mode = 0;
-			//set L channel single end mode
-			*(volatile unsigned char  *)(0x80002d) &= 0x1F;
-		}
-
-		write_reg8(0x800b03,0x32);//audio input select AMIC, enable dfifo, enable wptr
-		SET_PFM(adc_max_m);//set Misc channel period
-		SET_PFL(adc_max_l);//set L channel period
-		write_reg8(0x800033,0x15);//mono mode; L channel enable; audio adc output enable
-	}
-	else if(audio_channel == DMIC){
-		/*******config DMIC clk as 1MHz*****/
-		write_reg8(0x80006c,0x01); // dmic clk step as 1
-		write_reg8(0x80006d,0xc0); // dmic clk mode as 192
-		*(volatile unsigned char  *)0x80006c |= 0x80;//Enable dmic CLK
-		write_reg8(0x800b03,0x30);//audio input select DMIC, enable dfifo, enable wptr
-		write_reg8(0x800b06,0x40);//enable DMIC input volume auto control
-	}
-
-	write_reg8(0x800b04,d_samp);//setting down sample rate
-
-	/********************************************Filter setting*****************************/
-#if TL_MIC_32K_FIR_16K
-	tem = read_reg8(0x800b04);//low pass filter setting
-	tem = tem & 0x8F;
-	tem = tem | 0x20;////0x10
-	write_reg8(0x800b04,tem);
-#else
-	tem = read_reg8(0x800b04);//low pass filter setting
-	tem = tem & 0x8F;
-	tem = tem | 0x40;
-	write_reg8(0x800b04,tem);
+	reg_audio_dfifo_ain = MASK_VAL( FLD_AUD_INPUT_SELECT, AUDIO_INPUT_AMIC, \
+									FLD_AUD_INPUT_MONO_MODE, 1, \
+									FLD_AUD_DECIMATION_FILTER_BYPASS, 0);
 #endif
 
 
-	tem = read_reg8(0x800b05);
-	tem = tem & 0xF0;/////0xF0
-#if TL_MIC_32K_FIR_16K
-	tem = tem | 0x09;
-#else
-	tem = tem | 0x0B;/////0x0B
-#endif
 
-	write_reg8(0x800b05,tem);//hpf 11
-
-
-#if TL_MIC_32K_FIR_16K
-	write_reg8(0x800b06,0x24);//ALC Volume setting  0x24 by Q.W
-#else
-	write_reg8(0x800b06,0x1c);//ALC Volume setting  0x1c by Q.W
-#endif
-}
-void Audio_FineTuneSampleRate(unsigned char fine_tune){
-    //if(fine_tune>3) return;
-    unsigned char tmp = read_reg8(0x800030);
-    tmp |= (fine_tune&0x03); ////reg0x30[1:0] 2 bits for fine tuning
-
-    write_reg8(0x800030,tmp);
-}
+	reg_audio_dec_mode  &= ~FLD_AUD_CIC_MODE;
+	reg_audio_dec_mode  |= FLD_AUD_LNR_VALID_SEL;
+	reg_audio_dec_ratio = AMIC_CIC_Rate[Audio_Rate];
 
 
 
-/************************************************************************************
-*
-*	@brief	sdm set function, enabl or disable the sdm output, configure SDM output paramaters
-*
-*	@param	audio_out_en:		audio output enable or disable set, '1' enable audio output; '0' disable output
-*			sdm_setp:		SDM clk divider
-*			sdm_clk:			SDM clk, default to be 8Mhz
-*
-*	@return	none
-*/
+	/*******2.ADC setting for analog audio sample**************************/
+	SET_ADC_CLK_EN();										//enable 24M clk to SAR ADC
+//	SET_ADC_CLK(2);											//adc_clk= 24M/(1+2)=8M
+	SET_ADC_CLK(5);  										//adc_clk= 24M/(1+5)=4M
+	SET_ADC_M_RNS_CAPTURE_LEN(0x0f);						//max_mc
 
-void Audio_SDMOutputSet(unsigned char audio_out_en,unsigned short sdm_step,unsigned char sdm_clk){
-	unsigned char tem;
-	if(audio_out_en){
-		/***1.Set SDM output clock to 8 Mhz***/
-		write_reg8(0x800067,(0x80|sdm_clk));//i2s clock, 8M Hz
-		write_reg8(0x800068,0xc0);//mod_i = 192MHz
-		write_reg16(0x800564,sdm_step);
-
-		/***2.Enable PN generator as dither control, clear bit 2, 3, 6***/
-		CLRB(0x800560,0x4C);
-		SETB(0x800560,0x30);//set bit 4 bit 5
-		CLRB(0x800560,0x03);//Close audio output
-		write_reg8(0x800562, 0x08);//PN generator 1 bits ussed
-		write_reg8(0x800563, 0x08);//PN generator 2 bits ussed
-
-        /***3.Enable SDM pins(sdm_n, sdm_p)***/
-		tem = read_reg8(0x8005a6);
-		tem = tem &0xFC;
-		write_reg8(0x8005a6,tem);//pe[1:0] gpio off
-		tem = read_reg8(0x8005b4);
-		tem = tem &0xFC;
-		write_reg8(0x8005b4,tem);//pe[1:0] as sdm_n, sdm_p
-
-		/***4.enable audio, enable sdm player***/
-		SETB(0x800560,0x03);
+	if((Audio_Rate == AUDIO_44K)||(Audio_Rate == AUDIO_22K))
+	{
+		SET_ADC_L_R_CAPTURE_LEN(AMIC_ADC_SampleLength[1]);	//max_c	132K
 	}
 	else
-		CLRB(0x800560,0x02);
+	{
+		SET_ADC_L_R_CAPTURE_LEN(AMIC_ADC_SampleLength[0]);	//max_c	96K
+	}
+
+
+	SET_ADC_SET_LEN(0x0a);									//max_s
+	SET_ADC_CHN_EN(ADC_LEFT_CHN);
+	SET_ADC_MAX_SCNT(0x02);
+
+	SET_ADC_BANDGAP_ON();
+
+//	SET_ADC_LEFT_VREF(ADC_VREF_0P6V);
+	SET_ADC_LEFT_VREF(ADC_VREF_0P9V);
+
+	SET_ADC_LEFT_N_CHN_AIN(PGA0N);
+	SET_ADC_LEFT_P_CHN_AIN(PGA0P);
+	SET_ADC_LEFT_RES(RES14);
+	SET_ADC_CHN_DIFF_EN(ADC_LEFT_CHN_MODE);
+	SET_ADC_LEFT_TSAMP_CYCLE(SAMPLING_CYCLES_6);
+
+	SET_ADC_VBAT_DIVIDER(ADC_VBAT_DIVIDER_1F2);
+	SET_ADC_ITRIM_PREAMP(ADC_CUR_TRIM_PER100);
+	SET_ADC_ITRIM_VREFBUF(ADC_CUR_TRIM_PER125);
+	SET_ADC_ITRIM_VCMBUF(ADC_CUR_TRIM_PER100);
+	SET_ADC_PRESCALER(ADC_PRESCALER_1);				//0x80+122  = 0x15? 0x00
+
+
+#if 1 //B3
+	SET_PGA_LEFT_P_AIN(PGA_AIN_C1);
+	SET_PGA_LEFT_N_AIN(PGA_AIN_C1);
+	SET_PGA_RIGHT_P_AIN(PGA_AIN_C0);
+	SET_PGA_RIGHT_N_AIN(PGA_AIN_C0);
+#else
+	SET_PGA_LEFT_P_AIN(PGA_AIN_C0);
+	SET_PGA_LEFT_N_AIN(PGA_AIN_C1);
+#endif
+	SET_LEFT_BOOST_BIAS(GAIN_STAGE_BIAS_PER125);
+	SET_LEFT_GAIN_BIAS(GAIN_STAGE_BIAS_PER125);
+	SET_ADC_POWER_ON(ADC_POWER_ON|LEFT_CHN_PGA_POWER_ON);
+	WriteAnalogReg(0x80+126,0x05);					//0x80+126  = 0x05
+	SET_PGA_GAIN_FIX_VALUE(0);
+
+
+
+	////////////////////////////// ALC HPF LPF setting /////////////////////////////////
+	//enable hpf, enable lpf, anable alc, disable double_down_sampling
+	reg_aud_hpf_alc = MASK_VAL( FLD_AUD_IN_HPF_SFT,  0x0b,   //different pcb may set different value.
+							    		   FLD_AUD_IN_HPF_BYPASS, 0, \
+							               FLD_AUD_IN_ALC_BYPASS, 0, \
+							               FLD_AUD_IN_LPF_BYPASS, 0, \
+							               FLD_DOUBLE_DOWN_SAMPLING_ON, 0);
+	//alc mode select digital mode
+	reg_aud_alc_cfg &= ~FLD_AUD_ALC_ANALOG_MODE_EN;
+	//alc left channel select manual regulate, and set volume
+	reg_aud_alc_vol_l_chn = MASK_VAL( FLD_AUD_ALC_MIN_VOLUME_IN_DIGITAL_MODE,  0x24, \
+									  FLD_AUD_ALC_DIGITAL_MODE_AUTO_REGULATE_EN, 0);
+
+
+
+
+#if 0
+	unsigned char tmp_shift;
+	unsigned char adc_mode;
+
+
+	/***judge which clock is the source of FHS. three selection: 1--PLL 2--RC32M 3--16Mhz crystal oscillator***/
+	switch(fhs_source){
+	case CLOCK_TYPE_PLL:
+		adc_mode = 192; //FHS is 192Mhz
+		break;
+	case CLOCK_TYPE_OSC:
+		adc_mode = 32;  //FHS is RC_32Mhz
+		break;
+	case CLOCK_TYPE_PAD:
+		adc_mode = 16;  //FHS is 16Mhz crystal oscillator
+		break;
+	}
+
+	/***configure adc module. adc clock = FHS*adc_step/adc_mode ***/
+	reg_adc_step_l  = 0x04;  //set the step 0x04,adc clock 4Mhz
+	reg_adc_mod_l   = adc_mode;
+	reg_adc_clk_en |= FLD_ADC_MOD_H_CLK; //enable adc clock
+
+	/***set resolution,reference voltage,sample cycle***/
+	BM_CLR(reg_adc_ref,FLD_ADC_REF_L);
+	reg_adc_ref      |= MASK_VAL(FLD_ADC_REF_L,RV_AVDD);       //1.set reference voltage
+	BM_CLR(reg_adc_res_lr,FLD_ADC_RESOLUTION_SEL);
+	reg_adc_res_lr   |= MASK_VAL(FLD_ADC_RESOLUTION_SEL,RES14); //2.set resolution
+	BM_CLR(reg_adc_tsamp_lr,FLD_ADC_SAMPLE_TIME);
+	reg_adc_tsamp_lr |= MASK_VAL(FLD_ADC_SAMPLE_TIME,S_3);      //3.set sample cycle
+	
+	if(mode_flag == DIFF_MODE){        //different mode 
+		BM_CLR(reg_adc_chn_l_sel,FLD_ADC_CHN_SEL|FLD_ADC_DIFF_CHN_SEL|FLD_ADC_DATA_FORMAT);
+		reg_adc_chn_l_sel |= MASK_VAL(FLD_ADC_CHN_SEL,AUD_PGAVOM,FLD_ADC_DIFF_CHN_SEL,AUD_PGAVOPM,FLD_ADC_DATA_FORMAT,1);
+	}
+	else{ //adc is single end mode
+		BM_CLR(reg_adc_chn_l_sel,FLD_ADC_DIFF_CHN_SEL);
+		reg_adc_chn_l_sel |= MASK_VAL(FLD_ADC_DIFF_CHN_SEL,AUD_SINGLEEND);
+	}
+	reg_adc_chn_l_sel |= FLD_ADC_DATA_FORMAT;                  //4.signed adc data
+	BM_CLR(reg_dfifo_ana_in,FLD_DFIFO_MIC_ADC_IN|FLD_DFIFO_AUD_INPUT_MONO);
+	reg_dfifo_ana_in |= MASK_VAL(FLD_DFIFO_MIC_ADC_IN,AUD_AMIC,FLD_DFIFO_AUD_INPUT_MONO,3); //select AMIC,enable dfifo and wptr
+
+	SET_PFM(misc_sys_tick); //set system tick of misc channel
+	SET_PFL(left_sys_tick); //set system tick of left channel
+
+	/**mono,left channel, adc done signal:falling,enable audio output**/
+	reg_adc_ctrl = MASK_VAL(FLD_ADC_AUD_DATAPATH_EN,1,FLD_ADC_CHNL_AUTO_EN,1,FLD_ADC_AUD_MODE,MONO_AUDIO,\
+			                FLD_ADC_DONE_SIGNAL,AUD_ADC_DONE_FALLING);
+		
+	/***decimation/down sample[3:0]Decimation rate [6:4]decimation shift select(0~5)***/
+	switch(d_samp&0x0f){
+	case R1:
+		tmp_shift = 0x01;
+		break;
+	case R2:
+	case R3:
+		tmp_shift = 0x02;
+		break;
+	case R4:
+	case R5:
+		tmp_shift = 0x03;
+		break;
+	case R6:
+		tmp_shift = 0x04;
+		break;
+	default:
+		tmp_shift = 0x05;
+		break;
+	}
+	reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,tmp_shift);
+	/***************HPF setting[3:0]HPF shift [4]bypass HPF [5]bypass ALC [6]bypass LPF********/
+	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_SFT);
+	reg_aud_hpf_alc |= MASK_VAL(FLD_AUD_IN_HPF_SFT,0x09);//different pcb may set different value.
+	/***************ALC Volume[5:0]manual volume [6]0:manual 1:auto**************************/
+	reg_aud_alc_vol = MASK_VAL(FLD_AUD_MANUAL_VOLUME,0x24,FLD_AUD_VOLUME_CTRL_MODE,AUD_VOLUME_MANUAL);//0x1c is the level of volume.0x1c
+
+#endif
 
 }
 
-
-
+/**
+ * @brief     audio DMIC init function, config the speed of DMIC and downsample audio data to required speed.
+ *            actually audio data is dmic_speed/d_samp.
+ * @param[in] dmic_speed - set the DMIC speed. such as 1 indicate 1M and 2 indicate 2M.
+ * @param[in] d_samp - set the decimation. ie div_speed.
+ * @param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
+ *
+ * @return    none.
+ */
+void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned char fhs_source)
+{
+//	unsigned char adc_mode;
+//	reg_clk_en2 |= FLD_CLK2_DFIFO_EN; //enable dfifo clock.
+//
+//	/***judge which clock is the source of FHS. three selection: 1--PLL 2--RC32M 3--16Mhz crystal oscillator***/
+//	switch(fhs_source){
+//	case CLOCK_TYPE_PLL:
+//		adc_mode = 192 - 4; //FHS is 192Mhz
+//		break;
+//	case CLOCK_TYPE_OSC:
+//		adc_mode = 32;  //FHS is RC_32Mhz
+//		break;
+//	case CLOCK_TYPE_PAD:
+//		adc_mode = 16;  //FHS is 16Mhz crystal oscillator
+//		break;
+//	}
+//	/***config the pin dmic_sda and dmic_scl***/
+//	gpio_set_func(GPIO_DMIC_DI,AS_DMIC);  //disable DI gpio function
+//	gpio_set_func(GPIO_DMIC_CK,AS_DMIC);  //disable CK gpio function
+//	gpio_set_input_en(GPIO_DMIC_DI,1);    //enable DI input
+//	gpio_set_input_en(GPIO_DMIC_CK,1);    //enable CK input
+////	reg_gpio_config_func0 |= FLD_DMIC_DI_PWM0; //enable PA0 as dmic pin
+//	/***configure DMIC clock ***/
+//	BM_CLR(reg_dmic_step,FLD_DMIC_STEP);
+//	reg_dmic_step |= MASK_VAL(FLD_DMIC_STEP,dmic_speed);
+//	reg_dmic_mod = adc_mode;
+//	reg_dmic_step |= FLD_DMIC_CLK_EN; // enable dmic clock
+//
+//	BM_CLR(reg_dfifo_ana_in,FLD_DFIFO_MIC_ADC_IN|FLD_DFIFO_AUD_INPUT_MONO);
+//	reg_dfifo_ana_in |= MASK_VAL(FLD_DFIFO_MIC_ADC_IN,AUD_DMIC,FLD_DFIFO_AUD_INPUT_MONO,3); //select AMIC,enable dfifo and wptr
+//
+//	/***************decimation/down sample[3:0]Decimation rate [6:4]decimation shift select(0~5)***/
+//	switch(d_samp){
+//	case R32:
+//		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x02);
+//		break;
+//	case R64:
+//		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x05);
+//		break;
+//	default:
+//		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x05);
+//		break;
+//	}
+//	/***************HPF setting[3:0]HPF shift [4]bypass HPF [5]bypass ALC [6]bypass LPF*************/
+//	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_SFT);
+//	reg_aud_hpf_alc |= MASK_VAL(FLD_AUD_IN_HPF_SFT,0x05);//different pcb may set different value.
+//	/***************ALC Volume[5:0]manual volume [6]0:manual 1:auto*********************************/
+//	reg_aud_alc_vol = 0x30;  //0x24
+//
+//	/*************enable HPF ,ALC and disable LPF***/
+//	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_BYPASS|FLD_AUD_IN_ALC_BYPASS|FLD_AUD_IN_LPF_BYPASS);//open hpf,alc,lpf
+//	reg_aud_hpf_alc |= FLD_AUD_IN_LPF_BYPASS; //close lpf
+}
 /************************************************************************************
 *
 *	@brief	audio input set function, select analog audio input channel, start the filters
@@ -318,93 +369,154 @@ void Audio_SDMOutputSet(unsigned char audio_out_en,unsigned short sdm_step,unsig
 *
 *	@return	none
 */
-void Audio_InputSet(unsigned char adc_ch){
-	unsigned char tem;
-	if(audio_mode){
-		//PGA Setting
-		pgaInit();
-		preGainAdjust(DB20);//set pre pga gain to 0  ////DB20 by sihui
-		postGainAdjust(DB9);//set post pga gain to 0 ////DB9 by sihui
+//void audio_amic_input_set(enum audio_input_t adc_ch){
+//	unsigned char tem;
+//	if(adc_ch == PGA_CH){ //this selection is diff mode. the input is pga.
+//		pgaInit();
+//		preGainAdjust(DB20); //set pre pga gain to 20db
+//		postGainAdjust(DB9); //set post pga gain to 0db
+//	}
+//	else{                 //this selection is signed end
+//		reg_adc_chn_l_sel &= (~FLD_ADC_CHN_SEL);
+//		reg_adc_chn_l_sel |= adc_ch;
+//	}
+//	//configure filter and volume control register
+//	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_BYPASS|FLD_AUD_IN_ALC_BYPASS|FLD_AUD_IN_LPF_BYPASS);//open hpf,alc,lpf
+//	reg_aud_hpf_alc |= FLD_AUD_IN_LPF_BYPASS; //close lpf
+//}
+/**
+*	@brief		reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
+*	@param[in]	fine_tune - unsigned char fine_tune,range from 0 to 3
+*	@return	    none
+*/
+void audio_finetune_sample_rate(unsigned char fine_tune)
+{
+    //if(fine_tune>3) return;
+	BM_CLR(reg_adc_period_chn0,FLD_ADC_PHASE_TICK);
+	fine_tune &= 0x03;
+    reg_adc_period_chn0 |= MASK_VAL(FLD_ADC_PHASE_TICK,fine_tune);////reg0x30[1:0] 2 bits for fine tuning
+}
+
+/**
+ *  @brief      tune decimation shift .i.e register 0xb04 in datasheet.
+ *  @param[in]  deci_shift - range from 0 to 5.
+ *  @return     none
+ */
+unsigned char audio_tune_deci_shift(unsigned char deci_shift)
+{
+	if(deci_shift > 5)
+	{
+		return 0;
+	}
+	BM_CLR(reg_dfifo_scale,FLD_DFIFO0_DEC_SCALE);
+	reg_dfifo_scale |= MASK_VAL(FLD_DFIFO0_DEC_SCALE,deci_shift);
+	return 1;
+}
+/**
+ *   @brief       tune the HPF shift .i.e register 0xb05 in datasheet.
+ *   @param[in]   hpf_shift - range from 0 to 0x0f
+ *   @return      none
+ */
+ unsigned char audio_tune_hpf_shift(unsigned char hpf_shift)
+ {
+	if(hpf_shift > 0x0f){
+		return 0;
+	}
+	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_SFT);
+	reg_aud_hpf_alc |= MASK_VAL(FLD_AUD_IN_HPF_SFT,hpf_shift);
+	return 1;
+ }
+ /**
+ *
+ *	@brief	   sdm setting function, enable or disable the sdm output, configure SDM output paramaters
+ *
+ *	@param[in]	audio_out_en - audio output enable or disable set, '1' enable audio output; '0' disable output
+ *	@param[in]	sample_rate - audio sampling rate, such as 16K,32k etc.
+ *	@param[in]	sdm_clk -	  SDM clock, default to be 8Mhz
+ *	@param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
+ *
+ *	@return	none
+ */
+void audio_sdm_output_set(unsigned char audio_out_en,int sample_rate,unsigned char sdm_clk,unsigned char fhs_source)
+{
+#if 0
+	unsigned char adc_mode;
+	if(audio_out_en){
+		/***enable SDM pins(sdm_n,sdm_p)***/
+//		gpio_set_func(GPIO_SDMP,AS_SDM);  //disable gpio function
+//		gpio_set_func(GPIO_SDMN,AS_SDM);  //disable gpio function
+//		gpio_set_input_en(GPIO_SDMP,1);   //in sdk, require to enable input.because the gpio_init() function in main() function.
+//		gpio_set_input_en(GPIO_SDMN,1);   //in sdk, require to enable input
+		reg_gpio_config_func4 &= (~(FLD_DMIC_CK_RX_CLK|FLD_I2S_DI_RX_DAT));//enable dmic function of SDMP and SDMM
+
+		/***judge which clock is the source of FHS. three selection: 1--PLL 2--RC32M 3--16Mhz crystal oscillator***/
+		switch(fhs_source){
+		case CLOCK_TYPE_PLL:
+			adc_mode = 192; //FHS is 192Mhz
+			break;
+		case CLOCK_TYPE_OSC:
+			adc_mode = 32;  //FHS is RC_32Mhz
+			break;
+		case CLOCK_TYPE_PAD:
+			adc_mode = 16;  //FHS is 16Mhz crystal oscillator
+			break;
+		}
+
+		/***configure sdm clock; ***/
+		BM_CLR(reg_i2s_step,FLD_I2S_STEP);
+		reg_i2s_step |= MASK_VAL(FLD_I2S_STEP,sdm_clk,FLD_I2S_CLK_EN,1);
+		reg_i2s_mod   = adc_mode;
+		reg_clk_en2  |= FLD_CLK2_AUD_EN;	//enable audio clock
+
+		/***configure interpolation ratio***/
+		reg_ascl_step = AUD_SDM_STEP (sample_rate, sdm_clk*1000000);
+		/***2.Enable PN generator as dither control, clear bit 2, 3, 6***/
+		BM_CLR(reg_aud_ctrl,FLD_AUD_ENABLE|FLD_AUD_SDM_PLAY_EN|FLD_AUD_PN_SHAPPING_BYPASS|FLD_AUD_SHAPING_EN|FLD_AUD_CONST_VAL_INPUT_EN);
+		reg_aud_ctrl |= MASK_VAL(FLD_AUD_PN2_GENERATOR_EN,1,FLD_AUD_PN1_GENERATOR_EN,1);
+		
+		reg_aud_pn1 = 0x08;  //PN generator 1 bits used
+		reg_aud_pn2 = 0x08;  //PN generator 1 bits used
+
+		//enable audio and sdm player.
+		reg_aud_ctrl |= (FLD_AUD_ENABLE|FLD_AUD_SDM_PLAY_EN);
 	}
 	else{
-		//L channel's input as C[0]
-		//adc_AnaChSet(LCHANNEL,adc_ch);
-		*(volatile unsigned char  *)(0x80002d) &= 0xE0;
-		*(volatile unsigned char  *)(0x80002d) |= adc_ch;
-		}
-	//open lpf, hpf, alc
-	tem = read_reg8(0x800b05);
-	tem = tem & 0x8F;
-	tem = tem | 0x40;////open hpf,alc;close lpf
-	write_reg8(0x800b05,tem);
+		BM_CLR(reg_aud_ctrl,FLD_AUD_SDM_PLAY_EN);  //close sdm player
+	}
+#endif
 }
 
-
-/*******************************************************************************************
-*	@brief	set audio volume level
-*
-*	@param	input_output_select:	select the tune channel, '1' tune ALC volume; '0' tune SDM output volume
-*			volume_set_value:		volume level
-*
-*	@return	none
+/**
+*	@brief	    set audio volume level
+*	@param[in]	input_out_sel - select the tune channel, '1' tune ALC volume; '0' tune SDM output volume
+*	@param[in]	volume_level - volume level
+*	@return	    none
 */
-void Audio_VolumeSet(unsigned char input_output_select,unsigned char volume_set_value){
-
-	if(input_output_select)
-		write_reg8(0x800b06,volume_set_value);
-	else
-		write_reg8(0x800561,volume_set_value);
+void audio_volume_tune(unsigned char input_out_sel, unsigned char volume_level)
+{
+//	if(input_out_sel){
+//		BM_CLR(reg_aud_alc_vol,FLD_AUD_MANUAL_VOLUME);
+//		reg_aud_alc_vol |= MASK_VAL(FLD_AUD_MANUAL_VOLUME,volume_level);//the low six bits is volume level bits
+//	}
+//	else{
+//		reg_aud_vol_ctrl = volume_level;
+//	}
 }
-
 
 /*************************************************************
 *
 *	@brief	automatically gradual change volume
 *
-*	@param	vol_step - volume change step, the high part is decrease step while the low part is increase step
-*			gradual_interval - volume increase interval
+*	@param[in]	vol_step - volume change step, the high part is decrease step while the low part is increase step
+*			    gradual_interval - volume increase interval
 *
 *	@return	none
 */
-void Audio_VolumeStepChange(unsigned char vol_step,unsigned short gradual_interval){
-	// unsigned char low_part,high_part;
-	// low_part = (unsigned char)gradual_interval;
-	// high_part = (unsigned char)(gradual_interval>>8);
-	write_reg8(0x800b0b,vol_step);
-	write_reg16(0x800b0c,gradual_interval);
-	// write_reg8(0x800b0d,high_part);
+void audio_volume_step_adjust(unsigned char vol_step,unsigned short gradual_interval)
+{
+	reg_aud_vol_step = vol_step;
+	BM_CLR(reg_aud_tick_interval,FLD_AUD_ALC_VOL_TICK_L|FLD_AUD_ALC_VOL_TICK_H);
+	reg_aud_tick_interval |= MASK_VAL(FLD_AUD_ALC_VOL_TICK_L,(gradual_interval&0xff),FLD_AUD_ALC_VOL_TICK_H,((gradual_interval>>8)&0x3f));
 }
 
-
-/********************************************************
-*
-*	@brief		get the battery value
-*
-*	@param		None
-*
-*	@return		unsigned long - return the sampled value, 7 bits resolution
-*/
-	//Check adc status, busy return 1
-#define		CHECKADCSTATUS		(((*(volatile unsigned char  *)0x80003a) & 0x01) ? 1:0)
-#if 1 // diff mode on off, audio on
-unsigned short Audio_BatteryValueGet(void){
-	unsigned short sampledValue;
-	write_reg8(0x800035,0x80);
-	while(CHECKADCSTATUS);
-	sampledValue = read_reg16(0x800038);
-	sampledValue = (sampledValue&0x3F80);
-    sampledValue = (sampledValue -128)*64*1428/63/16384;
-	return sampledValue;
-}
-
-
-#else //for diff mode on
-unsigned short Audio_BatteryValueGet(void){
-	unsigned short sampledValue;
-	while(CHECKADCSTATUS);
-	sampledValue = read_reg16(0x800038);
-	sampledValue = sampledValue&0x3F80;
-	return (sampledValue>>7);
-}
-#endif
 

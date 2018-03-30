@@ -6,8 +6,8 @@
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
 #include "../../proj_lib/ble/trace.h"
-#include "../../proj/mcu/pwm.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
+#include "../../proj/drivers/adc.h"
 #include "../../proj/drivers/audio.h"
 #include "../../proj/drivers/adc.h"
 #include "../../proj/drivers/battery.h"
@@ -20,7 +20,9 @@
 
 #if (__PROJECT_MSSOC_BLE_REMOTE__)
 
-#define BLE_REMOTE_PM_ENABLE					1
+#define 	BLE_REMOTE_PM_ENABLE			1
+
+
 
 #define 	ADV_IDLE_ENTER_DEEP_TIME			60  //60 s
 #define 	CONN_IDLE_ENTER_DEEP_TIME			100  //60 s
@@ -35,6 +37,8 @@
 
 
 #define		MY_RF_POWER_INDEX					RF_POWER_9m34PdBm
+
+
 
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
@@ -222,12 +226,20 @@ static u16 vk_consumer_map[16] = {
 
 
 		if(en){  //audio on
-			lowBattDet_enable = 0;
-			battery2audio();////switch auto mode
+
+			///////////////////// AUDIO initialization///////////////////
+			//buffer_mic set must before audio_init !!!
+			config_mic_buffer ((u32)buffer_mic, TL_MIC_BUFFER_SIZE);
+
+			#if (BLE_DMIC_ENABLE)  //Dmic config
+
+			#else  //Amic config
+				audio_amic_init(AUDIO_16K);
+			#endif
+
 		}
 		else{  //audio off
-			audio2battery();////switch manual mode
-			lowBattDet_enable = 1;
+
 		}
 	}
 
@@ -245,7 +257,7 @@ static u16 vk_consumer_map[16] = {
 	void	task_audio (void)
 	{
 		static u32 audioProcTick = 0;
-		if(clock_time_exceed(audioProcTick, 5000)){
+		if(clock_time_exceed(audioProcTick, 500)){
 			audioProcTick = clock_time();
 		}
 		else{
@@ -254,6 +266,7 @@ static u16 vk_consumer_map[16] = {
 
 		///////////////////////////////////////////////////////////////
 		log_event(TR_T_audioTask);
+
 
 		proc_mic_encoder ();
 
@@ -344,7 +357,7 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 void	task_connect (u8 e, u8 *p, int n)
 {
 	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);  //interval=10ms latency=99 timeout=4s
-	bls_l2cap_setMinimalUpdateReqSendingTime_after_connCreate(5000);
+	bls_l2cap_setMinimalUpdateReqSendingTime_after_connCreate(1000);
 
 
 	latest_user_event_tick = clock_time();
@@ -469,7 +482,6 @@ void key_change_proc(void)
 		else if (key0 == VOICE)
 		{
 			if(ui_mic_enable){  //if voice on, voice off
-				//adc_clk_powerdown();
 				ui_enable_mic (0);
 			}
 			else{ //if voice not on, mark voice key press tick
@@ -630,7 +642,7 @@ void blt_pm_proc(void)
 #if(BLE_REMOTE_PM_ENABLE)
 	if(ui_mic_enable)
 	{
-		bls_pm_setSuspendMask (MCU_STALL);
+		bls_pm_setSuspendMask (SUSPEND_DISABLE);
 	}
 #if(REMOTE_IR_ENABLE)
 	else if( ir_send_ctrl.is_sending || ir_send_ctrl.repeat_timer_enable){
@@ -710,7 +722,7 @@ void blt_pm_proc(void)
 
 _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
-	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
+	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_16M_SYS_TIMER_CLK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio pad wakeup suspend/deepsleep
 	}
 }
@@ -835,69 +847,6 @@ void user_init_normal()
 	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_keyboard);
 
 
-	///////////////////// AUDIO initialization///////////////////
-#if (BLE_AUDIO_ENABLE)
-	//buffer_mic set must before audio_init !!!
-	config_mic_buffer ((u32)buffer_mic, TL_MIC_BUFFER_SIZE);
-
-	#if (BLE_DMIC_ENABLE)  //Dmic config
-		/////////////// DMIC: PA0-data, PA1-clk, PA3-power ctl
-		gpio_set_func(GPIO_PA0, AS_DMIC);
-		gpio_set_func(GPIO_PA1, AS_DMIC);
-
-		gpio_set_input_en(GPIO_PA0 , 1);                //PA0 as input
-
-		gpio_set_func(GPIO_PA3, AS_GPIO);
-		gpio_set_input_en(GPIO_PA3, 1);
-		gpio_set_output_en(GPIO_PA3, 1);
-		gpio_write(GPIO_PA3, 0);
-
-		#if TL_MIC_32K_FIR_16K
-			audio_dmic_init(1, R32, CLOCK_SYS_TYPE);  //1 indicate 1M; 32K
-		#else
-			audio_dmic_init(1, R64, CLOCK_SYS_TYPE);  //1 indicate 1M; 16K
-		#endif
-	#else  //Amic config
-		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
-		#if TL_MIC_32K_FIR_16K
-			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 26,  9, R2, CLOCK_SYS_TYPE);
-				audio_finetune_sample_rate(2);  //reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
-			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 33, 15, R2, CLOCK_SYS_TYPE);
-				audio_finetune_sample_rate(3);
-			#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
-				audio_amic_init( DIFF_MODE, 45, 20, R2, CLOCK_SYS_TYPE); // 16 , 15
-			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R3, CLOCK_SYS_TYPE);
-			#endif
-		#else
-			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 26,  9, R4, CLOCK_SYS_TYPE);
-				audio_finetune_sample_rate(2);
-			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 33, 15, R4, CLOCK_SYS_TYPE);
-				audio_finetune_sample_rate(3);
-			#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
-				audio_amic_init( DIFF_MODE, 45, 20, R4, CLOCK_SYS_TYPE);
-			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R6, CLOCK_SYS_TYPE);
-			#endif
-		#endif
-	audio_amic_input_set(PGA_CH);//audio input set, ignore the input parameter
-	#endif//end of BLE_DMIC_ENABLE
-#endif
-
-#if(BATT_CHECK_ENABLE)
-	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
-	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
-	#endif
-#endif
-
-
-
 
 
 		///////////////////// Power Management initialization///////////////////
@@ -911,7 +860,8 @@ void user_init_normal()
 
 
 	////////////////LED initialization /////////////////////////
-//	device_led_init(GPIO_LED, 1);
+	device_led_init(GPIO_LED, 1);
+	device_led_setup(led_cfg[LED_POWER_ON]);
 
 #if (BLE_REMOTE_OTA_ENABLE)
 	////////////////// OTA relative ////////////////////////
@@ -960,6 +910,8 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 			cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
 		}
 	}
+
+	device_led_init(GPIO_LED, 1);
 
 
 	blc_ll_recoverDeepRetention();

@@ -10,18 +10,32 @@ extern "C" {
 #define CHIP_TYPE				MCU_CORE_MSSOC
 
 
-
-
 /////////////////// MODULE /////////////////////////////////
-
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_REMOTE_OTA_ENABLE			0
 #define REMOTE_IR_ENABLE				0
 #define BATT_CHECK_ENABLE       		0   //enable or disable battery voltage detection
+#define BLE_AUDIO_ENABLE				1
 
 
 
-#define BLE_AUDIO_ENABLE				0
+////////////////////////// AUDIO CONFIG /////////////////////////////
+#if (BLE_AUDIO_ENABLE)
+	#define BLE_DMIC_ENABLE					0  //0: Amic   1: Dmic
+	#define	ADPCM_PACKET_LEN				128
+	#define TL_MIC_ADPCM_UNIT_SIZE			248
+
+	#define	TL_MIC_32K_FIR_16K				0
+
+	#if TL_MIC_32K_FIR_16K
+		#define	TL_MIC_BUFFER_SIZE				1984
+	#else
+		#define	TL_MIC_BUFFER_SIZE				992
+	#endif
+
+	#define GPIO_AMIC_BIAS					GPIO_PC4
+
+#endif
 
 
 
@@ -117,8 +131,6 @@ extern "C" {
 #define			T_VK_CH_DN		0xd1
 
 
-
-
 #define			GPIO_LED				GPIO_PC6
 
 #if (REMOTE_IR_ENABLE)  //with IR keymap
@@ -155,7 +167,7 @@ extern "C" {
 
 		#define		KB_MAP_NORMAL	{\
 						0x00,		VK_2,			0x00,		0x00,				0x00,	 \
-						0x00,		0x00,			0x00,		CR_VOL_UP,			CR_VOL_DN,	 \
+						VOICE,		0x00,			0x00,		CR_VOL_UP,			CR_VOL_DN,	 \
 						VK_2,		0x00,			0x00,		VK_3,				VK_1,	 \
 						VK_5,		0x00,			0x00,		VK_6,				VK_4,	 \
 						VK_8,		VK_4,			0x00,		VK_9,				VK_7,	 \
@@ -217,6 +229,12 @@ extern "C" {
 /////////////////// Clock  /////////////////////////////////
 #define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC
 #define CLOCK_SYS_CLOCK_HZ  	16000000
+
+enum{
+	CLOCK_SYS_CLOCK_1S = CLOCK_SYS_CLOCK_HZ,
+	CLOCK_SYS_CLOCK_1MS = (CLOCK_SYS_CLOCK_1S / 1000),
+	CLOCK_SYS_CLOCK_1US = (CLOCK_SYS_CLOCK_1S / 1000000),
+};
 
 //////////////////Extern Crystal Type///////////////////////
 #define CRYSTAL_TYPE			XTAL_12M		//  extern 12M crystal

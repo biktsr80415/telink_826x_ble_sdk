@@ -372,8 +372,8 @@ void voice_iir (signed short * ps, signed short *pd, int* coef, int nsample,u8 s
 void	proc_mic_encoder (void)
 {
 	static u16	buffer_mic_rptr;
-	u16 mic_wptr = reg_audio_wr_ptr;
-	u16 l = ((mic_wptr<<1) >= buffer_mic_rptr) ? ((mic_wptr<<1) - buffer_mic_rptr) : 0xffff;
+	u16 mic_wptr = get_mic_wr_ptr();
+	u16 l = (mic_wptr >= buffer_mic_rptr) ? (mic_wptr - buffer_mic_rptr) : 0xffff;
 
 	if (l >=(TL_MIC_BUFFER_SIZE>>2)) {
 		log_task_begin (TR_T_adpcm);

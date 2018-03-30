@@ -72,7 +72,7 @@ enum{
 #define anaReg_gpioPC_ds			0xC2
 
 #define reg_gpio_gpio_func(i)		REG_ADDR8(0x586+((i>>8)<<3))
-#define reg_gpio_config_func(i)		REG_ADDR8(0x5b0 +(i>>8))  	  //5b0 5b1 5b2 5b3 5b4 5b5
+
 
 #define reg_gpio_irq_wakeup_en(i)	REG_ADDR8(0x587+((i>>8)<<3))  // reg_irq_mask: FLD_IRQ_GPIO_EN
 
@@ -262,19 +262,8 @@ static inline void gpio_set_interrupt_risc2(u32 pin, u32 falling){
 
 
 
-
-static inline void gpio_set_func(u32 pin, u32 func){
-	u8	bit = pin & 0xff;
-	if(func == AS_GPIO){
-		BM_SET(reg_gpio_gpio_func(pin), bit);
-		return;
-	}else{
-		BM_CLR(reg_gpio_gpio_func(pin), bit);
-	}
-
-}
-
 void gpio_init(void);
 void gpio_set_wakeup(u32 pin, u32 level, int en);
 void gpio_setup_up_down_resistor(u32 gpio, u32 up_down);
 void gpio_set_input_en(u32 pin, u32 value);
+void gpio_set_func(u32 pin, u32 func);

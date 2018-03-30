@@ -154,11 +154,12 @@ enum{
 /////////// adc select [4:0] channel; [6:5] mode; [7] signed
 #define reg_adc_chn_m_sel		REG_ADDR8(0x2c)
 #define reg_adc_chn_l_sel		REG_ADDR8(0x2d)
-#define reg_adc_chn_r_sel		REG_ADDR8(0x2e)
 enum{
 	FLD_ADC_CHN_SEL = 			BIT_RNG(0,4),
-	FLD_ADC_DIFF_CHN_SEL = 		BIT_RNG(5,7),	// datasheet  12.1
+	FLD_ADC_DIFF_CHN_SEL = 		BIT_RNG(5,6),	// datasheet  12.1
+	FLD_ADC_DATA_FORMAT  =      BIT(7),
 };
+#define reg_adc_chn_r_sel		REG_ADDR8(0x2e)
 
 enum{
 	FLD_ADC_CHN_D0				= 0x01,
@@ -201,11 +202,15 @@ enum{
 
 };
 
-#define reg_adc_ref				REG_ADDR8(0x2b)
-
 #define reg_adc_res_lr			REG_ADDR8(0x2f)
+enum {
+	FLD_ADC_RESOLUTION_SEL   =  BIT_RNG(0,2),
+};
 #define reg_adc_res_m			REG_ADDR8(0x3c)
 #define reg_adc_tsamp_lr		REG_ADDR8(0x3d)
+enum {
+	FLD_ADC_SAMPLE_TIME         = BIT_RNG(0,2),
+};
 
 enum{
 	FLD_ADC_VREF_1P3V			= 0x15,
@@ -215,7 +220,16 @@ enum{
 
 
 #define reg_adc_period_chn0		REG_ADDR16(0x30)
+enum {
+	FLD_ADC_PHASE_TICK    =    BIT_RNG(0,1),
+	FLD_ADC_CHNM_PERIODL  =    BIT_RNG(2,7),
+	FLD_ADC_CHNM_PEIRODH  =    BIT_RNG(8,15),
+	FLD_ADC_CHNM_PERIOD   =    BIT_RNG(2,15),
+};
 #define reg_adc_period_chn12	REG_ADDR8(0x32)
+enum {
+	FLD_ADC_CHNLR_PERIOD  =    BIT_RNG(0,15),
+};
 
 #define reg_adc_ctrl			REG_ADDR8(0x33)
 enum{
@@ -236,6 +250,9 @@ enum{
 #define reg_adc_dat_byp_outp	REG_ADDR16(0x38)
 
 #define reg_adc_chn0_input		REG_ADDR16(0x3a)
+enum {
+	FLD_ADC_BUSY_FLAG       =   BIT(0),
+};
 
 #define reg_adc_samp_res		REG_ADDR16(0x3c)
 enum{
@@ -244,78 +261,76 @@ enum{
 	FLD_ADC_CHNLR_SAMP_CYCLE =	BIT_RNG(8,10),	// reg: 0x3d
 };
 
+
 #define reg_i2c_mem_map			REG_ADDR16(0x3e)	// check with spec again // refer to FLD_I2C_MEM_MAP
 
 /****************************************************
  sys regs struct: begin  addr : 0x60
  *****************************************************/
 #define reg_rst0				REG_ADDR8(0x60)
-#define reg_rst0_16				REG_ADDR16(0x60)
-#define reg_rst1				REG_ADDR8(0x61)
-#define reg_rst2				REG_ADDR8(0x62)
-#define reg_rst_clk0			REG_ADDR32(0x60)
 enum{
 	FLD_RST_SPI = 				BIT(0),
 	FLD_RST_I2C = 				BIT(1),
-	FLD_RST_USB = 				BIT(2),
-	FLD_RST_USB_PHY = 			BIT(3),
-	FLD_RST_MCU = 				BIT(4),
-	FLD_RST_MAC =				BIT(5),
-	FLD_RST_AIF = 				BIT(6),
-	FLD_RST_BB = 				BIT(7),
-	FLD_RST_ZB =				BIT(7),
-	FLD_RST_GPIO = 				BIT(8),
-	FLD_RST_ALGM = 				BIT(9),
-	FLD_RST_DMA =				BIT(10),
-	FLD_RST_UART = 				BIT(11),
-	FLD_RST_PWM = 				BIT(12),
-	FLD_RST_AES = 				BIT(13),
-	FLD_RST_SWR_M =				BIT(14),
-	FLD_RST_SWR_S =				BIT(15),
-	FLD_RST_SBC =				BIT(16),
-	FLD_RST_AUD =				BIT(17),
-	FLD_RST_DFIFO =				BIT(18),
-	FLD_RST_ADC =				BIT(19),
-	FLD_RST_SOFT_MCU =			BIT(20),
-	FLD_RST_MCIC = 				BIT(21),
-	FLD_RST_SOFT_MCIC =			BIT(22),
-	FLD_RST_RSV =				BIT(23),
-	FLD_CLK_SPI_EN =			BIT(24),
-	FLD_CLK_I2C_EN =			BIT(25),
-	FLD_CLK_USB_EN =			BIT(26),
-	FLD_CLK_USB_PHY_EN =		BIT(27),
-	FLD_CLK_MCU_EN =			BIT(28),
-	FLD_CLK_MAC_EN =			BIT(29),
-	FLD_CLK_ADC_EN =			BIT(30),	// ADC interface
-	FLD_CLK_ZB_EN =				BIT(31),
+	FLD_RST_UART = 				BIT(2),
+	FLD_RST_USB = 				BIT(3),
+	FLD_RST_PWM = 				BIT(4),
+	FLD_RST_QDEC =				BIT(5),
+	FLD_RST_SWIRE = 			BIT(7),
 };
 
-#define reg_clk_en				REG_ADDR16(0x64)
+#define reg_rst1				REG_ADDR8(0x61)
+enum{
+	FLD_RST1_ZB = 				BIT(0),
+	FLD_RST1_SYS_TIMER = 		BIT(1),
+	FLD_RST1_DMA =				BIT(2),
+	FLD_RST1_ALGM = 			BIT(3),
+	FLD_RST1_AES = 				BIT(4),
+	FLD_RST1_ADC = 				BIT(5),
+	FLD_RST1_ALG =				BIT(6),
+};
+
+#define reg_rst2				REG_ADDR8(0x62)
+enum{
+	FLD_RST2_AUD =				BIT(1),
+	FLD_RST2_DFIFO =			BIT(2),
+	FLD_RST2_RISC =				BIT(4),
+	FLD_RST2_MCIC = 			BIT(5),
+};
+
+
+
+#define reg_clk_en0				REG_ADDR8(0x63)
+enum{
+	FLD_CLK_SPI_EN = 			BIT(0),
+	FLD_CLK_I2C_EN = 			BIT(1),
+	FLD_CLK_UART_EN = 			BIT(2),
+	FLD_CLK_USB_EN = 			BIT(3),
+	FLD_CLK_PWM_EN = 			BIT(4),
+	FLD_CLK_QDEC_EN = 			BIT(5),
+	FLD_CLK_SWIRE_EN = 			BIT(7),
+};
+
 #define reg_clk_en1				REG_ADDR8(0x64)
 enum{
-	FLD_CLK_GPIO_EN = 			BIT(0),
-	FLD_CLK_ALGM_EN = 			BIT(1),
-	FLD_CLK_DMA_EN = 			BIT(2),
-	FLD_CLK_UART_EN = 			BIT(3),
-	FLD_CLK_PWM_EN = 			BIT(4),
-	FLD_CLK_AES_EN = 			BIT(5),
-	FLD_CLK_32K_TIMER_EN =		BIT(6),
-	FLD_CLK_SWIRE_EN = 			BIT(7),
-	FLD_CLK_32K_QDEC_EN =		BIT(8),
-	FLD_CLK_AUD_EN =			BIT(9),
-	FLD_CLK_DIFIO_EN = 			BIT(10),
-	FLD_CLK_KEYSCAN_EN =		BIT(11),
-	FLD_CLK_MCIC_EN =			BIT(12),
-	FLD_CLK_QDEC_EN =			BIT(13),
+	FLD_CLK1_ZB_EN = 			BIT(0),
+	FLD_CLK1_SYS_TIMER_EN = 	BIT(1),
+	FLD_CLK1_DMA_EN = 			BIT(2),
+	FLD_CLK1_ALGM_EN = 			BIT(3),
+	FLD_CLK1_AES_EN = 			BIT(4),
+
 };
+
+
 #define reg_clk_en2				REG_ADDR8(0x65)
 enum{
-	FLD_CLK2_SBC_EN =			BIT(0),
-	FLD_CLK2_AUD_EN =			BIT(1),
-	FLD_CLK2_DIFIO_EN = 		BIT(2),
-	FLD_CLK2_I2S =				BIT_RNG(3,4),
-	FLD_CLK2_C32K =				BIT_RNG(5,7),
+	FLD_CLK2_RSVD5_EN = 		BIT(0),
+	FLD_CLK2_AUD_EN = 			BIT(1),
+	FLD_CLK2_DFIFO_EN = 		BIT(2),
+	FLD_CLK2_MC_EN = 			BIT(4),
+	FLD_CLK2_MCIC_EN = 			BIT(5),
 };
+
+
 
 #define reg_clk_sel				REG_ADDR8(0x66)
 enum{
@@ -1004,6 +1019,11 @@ enum{
 	FLD_AUD_ENABLE	 =			BIT(0),
 	FLD_AUD_SDM_PLAY_EN = 		BIT(1),
 	FLD_AUD_SHAPPING_EN =		BIT(2),
+	FLD_AUD_PN_SHAPPING_BYPASS =    BIT(2),
+	FLD_AUD_SHAPING_EN         =    BIT(3),
+	FLD_AUD_PN2_GENERATOR_EN   =    BIT(4),
+	FLD_AUD_PN1_GENERATOR_EN   =    BIT(5),
+	FLD_AUD_CONST_VAL_INPUT_EN =    BIT(6),
 };
 
 #define reg_aud_vol_ctrl		REG_ADDR8(0x561)
@@ -1045,7 +1065,6 @@ enum {
 	FLD_AUD_FLT_CFGHIGH		= 	0x1000,
 };
 #define reg_aud_sram			REG_ADDR8(0xb81)
-
 
 
 /****************************************************
@@ -1276,22 +1295,30 @@ enum {
 	FLD_SYSTEM_TICK_IRQ_EN  = 		BIT(1),
 };
 
+
 /****************************************************
  PWM regs define:  begin  0x780
  *****************************************************/
+
+typedef enum {
+	PWM0_ID = 0,
+	PWM1_ID,
+	PWM2_ID,
+	PWM3_ID,
+	PWM4_ID,
+	PWM5_ID,
+}pwm_id;
+
+
 #define reg_pwm_enable			REG_ADDR8(0x780)
 #define reg_pwm_clk				REG_ADDR8(0x781)
-#define reg_pwm_mode			REG_ADDR8(0x782)
-enum{
-	FLD_PWM0_MODE  = 				BIT_RNG(0,1),
-	FLD_PWM1_MODE  = 				BIT_RNG(2,3),
-};
 
+#define reg_pwm_mode			REG_ADDR8(0x782)
 enum{
 	PWM_NORMAL_MODE = 0x00,
 	PWM_COUNT_MODE  = 0x01,
 	PWM_IR_MODE     = 0x03,
-
+	PWM_IR_FIFO_MODE  = 0x13,
 };
 
 #define reg_pwm_invert			REG_ADDR8(0x783)
@@ -1307,62 +1334,114 @@ enum{
 	FLD_PWM_MAX  = 				BIT_RNG(16,31),
 };
 
-#define reg_pwm_pulse_num(i)	REG_ADDR16(0x7ac + (i << 1))	// i == 0, 1
+#define reg_pwm_pulse_num		REG_ADDR16(0x7ac)
 #define reg_pwm_irq_mask		REG_ADDR8(0x7b0)
 #define reg_pwm_irq_sta			REG_ADDR8(0x7b1)
 
-enum{
+typedef enum{
 	FLD_IRQ_PWM0_PNUM =			BIT(0),
-	FLD_IRQ_PWM1_PNUM =			BIT(1),
 	FLD_IRQ_PWM0_FRAME =		BIT(2),
 	FLD_IRQ_PWM1_FRAME =		BIT(3),
 	FLD_IRQ_PWM2_FRAME =		BIT(4),
 	FLD_IRQ_PWM3_FRAME =		BIT(5),
 	FLD_IRQ_PWM4_FRAME 	=		BIT(6),
 	FLD_IRQ_PWM5_FRAME =		BIT(7),
+}PWM_IRQ;
+
+
+#define reg_pwm0_fifo_mode_irq_mask		REG_ADDR8(0x7b2)
+#define reg_pwm0_fifo_mode_irq_sta		REG_ADDR8(0x7b3)
+enum{
+	FLD_IRQ_PWM0_FIFO_MODE_STOP =		BIT(0),
+	FLD_IRQ_PWM0_FIFO_MODE_CNT  =		BIT(1),
 };
 
-static inline void pwmm_set_mode(int id, int mode){
-	if(0 == id){
-		reg_pwm_mode = MASK_VAL(FLD_PWM0_MODE,mode);
-	}else if(1 == id){
-		reg_pwm_mode = MASK_VAL(FLD_PWM1_MODE,mode);
+
+
+
+
+
+static inline void pwm_set_mode(pwm_id id, int mode){
+	if(PWM0_ID == id){
+		reg_pwm_mode = mode;  //only PWM0 has count/IR/fifo IR mode
 	}
 }
-static inline void pwm_set(int id, u16 max_tick, u16 cmp_tick){
-	reg_pwm_cycle(id) = MASK_VAL(FLD_PWM_CMP, cmp_tick, FLD_PWM_MAX, max_tick);
+
+//Set PWM clock frequency
+static inline void pwm_set_clk(int system_clock_hz, int pwm_clk){
+	reg_pwm_clk = (int)system_clock_hz /pwm_clk - 1;
 }
 
-//static inline void pwmm_clk(int pwm_clk){
-//	reg_pwm_clk = (int)CLOCK_SYS_CLOCK_HZ /pwm_clk - 1;
-//}
 
-static inline void pwmm_set_duty(int id, u16 max_tick, u16 cmp_tick){
-	reg_pwm_cycle(id) = MASK_VAL(FLD_PWM_CMP, cmp_tick, FLD_PWM_MAX, max_tick);
+static inline void pwm_set_cmp(pwm_id id, u16 cmp_tick){
+	reg_pwm_cmp(id) = cmp_tick;
 }
 
-static inline void pwmm_set_cmp(int id, u16 cmp){
-	reg_pwm_cmp(id) = cmp;
+static inline void pwm_set_cycle(pwm_id id, u16 cycle_tick){
+	reg_pwm_max(id) = cycle_tick;
 }
 
-static inline void pwmm_set_max(int id, u16 max){
-	reg_pwm_max(id) = max;
+
+static inline void pwm_set_cycle_and_duty(pwm_id id, u16 cycle_tick, u16 cmp_tick){
+	reg_pwm_cycle(id) = MASK_VAL(FLD_PWM_CMP, cmp_tick, FLD_PWM_MAX, cycle_tick);
 }
 
-static inline void pwmm_set_phase(int id, u16 phase){
+
+static inline void pwm_set_phase(pwm_id id, u16 phase){
 	reg_pwm_phase(id) = phase;
 }
 
-static inline void pwmm_set_pulse_num(int id, u16 pulse_num){
-	reg_pwm_pulse_num(id) = pulse_num;
+
+static inline void pwm_set_pulse_num(pwm_id id, u16 pulse_num){
+	if(PWM0_ID == id){
+		reg_pwm_pulse_num = pulse_num;
+	}
+
 }
 
-static inline void pwmm_start(int id){
+static inline void pwm_start(pwm_id id){
 	BM_SET(reg_pwm_enable, BIT(id));
 }
 
-static inline void pwmm_stop(int id){
+static inline void pwm_stop(pwm_id id){
 	BM_CLR(reg_pwm_enable, BIT(id));
+}
+
+//revert PWMx
+static inline void pwm_revert(pwm_id id){
+	reg_pwm_invert |= BIT(id);
+}
+
+
+//revert PWMx_N
+static inline void pwm_n_revert(pwm_id id){
+	reg_pwm_n_invert |= BIT(id);
+}
+
+static inline void pwm_polo_enable(pwm_id id, int en){
+	if(en){
+		BM_SET(reg_pwm_pol, BIT(id));
+	}else{
+		BM_CLR(reg_pwm_pol, BIT(id));
+	}
+}
+
+
+static inline void pwm_set_interrupt_enable(PWM_IRQ irq){
+//	if(en){
+//		BM_SET(reg_pwm_irq_mask, irq);
+//	}else{
+//		BM_CLR(reg_pwm_irq_mask, irq);
+//	}
+	BM_SET(reg_pwm_irq_mask, irq);
+}
+
+static inline void pwm_set_interrupt_disable(PWM_IRQ irq){
+	BM_CLR(reg_pwm_irq_mask, irq);
+}
+
+static inline void pwm_clear_interrupt_status( PWM_IRQ irq){
+	reg_pwm_irq_sta = irq;
 }
 
 //////////////////////////////////////////////////////////////
@@ -1385,13 +1464,19 @@ enum{
 };
 
 #define reg_dfifo0_addr			REG_ADDR16(0xb00)
+#define reg_dfifo0_addr2		REG_ADDR8(0xb03)
+
 #define reg_dfifo0_size			REG_ADDR8(0xb02)
+
+
 
 #define reg_dfifo_ana_in		REG_ADDR8(0xb03)
 enum{
 	FLD_DFIFO_MIC0_RISING_EDGE = BIT(0),
 	FLD_DFIFO_MIC_ADC_IN 	= BIT(1),
-
+	FLD_DFIFO_EN               = BIT(4),
+	FLD_DFIFO_WPTR_EN          = BIT(5),
+	FLD_DFIFO_WPTR_CLR         = BIT(6),
 	FLD_DFIFO_AUD_INPUT_MONO =	BIT(4) | BIT(5),
 //	FLD_DFIFO_AUD_INPUT_BYPASS = BIT(5),
 };
@@ -1405,212 +1490,139 @@ enum{
 #define reg_dfifo_scale			REG_ADDR8(0xb04)
 enum{
 	FLD_DFIFO2_DEC_CIC =		BIT_RNG(0,3),
-	FLD_DFIFO0_DEC_SCALE =		BIT_RNG(4,7),
+	FLD_DFIFO0_DEC_SCALE =		BIT_RNG(4,6),
 };
 
-#define reg_aud_hpf_alc			REG_ADDR8(0xb05)
+
+#define reg_aud_vol_step        REG_ADDR8(0xb0b)
+#define reg_aud_tick_interval   REG_ADDR16(0xb0c)
 enum {
-	FLD_AUD_IN_HPF_SFT	=	BIT_RNG(0,3),
-	FLD_AUD_IN_HPF_BYPASS	=	BIT(4),
-	FLD_AUD_IN_ALC_BYPASS	=	BIT(5),
-	FLD_AUD_IN_USB_SET		=  0x3b,
+	FLD_AUD_ALC_VOL_TICK_L    = BIT_RNG(0,7),
+	FLD_AUD_ALC_VOL_TICK_H    = BIT_RNG(8,13),
 };
 
-#define reg_aud_alc_vol			REG_ADDR8(0xb06)
 
-#define reg_audio_wr_ptr		REG_ADDR16(0xb10)
+
+#define	reg_audio_dfifo_mode	REG_ADDR8(0xb10)
+#define	REG_AUDIO_DFIFO_MODE    reg_audio_dfifo_mode
+enum{
+	FLD_AUD_DFIFO0_IN 		= BIT(0),
+	FLD_AUD_DFIFO1_IN 		= BIT(1),
+	FLD_AUD_DFIFO2_IN 		= BIT(2),
+	FLD_AUD_DFIFO0_OUT 		= BIT(3),
+	FLD_AUD_DFIFO0_L_INT	= BIT(4),
+	FLD_AUD_DFIFO0_H_INT	= BIT(5),
+	FLD_AUD_DFIFO1_H_INT	= BIT(6),
+	FLD_AUD_DFIFO2_H_INT	= BIT(7),
+};
+
+
+#define	reg_audio_dfifo_ain		REG_ADDR8(0xb11)
+#define	REG_AUDIO_DFIFO_AIN		reg_audio_dfifo_ain
+enum{
+	FLD_AUD_DMIC0_DATA_IN_RISING_EDGE = BIT(0),
+	FLD_AUD_DMIC1_DATA_IN_RISING_EDGE = BIT(1),
+	FLD_AUD_INPUT_SELECT     		  = BIT_RNG(2,3),
+	FLD_AUD_INPUT_MONO_MODE	   		  = BIT(4),
+	FLD_AUD_DECIMATION_FILTER_BYPASS  = BIT(5),
+	FLD_AUD_DMIC_RISING_EDGE_BYPASS   = BIT(6),
+	FLD_AUD_DMIC_FALLING_EDGE_BYPASS  = BIT(7),
+
+};
+
+//enum{
+//	AUDIO_DMIC_DATA_IN_RISING_EDGE 		= 0,
+//	AUDIO_DMIC_DATA_IN_FALLING_EDGE 	= 1,
+//}
+
+enum{
+	AUDIO_INPUT_USB  = 0x00,
+	AUDIO_INPUT_I2S  = 0x01,
+	AUDIO_INPUT_AMIC = 0x02,
+	AUDIO_INPUT_DMIC = 0x03,
+};
+
+
+
+#define reg_audio_dec_ratio		REG_ADDR8(0xb12)
+#define REG_AUDIO_DEC_RATIO  	reg_audio_dec_ratio
+
+
+
+
+
+#define reg_audio_wr_ptr		REG_ADDR16(0xb16)
 #define reg_mic_ptr				reg_audio_wr_ptr
 
 static inline u16 get_mic_wr_ptr (void) {
-	return reg_audio_wr_ptr << 0;
+	return reg_audio_wr_ptr >>1;
 }
 
 
-/////////////////////////////////////////////////////////////////////////////
 
-///////////////////// PM register /////////////////////////
+#define	reg_audio_dec_mode		REG_ADDR8(0xb35)
+#define	REG_AUDIO_DEC_MODE		reg_audio_dec_mode
+enum{
+	FLD_AUD_LNR_VALID_SEL	= BIT(0),
+	FLD_AUD_CIC_MODE  	= BIT(3)
+};
 
-#define		rega_deepsleep_flag		0x3f		//0x34 - 0x39 (watch dog reset)
-//#define		rega_deepsleep_flag		0x34		//0x3a - 0x3b (power-on reset)
-#define		flag_deepsleep_wakeup	(analog_read(0x3f) & 0x40)
 
-#define		rega_wakeup_en_val0		0x41
-#define		rega_wakeup_en_val1		0x42
-#define		rega_wakeup_en_val2		0x43
-#define		raga_gpio_wkup_pol		0x44
+#define	reg_audio_alc_hpf_lpf_ctrl	 REG_ADDR8(0xb40)
+#define reg_aud_hpf_alc				 reg_audio_alc_hpf_lpf_ctrl
+enum {
+	FLD_AUD_IN_HPF_SFT		=	BIT_RNG(0,3),
+	FLD_AUD_IN_HPF_BYPASS	=	BIT(4),
+	FLD_AUD_IN_ALC_BYPASS	=	BIT(5),
+	FLD_AUD_IN_LPF_BYPASS   =   BIT(6),
+	FLD_DOUBLE_DOWN_SAMPLING_ON =   BIT(7)
+};
 
-#define		raga_pga_gain0		0x86
-#define		raga_pga_gain1		0x87
 
-static inline u16 config_sdm (u32 adr, int size, int sample_rate, int sdm_fmhz) {
-	reg_clk_en2 |= FLD_CLK2_AUD_EN;				//enable audio clock
-	reg_gpio_pe_gpio &= ~(BIT(0) | BIT(1));		//enable SDM function
-	reg_gpio_config_func4 &=  ~(BIT(0) | BIT(1)); //SDM function
 
-	reg_aud_ctrl = FLD_AUD_ENABLE | FLD_AUD_SDM_PLAY_EN | FLD_AUD_SHAPPING_EN;
+#define reg_aud_alc_vol_l_chn		REG_ADDR8(0xb41)  //default 0x00, will be 0x20 after ana_34 set to 0x80
+#define reg_aud_alc_vol_r_chn		REG_ADDR8(0xb42)  //default 0x00, will be 0x20 after ana_34 set to 0x80
+enum{
+	FLD_AUD_ALC_MIN_VOLUME_IN_DIGITAL_MODE 	= BIT_RNG(0,5),
+	FLD_AUD_ALC_MIN_PGA_IN_ANALOG_MODE	    = BIT_RNG(0,6),
+	//alc digital mode left/right channel regulate mode select: 1 for auto regulate; 0 for manual regulate
+	FLD_AUD_ALC_DIGITAL_MODE_AUTO_REGULATE_EN	= BIT(7),
+};
 
-	SET_SDM_CLOCK_MHZ (sdm_fmhz);
-	reg_aud_base_adr = (u16) adr;
-	reg_aud_buff_size = (size>>4)-1;
 
-	reg_ascl_step = AUD_SDM_STEP (sample_rate, sdm_fmhz*1000000);
-	return reg_ascl_step;
-}
+#define reg_aud_alc_vol_h			REG_ADDR8(0xb43)
+enum{
+	FLD_AUD_ALC_MAX_VOLUME_IN_DIGITAL_MODE 	= BIT_RNG(0,5),
+	FLD_AUD_ALC_MAX_PGA_IN_ANALOG_MODE	    = BIT_RNG(0,6),
+};
 
-static inline	void config_dmic (int sample_rate) {		//16K configuration
-	reg_clk_en2 |= FLD_CLK2_DIFIO_EN;
-	reg_gpio_pa_gpio &= ~(BIT(1) | BIT(0));		//dmic clk gpio off
-	reg_gpio_config_func0 |= FLD_I2S_REFCLK_DMIC;
-	reg_dmic_step = FLD_DMIC_CLK_EN | 1; //2;
-	reg_dmic_mod = 94 * 16000 / sample_rate;//188 * 16000 / sample_rate;					// dmic clock 192M (PLL) / 188 * 2 = 2M
-	reg_dfifo_ana_in = FLD_DFIFO_AUD_INPUT_MONO;
-	reg_dfifo_scale = 0x1b;				// down scale by 128
-	reg_aud_hpf_alc = 11;				// volume setting
-	reg_aud_alc_vol = 28;
-}
 
-static inline void config_adc_channel1 (int chn_mic) {
-	// adc-pga setting
-	//reg_adc_pga_sel_l = chn_mic >> 8;		//C0, C1, C2 & C3
-	reg_adc_pga_sel_m = reg_adc_pga_sel_l = chn_mic >> 8;		//C0, C1, C2 & C3
-	reg_adc_chn_l_sel = chn_mic | FLD_ADC_DATA_SIGNED;
-	reg_adc_ref = FLD_ADC_VREF_1P3V;
-	reg_aud_alc_vol = 28;
 
-	if (chn_mic) {
-		//analog_write (raga_pga_gain0, 0x50);  //ana_reg0x86[2] pga mute, [3] power down pga, pre_amp move to ana_reg0x87
-		analog_write (raga_pga_gain1, 0x07); //reg0x87[2:1] 00 0db, 01 3db , 10 6db, 11 9db
-	}
-	else {
-		//analog_write (raga_pga_gain0, 0x53);
-		analog_write (raga_pga_gain1, 0x00);
-	}
-}
 
-static inline void config_mic_gain (int vol) {
-	reg_aud_alc_vol = vol;
-}
 
-static inline void config_adc_channel2 (int chn_adc) {
-	reg_adc_chn_r_sel = chn_adc | FLD_ADC_DATA_SIGNED;
-}
+#define reg_aud_alc_cfg			REG_ADDR8(0xb54)   //default 0x00, will be 0x02 after ana_34 set to 0x80
+enum{
+	FLD_AUD_ALC_ANALOG_MODE_EN 		= BIT(0),    //alc mode select:   1 for analog mode;  0 for digital mode
+	FLD_AUD_ALC_NOISE_EN 			= BIT(1),
 
-#define		SYS_16M_AMIC_16K				0
-#define		SYS_32M_AMIC_16K				1
-#define		SYS_16M_AMIC_12K				2
-#define		SYS_32M_AMIC_12K				3
-#define		SYS_32M_AMIC_8K					4
-#define		SYS_16M_AMIC_8K					5
-#define 	SYS_32M_AMIC_DIR_16K			6
-#define 	SYS_48M_AMIC_16K				7
-//#define		SYS_16M_AMIC_12K				2
 
-static inline void config_adc (int chn_mic, int chn_adc, int sample) {
-	reg_clk_en2 |= FLD_CLK2_DIFIO_EN;
-	reg_dfifo_ana_in = FLD_DFIFO_AUD_INPUT_MONO | FLD_DFIFO_MIC_ADC_IN;
-	reg_dfifo_scale = 0x25;				// down scale by 6
-#if TL_MIC_32K_FIR_16K
-	reg_aud_hpf_alc = 9;				// reg0xb05 volume setting
-#else	//clr lpf ,when no fir 32k to 16k
-	reg_aud_hpf_alc = 0x4b;//11;				// reg0xb05 volume setting
-#endif
-	reg_aud_alc_vol = 4;
+};
 
-	config_adc_channel1 (chn_mic);
-	config_adc_channel2 (chn_adc);
 
-	if (sample == SYS_32M_AMIC_16K) {	//32M / (77 + 8 * 16 * 2) = 96K
-		reg_adc_period_chn0 = 77;
-		reg_adc_period_chn12 = 8;
-	}
-	else if (sample == SYS_32M_AMIC_12K) { //32M / (77 + 11 * 16 * 2) = 72K
-		reg_adc_period_chn0 = 92;
-		reg_adc_period_chn12 = 11;
-	}
-	else if (sample == SYS_16M_AMIC_12K) {
-		//16M / (77 + 5 * 16 * 2) = 72K
-		reg_adc_period_chn0 = 64;
-		reg_adc_period_chn12 = 5;		// 32M setting
-	}
-	else if (sample == SYS_32M_AMIC_8K) { //32M / (244 + 8 * 16 * 2) = 64K
-		reg_dfifo_scale = 0x37;				// down scale by 8
-		reg_adc_period_chn0 = 180;
-		reg_adc_period_chn12 = 10;
-	}
-	else if (sample == SYS_16M_AMIC_8K) { //16M / (90 + 5 * 16 * 2) = 64K
-		reg_dfifo_scale = 0x37;				// down scale by 8
-		reg_adc_period_chn0 = 90;
-		reg_adc_period_chn12 = 5;
-	}
-	else if (sample == SYS_32M_AMIC_DIR_16K){
-		/*
-		reg_dfifo_scale  = 0x23;//down scale by 4
-     	reg_adc_period_chn0 = 374;//374;//374;//208;//77
-	 	reg_adc_period_chn12= 8;//8;
-	 	*/
-		
-	 	reg_dfifo_scale  = 0x25;//down scale by 6
-     	reg_adc_period_chn0 = 208;//374;//374;//208;//77
-	 	reg_adc_period_chn12= 8;//8;
-        reg_adc_ctrl          = 0x15;
-        reg_aud_alc_vol       = 0x12;//0x24;0x1c;//0x19; // 0xb06[5:0]: manual volume , corespond to  reg0xb04[6:4]
 
-	}
-	else if(sample == SYS_16M_AMIC_16K){
-#if TL_MIC_32K_FIR_16K
-		//16000/(187+4*16)/2 = 16000/251/2 = 31.87 K
-		// down scale by 2
-        reg_dfifo_scale       = 0x21;  // reg0xb04[6:4] cic filter output select 1 , cic[22:5] , reg0xb04[3:0] down scale by 2,
-        reg_adc_period_chn0   = 187;   // reg0x30 T1~4,  250(16M/64K) - 64 = 186 , 0x30[1:0] just for fine tuning
-        reg_adc_period_chn12  = 4;     // reg0x32 T5 = 4x16 = 64 , just T5 no T6, single channel
 
-        reg_adc_ctrl          = 0x15;
-        reg_aud_alc_vol       = 0x24;  //0x1c;//0x19; // 0xb06[5:0]: manual volume , corespond to  reg0xb04[6:4]
-#else
-        //16000/(72+8*16)/5 = 16000/200/5 = 16 K
-        reg_dfifo_scale       = 0x44; //down scale by 5
-       	reg_adc_period_chn0   = 0x48;
-       	reg_adc_period_chn12  = 8;
 
-        reg_adc_ctrl          = 0x15;  // reg0x33[1] = 0 , disable T6 , mono mode[4]/L channel enable[3]/audio enable[1],  talk to zhidong.mao for detail
-        reg_aud_alc_vol       = 0x1c;  // reg0xb06 0x19; // 0xb06[5:0]: manual volume , corespond to  reg0xb04[6:4]
-#endif
-	}
-	else if(sample == SYS_48M_AMIC_16K){
-#if TL_MIC_32K_FIR_16K
-		//48000/(260+15*16)/3 = 48000/500/3 = 32 K
-		reg_dfifo_scale       = 0x22; //down scale by 3
-		reg_adc_period_chn0   = 260;
-		reg_adc_period_chn12  = 15;
+#define reg_pga_gain_init		REG_ADDR8(0xb5d)
+#define reg_pga_gain_l			REG_ADDR8(0xb5e)   //used to check current left  channel gain in analog mode auto regulate
+#define reg_pga_gain_r			REG_ADDR8(0xb5f)   //used to check current right channel gain in analog mode auto regulate
+#define reg_pga_man_speed		REG_ADDR8(0xb60)
 
-        reg_adc_ctrl          = 0x15;
-        reg_aud_alc_vol       = 0x24;
-#else
-		//48000/(260+15*16)/6 = 48000/500/6 = 16 K
-		reg_dfifo_scale       = 0x45; //down scale by 6
-		reg_adc_period_chn0   = 260;
-		reg_adc_period_chn12  = 15;
 
-        reg_adc_ctrl          = 0x15;
-        reg_aud_alc_vol       = 0x1c;
-#endif
-	}
-	else {
-		while(1);  //config adc err
-	}
-}
 
-static inline void config_mic_buffer (u32 adr, int size) {
-	reg_dfifo0_addr = (u16) adr;
-	reg_dfifo0_size = (size>>4)-1;
-}
 
-static inline void config_timer_interrupt (u32 tick) {
-	reg_tmr1_tick = 0;
-	reg_tmr1_capt = tick;
-	reg_tmr_ctrl8 |= FLD_TMR1_EN;
-	reg_irq_mask |= FLD_IRQ_TMR1_EN;
-}
+
+
+
 
 #if defined(__cplusplus)
 }

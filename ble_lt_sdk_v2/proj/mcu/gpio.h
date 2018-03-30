@@ -12,18 +12,29 @@ enum{
 #define AS_MSPI		1
 #define AS_SWIRE	2
 #define AS_UART		3
-#define AS_PWM		4
-#define AS_I2C		5
-#define AS_SPI		6
-#define AS_ETH_MAC	7
-#define AS_I2S		8
+#define AS_I2C		4
+#define AS_SPI		5
+#define AS_I2S		6
+#define AS_AMIC		7
+#define AS_DMIC		8
 #define AS_SDM		9
-#define AS_DMIC		10
-#define AS_USB		11
-#define AS_SWS		12
-#define AS_SWM		13
-#define AS_TEST		14
-#define AS_ADC		15
+#define AS_USB		10
+#define AS_ADC		11
+#define AS_CMP		12
+
+#define AS_PWM0		20
+#define AS_PWM1		21
+#define AS_PWM2		22
+#define AS_PWM3		23
+#define AS_PWM4		24
+#define AS_PWM5		25
+#define AS_PWM0_N	26
+#define AS_PWM1_N	27
+#define AS_PWM2_N	28
+#define AS_PWM3_N	29
+#define AS_PWM4_N	30
+#define AS_PWM5_N	31
+
 
 #include "../common/static_assert.h"
 

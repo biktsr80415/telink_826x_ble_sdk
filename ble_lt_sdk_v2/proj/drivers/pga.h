@@ -2,63 +2,90 @@
 #define		pga_H
 
 
-//set ANA_C<3> and ANA_C<2> as positive and minus input of the PGA
-#define		setPGAchannel_ONE			(*(volatile unsigned char  *)0x800028 &= 0xFE)
-
-//set ANA_C<5> and ANA_C<4> as positive and minus input of the PGA
-#define		setPGAchannel_TWO			(*(volatile unsigned char  *)0x800028 |= 0x01)
-
 enum PREAMPValue{
-	DBP0,
-	DB20,
+	DB26,
+	DB46,
 };
 
 enum POSTAMPValue{
-	DB0,
-	DB3,
-	DB6,
-	DB9,
+	DB_N10= 0x00,
+	DB_N5 = 0x0a,
+	DB_0  = 0x14,
+	DB_5  = 0x1d,
+	DB_10 = 0x28,
+	DB_14 = 0x30,
 };
 
+typedef enum{
+	PGA_LEFT_CHN  = BIT(6),
+	PGA_RIGHT_CHN = BIT(7)
+}PGA_CHN_Typdef;
 
-void setChannel(unsigned char chM){
-	//set ANA_C<5> and ANA_C<4> as positive and minus input of the PGA
-	if(chM){
-		*(volatile unsigned char  *)0x800028 |= 0x01;
-		*(volatile unsigned char  *)0x800029 |= 0x01;
-	}
+#define		SET_PGA_CHN_ON(v)				do{\
+												unsigned char val=ReadAnalogReg(0x80+124);\
+												val &= (~(v));\
+												WriteAnalogReg(0x80+124,val);\
+											}while(0)
+enum{
+	PGA_AIN_C0,
+	PGA_AIN_C1,
+	PGA_AIN_C2,
+	PGA_AIN_C3,
+};
 
-	//set ANA_C<3> and ANA_C<2> as positive and minus input of the PGA
-	else{
-		*(volatile unsigned char  *)0x800028 &= 0xFE;
-		*(volatile unsigned char  *)0x800029 &= 0xFE;
-	}
+#define		SET_PGA_LEFT_P_AIN(v)			do{\
+												unsigned char val=ReadAnalogReg(0x80+125);\
+												val &= 0xfc;\
+												val |= (((unsigned char)(v))&0x03);\
+												WriteAnalogReg(0x80+125,val);\
+											}while(0)
 
-}
+#define		SET_PGA_LEFT_N_AIN(v)			do{\
+												unsigned char val=ReadAnalogReg(0x80+125);\
+												val &= 0xf3;\
+												val |= (((unsigned char)(v)<<2)&0x0c);\
+												WriteAnalogReg(0x80+125,val);\
+											}while(0)
 
+#define		SET_PGA_RIGHT_P_AIN(v)			do{\
+												unsigned char val=ReadAnalogReg(0x80+125);\
+												val &= 0xcf;\
+												val |= (((unsigned char)(v)<<4)&0x30);\
+												WriteAnalogReg(0x80+125,val);\
+											}while(0)
 
+#define		SET_PGA_RIGHT_N_AIN(v)			do{\
+												unsigned char val=ReadAnalogReg(0x80+125);\
+												val &= 0x3f;\
+												val |= (((unsigned char)(v)<<6)&0xc0);\
+												WriteAnalogReg(0x80+125,val);\
+											}while(0)
+
+#define		SET_PGA_GAIN_FIX_VALUE(v)		do{\
+												unsigned char val=0;\
+												val |= (((unsigned char)(v))&0x7f);\
+												write_reg8(0xb63,val|0x80);\
+											}while(0)
+
+enum{
+	PGA_POST_GAIN		= BIT_RNG(0,5),
+	PGA_PRE_GAIN_26DB	= BIT(6)
+};
+#define		REG_PGA_GAIN				READ_REG8(0xb63)
 
 
 /**************************************************************
 *
-*	@brief	pga output enable or disable function, call this function to enable or disable the PGA output
+*	@brief	pga initiate function, call this function to enable the PGA module
+*			the input channel deafult set to ANA_C<3> and ANA_C<2>
 *
-*	@para	enDis - '1' enable output/mute off audio; '0' disable output/mute  on audio
+*	@para	chn - select PGA_LEFT_CHN or PGA_RIGHT_CHN to initiate the PGA
 *
 *	@return	None
 *
 */
-static void setPGAOutput(unsigned char enDis){
+extern void pgaInit(unsigned char chn);
 
-	unsigned char tem;
-	tem = ReadAnalogReg(0x86);
-	if(enDis)
-		tem = tem & 0xFB;//output enable
-	else
-		tem = tem | 0x04;//output dis able
-	WriteAnalogReg(0x86,tem);
-
-}
 /**************************************************************
 *
 *	@brief	adjust pre-amplifier gain value
@@ -68,19 +95,8 @@ static void setPGAOutput(unsigned char enDis){
 *	@return	'1' adjusted; '0' adjust error
 *
 */
+unsigned char preGainAdjust(enum PREAMPValue preGV);
 
-static inline unsigned char preGainAdjust(enum PREAMPValue preGV){
-	unsigned char tem0,tem1;
-	tem0 = (unsigned char)preGV;
-	if(tem0>1)
-		return 0;
-	tem1 = ReadAnalogReg(0x87);
-	tem1 = tem1 & 0xFE;
-	tem1 = tem1 |tem0;
-	WriteAnalogReg(0x87,tem1);
-
-	return 0;
-}
 /**************************************************************
 *
 *	@brief	adjust post-amplifier gain value
@@ -90,39 +106,7 @@ static inline unsigned char preGainAdjust(enum PREAMPValue preGV){
 *	@return	'1' adjusted; '0' adjust error
 *
 */
-static inline unsigned char postGainAdjust(enum POSTAMPValue posGV){
-	unsigned char tem0,tem1;
-	tem0 = (unsigned char)posGV;
-	if(tem0>3)
-		return 0;
-	tem1 = ReadAnalogReg(0x87);
-	tem1 = tem1 & 0xF9;
-	tem1 = tem1 |(tem0<<1);
-	WriteAnalogReg(0x87,tem1);
+unsigned char postGainAdjust(enum POSTAMPValue posGV);
 
-	return 0;
-}
-
-/**************************************************************
-*
-*	@brief	pga initiate function, call this function to enable the PGA module
-*			the input channel deafult set to ANA_C<3> and ANA_C<2>
-*
-*	@para	None
-*
-*	@return	None
-*
-*/
-static void pgaInit(void){
-	unsigned char tem;
-
-	//Power on pga
-	tem = ReadAnalogReg(0x87);
-	tem = tem & 0xF7;
-	WriteAnalogReg(0x87,tem);
-	//set PGA input channel
-	setChannel(1);
-	setPGAOutput(1);
-}
 
 #endif

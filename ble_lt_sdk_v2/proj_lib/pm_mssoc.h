@@ -122,7 +122,7 @@ static inline int pm_is_MCU_deepRetentionWakeup(void)
 }
 
 
-static inline int pm_clear_MCU_deepRetentionFlag(void)
+static inline void pm_clear_MCU_deepRetentionFlag(void)
 {
 	pmParam.is_deepRetn_back = 0;
 }
