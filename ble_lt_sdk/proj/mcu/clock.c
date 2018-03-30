@@ -28,6 +28,9 @@
 
 void clock_init(){
 
+#if(MCU_CORE_TYPE == MCU_CORE_5316)
+
+#else
 	reg_rst_clk0 = 0xff000000 | (CLK_USB_ENABLE ? FLD_CLK_USB_EN: 0);
 
 #if(CLOCK_SYS_TYPE == CLOCK_TYPE_PLL)
@@ -76,6 +79,7 @@ void clock_init(){
 	reg_tmr_ctrl = MASK_VAL(FLD_TMR0_EN, 1
 		, FLD_TMR_WD_CAPT, (MODULE_WATCHDOG_ENABLE ? (WATCHDOG_INIT_TIMEOUT * CLOCK_SYS_CLOCK_1MS >> WATCHDOG_TIMEOUT_COEFF):0)
 		, FLD_TMR_WD_EN, (MODULE_WATCHDOG_ENABLE?1:0));
+#endif
 }
 
 _attribute_ram_code_ void sleep_us (u32 us)

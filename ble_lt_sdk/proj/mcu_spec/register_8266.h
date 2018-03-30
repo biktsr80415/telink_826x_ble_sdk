@@ -475,7 +475,7 @@ enum{
 
 #define reg_uart_ctrl0			REG_ADDR16(0x96)
 enum{
-	FLD_UART_BPWC = 			BIT_RNG(0,3),
+	FLD_UART_BWPC = 			BIT_RNG(0,3),
 	FLD_UART_RX_DMA_EN = 		BIT(4),
 	FLD_UART_TX_DMA_EN =		BIT(5),
 	FLD_UART_RX_IRQ_EN = 		BIT(6),

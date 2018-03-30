@@ -15,7 +15,23 @@
  * brief  judge what the irq source is. host write or host read.
  */
 I2C_I2CIrqSrcTypeDef I2C_SlaveIrqGet(void){
+
 	unsigned char hostStatus = reg_i2c_irq_status;
+
+#if(MCU_CORE_TYPE == MCU_CORE_5316)
+	if(hostStatus & FLD_I2C_STATUS_RD)
+	{
+		return I2C_IRQ_HOST_READ_ONLY;
+	}
+	else if(hostStatus & FLD_I2C_STATUS_WR)
+	{
+		return I2C_IRQ_HOST_WRITE_ONLY;
+	}
+	else
+	{
+		return I2C_IRQ_NONE;
+	}
+#else
 	if(hostStatus & FLD_I2C_STATUS_RD){
 		return I2C_IRQ_HOST_READ_ONLY;
 	}
@@ -26,11 +42,23 @@ I2C_I2CIrqSrcTypeDef I2C_SlaveIrqGet(void){
 	else{
 		return I2C_IRQ_NONE;
 	}
+#endif
 }
 /****
  * brief  clear the irq status bit.
  */
-void I2C_SlaveIrqClr(I2C_I2CIrqSrcTypeDef src){
+void I2C_SlaveIrqClr(I2C_I2CIrqSrcTypeDef src)
+{
+#if(MCU_CORE_TYPE == MCU_CORE_5316)
+	if(src == I2C_IRQ_HOST_READ_ONLY)
+	{
+		reg_i2c_irq_status |= FLD_I2C_STATUS_RD;//write 1 to clear.
+	}
+	else
+	{
+		reg_i2c_irq_status |= FLD_I2C_STATUS_WR;//write 1 to clear.
+	}
+#else
 	if(src==I2C_IRQ_HOST_READ_ONLY){
 		BM_SET(reg_i2c_clr_status, FLD_I2C_STATUS_WR|FLD_I2C_STATUS_RD);
 	}
@@ -39,6 +67,7 @@ void I2C_SlaveIrqClr(I2C_I2CIrqSrcTypeDef src){
 	}
 	else{
 	}
+#endif
 }
 
 /*****
@@ -124,6 +153,337 @@ void i2c_pin_init(I2C_GPIO_GroupTypeDef i2c_pin_group){
 
 	gpio_set_func(gpio_sda,AS_I2C);  //disable gpio function
 	gpio_set_func(gpio_scl,AS_I2C);  //disable gpio function
+
+#elif (MCU_CORE_TYPE == MCU_CORE_5316)
+
+	switch(i2c_pin_group)
+	{
+	case I2C_GPIO_GROUP_M_A3A4: /* IIC master GPIO settings. */
+		gpio_scl = GPIO_PA3;
+		gpio_sda = GPIO_PA4;
+
+		/* Set GPIO AF as IIC. */
+		GPIOA_AF->RegBits.P3_AF = GPIOA3_I2C_MCK;
+		GPIOA_AF->RegBits.P4_AF = GPIOA4_I2C_MSD;
+
+		/* Close other GPIO which have I2C Master function when their's IIC function is enabled. */
+		//PA5 PA6
+		if(GPIOA_AF->RegBits.P5_AF == GPIOA5_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PA5,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P6_AF == GPIOA6_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PA6,AS_GPIO);
+		}
+
+		//PB2 PB3
+		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PB2,AS_GPIO);
+		}
+		if( GPIOB_AF->RegBits.P3_AF == GPIOB3_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PB3,AS_GPIO);
+		}
+
+		//PB6 PB7
+		if(GPIOB_AF->RegBits.P6_AF == GPIOB6_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PB6,AS_GPIO);
+		}
+		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PB7,AS_GPIO);
+		}
+
+		//PC4 PC5
+		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PC4,AS_GPIO);
+		}
+		if(GPIOC_AF->RegBits.P5_AF == GPIOC5_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PC5,AS_GPIO);
+		}
+		break;
+	case I2C_GPIO_GROUP_M_A5A6:
+		gpio_scl = GPIO_PA5;
+		gpio_sda = GPIO_PA6;
+
+		/* Set GPIO AF as IIC. */
+		GPIOA_AF->RegBits.P5_AF = GPIOA5_I2C_MCK;
+		GPIOA_AF->RegBits.P6_AF = GPIOA6_I2C_MSD;
+
+		/* Close other GPIO which have I2C Master function when their's IIC function is enabled. */
+		if(GPIOA_AF->RegBits.P3_AF == GPIOA3_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PA3,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P4_AF == GPIOA4_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PA4,AS_GPIO);
+		}
+
+		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PB2,AS_GPIO);
+		}
+		if(GPIOB_AF->RegBits.P3_AF == GPIOB3_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PB3,AS_GPIO);
+		}
+
+		if(GPIOB_AF->RegBits.P6_AF == GPIOB6_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PB6,AS_GPIO);
+		}
+		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PB7,AS_GPIO);
+		}
+
+		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PC4,AS_GPIO);
+
+		}
+		if(GPIOC_AF->RegBits.P5_AF == GPIOC5_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PC5,AS_GPIO);
+		}
+		break;
+	case I2C_GPIO_GROUP_M_B2B3:
+		gpio_scl = GPIO_PB2;
+		gpio_sda = GPIO_PB3;
+
+		/* Set GPIO as IIC. */
+		GPIOB_AF->RegBits.P2_AF = GPIOB2_I2C_MCK;
+		GPIOB_AF->RegBits.P3_AF = GPIOB3_I2C_MSD;
+
+		/* Close other GPIO which have I2C Master function when their's IIC function is enabled. */
+		if(GPIOA_AF->RegBits.P3_AF == GPIOA3_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PA3,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P4_AF == GPIOA4_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PA4,AS_GPIO);
+		}
+
+		if(GPIOA_AF->RegBits.P5_AF == GPIOA5_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PA5,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P6_AF == GPIOA6_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PA6,AS_GPIO);
+		}
+
+		if(GPIOB_AF->RegBits.P6_AF == GPIOB6_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PB6,AS_GPIO);
+		}
+		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PB7,AS_GPIO);
+		}
+
+		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PC4,AS_GPIO);
+		}
+		if( GPIOC_AF->RegBits.P5_AF == GPIOC5_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PC5,AS_GPIO);
+		}
+		break;
+	case I2C_GPIO_GROUP_M_B6B7:
+		gpio_scl = GPIO_PB6;
+		gpio_sda = GPIO_PB7;
+
+		/* Set GPIO AF as IIC. */
+		GPIOB_AF->RegBits.P6_AF = GPIOB6_I2C_MCK;
+		GPIOB_AF->RegBits.P7_AF = GPIOB7_I2C_MSD;
+
+		/* Close other GPIO which have I2C Master function when their's IIC function is enabled. */
+		if(GPIOA_AF->RegBits.P3_AF == GPIOA3_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PA3,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P4_AF == GPIOA4_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PA4,AS_GPIO);
+		}
+
+		if(GPIOA_AF->RegBits.P5_AF == GPIOA5_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PA5,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P6_AF == GPIOA6_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PA6,AS_GPIO);
+		}
+
+		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PB2,AS_GPIO);
+		}
+		if(GPIOB_AF->RegBits.P3_AF == GPIOB3_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PB3,AS_GPIO);
+		}
+
+		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PC4,AS_GPIO);
+		}
+		if(GPIOC_AF->RegBits.P5_AF == GPIOC5_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PC5,AS_GPIO);
+		}
+		break;
+	case I2C_GPIO_GROUP_M_C4C5:
+		gpio_scl = GPIO_PC5;
+		gpio_sda = GPIO_PC4;
+
+		/* Set GPIO as IIC. */
+		GPIOC_AF->RegBits.P4_AF = GPIOC4_I2C_MSD;
+		GPIOC_AF->RegBits.P5_AF = GPIOC5_I2C_MCK;
+
+		/* Close other GPIO which have I2C Master function when their's IIC function is enabled. */
+		if(GPIOA_AF->RegBits.P3_AF == GPIOA3_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PA3,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P4_AF == GPIOA4_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PA4,AS_GPIO);
+		}
+
+		if(GPIOA_AF->RegBits.P5_AF == GPIOA5_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PA5,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P6_AF == GPIOA6_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PA6,AS_GPIO);
+		}
+
+		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PB2,AS_GPIO);
+		}
+		if(GPIOB_AF->RegBits.P3_AF == GPIOB3_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PB3,AS_GPIO);
+		}
+
+		if(GPIOB_AF->RegBits.P6_AF == GPIOB6_I2C_MCK)
+		{
+			gpio_set_func(GPIO_PB6,AS_GPIO);
+		}
+		if( GPIOB_AF->RegBits.P7_AF == GPIOB7_I2C_MSD)
+		{
+			gpio_set_func(GPIO_PB7,AS_GPIO);
+		}
+		break;
+	case I2C_GPIO_GROUP_S_A3A4:/* IIC slave GPIO settings. */
+		gpio_scl = GPIO_PA4;
+		gpio_sda = GPIO_PA3;
+
+		/* Set GPIO AF as IIC. */
+		GPIOA_AF->RegBits.P3_AF = GPIOA3_I2C_SD_OR_SPI_DI;
+		GPIOA_AF->RegBits.P4_AF = GPIOA4_I2C_CK_OR_SPI_CK;
+
+		/* Close other GPIO which have I2C Slave function. */
+		if(GPIOA_AF->RegBits.P5_AF == GPIOA5_I2C_CK)
+		{
+			gpio_set_func(GPIO_PA5,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P6_AF == GPIOA6_I2C_SD)
+		{
+			gpio_set_func(GPIO_PA6,AS_GPIO);
+		}
+
+		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_SPI_DI_OR_I2C_SD)
+		{
+			gpio_set_func(GPIO_PC4,AS_GPIO);
+		}
+		if(GPIOC_AF->RegBits.P5_AF == GPIOC5_SPI_CK_OR_I2C_CK)
+		{
+			gpio_set_func(GPIO_PC5,AS_GPIO);
+		}
+		break;
+	case I2C_GPIO_GROUP_S_A5A6:
+		gpio_scl = GPIO_PA5;
+		gpio_sda = GPIO_PA6;
+
+		/* Set GPIO AF as IIC. */
+		GPIOA_AF->RegBits.P5_AF = GPIOA5_I2C_CK;
+		GPIOA_AF->RegBits.P6_AF = GPIOA6_I2C_SD;
+
+		/* Close other GPIO which have I2C Slave function. */
+		if(GPIOA_AF->RegBits.P3_AF == GPIOA3_I2C_SD_OR_SPI_DI)
+		{
+			gpio_set_func(GPIO_PA3,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P4_AF == GPIOA4_I2C_CK_OR_SPI_CK)
+		{
+			gpio_set_func(GPIO_PA4,AS_GPIO);
+		}
+
+		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_SPI_DI_OR_I2C_SD)
+		{
+			gpio_set_func(GPIO_PC4,AS_GPIO);
+		}
+		if(GPIOC_AF->RegBits.P5_AF == GPIOC5_SPI_CK_OR_I2C_CK)
+		{
+			gpio_set_func(GPIO_PC5,AS_GPIO);
+		}
+		break;
+	case I2C_GPIO_GROUP_S_C4C5:
+		gpio_scl = GPIO_PC5;
+		gpio_sda = GPIO_PC4;
+
+		/* Set GPIO as IIC. */
+		GPIOC_AF->RegBits.P4_AF = GPIOC4_SPI_DI_OR_I2C_SD;
+		GPIOC_AF->RegBits.P5_AF = GPIOC5_SPI_CK_OR_I2C_CK;
+
+		/* Close other GPIO which have I2C Slave function. */
+		if(GPIOA_AF->RegBits.P3_AF == GPIOA3_I2C_SD_OR_SPI_DI)
+		{
+			gpio_set_func(GPIO_PA3,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P4_AF == GPIOA4_I2C_CK_OR_SPI_CK)
+		{
+			gpio_set_func(GPIO_PA4,AS_GPIO);
+		}
+
+		if(GPIOA_AF->RegBits.P5_AF == GPIOA5_I2C_CK)
+		{
+			gpio_set_func(GPIO_PA5,AS_GPIO);
+		}
+		if(GPIOA_AF->RegBits.P6_AF == GPIOA6_I2C_SD)
+		{
+			gpio_set_func(GPIO_PA6,AS_GPIO);
+		}
+		break;
+	default:
+		break;
+	}
+
+	//Disable GPIO function.
+	gpio_set_func(gpio_sda,AS_I2C);
+	gpio_set_func(gpio_scl,AS_I2C);
+
+	//Set GPIO as input.
+	gpio_set_input_en(gpio_sda,1);
+	gpio_set_input_en(gpio_scl,1);
+
+	//Enable 10k pull up.
+	gpio_setup_up_down_resistor(gpio_sda,PM_PIN_PULLUP_10K);
+	gpio_setup_up_down_resistor(gpio_scl,PM_PIN_PULLUP_10K);
 #endif
 
 }
@@ -143,8 +503,15 @@ void i2c_master_init_div(unsigned char slave_id, unsigned char div_clock)
 
 	reg_i2c_id = MASK_VAL(FLD_I2C_ID,slave_id);//set the id of i2c module.
 
+#if(MCU_CORE_TYPE == MCU_CORE_5316)
+	reg_i2c_mode &= ~(FLD_I2C_MASTER_EN|FLD_I2C_SLAVE_EN);
+	reg_i2c_mode |= FLD_I2C_MASTER_EN;
+
+#else
+
 	BM_SET(reg_i2c_mode,FLD_I2C_MODE_MASTER|FLD_I2C_HOLD_MASTER);  //enable master mode.
 //	BM_SET(reg_i2c_mode,FLD_I2C_MODE_MASTER);
+#endif
 
 	BM_SET(reg_rst_clk0,FLD_CLK_I2C_EN);       //enable i2c clock
 
@@ -164,7 +531,14 @@ void i2c_master_init_khz(unsigned char slave_id, unsigned int i2c_speed)
 
 	reg_i2c_id = MASK_VAL(FLD_I2C_ID,slave_id);//set the id of i2c module.
 
+#if(MCU_CORE_TYPE == MCU_CORE_5316)
+	reg_i2c_mode &= ~(FLD_I2C_MASTER_EN|FLD_I2C_SLAVE_EN);
+	reg_i2c_mode |= FLD_I2C_MASTER_EN;
+
+#else
+
 	BM_SET(reg_i2c_mode,FLD_I2C_MODE_MASTER);  //enable master mode.
+#endif
 
 	BM_SET(reg_rst_clk0,FLD_CLK_I2C_EN);       //enable i2c clock
 
@@ -180,6 +554,19 @@ void i2c_master_init_khz(unsigned char slave_id, unsigned int i2c_speed)
  */
 void i2c_slave_init(unsigned char device_id,enum I2C_SLAVE_MODE i2c_mode,unsigned char* pbuf)
 {
+#if (MCU_CORE_TYPE == MCU_CORE_5316)
+	reg_i2c_slave_id = MASK_VAL(FLD_I2C_ID,device_id); //configure the slave id of i2c module.
+
+	if(i2c_mode == I2C_SLAVE_MAP)
+	{
+		reg_i2c_mode |= FLD_I2C_SLAVE_MAPPING;
+		reg_i2c_mem_map = (unsigned int)pbuf & 0xffff;
+	}
+
+	reg_i2c_mode &= ~FLD_I2C_MASTER_EN;
+	reg_i2c_mode |= FLD_I2C_SLAVE_EN;
+
+#else
 	reg_i2c_id = MASK_VAL(FLD_I2C_ID,device_id); //configure the id of i2c module.
 	if(i2c_mode == I2C_SLAVE_MAP){
 		reg_i2c_mode = MASK_VAL(FLD_I2C_ADDR_AUTO, 1, FLD_I2C_MEM_MAP, 1); //enable i2c address auto increase and enable mapping mode.
@@ -187,6 +574,9 @@ void i2c_slave_init(unsigned char device_id,enum I2C_SLAVE_MODE i2c_mode,unsigne
 	}
 
 	BM_CLR(reg_i2c_mode, FLD_I2C_MODE_MASTER); //disable master mode .i.e enable slave mode.
+#endif
+
+	BM_SET(reg_rst_clk0,FLD_CLK_I2C_EN);
 
 	BM_CLR(reg_spi_sp,FLD_SPI_ENABLE);        //force PADs act as I2C; i2c and spi share the hardware of IC
 }
@@ -209,8 +599,8 @@ void i2c_write_byte(unsigned char* addr, int addr_len, unsigned char data)
 		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1); //send start, ID, addr
 	}
 	else if(addr_len == 2){
-		reg_i2c_adr = addr[0];
-		reg_i2c_do  = addr[1];
+		reg_i2c_adr = addr[1];
+		reg_i2c_do  = addr[0];
 		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1);//send start,ID,addrL,addH
 	}
 	else{
@@ -244,8 +634,8 @@ unsigned char i2c_read_byte(unsigned char* addr, unsigned char addr_len)
 		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1);
 	}
 	else if(addr_len == 2){
-		reg_i2c_adr = addr[0];
-		reg_i2c_do  = addr[1];
+		reg_i2c_adr = addr[1];
+		reg_i2c_do  = addr[0];
 		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1);
 	}
 	else{
@@ -288,7 +678,7 @@ void i2c_burst_write(unsigned char *addr, int addr_len, unsigned char * pbuf, in
     memcpy(&tmp_addr, addr, addr_len);
 
     for (i = 0; i < len; i++) {
-        i2c_write_byte(&tmp_addr, addr_len, pbuf[i]);
+        i2c_write_byte((unsigned char*)&tmp_addr, addr_len, pbuf[i]);
         tmp_addr++;
     }
 }
@@ -309,7 +699,7 @@ void i2c_burst_read(unsigned char* addr, int addr_len, unsigned char * pbuf, int
     memcpy(&tmp_addr, addr, addr_len);
 
     for (i = 0; i < len; i++) {
-        pbuf[i] = i2c_read_byte(&tmp_addr, addr_len);
+        pbuf[i] = i2c_read_byte((unsigned char *)&tmp_addr, addr_len);
         tmp_addr++;
     }
 }

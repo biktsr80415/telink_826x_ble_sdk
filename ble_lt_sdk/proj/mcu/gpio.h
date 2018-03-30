@@ -9,6 +9,8 @@ enum{
 
 // do not use enum,  because we use this in preprocessor diretive,  #if
 #define AS_GPIO		0
+#define AS_AF       (!0)
+
 #define AS_MSPI		1
 #define AS_SWIRE	2
 #define AS_UART		3
@@ -37,11 +39,9 @@ enum{
 	  __TL_LIB_8269__ || MCU_CORE_TYPE == MCU_CORE_8269 )
 #include "../mcu_spec/gpio_default_8267.h"
 #include "../mcu_spec/gpio_8267.h"
-#elif(__TL_LIB_8366__ || MCU_CORE_TYPE == MCU_CORE_8366)
-#include "../mcu_spec/gpio_default_8366.h"
-#include "../mcu_spec/gpio_8366.h"
-#elif(__TL_LIB_8263__ || MCU_CORE_TYPE == MCU_CORE_8263)
-#include "../mcu_spec/gpio_default_8263.h"
-#include "../mcu_spec/gpio_8263.h"
+#elif(__TL_LIB_5316__ || MCU_CORE_TYPE == MCU_CORE_5316)
+#include "../mcu_spec/gpio_default_5316.h"
+#include "../mcu_spec/gpio_5316.h"
+#else
 #endif
 

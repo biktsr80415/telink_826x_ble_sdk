@@ -47,6 +47,8 @@
 	#include "../826x_beacon_detector/app_config.h"
 #elif (__826x_PTS_TEST__)
 	#include "../826x_pts_test/app_config.h"
+#elif(__PROJECT_5316_BLE_REMOTE__)
+        #include "../531x_ble_remote/app_config.h"
 #else
 	#include "../common/default_config.h"
 #endif

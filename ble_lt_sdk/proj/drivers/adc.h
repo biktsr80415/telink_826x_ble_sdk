@@ -14,8 +14,9 @@
 	  __TL_LIB_8261__ || MCU_CORE_TYPE == MCU_CORE_8261 || \
 	  __TL_LIB_8269__ || MCU_CORE_TYPE == MCU_CORE_8269 )
 #include "../mcu_spec/adc_8267.h"
-#elif(__TL_LIB_8263__ || MCU_CORE_TYPE == MCU_CORE_8263)
-#include "../mcu_spec/adc_8263.h"
+#elif(__TL_LIB_5316__ || MCU_CORE_TYPE == MCU_CORE_5316)
+#include "../mcu_spec/adc_5316.h"
+#else
 #endif
 
 

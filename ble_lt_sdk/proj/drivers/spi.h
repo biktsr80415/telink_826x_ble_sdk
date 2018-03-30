@@ -3,23 +3,38 @@
 
 #include "../common/types.h"
 
-//void spi_write(u8 d);
-//u8 spi_read();
-
-typedef void (*spi_callback_func)(u8 *);
+#if(MCU_CORE_TYPE == MCU_CORE_5316)
+	/* SPI Read/Write Command define. */
+	#ifndef SPI_WRITE_CMD
+	#define SPI_WRITE_CMD   0x00
+	#endif
+	#ifndef SPI_READ_CMD
+	#define SPI_READ_CMD    0x80
+	#endif
+#endif
 
 ///spi irq handler
 #define SPI_IRQ_EN()        BM_SET(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
 #define SPI_IRQ_DIS()       BM_CLR(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
 #define SPI_IRQ_GET()       ( (reg_spi_irq_status & FLD_SPI_STATUS_WR) ? 1: 0 )
-#define SPI_IRQ_CLR()       BM_SET(reg_spi_clr_status, FLD_SPI_STATUS_WR)
+#if(MCU_CORE_TYPE == MCU_CORE_5316)
+	#define SPI_IRQ_CLR()   BM_SET(reg_spi_irq_status, FLD_SPI_STATUS_WR)
+#else
+	#define SPI_IRQ_CLR()   BM_SET(reg_spi_clr_status, FLD_SPI_STATUS_WR)
+#endif
 
-#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+typedef void (*spi_callback_func)(u8 *);
+
+
 enum spi_pin_t{
+#if((MCU_CORE_TYPE == MCU_CORE_8266)||(MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 	SPI_PIN_GROUPA,
 	SPI_PIN_GROUPB,
-};
+#elif (MCU_CORE_TYPE == MCU_CORE_5316)
+	SPI_PIN_GROUPB,//SPI Master and Slave GPIO
+	SPI_PIN_GROUPC,
 #endif
+};
 
 enum spi_mode_t{
 	SPI_MODE0 = 0,
@@ -35,7 +50,7 @@ enum spi_mode_t{
 */
 #if(MCU_CORE_TYPE == MCU_CORE_8266)
 void spi_master_pin_init(unsigned int cs_pin);
-#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269)||(MCU_CORE_TYPE == MCU_CORE_5316))
 void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin);
 #endif
 
@@ -54,7 +69,7 @@ void spi_master_init(unsigned char div_clk, enum spi_mode_t spi_mode);
 */
 #if(MCU_CORE_TYPE == MCU_CORE_8266)
 void spi_slave_init(enum spi_mode_t spi_mode);
-#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269)||(MCU_CORE_TYPE == MCU_CORE_5316))
 void spi_slave_init(enum spi_pin_t spi_grp, enum spi_mode_t spi_mode);
 #endif
 
@@ -88,4 +103,10 @@ void spi_write(unsigned char* addr_cmd, unsigned char addr_cmd_len, unsigned cha
 void spi_read(unsigned char* addr_cmd, unsigned char addr_cmd_len, unsigned char* pbuf, int buf_len, unsigned int cs_pin);
 
 
-
+/**
+ * These functions are defined for convenience of using SPI and only open to chip,5316.
+ */
+#if(MCU_CORE_TYPE == MCU_CORE_5316)
+void spi_writeEx(unsigned short addr,unsigned char addrLen, unsigned char* pBuf, unsigned int len);
+void spi_ReadEx(unsigned short addr, unsigned char addrLen, unsigned char* pBuf, unsigned int len);
+#endif

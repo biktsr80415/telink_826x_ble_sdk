@@ -52,6 +52,10 @@ void battery_power_check(void)
 	static u32 battCheckTick = 0;
 	if(clock_time_exceed(battCheckTick, 100000)){
 		battCheckTick = clock_time();
+
+		#if (MCU_CORE_TYPE == MCU_CORE_5316)
+			ADC_PowerOn();
+		#endif
 	}
 	else{
 		return;
@@ -63,11 +67,22 @@ void battery_power_check(void)
 	unsigned short adcValue[BATT_CHECK_CNT] = {0};
 
 	for(adc_idx=0;adc_idx<BATT_CHECK_CNT;adc_idx++){
+	#if (MCU_CORE_TYPE == MCU_CORE_5316)
+		adcValue[adc_idx] = ADC_GetConvertValue();
+	#else
 		adcValue[adc_idx] = adc_SampleValueGet();
+	#endif
 	}
 
 	unsigned short average_data;
 	average_data = filter_data(adcValue,BATT_CHECK_CNT);
+	#if(MCU_CORE_TYPE == MCU_CORE_5316)
+		if((average_data & BIT(14)) != 0)//negative
+		{
+			average_data += 1;
+			average_data= ~average_data;
+		}
+	#endif
 
 
 	unsigned int tem_batteryVol;         //2^14 - 1 = 16383;
@@ -75,6 +90,9 @@ void battery_power_check(void)
 	tem_batteryVol = 3*(1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
 #elif(MCU_CORE_TYPE == MCU_CORE_8266)
 	tem_batteryVol = 3*((1300*average_data)>>14);
+#elif(MCU_CORE_TYPE == MCU_CORE_5316)
+	tem_batteryVol = 8 *((average_data * 1200) >> 13);
+	ADC_PowerOff();//save power
 #endif
 
 	if(tem_batteryVol < 2000){  //when battery voltage is lower than 2.0v, chip will enter deep sleep mode

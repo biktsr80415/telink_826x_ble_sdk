@@ -32,8 +32,22 @@ enum{
 	CLOCK_HS_16M_OSC = 	3,
 };
 
+#if (MCU_CORE_TYPE == MCU_CORE_5316)
+	/* 5316 system clock source define. */
+	#define SYS_CLK_SRC_24M_RC              0
+	#define SYS_CLK_SRC_FHS                 1
+	#define SYS_CLK_SRC_FHS_DIV             2
+	#define SYS_CLK_SRC_FHS_2V3_DIV         3
 
+	/* 5316 FHS clock source define. */
+	//use for 0x66[7]
+	#define FHS_CLK_SRC_L_48M_OR_24M_PAD     0
+	#define FHS_CLK_SRC_L_24M_RC             1
 
+	//use for 0x70[0]
+	#define FHS_CLK_SRC_H_48M_OR_24M_RC      0
+	#define FHS_CLK_SRC_H_24M_PAD            1
+#endif
 
 #ifdef	USE_SYS_TICK_PER_US
 	extern	u32 sys_tick_per_us;
@@ -53,7 +67,7 @@ enum{
 		CLOCK_SYS_CLOCK_1US = (CLOCK_SYS_CLOCK_1S / 1000000),
 	};
 
-	#define 	sys_tick_per_us		CLOCK_SYS_CLOCK_1US
+	#define 	sys_tick_per_us		16
 
 #endif
 

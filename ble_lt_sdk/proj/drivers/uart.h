@@ -14,6 +14,43 @@
 #include "../common/compatibility.h"
 #include "../common/utility.h"
 
+/* UART Pin enum define. */
+typedef enum
+{
+#if(__TL_LIB_5316__ || MCU_CORE_TYPE == MCU_CORE_5316)
+	UART_PIN_PA3A4,
+	UART_PIN_PB4B5,
+	UART_PIN_PC4C5,
+
+#elif(__TL_LIB_8266__ || MCU_CORE_TYPE == MCU_CORE_8266)
+	UART_PIN_PC6C7,
+
+#elif((__TL_LIB_8261__ || MCU_CORE_TYPE == MCU_CORE_8261)||(__TL_LIB_8267__ || MCU_CORE_TYPE == MCU_CORE_8267)||(__TL_LIB_8269__ || MCU_CORE_TYPE == MCU_CORE_8269))
+	UART_PIN_PA6A7,
+	UART_PIN_PB2B3,
+	UART_PIN_PC2C3,
+
+#endif
+}eUART_PinTypeDef;
+
+/* 5316 UART hardware flow pin define. */
+#if (__LIB_TL_5316__ || MCU_CORE_TYPE == MCU_CORE_5316)
+typedef enum
+{
+	UART_FLOW_CTRL_CTS_PA1,
+	UART_FLOW_CTRL_RTS_PA2,
+
+	UART_FLOW_CTRL_CTS_PB2,
+	UART_FLOW_CTRL_RTS_PB3,
+
+	UART_FLOW_CTRL_CTS_PB7,
+	UART_FLOW_CTRL_RTS_PB6,
+
+	UART_FLOW_CTRL_CTS_PC2,
+	UART_FLOW_CTRL_RTS_PC3,
+}eUART_FlowCtrlPinTypeDef;
+#endif
+
 /**
  *  @brief  Define parity type
  */
@@ -103,6 +140,12 @@ enum {
 										gpio_set_func(GPIO_PC7, AS_UART);\
                                       }while(0)
 
+#elif (MCU_CORE_TYPE == MCU_CORE_5316)
+                     //TxRx
+#define UART_GPIO_INIT_PA3A4()   uart_pin_init(UART_PIN_PA3A4)
+#define UART_GPIO_INIT_PB4B5()   uart_pin_init(UART_PIN_PB4B5)
+#define UART_GPIO_INIT_PC4C5()   uart_pin_init(UART_PIN_PC4C5)
+
 #endif
 
 #define UART_GPIO_8267_PA6_PA7      1
@@ -116,6 +159,9 @@ enum {
  *            not 0: indicate tx or rx irq
  */
 #define GET_UART_NOT_DMA_IRQ()       ((reg_uart_status0&FLD_UART_IRQ_FLAG) ? 1:0)  //not dma mode,1: occur uart irq; 0:not uart irq
+
+extern void uart_pin_init(eUART_PinTypeDef uartPin);
+
 /**********************************************************
 *
 *	@brief	reset uart module
@@ -199,7 +245,8 @@ extern unsigned char uart_notDmaModeRevData(void);
  * @param[in] uartData - the data to be send.
  * @return    1: send success ; 0: uart busy
  */
-extern unsigned char UART_notDmaModeSendByte(unsigned char uartData);
+extern unsigned char uart_TxIndex;
+extern unsigned char uart_notDmaModeSendByte(unsigned char uartData);
 
 /********************************************************************************
 *	@brief	uart send data function, this  function tell the DMA to get data from the RAM and start
@@ -252,8 +299,13 @@ void uart_clr_tx_busy_flag(void);
 void uart_set_tx_done_delay (u32 t);		//for 8266 only
 
 unsigned char uart_tx_is_busy(void);
-
 void uart_io_init(unsigned char uart_io_sel);
 
+#if(MCU_CORE_TYPE == MCU_CORE_5316)
+extern void UART_FlowCtrlPinInit(eUART_FlowCtrlPinTypeDef flowCtrlPin);
+extern void UART_RTS_Init(u8 rtsTriggerLevel,u8 isInvertRtsValue,u8 rtsManualModeEn,u8 rtsEnable);
+extern void UART_RTS_SetPinValue(u8 pinValue);
+extern void UART_CTS_Init(u8 pinValue, u8 ctsEnable);
+#endif
 
 #endif
