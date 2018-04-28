@@ -93,6 +93,7 @@ typedef struct{
 	u8 is_deepRetn_back;
 	u8 is_pad_wakeup;
 	u8 wakeup_src;
+	u8 is_B4_version;
 }pm_para_t;
 
 extern pm_para_t	pmParam;
@@ -167,7 +168,7 @@ typedef enum {
 #define PM_SLEEP_DURATION_MAX    0xc0000000 //sys ticks
 #define TickPerUs				 16
 #define ClockTime				 clock_time
-#define WRITE_REG8				 write_gre8
+//#define WRITE_REG8				 write_reg8
 #define IRQ_Disable				 irq_disable
 #define IRQ_Restore				 irq_restore
 #define PM_Get32kTick			 cpu_get_32k_tick

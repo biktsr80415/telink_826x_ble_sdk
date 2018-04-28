@@ -290,7 +290,7 @@ u8 			blc_ll_getLatestAvgRSSI(void);
 u16   		blc_ll_setInitTxDataLength (u16 maxTxOct);   //core4.2 long data packet
 
 
-
+bool		blc_ll_isControllerEventPending(void);
 
 
 

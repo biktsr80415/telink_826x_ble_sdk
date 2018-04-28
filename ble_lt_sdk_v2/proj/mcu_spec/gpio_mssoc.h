@@ -78,7 +78,6 @@ enum{
 
 #define reg_gpio_irq_risc0_en(i)  REG_ADDR8(0x5b8 + (i >> 8))	  // reg_irq_mask: FLD_IRQ_GPIO_RISC0_EN
 #define reg_gpio_irq_risc1_en(i)  REG_ADDR8(0x5c0 + (i >> 8))	  // reg_irq_mask: FLD_IRQ_GPIO_RISC1_EN
-#define reg_gpio_irq_risc2_en(i)  REG_ADDR8(0x5c8 + (i >> 8))     // reg_irq_mask: FLD_IRQ_GPIO_RISC2_EN
 
 
 
@@ -237,25 +236,6 @@ static inline void gpio_set_interrupt_risc1(u32 pin, u32 falling){
 	}
 }
 
-static inline void gpio_en_interrupt_risc2(u32 pin, int en){  // reg_irq_mask: FLD_IRQ_GPIO_RISC2_EN
-	u8	bit = pin & 0xff;
-	if(en){
-		BM_SET(reg_gpio_irq_risc2_en(pin), bit);
-	}
-	else{
-		BM_CLR(reg_gpio_irq_risc2_en(pin), bit);
-	}
-}
-
-static inline void gpio_set_interrupt_risc2(u32 pin, u32 falling){
-	u8	bit = pin & 0xff;
-	BM_SET(reg_gpio_irq_risc2_en(pin), bit);
-	if(falling){
-		BM_SET(reg_gpio_pol(pin), bit);
-	}else{
-		BM_CLR(reg_gpio_pol(pin), bit);
-	}
-}
 
 
 

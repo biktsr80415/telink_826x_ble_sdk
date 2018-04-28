@@ -1,5 +1,5 @@
 
-#ifdef MCU_CORE_MSSOC
+#ifdef MCU_CORE_MSSOC_B3
 
 #ifndef __LOAD_RAM_SIZE__
 #define	__LOAD_RAM_SIZE__		0xc
@@ -46,7 +46,6 @@ __start:					@ MUST,  referenced by boot.link
 	.org 0x8
 	.word	(0x544c4e4b)
 	.word	(0x00800000 + 0x08)    @_ramcode_size_div_16_align_256_
-	@.word	(0x00880000 + _ramcode_size_div_16_align_256_)
 
 	.org 0x10
 	tj		__irq
@@ -68,6 +67,16 @@ __reset:
 
 @	tmov		r0, #16			@0b00010000 = 0x10 = #16
 @	tstorerb	r0, [r1, #1]	@0x800583  PA4 output
+
+
+	@ add debug, PB7 output 1
+@	tloadr     	r1, DEBUG_GPIO    @0x80058a  PB7 oen
+@	tmov		r0, #127      @0b 01111111 = 0x7f = #127
+@	tstorerb	r0, [r1, #0]
+
+@	tmov		r0, #128			@0b10000000 = 0x80 = #128
+@	tstorerb	r0, [r1, #1]	@0x800583  PA4 output
+
 
     tloadr  	r0, BOOT_CHECK              @r0 = 0x544c4e4b
     tloadr  	r1, FLL_D+12				@r1 = others or 0x544c4e4b

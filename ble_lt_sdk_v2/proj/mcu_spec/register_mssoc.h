@@ -21,6 +21,8 @@ extern u8 reg_simu_buffer[];
 #define REG_ADDR16(a)			(*(volatile u16*)(REG_BASE_ADDR + (a)))
 #define REG_ADDR32(a)			(*(volatile u32*)(REG_BASE_ADDR + (a)))
 
+#define WRITE_REG8(addr,data)           (*(volatile unsigned char  *)((addr)|REG_BASE_ADDR)=data)
+#define READ_REG8(addr)                 (*(volatile unsigned char  *)((addr)|REG_BASE_ADDR))
 
 //#define reg_gpio_datai_grp(grp) 	REG_ADDR8(0x580 + grp * 8)
 //#define reg_gpio_ie_grp(grp) 		REG_ADDR8(0x581 + grp * 8)
@@ -34,6 +36,11 @@ extern u8 reg_simu_buffer[];
 #define reg_i2c_set				REG_ADDR32(0x00)
 #define reg_i2c_speed			REG_ADDR8(0x00)
 #define reg_i2c_id				REG_ADDR8(0x01)
+enum{
+	FLD_I2C_WRITE_READ_BIT  =  BIT(0),
+	FLD_I2C_ID              =  BIT_RNG(1,7),
+};
+
 #define reg_i2c_status			REG_ADDR8(0x02)
 enum{
 	FLD_I2C_CMD_BUSY		= 	BIT(0),
@@ -87,6 +94,10 @@ enum{
 };
 
 #define reg_spi_inv_clk			REG_ADDR8(0x0b)
+enum{
+	FLD_INVERT_SPI_CLK =        BIT(0),
+	FLD_DAT_DLY_HALF_CLK =      BIT(1),
+};
 
 /****************************************************
  master spi regs struct: begin  addr : 0x0c
@@ -132,8 +143,12 @@ enum{
 #define reg_i2c_clr_status		REG_ADDR8(0x22)
 enum{
 	FLD_I2C_STATUS_WR = 		BIT(1),
+	FLD_SPI_STATUS_WR =         BIT(1),
 	FLD_I2C_STATUS_RD = 		BIT(2),
 };
+
+#define reg_spi_irq_status      reg_i2c_irq_status
+#define reg_spi_clr_status      reg_i2c_clr_status
 
 /****************************************************
  adc regs struct: begin  addr : 0x28
@@ -268,69 +283,72 @@ enum{
  sys regs struct: begin  addr : 0x60
  *****************************************************/
 #define reg_rst0				REG_ADDR8(0x60)
+#define reg_rst0_16				REG_ADDR16(0x60)
+#define reg_rst1				REG_ADDR8(0x61)
+#define reg_rst2				REG_ADDR8(0x62)
+#define reg_rst_clk0			REG_ADDR32(0x60)
 enum{
 	FLD_RST_SPI = 				BIT(0),
 	FLD_RST_I2C = 				BIT(1),
-	FLD_RST_UART = 				BIT(2),
-	FLD_RST_USB = 				BIT(3),
-	FLD_RST_PWM = 				BIT(4),
-	FLD_RST_QDEC =				BIT(5),
-	FLD_RST_SWIRE = 			BIT(7),
+	FLD_RST_USB = 				BIT(2),
+	FLD_RST_USB_PHY = 			BIT(3),
+	FLD_RST_MCU = 				BIT(4),
+	FLD_RST_MAC =				BIT(5),
+	FLD_RST_AIF = 				BIT(6),
+	FLD_RST_BB = 				BIT(7),
+	FLD_RST_ZB =				BIT(7),
+	FLD_RST_GPIO = 				BIT(8),
+	FLD_RST_ALGM = 				BIT(9),
+	FLD_RST_DMA =				BIT(10),
+	FLD_RST_UART = 				BIT(11),
+	FLD_RST_PWM = 				BIT(12),
+	FLD_RST_AES = 				BIT(13),
+	FLD_RST_SWR_M =				BIT(14),
+	FLD_RST_SWR_S =				BIT(15),
+	FLD_RST_SBC =				BIT(16),
+	FLD_RST_AUD =				BIT(17),
+	FLD_RST_DFIFO =				BIT(18),
+	FLD_RST_ADC =				BIT(19),
+	FLD_RST_SOFT_MCU =			BIT(20),
+	FLD_RST_MCIC = 				BIT(21),
+	FLD_RST_SOFT_MCIC =			BIT(22),
+	FLD_RST_RSV =				BIT(23),
+	FLD_CLK_SPI_EN =			BIT(24),
+	FLD_CLK_I2C_EN =			BIT(25),
+	FLD_CLK_USB_EN =			BIT(26),
+	FLD_CLK_USB_PHY_EN =		BIT(27),
+	FLD_CLK_MCU_EN =			BIT(28),
+	FLD_CLK_MAC_EN =			BIT(29),
+	FLD_CLK_ADC_EN =			BIT(30),	// ADC interface
+	FLD_CLK_ZB_EN =				BIT(31),
 };
 
-#define reg_rst1				REG_ADDR8(0x61)
-enum{
-	FLD_RST1_ZB = 				BIT(0),
-	FLD_RST1_SYS_TIMER = 		BIT(1),
-	FLD_RST1_DMA =				BIT(2),
-	FLD_RST1_ALGM = 			BIT(3),
-	FLD_RST1_AES = 				BIT(4),
-	FLD_RST1_ADC = 				BIT(5),
-	FLD_RST1_ALG =				BIT(6),
-};
-
-#define reg_rst2				REG_ADDR8(0x62)
-enum{
-	FLD_RST2_AUD =				BIT(1),
-	FLD_RST2_DFIFO =			BIT(2),
-	FLD_RST2_RISC =				BIT(4),
-	FLD_RST2_MCIC = 			BIT(5),
-};
-
-
-
-#define reg_clk_en0				REG_ADDR8(0x63)
-enum{
-	FLD_CLK_SPI_EN = 			BIT(0),
-	FLD_CLK_I2C_EN = 			BIT(1),
-	FLD_CLK_UART_EN = 			BIT(2),
-	FLD_CLK_USB_EN = 			BIT(3),
-	FLD_CLK_PWM_EN = 			BIT(4),
-	FLD_CLK_QDEC_EN = 			BIT(5),
-	FLD_CLK_SWIRE_EN = 			BIT(7),
-};
-
+#define reg_clk_en				REG_ADDR16(0x64)
 #define reg_clk_en1				REG_ADDR8(0x64)
 enum{
-	FLD_CLK1_ZB_EN = 			BIT(0),
-	FLD_CLK1_SYS_TIMER_EN = 	BIT(1),
-	FLD_CLK1_DMA_EN = 			BIT(2),
-	FLD_CLK1_ALGM_EN = 			BIT(3),
-	FLD_CLK1_AES_EN = 			BIT(4),
-
+	FLD_CLK_GPIO_EN = 			BIT(0),
+	FLD_CLK_ALGM_EN = 			BIT(1),
+	FLD_CLK_DMA_EN = 			BIT(2),
+	FLD_CLK_UART_EN = 			BIT(3),
+	FLD_CLK_PWM_EN = 			BIT(4),
+	FLD_CLK_AES_EN = 			BIT(5),
+	FLD_CLK_32K_TIMER_EN =		BIT(6),
+	FLD_CLK_SWIRE_EN = 			BIT(7),
+	FLD_CLK_32K_QDEC_EN =		BIT(8),
+	FLD_CLK_AUD_EN =			BIT(9),
+	FLD_CLK_DIFIO_EN = 			BIT(10),
+	FLD_CLK_KEYSCAN_EN =		BIT(11),
+	FLD_CLK_MCIC_EN =			BIT(12),
+	FLD_CLK_QDEC_EN =			BIT(13),
 };
-
-
 #define reg_clk_en2				REG_ADDR8(0x65)
 enum{
-	FLD_CLK2_RSVD5_EN = 		BIT(0),
-	FLD_CLK2_AUD_EN = 			BIT(1),
+	FLD_CLK2_SBC_EN =			BIT(0),
+	FLD_CLK2_AUD_EN =			BIT(1),
 	FLD_CLK2_DFIFO_EN = 		BIT(2),
-	FLD_CLK2_MC_EN = 			BIT(4),
-	FLD_CLK2_MCIC_EN = 			BIT(5),
+	FLD_CLK2_I2S =				BIT_RNG(3,4),
+	FLD_CLK2_C32K =				BIT_RNG(5,7),
 };
-
-
 
 #define reg_clk_sel				REG_ADDR8(0x66)
 enum{
@@ -350,7 +368,6 @@ static inline void SET_SDM_CLOCK_MHZ(int f_mhz)	{
 	reg_i2s_step = FLD_I2S_CLK_EN | f_mhz;
 	reg_i2s_mod = 0xc0;
 }
-
 /****************************************************
 	 ADC: 0x69
  *****************************************************/
@@ -486,13 +503,52 @@ enum{
 	FLD_UART_CTS_I_SELECT =		BIT(8),
 	FLD_UART_CTS_EN = 			BIT(9),
 	FLD_UART_PARITY_EN =		BIT(10),
+    FLD_UART_PARITY_SEL =       BIT(11),
+    FLD_UART_STOP_BIT =         BIT_RNG(12,13),
+    FLD_UART_TTL =              BIT(14),
+    FLD_UART_LOOPBACK =         BIT(15),
 };
-#define reg_uart_ctrl1			REG_ADDR16(0x98)
+
+#define reg_uart_crtl1         		REG_ADDR8(0x97)
+enum {
+    FLD_UART_CTRL1_CTS_SELECT = BIT(0),
+    FLD_UART_CTRL1_CTS_EN = BIT(1),
+    FLD_UART_CTRL1_PARITY_EN = BIT(2),
+    FLD_UART_CTRL1_PARITY = BIT(3),
+    FLD_UART_CTRL1_STOP_BIT = BIT_RNG(4,5),
+    FLD_UART_CTRL1_TTL = BIT(6),
+    FLD_UART_CTRL1_LOOPBACK = BIT(7),
+};
+
+#define reg_uart_ctrl2			REG_ADDR16(0x98)
+enum {
+    FLD_UART_CTRL2_RTS_TRIG_LVL = BIT_RNG(0,3),
+    FLD_UART_CTRL2_RTS_PARITY = BIT(4),
+    FLD_UART_CTRL2_RTS_MANUAL_VAL = BIT(5),
+    FLD_UART_CTRL2_RTS_MANUAL_EN = BIT(6),
+    FLD_UART_CTRL2_RTS_EN = BIT(7),
+	FLD_UART_CTRL3_RX_IRQ_TRIG_LEVEL = BIT_RNG(8,11),
+	FLD_UART_CTRL3_TX_IRQ_TRIG_LEVEL = BIT_RNG(12,15),
+};
 
 #define reg_uart_rx_timeout		REG_ADDR16(0x9a)
 enum{
 	FLD_UART_TIMEOUT_BW = 		BIT_RNG(0,7),		//  timeout bit width
 	FLD_UART_TIMEOUT_MUL = 		BIT_RNG(8,15),
+};
+
+#define reg_uart_status0       REG_ADDR8(0x9d)
+
+
+enum{
+	FLD_UART_IRQ_FLAG  =  BIT(3),
+	FLD_UART_RX_ERR_CLR=  BIT(6),
+	FLD_UART_RX_ERR_FLAG= BIT(7),
+};
+
+#define reg_uart_status1       REG_ADDR8(0x9e)
+enum{
+	FLD_UART_TX_DONE   =  BIT(0),
 };
 
 /****************************************************
@@ -981,6 +1037,8 @@ enum{
 	FLD_DMA_RF_TX =				BIT(3),
 };
 
+#define reg_dma0_addrHi			REG_ADDR8(0xc40)
+
 //  The default channel assignment
 #define reg_dma_uart_rx_addr	reg_dma0_addr
 #define reg_dma_uart_rx_ctrl	reg_dma0_ctrl
@@ -1195,16 +1253,11 @@ enum{
 	FLD_I2S_DI_RX_DAT	=	BIT(1),
 };
 
-#define reg_gpio_wakeup_irq		REG_ADDR8(0x5b5)
-enum{
-	FLD_GPIO_WAKEUP_EN		=	BIT(2),
-	FLD_GPIO_INTERRUPT_EN	=	BIT(3),
-};
 /****************************************************
  timer regs struct: begin  0x620
  *****************************************************/
 #define reg_tmr_ctrl			REG_ADDR32(0x620)
-#define reg_tmr_ctrl16			REG_ADDR16(0x620)		// 因为0x622 不要写
+#define reg_tmr_ctrl16			REG_ADDR16(0x620)
 #define reg_tmr_ctrl8			REG_ADDR8(0x620)
 enum{
 	FLD_TMR0_EN =				BIT(0),
@@ -1275,7 +1328,7 @@ enum{
 	FLD_IRQ_SYSTEM_TIMER =		BIT(20),
 	FLD_IRQ_GPIO_RISC0_EN =		BIT(21),
 	FLD_IRQ_GPIO_RISC1_EN =		BIT(22),
-	FLD_IRQ_GPIO_RISC2_EN = 	BIT(23),
+	FLD_IRQ_CMP_EN		  = 	BIT(23),
 
 	FLD_IRQ_EN =				BIT_RNG(24,31),
 };
@@ -1443,6 +1496,89 @@ static inline void pwm_set_interrupt_disable(PWM_IRQ irq){
 static inline void pwm_clear_interrupt_status( PWM_IRQ irq){
 	reg_pwm_irq_sta = irq;
 }
+
+
+typedef enum{
+	WAVEFORM0_ID = 0x00,
+	WAVEFORM1_ID = 0x01,
+	WAVEFORM2_ID = 0x02,
+	WAVEFORM3_ID = 0x03,
+	WAVEFORM4_ID = 0x04,
+	WAVEFORM5_ID = 0x05,
+	WAVEFORM6_ID = 0x06,
+	WAVEFORM7_ID = 0x07,
+}WAVEFORM_ID;
+
+
+typedef enum{
+	WAVEFORM0_TAIL = 0x00,
+	WAVEFORM0_HEAD = 0x01,
+	WAVEFORM1_TAIL = 0x02,
+	WAVEFORM1_HEAD = 0x03,
+	WAVEFORM2_TAIL = 0x04,
+	WAVEFORM2_HEAD = 0x05,
+	WAVEFORM3_TAIL = 0x06,
+	WAVEFORM3_HEAD = 0x07,
+	WAVEFORM4_TAIL = 0x08,
+	WAVEFORM4_HEAD = 0x09,
+	WAVEFORM5_TAIL = 0x0a,
+	WAVEFORM5_HEAD = 0x0b,
+	WAVEFORM6_TAIL = 0x0c,
+	WAVEFORM6_HEAD = 0x0d,
+	WAVEFORM7_TAIL = 0x0e,
+	WAVEFORM7_HEAD = 0x0f,
+}WAVEFORM_TypeDef;
+
+
+#define reg_pwm0_waveform_carrier_en					REG_ADDR16(0x7cc)
+#define reg_pwm0_waveform_carrier_pulse_num(i)			REG_ADDR16(0x7d0 + (i<<1))
+
+
+#define reg_pwm0_fifo_input								REG_ADDR16(0x7f0)
+
+
+static inline void pwm_set_waveform_carrier_en(WAVEFORM_TypeDef wf_type, int en)
+{
+	u16 mask = BIT((wf_type^0x01));
+	if(en){
+		BM_SET(reg_pwm0_waveform_carrier_en, mask);
+	}
+	else{
+		BM_CLR(reg_pwm0_waveform_carrier_en, mask);
+	}
+}
+
+
+static inline void pwm_config_waveform_carrier_num(WAVEFORM_TypeDef wf_type, u16 carrier_num)
+{
+	reg_pwm0_waveform_carrier_pulse_num(wf_type) = carrier_num;
+}
+
+
+
+static inline void pwm_set_waveform_input_1(WAVEFORM_ID wf_id)
+{
+	reg_pwm0_fifo_input = (0xfff0 | wf_id);
+}
+
+static inline void pwm_set_waveform_input_2(WAVEFORM_ID wf_id1, WAVEFORM_ID wf_id2)
+{
+	reg_pwm0_fifo_input = (0xff00 | wf_id2<<4 | wf_id1);
+}
+
+static inline void pwm_set_waveform_input_3(WAVEFORM_ID wf_id1, WAVEFORM_ID wf_id2, WAVEFORM_ID wf_id3)
+{
+	reg_pwm0_fifo_input = (0xf000 | wf_id3<<8 | wf_id2<<4 | wf_id1);
+}
+
+static inline void pwm_set_waveform_input_4(WAVEFORM_ID wf_id1, WAVEFORM_ID wf_id2, WAVEFORM_ID wf_id3, WAVEFORM_ID wf_id4)
+{
+	reg_pwm0_fifo_input = (wf_id4<<12 | wf_id3<<8 | wf_id2<<4 | wf_id1);
+}
+
+
+
+
 
 //////////////////////////////////////////////////////////////
 // DFIFO

@@ -16,7 +16,10 @@ extern "C" {
 #define REMOTE_IR_ENABLE				0
 #define BATT_CHECK_ENABLE       		0   //enable or disable battery voltage detection
 #define BLE_AUDIO_ENABLE				1
+#define BLE_REMOTE_LED_ENABLE			1
 
+#define BLE_REMOTE_PM_ENABLE				1
+#define PM_DEEPSLEEP_RETENTION_ENABLE		1
 
 
 ////////////////////////// AUDIO CONFIG /////////////////////////////
@@ -39,6 +42,10 @@ extern "C" {
 
 
 
+//PB0 IRout 100K pulldown when  IR not working,  when IR begin, disable this 100K pulldown
+#define	PULL_WAKEUP_SRC_PB0		PM_PIN_PULLDOWN_100K
+
+
 
 //////////////////////////// KEYSCAN/MIC  GPIO //////////////////////////////////
 #define	MATRIX_ROW_PULL					PM_PIN_PULLDOWN_100K
@@ -46,7 +53,6 @@ extern "C" {
 
 #define	KB_LINE_HIGH_VALID				0   //dirve pin output 0 when keyscan, scanpin read 0 is valid
 #define DEEPBACK_FAST_KEYSCAN_ENABLE	0   //proc fast scan when deepsleep back trigged by key press, in case key loss
-#define KEYSCAN_IRQ_TRIGGER_MODE		0
 #define LONG_PRESS_KEY_POWER_OPTIMIZE	0   //lower power when pressing key without release
 
 //stuck key
@@ -137,41 +143,38 @@ extern "C" {
 		#define 		GPIO_IR_CONTROL			GPIO_PD0
 
 		#define		KB_MAP_NORMAL	{\
-						{0, 	1,		2,		3,		4,		5,		6,		}, \
-						{7,		8,		9,		10,		11,		12,		13,		}, \
-						{14,	15,		16,		17,		18,		19, 	KEY_MODE_SWITCH, }, \
-						{21,	22,		23,		24,		25,		26,		27,		}, \
-						{28,	29,		VOICE,	31,		32,		33,		34,		}, \
-						{35,	36,		37,		38,		39,		40,		41,		}, \
-						{42,	43,		44,		45,		46,		47,		48,		}, }
+						{0, 	    1,				2,			3,		4,		}, \
+						{VOICE,	 KEY_MODE_SWITCH,	7,			8,		9		}, \
+						{10,		11,				12,			13,		14,		}, \
+						{15,		16,				17,			18,		19,		}, \
+						{20,		21,				22,			23,		24,		}, \
+						{25,		26,				27,			28,		29,		}, }
 
 		#define		KB_MAP_BLE	{\
-						VK_7,		VK_4,			VK_1,		VK_NONE,			CR_VOL_DN,	CR_VOL_UP,	CR_BACK	, \
-						VK_LEFT,	VK_NONE,		VK_NONE,	VK_NONE,			CR_RECORD,	VK_NONE,	CR_POWER, \
-						VK_RIGHT,	CR_HOME,		VK_NONE,	CR_FAST_FORWARD,	CR_STOP,	CR_SEARCH,	KEY_MODE_SWITCH , \
-						VK_9,	 	VK_6,			VK_3,		VK_NONE,			CR_CHN_DN,	CR_CHN_UP,	CR_MENU , \
-						VK_NONE,	CR_VOL_MUTE,	VOICE,		VK_DOWN,			VK_ENTER,	VK_UP,		VK_NONE , \
-						VK_NONE,	VK_NONE,		VK_0,		VK_8,				VK_5,		VK_2,		VK_NONE , \
-						CR_PAUSE,	CR_PLAY,		VK_NONE,	VK_NONE,			VK_NONE,	VK_NONE,	VK_NONE, }
+						VK_NONE,	VK_NONE,		VK_NONE,		VK_NONE,			VK_NONE,	 \
+						VOICE,		VK_NONE,		VK_NONE,		CR_VOL_UP,			CR_VOL_DN,	 \
+						VK_2,		VK_NONE,		VK_NONE,		VK_3,				VK_1,	 \
+						VK_5,		VK_NONE,		VK_NONE,		VK_6,				VK_4,	 \
+						VK_8,		VK_NONE,		VK_NONE,		VK_9,				VK_7,	 \
+						VK_0,		VK_NONE,		VK_NONE,		VK_NONE,			VK_NONE,	 }
 
 
 		#define		KB_MAP_IR	{\
-						IR_VK_7,	IR_VK_4,	IR_VK_1,	IR_RED_KEY,	IR_VOL_DN,	IR_VOL_UP,	IR_BACK	, \
-						IR_LEFT,	VK_NONE,	VK_NONE,	IR_PREV,	VK_NONE,	VK_MMODE,	IR_POWER, \
-						IR_RIGHT,	IR_HOME,	VK_NONE,	IR_NEXT,	IR_STOP,	IR_SEARCH,	KEY_MODE_SWITCH , \
-						IR_VK_9,	IR_VK_6,	IR_VK_3,	IR_BLUE_KEY,VK_CH_DN,	VK_CH_UP,	IR_MENU , \
-						IR_YELLOW_KEY,VK_NONE,	VK_NONE,	IR_DN,		IR_SEL,		IR_UP,		VK_NONE , \
-						VK_NONE,	VK_NONE,	IR_VK_0,	IR_VK_8,	IR_VK_5,	IR_VK_2,	IR_GREEN_KEY , \
-						IR_PAUSE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE, }
+						VK_NONE,	VK_NONE,		VK_NONE,	VK_NONE,			VK_NONE,	 \
+						VK_NONE,	VK_NONE,		VK_NONE,	VK_NONE,			VK_NONE,	 \
+						IR_VK_2,	VK_NONE,		VK_NONE,	IR_VK_3,			IR_VK_1, 	 \
+						IR_VK_5,	VK_NONE,		VK_NONE,	IR_VK_6,			IR_VK_4,	 \
+						IR_VK_8,	VK_NONE,		VK_NONE,	IR_VK_9,			IR_VK_7,	 \
+						IR_VK_0,	VK_NONE,		VK_NONE,	VK_NONE,			VK_NONE,	 }
 #else   //key map
 
 		#define		KB_MAP_NORMAL	{\
-						0x00,		VK_2,			0x00,		0x00,				0x00,	 \
-						VOICE,		0x00,			0x00,		CR_VOL_UP,			CR_VOL_DN,	 \
-						VK_2,		0x00,			0x00,		VK_3,				VK_1,	 \
-						VK_5,		0x00,			0x00,		VK_6,				VK_4,	 \
-						VK_8,		VK_4,			0x00,		VK_9,				VK_7,	 \
-						VK_0,		0x00,			0x00,		0x00,				0x00,	 }
+						VK_NONE,	VK_NONE,		VK_NONE,		VK_NONE,			VK_NONE,	 \
+						VOICE,		VK_NONE,		VK_NONE,		CR_VOL_UP,			CR_VOL_DN,	 \
+						VK_2,		VK_NONE,		VK_NONE,		VK_3,				VK_1,	 \
+						VK_5,		VK_NONE,		VK_NONE,		VK_6,				VK_4,	 \
+						VK_8,		VK_NONE,		VK_NONE,		VK_9,				VK_7,	 \
+						VK_0,		VK_NONE,		VK_NONE,		VK_NONE,			VK_NONE,	 }
 
 #endif  //end of REMOTE_IR_ENABLE
 
@@ -227,7 +230,6 @@ extern "C" {
 #define		KB_MAP_FN		KB_MAP_NORMAL
 
 /////////////////// Clock  /////////////////////////////////
-#define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC
 #define CLOCK_SYS_CLOCK_HZ  	16000000
 
 enum{

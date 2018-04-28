@@ -1,297 +1,517 @@
-
 #include "../tl_common.h"
 #include "../mcu/clock.h"
 #include "i2c.h"
 
 #if(MCU_CORE_TYPE != MCU_CORE_8263)
 
-//////////////////////////////////////////////////////////////////////
-///// i2c_nb: non-blocking access
-//////////////////////////////////////////////////////////////////////
-#ifndef I2C_USE_SIMULATION
-#define I2C_USE_SIMULATION	0
-#endif
-#ifndef I2C_SPEED
-#define I2C_SPEED	2000
-#endif
-#ifndef I2C_16BIT_ADDR
-#define I2C_16BIT_ADDR		0
-#endif
+#define I2C_CMD_BUSY_FLAG		((reg_i2c_status & FLD_I2C_CMD_BUSY)? 1:0)
 
-static inline int i2c_busy(){
-	return(reg_i2c_status & FLD_I2C_CMD_BUSY);
-}
+#define I2C_MODULE_RESET()        do{\
+									BM_SET(reg_rst_clk0,FLD_RST_I2C);\
+									BM_CLR(reg_rst_clk0,FLD_RST_I2C);\
+								  }while(0)
 
-static inline void i2c_nb_write_adr8_dat(u8 adr, u8 dat){
-	reg_i2c_dat_ctrl = adr | (dat << 16) |
-			((FLD_I2C_CMD_START | FLD_I2C_CMD_STOP | FLD_I2C_CMD_ID |
-				FLD_I2C_CMD_ADR | FLD_I2C_CMD_DI) << 24);
-}
-
-static inline void i2c_nb_write_adr16_dat(u16 adr, u8 dat){
-	reg_i2c_dat_ctrl = (adr>>8) | ((adr&0xff)<<8) | (dat << 16) |
-			((FLD_I2C_CMD_START | FLD_I2C_CMD_STOP | FLD_I2C_CMD_ID |
-				FLD_I2C_CMD_ADR | FLD_I2C_CMD_DI | FLD_I2C_CMD_DO) << 24);
-}
-
-static inline void i2c_nb_write_start8(u8 adr, u8 stop){
-	reg_i2c_dat_ctrl = adr |
-			((FLD_I2C_CMD_START | (stop ? FLD_I2C_CMD_STOP : 0) |
-				FLD_I2C_CMD_ID | FLD_I2C_CMD_ADR ) << 24);
-}
-
-static inline void i2c_nb_write_start16(u16 adr, u8 stop){
-	reg_i2c_dat_ctrl = (adr>>8) | ((adr&0xff)<<8) |
-			((FLD_I2C_CMD_START | (stop ? FLD_I2C_CMD_STOP : 0) |
-				FLD_I2C_CMD_ID | FLD_I2C_CMD_ADR | FLD_I2C_CMD_DO) << 24);
-}
-
-static inline void i2c_nb_write_byte(u8 dat, u8 stop){
-	reg_i2c_di_ctrl = dat | ((FLD_I2C_CMD_DI | (stop ? FLD_I2C_CMD_STOP : 0)) << 8);
-}
-
-///////////// for read command ///////////////////////////////////////////////
-static inline void i2c_nb_read_byte(){
-	reg_i2c_ctrl = FLD_I2C_CMD_START | FLD_I2C_CMD_ID | FLD_I2C_CMD_READ_ID |
-			FLD_I2C_CMD_DI | FLD_I2C_CMD_STOP;
-}
-
-static inline void i2c_nb_read_start(u8 stop){
-	reg_i2c_ctrl = FLD_I2C_CMD_START | FLD_I2C_CMD_ID | FLD_I2C_CMD_DI |
-			FLD_I2C_CMD_READ_ID |(stop ? FLD_I2C_CMD_STOP | FLD_I2C_CMD_NAK : 0);
-}
-
-static inline void i2c_nb_read_next(u8 stop){
-	reg_i2c_ctrl = FLD_I2C_CMD_DI | FLD_I2C_CMD_READ_ID |
-			(stop ? FLD_I2C_CMD_STOP | FLD_I2C_CMD_NAK : 0);
-}
-
-
-static int i2c_nb_write(u16 adr, u8 * buff, int len){
-	static int status = 0;
-	// 0: idle
-	// 1: start-id-address
-	// 2+: data
-	if(status && i2c_busy()){
-		return 0;		// i2c busy
+/*****
+ * brief  judge what the irq source is. host write or host read.
+ */
+I2C_I2CIrqSrcTypeDef I2C_SlaveIrqGet(void){
+	unsigned char hostStatus = reg_i2c_irq_status;
+	if(hostStatus & FLD_I2C_STATUS_RD){
+		return I2C_IRQ_HOST_READ_ONLY;
 	}
-
-	if(!status){	// start i2c write command
-		if(I2C_16BIT_ADDR){
-			i2c_nb_write_start16(adr, len == 0);
-		}
-		else {
-			i2c_nb_write_start8(adr, len == 0);
-		}
+	else if(hostStatus & FLD_I2C_STATUS_WR){
+		/*the bit actually indicate read and write,but because the "return read_only"is before "read_write",so if return"read_write" indicate write only*/
+		return I2C_IRQ_HOST_WRITE_ONLY;
 	}
-	else {
-		int offset = status - 1;
-		if(offset >= len){
-			status = 0;
-			if(reg_i2c_status & FLD_I2C_NAK){
-				return -1;
-			}
-			else {
-				return 1;
-			}
-		}
-		else {
-			i2c_nb_write_byte(buff[offset], status == len);
-		}
-	}
-	status ++;
-	return 0;
-}
-
-static int i2c_nb_read(u16 adr, u8 * buff, int len){
-	static int status = 0;
-	// 0: idle
-	// 1: start-write_id-address-stop
-	// 2: start-read_id
-	// 3+: data
-	if(status && i2c_busy()){
-		return 0;		// i2c busy
-	}
-
-	if(!status){	// start i2c write address command
-		if(I2C_16BIT_ADDR){
-			i2c_nb_write_start16(adr, FLD_I2C_CMD_STOP);
-		}
-		else {
-			i2c_nb_write_start8(adr, FLD_I2C_CMD_STOP);
-		}
-	}
-	else if(status == 1){ // start i2c read command
-		if(reg_i2c_status & FLD_I2C_NAK || !len){
-			status = 0;
-			return -1;
-		}
-		i2c_nb_read_start(len == 1);
-	}
-	else {
-		buff[status - 2] = reg_i2c_di;
-		if(status > len){
-			status = 0;
-			return 1;
-		}
-		else {
-			i2c_nb_read_next(status == len);
-		}
-	}
-	status ++;
-	return 0;
-}
-
-void i2c_init(void){
-#if(I2C_USE_SIMULATION)
-	i2c_init();
-	i2c_sim_init();
-#else
-	// 注意reg_rst_clk0 的I2C  clk 打开了吗?
-	reg_gpio_pe_gpio &= ~ BIT(7);
-	reg_gpio_pf_gpio &= ~ BIT(1);
-
-	analog_write(20, analog_read(20) | (GPIO_PULL_UP_10K<<2) | (GPIO_PULL_UP_10K<<6));	//  CK, DI, pullup 10K
-
-	reg_i2c_set =(CLOCK_SYS_CLOCK_1MS / (I2C_SPEED * 4)) |(FLD_I2C_MODE_MASTER << 24);	/*  don't know why   speed * 4   */
-	reg_spi_sp = 0;		//force PADs act as I2C
-#endif
-}
-
-int i2c_burst_write(u8 id, u16 adr, u8 * buff, int len){
-#if(I2C_USE_SIMULATION)
-	i2c_sim_burst_write(id, adr, buff, len);
-	return 0;
-#else
-	reg_i2c_id = id;
-	int ret;
-	do {
-		ret = i2c_nb_write(adr, buff, len);
-	} while(ret == 0);
-	return !ret;
-#endif
-}
-
-int i2c_burst_read(u8 id, u16 adr, u8 * buff, int len){
-#if(I2C_USE_SIMULATION)
-	i2c_sim_burst_read(id, adr, buff, len);
-	return 0;
-#else
-	reg_i2c_id = id;
-	int ret;
-	do {
-		ret = i2c_nb_read(adr, buff, len);
-	} while(ret == 0);
-	return !ret;
-#endif
-}
-
-void i2c_write(u8 id, u16 adr, u8 dat){
-#if(I2C_USE_SIMULATION)
-	i2c_sim_write(id, adr, dat);
-#else
-	i2c_burst_write(id, adr, &dat, 1);
-#endif
-}
-
-u8 i2c_read(u8 id, u16 adr){
-#if(I2C_USE_SIMULATION)
-	return i2c_sim_read(id, adr);
-#else
-	u8 dat;
-	i2c_burst_read(id, adr, &dat, 1);
-	return dat;
-#endif
-}
-
-///////////////  I2C slave driver /////////////////////////////
-
-#define I2C_SLAVE_SELF_ID		0x6e
-// To use I2c slave:
-// 1, CK, DI must not be GPIO mode.
-// 2, CK, DI must 10K pullup or stronger
-// 3, mem_addr is a address equal to  (0x808000 + real_mem), such as 0x809ea0
-// 4, mem_addr is the write buffer, whereas (mem_addr + 64) is the read buffer
-// 5, i2c_slave_init() is called instead of i2c_init()
-u8 *i2c_slave_write_buff, *i2c_slave_read_buff;
-void i2c_slave_init(u32 mem_addr){
-	// 注意reg_rst_clk0 的I2C  clk 打开了吗?
-	reg_gpio_pe_gpio &= ~ BIT(7);
-	reg_gpio_pf_gpio &= ~ BIT(1);
-
-	analog_write(20, analog_read(20) | (GPIO_PULL_UP_10K<<2) | (GPIO_PULL_UP_10K<<6));	//  CK, DI, pullup 10K
-
-	reg_i2c_set = (I2C_SLAVE_SELF_ID << 8) | ((FLD_I2C_ADDR_AUTO | FLD_I2C_MEM_MAP) << 24);
-	reg_spi_sp = 0;														//force PADs act as I2C
-	reg_i2c_mem_map = mem_addr;
-	i2c_slave_write_buff = (u8*)mem_addr;
-	i2c_slave_read_buff = (u8*)(mem_addr + 64);
-}
-// sample  receive and send  command handling, pseudo code
-#if(0)
-void i2c_slave_sample_recv_command_poll(void){
-	if(i2c_slave_write_buff[0] == CMD_OK){
-		gpio_write (HOST_INTERRUPT_PIN, !HOST_INTERRUPT_LEVEL);	// clear interrupt pin
-		parse_cmd();
-		do_cmd();
+	else{
+		return I2C_IRQ_NONE;
 	}
 }
-void i2c_slave_sample_send_command(void){
-	foreach(i, 10){
-		i2c_slave_read_buff[i] = data[i];
+/****
+ * brief  clear the irq status bit.
+ */
+void I2C_SlaveIrqClr(I2C_I2CIrqSrcTypeDef src){
+	if(src==I2C_IRQ_HOST_READ_ONLY){
+		BM_SET(reg_i2c_clr_status, FLD_I2C_STATUS_WR|FLD_I2C_STATUS_RD);
 	}
-	gpio_write (HOST_INTERRUPT_PIN, HOST_INTERRUPT_LEVEL); // set interrupt, to notify host to read
+	else if(src==I2C_IRQ_HOST_WRITE_ONLY){
+		BM_SET(reg_i2c_clr_status, FLD_I2C_STATUS_WR);
+	}
+	else{
+	}
 }
-#endif
 
-static int i2c_irq_pin = 0;
-static i2c_callback_func i2c_callback;
-void i2c_check_cmd(){
-	if(i2c_callback){
-		if((reg_i2c_irq_status & (FLD_I2C_STATUS_WR | FLD_I2C_STATUS_RD)) == FLD_I2C_STATUS_WR){
-			i2c_callback(i2c_slave_write_buff);
-		}else if((reg_i2c_irq_status & (FLD_I2C_STATUS_WR | FLD_I2C_STATUS_RD)) == (FLD_I2C_STATUS_WR | FLD_I2C_STATUS_RD)){
-			*(u32*)(i2c_slave_read_buff) = 0;
+/*****
+ * brief: the function initial the relevant gpio as i2c.
+ *        when enable one group of pins as i2c, the other two groups of pin should be disable the i2c function.
+ *        in addition, when disable pin as i2c, we can enable the pin as gpio.
+ * param[in] gpio_sda -- the pin as data line of i2c.
+ * param[in] gpio_scl -- the pin as clock line of i2c.
+ * return none
+ */
+void i2c_pin_init(I2C_GPIO_GroupTypeDef i2c_pin_group){
+	u32 gpio_sda,  gpio_scl;
+#if (MCU_CORE_TYPE == MCU_CORE_8266)
+	gpio_sda = GPIO_PE7;
+	gpio_scl = GPIO_PF1;
+
+	gpio_set_input_en(gpio_sda,1);
+    gpio_set_input_en(gpio_scl,1);
+
+#elif ((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+	switch(i2c_pin_group){
+	case I2C_GPIO_GROUP_A3A4:
+		gpio_sda = GPIO_PA3;
+		gpio_scl = GPIO_PA4;
+
+		if(BM_IS_SET(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff)){
+			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);     //disable B6/B7 as i2c function
+			gpio_set_func(GPIO_PB6, AS_GPIO);                   		 //enable B6/B7 as gpio function
+			gpio_set_func(GPIO_PB7, AS_GPIO);
 		}
-		reg_i2c_clr_status = (FLD_I2C_STATUS_WR | FLD_I2C_STATUS_RD);
+		if(BM_IS_SET(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff)){
+			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
+			gpio_set_func(GPIO_PC0, AS_GPIO);                  			//enable C0/C1 as gpio function
+			gpio_set_func(GPIO_PC1, AS_GPIO);
+		}
+
+		break;
+	case I2C_GPIO_GROUP_B6B7:
+		gpio_sda = GPIO_PB6;
+		gpio_scl = GPIO_PB7;
+
+		if(BM_IS_SET(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff)){
+			BM_CLR(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff);     // disable A3/A4 as i2c function
+			gpio_set_func(GPIO_PA3,	AS_GPIO);                    		 // enable A3/A4 as gpio function
+			gpio_set_func(GPIO_PA4,	AS_GPIO);
+		}
+		if(BM_IS_SET(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff)){
+			BM_CLR(reg_gpio_config_func2, (GPIO_PC0|GPIO_PC1)&0xff);    //disable C0/C1 as i2c function
+			gpio_set_func(GPIO_PC0,	AS_GPIO);                   		//enable C0/C1 as gpio function
+			gpio_set_func(GPIO_PC1,	AS_GPIO);
+		}
+		break;
+	case I2C_GPIO_GROUP_C0C1:
+		gpio_sda = GPIO_PC0;
+		gpio_scl = GPIO_PC1;
+
+		if(BM_IS_SET(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff)){
+			BM_CLR(reg_gpio_config_func0, (GPIO_PA3|GPIO_PA4)&0xff);    //disable A3/A4 as i2c function
+			gpio_set_func(GPIO_PA3,	AS_GPIO);                   		// enable A3/A4 as gpio function
+			gpio_set_func(GPIO_PA4,	AS_GPIO);
+		}
+		if(BM_IS_SET(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff)){
+			BM_CLR(reg_gpio_config_func1, (GPIO_PB6|GPIO_PB7)&0xff);    // disable B6/B7 as i2c function
+			gpio_set_func(GPIO_PB6,	AS_GPIO);                   		// enable B6/B7 as gpio function
+			gpio_set_func(GPIO_PB7,	AS_GPIO);
+		}
+
+		break;
 	}
 
-}
+#elif (MCU_CORE_TYPE == MCU_CORE_MSSOC)
+	if(i2c_pin_group == I2C_GPIO_GROUP_A3A4){
+		gpio_sda = GPIO_PA3;
+		gpio_scl = GPIO_PA4;
 
-int i2c_notify_data_ready(void){
-	gpio_set_output_en(i2c_irq_pin, 1);
-	sleep_us(100);
-	gpio_set_output_en(i2c_irq_pin, 0);
-	return 0;
-}
-void i2c_send_response(u8 *buf, int len){
-	if(len > 64) return;
-	memcpy4(&i2c_slave_read_buff[0], buf, len+3);
-	i2c_notify_data_ready();
-}
+		gpio_set_func(GPIO_PC0,	AS_GPIO);
+		gpio_set_func(GPIO_PC1,	AS_GPIO);
+		gpio_set_func(GPIO_PD5,	AS_GPIO);
+		gpio_set_func(GPIO_PD4,	AS_GPIO);
 
-void i2c_slave_register(int pin, i2c_callback_func callback){
-	i2c_slave_init(0x80c000 - 128);
+	}else if(i2c_pin_group == I2C_GPIO_GROUP_C0C1){
+		gpio_sda = GPIO_PC0;
+		gpio_scl = GPIO_PC1;
 
-	gpio_set_func(pin, AS_GPIO);
-	gpio_write(pin, 0);
-	gpio_set_input_en(pin, 1);
-	i2c_irq_pin = pin;
-	i2c_callback = callback;
+		gpio_set_func(GPIO_PA3,	AS_GPIO);
+		gpio_set_func(GPIO_PA4,	AS_GPIO);
+		gpio_set_func(GPIO_PD5,	AS_GPIO);
+		gpio_set_func(GPIO_PD4,	AS_GPIO);
 
-#if (SP_SRC_I2C)
-	ev_on_poll(EV_POLL_I2C_CMD, i2c_check_cmd);
-#endif
-}
+	}else if(i2c_pin_group == I2C_GPIO_GROUP_D4D5){
+		gpio_sda = GPIO_PD5;
+		gpio_scl = GPIO_PD4;
 
-void i2c_slave_deregister(void){
-	i2c_callback = 0;
-}
+		gpio_set_func(GPIO_PA3,	AS_GPIO);
+		gpio_set_func(GPIO_PA4,	AS_GPIO);
+		gpio_set_func(GPIO_PC0,	AS_GPIO);
+		gpio_set_func(GPIO_PC1,	AS_GPIO);
 
+	}
 
 #endif
 
-///////////////  I2C simulation ////////////////////////////////////
+	gpio_setup_up_down_resistor(gpio_sda, PM_PIN_PULLUP_10K);       //10k pull_up resistor
+	gpio_setup_up_down_resistor(gpio_scl, PM_PIN_PULLUP_10K);       //10k pull_up resistor
+
+	gpio_set_func(gpio_sda,AS_I2C);  //disable gpio function
+	gpio_set_func(gpio_scl,AS_I2C);  //disable gpio function
+
+	gpio_set_input_en(gpio_sda, 1);
+	gpio_set_input_en(gpio_scl, 0);
+	gpio_set_output_en(gpio_sda, 1);
+	gpio_set_output_en(gpio_scl, 1);
+
+}
+
+/**
+ * @brief      This function set the id of slave device and the speed of I2C interface
+ *             note: the param ID contain the bit of writting or reading.
+ *             eg:the parameter 0x5C. the reading will be 0x5D and writting 0x5C.
+ * @param[in]  slave_id - the id of slave device. it don't contain write or read bit.
+ * @param[in]  div_clock - the division factor of I2C clock, 
+ *             I2C clock = System clock / (4*div_clock);if the datasheet you look at is 2*,pls modify it.
+ * @return     none
+ */
+void i2c_master_init_div(unsigned char slave_id, unsigned char div_clock)
+{
+	reg_i2c_speed = div_clock;                 //configure the i2c's clock
+	BIT_CLR(REG_ADDR8(0x73), MASK_VAL(BIT_RNG(4, 7) , 0x01));
+	BIT_SET(REG_ADDR8(0x73), MASK_VAL(BIT_RNG(4, 7) , 0x00));///0:4x 1:8x
+
+	reg_i2c_id = MASK_VAL(FLD_I2C_ID,slave_id);//set the id of i2c module.
+
+	BM_SET(reg_i2c_mode,FLD_I2C_MODE_MASTER);  //enable master mode.
+//	BM_SET(reg_i2c_mode,FLD_I2C_MODE_MASTER);
+
+	BM_SET(reg_rst_clk0,FLD_CLK_I2C_EN);       //enable i2c clock
+
+	BM_CLR(reg_spi_sp,FLD_SPI_ENABLE);         //force PADs act as I2C; i2c and spi share the hardware of IC
+}
+
+/**
+ * @brief      This function set the id of slave device and the speed of I2C interface
+*
+ * @param[in]  slave_id - the id of slave device.it don't contains write or read bit,the lsb is write or read bit.
+ * @param[in]  i2c_speed is in Khz. for example: i2c_speed is 200, indicate 200k
+ * @return     none
+ */
+void i2c_master_init_khz(unsigned char slave_id, unsigned int i2c_speed)
+{
+	reg_i2c_speed = (CLOCK_SYS_CLOCK_1MS/(4*i2c_speed)); //set i2c clock
+
+	reg_i2c_id = MASK_VAL(FLD_I2C_ID,slave_id);//set the id of i2c module.
+
+	BM_SET(reg_i2c_mode,FLD_I2C_MODE_MASTER);  //enable master mode.
+
+	BM_SET(reg_rst_clk0,FLD_CLK_I2C_EN);       //enable i2c clock
+
+	BM_CLR(reg_spi_sp,FLD_SPI_ENABLE);         //force PADs act as I2C; i2c and spi share the hardware of IC
+}
+
+/**
+ *  @brief      the function config the ID of slave and mode of slave.
+ *  @param[in]  device_id - it don't contains write or read bit,the lsb is write or read bit.
+ *  @param[in]  i2c_mode - set slave mode. slave has two modes, one is DMA mode, the other is MAPPING mode.
+ *  @param[in]  pbuf - if slave mode is MAPPING, set the first address of buffer master write or read slave.
+ *              notice: the buffer must align 128 bytes. the write address is pbuf while the read address is pbuf+64.
+ *  @return     none
+ */
+void i2c_slave_init(unsigned char device_id,enum I2C_SLAVE_MODE i2c_mode,unsigned char* pbuf)
+{
+	reg_i2c_id = MASK_VAL(FLD_I2C_ID,device_id); //configure the id of i2c module.
+	if(i2c_mode == I2C_SLAVE_MAP){
+		reg_i2c_mode = MASK_VAL(FLD_I2C_ADDR_AUTO, 1, FLD_I2C_MEM_MAP, 1); //enable i2c address auto increase and enable mapping mode.
+		reg_i2c_mem_map = (unsigned short*)pbuf;
+	}
+
+	BM_CLR(reg_i2c_mode, FLD_I2C_MODE_MASTER); //disable master mode .i.e enable slave mode.
+
+	BM_CLR(reg_spi_sp,FLD_SPI_ENABLE);        //force PADs act as I2C; i2c and spi share the hardware of IC
+}
+
+/**
+ * @brief      This function writes one byte to the slave device at the specified address
+ * @param[in]  addr - pointer to the address where the one byte data will be written
+ * @param[in]  addr_len - length in byte of the address, which makes this function is  
+ *             compatible for slave device with both one-byte address and two-byte address
+ * @param[in]  data - the one byte data will be written via I2C interface
+ * @return     none
+ * @ timing chart : start + ID(w) + addr(1or2) + data + stop
+ */
+void i2c_write_byte(unsigned char* addr, int addr_len, unsigned char data)
+{
+	BM_CLR(reg_i2c_id, FLD_I2C_WRITE_READ_BIT); //ID|rw_bit; if rw_bit=1,read data; if rw_bit=0,write data
+
+	if(addr_len == 1){
+		reg_i2c_adr = addr[0];
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1); //send start, ID, addr
+	}
+	else if(addr_len == 2){
+		reg_i2c_adr = addr[0];
+		reg_i2c_do  = addr[1];
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1);//send start,ID,addrL,addH
+	}
+	else if(addr_len == 3){
+		reg_i2c_adr = addr[0] & 0x04;///only low 4bits used
+		reg_i2c_do  = addr[1];
+		reg_i2c_di	= addr[2];
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1, FLD_I2C_CMD_DI, 1);
+	}
+	else{
+		while(1);
+	}
+	while(I2C_CMD_BUSY_FLAG);
+
+	reg_i2c_di = data;
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_DI, 1);   //send data
+	while(I2C_CMD_BUSY_FLAG);
+	
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_STOP, 1); //send stop bit
+	while(I2C_CMD_BUSY_FLAG);
+}
+/**
+ * @brief      This function reads one byte from the slave device at the specified address
+ * @param[in]  Addr - pointer to the address where the one byte data will be read
+ * @param[in]  AddrLen - length in byte of the address, which makes this function is  
+ *             compatible for slave device with both one-byte address and two-byte address
+ * @return     the one byte data read from the slave device via I2C interface
+ * @timing chart: start+ID(w)+addr(1or2)+ restart + ID(r) + data + stop
+ */
+unsigned char i2c_read_byte(unsigned char* addr, unsigned char addr_len)
+{
+	unsigned char read_data = 0;
+	/***start+ID(w)+addr(1or2bytes)***/
+	BM_CLR(reg_i2c_id, FLD_I2C_WRITE_READ_BIT);  //ID|rw_bit; if rw_bit=1,read data; if rw_bit=0,write data
+
+	if(addr_len == 1){
+		reg_i2c_adr = addr[0];
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1);
+	}
+	else if(addr_len == 2){
+		reg_i2c_adr = addr[0];
+		reg_i2c_do  = addr[1];
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1);
+	}
+	else if(addr_len == 3){
+		reg_i2c_adr = addr[0] & 0x0f;///only low 4bits used
+		reg_i2c_do  = addr[1];
+		reg_i2c_di	= addr[2];
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1, FLD_I2C_CMD_DI, 1);
+	}
+	else{
+		while(1);
+	}
+	while(I2C_CMD_BUSY_FLAG);
+	
+	/***restart+ID(r)***/
+	BM_SET(reg_i2c_id,FLD_I2C_WRITE_READ_BIT); //ID|rw_bit; if rw_bit=1,read data; if rw_bit=0,write data
+	
+	/***simulate restart. when chip don't send stop bit, chip will not occur start bit. so reset module to occur restart***/
+	I2C_MODULE_RESET();    //reset i2c module and occur "restart"
+
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1);
+	while(I2C_CMD_BUSY_FLAG);
+
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_DI, 1, FLD_I2C_CMD_READ_ID, 1, FLD_I2C_CMD_NAK, 1);//enable read and send 8 clock
+	while(I2C_CMD_BUSY_FLAG);
+	read_data = reg_i2c_di;  //get the data
+	/***stop bit***/
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_STOP, 1);  //send stop bit
+	while(I2C_CMD_BUSY_FLAG);
+
+	return read_data;
+}
+/**
+ * @brief      This function writes a bulk of data to the slave device at the specified address
+ * @param[in]  addr - pointer to the address where the data will be written
+ * @param[in]  addr_len - length in byte of the address, which makes this function is  
+ *             compatible for slave device with both one-byte address and two-byte address
+ * @param[in]  pbuf - pointer to the data will be written via I2C interface
+ * @param[in]  len - length in byte of the data will be written via I2C interface
+ * @return     none
+ */
+void i2c_burst_write(unsigned char *addr, int addr_len, unsigned char * pbuf, int len)
+{
+    int i = 0;
+    unsigned short tmp_addr = 0;
+
+    memcpy(&tmp_addr, addr, addr_len);
+
+    for (i = 0; i < len; i++) {
+        i2c_write_byte(&tmp_addr, addr_len, pbuf[i]);
+        tmp_addr++;
+    }
+}
+/**
+ * @brief      This function reads a bulk of data from the slave device at the specified address
+ * @param[in]  addr - pointer to the address where the data will be read
+ * @param[in]  addr_len - length in byte of the address, which makes this function is  
+ *             compatible for slave device with both one-byte address and two-byte address
+ * @param[out] pbuf - pointer to the buffer will cache the data read via I2C interface
+ * @param[in]  len - length in byte of the data will be read via I2C interface
+ * @return     none
+ */
+void i2c_burst_read(unsigned char* addr, int addr_len, unsigned char * pbuf, int len)
+{
+    int i = 0;
+    unsigned short tmp_addr = 0;
+
+    memcpy(&tmp_addr, addr, addr_len);
+
+    for (i = 0; i < len; i++) {
+        pbuf[i] = i2c_read_byte(&tmp_addr, addr_len);
+        tmp_addr++;
+    }
+}
+
+/**
+ *  @brief      the write format in dma mode telink design. pls refer to datasheet.
+ *  @param[in]  addr - the register that master write data to slave in. support one byte and two bytes. i.e param2 AddrLen may be 1 or 2.
+ *  @param[in]  addr_len - the length of register. enum 1 or 2. based on the spec of i2c slave.
+ *  @param[in]  pbuf - the first SRAM buffer address to write data to slave in.
+ *  @param[in]  len - the length of data master write to slave.
+ *  @return     none
+ *  @ timing chart: start + ID(w) + addr(1B or 2B) + pbuf[0] +...+ pbuf[len] + stop
+ */
+void i2c_write_dma(unsigned int addr, unsigned char addr_len, unsigned char* pbuf, int len)
+{
+	int idx = 0;	
+	/***start + ID(w) + addr(1or2)***/
+	BM_CLR(reg_i2c_id, FLD_I2C_WRITE_READ_BIT);  //ID|rw_bit; if rw_bit=1,read data; if rw_bit=0,write data
+
+	if(addr_len == 1){
+		reg_i2c_adr = (unsigned char)addr;
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1);
+	}
+	else if(addr_len == 2){
+		reg_i2c_adr = (unsigned char)(addr>>8);
+		reg_i2c_do  = (unsigned char)addr;
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1);
+	}
+	else if(addr_len == 3){
+		reg_i2c_adr = (unsigned char)((addr>>16) & 0x0f);///only low 4bits used
+		reg_i2c_do  = (unsigned char)(addr>>8);
+		reg_i2c_di	= (unsigned char)addr;
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1, FLD_I2C_CMD_DI, 1);
+	}
+	else{
+		while(1);
+	}
+	while(I2C_CMD_BUSY_FLAG);
+
+	/***write data to slave***/
+	for(idx=0;idx<len;idx++){
+		reg_i2c_di = pbuf[idx];
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_DI, 1);
+		while(I2C_CMD_BUSY_FLAG);
+	}
+	/***stop bit***/
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_STOP , 1);
+	while(I2C_CMD_BUSY_FLAG);
+ }
+/**
+ * @brief      the read format in dma mode telink design. pls refer to datasheet.
+ * @param[in]  addr - the register master read data from slave in. support one byte and two bytes.
+ * @param[in]  addr_len - the length of register. two data: 1 or 2.
+ * @param[in]  pbuf - the first address of SRAM buffer master store data in.
+ * @param[in]  len - the length of data master read from slave.
+ * @return     none.
+ * @timing chart: start + ID(w) + addr(1B or 2B) + stop + start + ID(r) + pbuf[0] + ...+ pbuf[len] + stop
+ */
+void i2c_read_dma(unsigned int addr, unsigned char addr_len, unsigned char* pbuf, int len)
+{
+	int idx = 0;
+	//start + ID(w) + addr(1or2) + stop
+	BM_CLR(reg_i2c_id, FLD_I2C_WRITE_READ_BIT);//ID|rw_bit; if rw_bit=1,read data; if rw_bit=0,write data
+	if(addr_len == 1){
+		reg_i2c_adr = (unsigned char)addr;
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1,FLD_I2C_CMD_STOP, 1);
+	}
+	else if(addr_len == 2){
+		reg_i2c_adr = (unsigned char)(addr>>8);
+		reg_i2c_do  = (unsigned char)addr;
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1, FLD_I2C_CMD_STOP, 1);
+	}
+	else if(addr_len == 3){
+		reg_i2c_adr = (unsigned char)((addr>>16) & 0x0f);///only low 4bits used
+		reg_i2c_do  = (unsigned char)(addr>>8);
+		reg_i2c_di	= (unsigned char)addr;
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1, FLD_I2C_CMD_ADR, 1, FLD_I2C_CMD_DO, 1, FLD_I2C_CMD_DI, 1, FLD_I2C_CMD_STOP, 1);
+	}
+	else{
+		while(1);
+	}
+	while(I2C_CMD_BUSY_FLAG);
+	/*** start + ID(r)***/
+	BM_SET(reg_i2c_id, FLD_I2C_WRITE_READ_BIT);  //ID|rw_bit; if rw_bit=1,read data; if rw_bit=0,write data
+	reg_i2c_ctrl =  MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1);
+	while(I2C_CMD_BUSY_FLAG);
+	
+	len--;
+	while(len){
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_DI, 1, FLD_I2C_CMD_READ_ID, 1);
+		while(I2C_CMD_BUSY_FLAG);
+		pbuf[idx] = reg_i2c_di;
+		idx++;
+		len--;
+	}
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_DI, 1, FLD_I2C_CMD_READ_ID, 1, FLD_I2C_CMD_NAK, 1);
+	while(I2C_CMD_BUSY_FLAG);
+
+	pbuf[idx] = reg_i2c_di;
+	/***stop bit***/
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_STOP, 1);
+	while(I2C_CMD_BUSY_FLAG);
+}
+/**
+ *   @brief      the write format in mapping mode telink design. pls refer to datasheet.
+ *   @param[in]  pbuf - the first address of data master write to slave.
+ *   @param[in]  len - the length of data to write.
+ *   @return     none
+ *   @timing chart: start + ID(w) + pbuf[0] + pbuf[...] + pbuf[len] + stop
+ */
+void i2c_write_mapping(unsigned char* pbuf, int len)
+{
+	int idx = 0;
+	BM_CLR(reg_i2c_id, FLD_I2C_WRITE_READ_BIT); //ID|rw_bit; if rw_bit=1,read data; if rw_bit=0,write data
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1);
+	while(I2C_CMD_BUSY_FLAG);
+	
+	/***start to write data to slave***/
+	for(idx = 0;idx < len; idx++){
+		reg_i2c_di = pbuf[idx];
+		reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_DI, 1);
+		while(I2C_CMD_BUSY_FLAG);
+	}
+	/***send stop bit***/
+	reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_STOP, 1);
+	while(I2C_CMD_BUSY_FLAG);
+}
+
+/**
+ *  @brief      read data from slave that is mapping mode.
+ *  @param[in]  pbuf - the first address of SRAM buffer to store data.
+ *  @param[in]  len - the length of data read from slave(byte).
+ *  @return     none
+ *  @timing chart: start + ID(r) + pbuf[0] + pbuf[...] + pbuf[len] + stop
+ */
+ void i2c_read_mapping(unsigned char* pbuf, int len)
+ {
+	 int idx = 0;
+	 BM_SET(reg_i2c_id, FLD_I2C_WRITE_READ_BIT); //ID|rw_bit; if rw_bit=1,read data; if rw_bit=0,write data
+	 reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_START, 1, FLD_I2C_CMD_ID, 1);
+	 while(I2C_CMD_BUSY_FLAG);
+	 
+	 len--;
+	 while(len){
+		 reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_DI, 1, FLD_I2C_CMD_READ_ID, 1);
+		 while(I2C_CMD_BUSY_FLAG);
+		 pbuf[idx++] = reg_i2c_di;
+		 len--;
+	 }
+	 reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_DI, 1, FLD_I2C_CMD_READ_ID, 1, FLD_I2C_CMD_NAK, 1);
+	 while(I2C_CMD_BUSY_FLAG);
+	 pbuf[idx] = reg_i2c_di;
+	 
+	 /***stop bit***/
+	 reg_i2c_ctrl = MASK_VAL(FLD_I2C_CMD_STOP, 1);
+	 while(I2C_CMD_BUSY_FLAG);
+ }
+ 
+/*******************************************************************
+ ***************** the following is simulate ***********************
+ *******************************************************************/
 
 #ifndef PIN_I2C_SCL
 #define PIN_I2C_SCL				0
@@ -305,8 +525,10 @@ static inline void i2c_sim_wait(void){
 void i2c_sim_long_wait(void){
 	CLOCK_DLY_600NS;
 }
-
-// Pulling the line to ground is considered a logical zero while letting the line float is a logical one.   http://en.wikipedia.org/wiki/I%C2%B2C
+/*** Pulling the line to ground is considered a logical zero
+ *   while letting the line float is a logical one.
+ *   http://en.wikipedia.org/wiki/I%C2%B2C
+ */
 static inline void i2c_sim_scl_out(int v){
 	gpio_set_output_en(PIN_I2C_SCL,(!v));
 }
@@ -315,7 +537,10 @@ static inline int i2c_sim_scl_in(void){
 	return gpio_read(PIN_I2C_SCL);
 }
 
-// Pulling the line to ground is considered a logical zero while letting the line float is a logical one.   http://en.wikipedia.org/wiki/I%C2%B2C
+/***Pulling the line to ground is considered a logical zero
+ *  while letting the line float is a logical one.
+ *  http://en.wikipedia.org/wiki/I%C2%B2C
+ */
 static inline void i2c_sim_sda_out(int v){
 	gpio_set_output_en(PIN_I2C_SDA,(!v));
 }
@@ -346,13 +571,10 @@ static inline void i2c_sim_sda_idle(void){
 
 void i2c_sim_init(){}
 
-/*
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ void i2c_sim_start(void)
-\\   Sets clock high, then data high.  This will do a stop if data was low.
-\\   Then sets data low, which should be a start condition.
-\\   After executing, data is left low, while clock is left high
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+/***
+ *  Sets clock high, then data high.  This will do a stop if data was low.
+ *  Then sets data low, which should be a start condition.
+ *  After executing, data is left low, while clock is left high
 */
 void i2c_sim_start(void)
 {
@@ -365,24 +587,21 @@ void i2c_sim_start(void)
 
 }
 
-/*
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ void i2c_sim_stop(void)
-\\  puts data low, then clock low,
-\\  then clock high, then data high.
-\\  This should cause a stop, which
-\\  should idle the bus, I.E. both clk and data are high.
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+/***
+ * puts data low, then clock low,
+ * then clock high, then data high.
+ * This should cause a stop, which
+ * should idle the bus, I.E. both clk and data are high.
 */
 void i2c_sim_stop(void)
 {
-	i2c_sim_sda_out(0);
-	i2c_sim_wait();
 	i2c_sim_scl_out(0);
 	i2c_sim_wait();
-	i2c_sim_scl_out(1);
+	i2c_sim_sda_out(0);
 	i2c_sim_wait();
 	i2c_sim_sda_out(1);
+	i2c_sim_wait();
+	i2c_sim_scl_out(1);
 }
 
 static void i2c_sim_wirte_bit(int bit)
@@ -393,7 +612,9 @@ static void i2c_sim_wirte_bit(int bit)
 	i2c_sim_scl_out(1);
 }
 
-// Read a bit from I2C bus
+/***
+ *   Read a bit from I2C bus
+ */
 static int i2c_sim_read_bit(void){
 	i2c_sim_wirte_bit(1);
 	return i2c_sim_sda_in();
@@ -455,7 +676,7 @@ void i2c_sim_burst_read(u8 id, u8 addr,u8 *p, int n)
 	i2c_sim_write_byte(id | 1);
 
 	for(int k = 0; k < n; ++k){
-		*p++ = i2c_sim_read_byte( k ==(n-1) );
+		*p++ = i2c_sim_read_byte(k == (n - 1));
 	}
 	i2c_sim_stop();
 
@@ -481,3 +702,7 @@ void i2c_sim_reset_e2prom(void ){
 	}
 	i2c_sim_sda_out(0);
 }
+#endif
+
+
+

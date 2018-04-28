@@ -251,10 +251,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 #define	BLC_FIX_RUNNING_CODE_INTERFERE_RF_EN			1
 #endif
 
-
-#define BLC_DBG_DEEP_RETENTION_FUNC						1
-
-
 /////////////////////HCI UART variables///////////////////////////////////////
 #define UART_DATA_LEN    64      // data max 252
 typedef struct{

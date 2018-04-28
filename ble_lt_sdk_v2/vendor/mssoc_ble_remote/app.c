@@ -16,16 +16,14 @@
 //#include "../../proj_lib/ble/ble_phy.h"
 #include "../../proj/drivers/uart.h"
 
-//#include "rc_ir.h"
+#include "rc_ir.h"
 
 #if (__PROJECT_MSSOC_BLE_REMOTE__)
-
-#define 	BLE_REMOTE_PM_ENABLE			1
 
 
 
 #define 	ADV_IDLE_ENTER_DEEP_TIME			60  //60 s
-#define 	CONN_IDLE_ENTER_DEEP_TIME			100  //60 s
+#define 	CONN_IDLE_ENTER_DEEP_TIME			60  //60 s
 
 #define 	MY_DIRECT_ADV_TMIE					2000000
 
@@ -104,6 +102,7 @@ int     ui_mtu_size_exchange_req = 0;
 
 u8 		key_type;
 u8 		user_key_mode;
+u8      ir_hw_initialed = 0;
 
 u8 		key_buf[8] = {0};
 
@@ -161,11 +160,17 @@ static u16 vk_consumer_map[16] = {
 	#define KEY_MODE_IR        		1    //ir  key
 
 
-	static const u8 kb_map_ble[49] = 	KB_MAP_BLE;  //7*7
-	static const u8 kb_map_ir[49] = 	KB_MAP_IR;   //7*7
+	static const u8 kb_map_ble[30] = 	KB_MAP_BLE;
+	static const u8 kb_map_ir[30] = 	KB_MAP_IR;
 
 
 	void ir_dispatch(u8 type, u8 syscode ,u8 ircode){
+
+		if(!ir_hw_initialed){
+			ir_hw_initialed = 1;
+			rc_ir_init();
+		}
+
 		if(type == TYPE_IR_SEND){
 			ir_nec_send(syscode,~(syscode),ircode);
 		}
@@ -222,8 +227,9 @@ static u16 vk_consumer_map[16] = {
 		gpio_set_output_en (GPIO_AMIC_BIAS, en);
 		gpio_write (GPIO_AMIC_BIAS, en);
 
-		device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
-
+		#if (BLE_REMOTE_LED_ENABLE)
+			device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
+		#endif
 
 		if(en){  //audio on
 
@@ -462,21 +468,17 @@ void key_change_proc(void)
 	key_not_released = 1;
 	if (kb_event.cnt == 2)   //two key press, do  not process
 	{
-#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE)  //"enter + back" trigger PhyTest
-		//notice that if IR enable, trigger keys must be defined in key map
-		if ( (key0 == VK_ENTER && key1 == CR_BACK) || (key0 == CR_BACK && key1 == VK_ENTER))
-		{
-			extern void app_trigger_phytest_mode(void);
-			app_trigger_phytest_mode();
-		}
-#endif
+
 	}
 	else if(kb_event.cnt == 1)
 	{
 		if(key0 == KEY_MODE_SWITCH)
 		{
 			user_key_mode = !user_key_mode;
-			device_led_setup(led_cfg[LED_SHINE_SLOW + user_key_mode]);
+			analog_write(DEEP_ANA_REG1, user_key_mode);
+			#if (BLE_REMOTE_LED_ENABLE)
+				device_led_setup(led_cfg[LED_SHINE_SLOW + user_key_mode]);
+			#endif
 		}
 #if (BLE_AUDIO_ENABLE)
 		else if (key0 == VOICE)
@@ -635,7 +637,7 @@ void proc_keyboard (u8 e, u8 *p, int n)
 extern u32	scan_pin_need;
 
 
-//_attribute_ram_code_
+
 void blt_pm_proc(void)
 {
 
@@ -645,19 +647,17 @@ void blt_pm_proc(void)
 		bls_pm_setSuspendMask (SUSPEND_DISABLE);
 	}
 #if(REMOTE_IR_ENABLE)
-	else if( ir_send_ctrl.is_sending || ir_send_ctrl.repeat_timer_enable){
+	else if( ir_send_ctrl.is_sending){
 		bls_pm_setSuspendMask(SUSPEND_DISABLE);
-	}
-#endif
-#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE)
-	else if( blc_phy_isPhyTestEnable() )
-	{
-		bls_pm_setSuspendMask(SUSPEND_DISABLE);  //phy test can not enter suspend
 	}
 #endif
 	else
 	{
-		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+		#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+			bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
+		#else
+			bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+		#endif
 
 		user_task_flg = ota_is_working || scan_pin_need || key_not_released || DEVICE_LED_BUSY;
 
@@ -685,32 +685,28 @@ void blt_pm_proc(void)
 		}
 		else if(sendTerminate_before_enterDeep == 2){  //Terminate OK
 			analog_write(DEEP_ANA_REG0, CONN_DEEP_FLG);
-
-			#if (REMOTE_IR_ENABLE)
-				analog_write(DEEP_ANA_REG1, user_key_mode);
-			#endif
 			cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
 		}
 
-		//adv 60s, deepsleep
-		if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && !sendTerminate_before_enterDeep && \
-			clock_time_exceed(advertise_begin_tick , ADV_IDLE_ENTER_DEEP_TIME * 1000000))
-		{
 
-			#if (REMOTE_IR_ENABLE)
-				analog_write(DEEP_ANA_REG1, user_key_mode);
-			#endif
-			cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
-		}
-		//conn 60s no event(key/voice/led), enter deepsleep
-		else if( device_in_connection_state && !user_task_flg && \
-				clock_time_exceed(latest_user_event_tick, CONN_IDLE_ENTER_DEEP_TIME * 1000000) )
-		{
+		if( !blc_ll_isControllerEventPending() ){  //no controller event pending
+			//adv 60s, deepsleep
+			if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && !sendTerminate_before_enterDeep && \
+				clock_time_exceed(advertise_begin_tick , ADV_IDLE_ENTER_DEEP_TIME * 1000000))
+			{
+				cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
+			}
+			//conn 60s no event(key/voice/led), enter deepsleep
+			else if( device_in_connection_state && !user_task_flg && \
+					clock_time_exceed(latest_user_event_tick, CONN_IDLE_ENTER_DEEP_TIME * 1000000) )
+			{
 
-			bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
-			bls_ll_setAdvEnable(0);   //disable adv
-			sendTerminate_before_enterDeep = 1;
+				bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
+				bls_ll_setAdvEnable(0);   //disable adv
+				sendTerminate_before_enterDeep = 1;
+			}
 		}
+
 	#endif
 
 	}
@@ -723,7 +719,7 @@ void blt_pm_proc(void)
 _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
 	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_16M_SYS_TIMER_CLK_1MS){  //suspend time > 30ms.add gpio wakeup
-		bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio pad wakeup suspend/deepsleep
+		bls_pm_setWakeupSource(PM_WAKEUP_CORE | PM_WAKEUP_PAD);  //gpio pad wakeup suspend/deepsleep
 	}
 }
 
@@ -852,16 +848,25 @@ void user_init_normal()
 		///////////////////// Power Management initialization///////////////////
 #if(BLE_REMOTE_PM_ENABLE)
 	blc_ll_initPowerManagement_module();
-	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+
+	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
+		blc_pm_setDeepsleepRetentionThreshold(200, 200);
+	#else
+		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+	#endif
+
 	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &ble_remote_set_sleep_wakeup);
 #else
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 #endif
 
 
-	////////////////LED initialization /////////////////////////
-	device_led_init(GPIO_LED, 1);
+#if (BLE_REMOTE_LED_ENABLE)
+	device_led_init(GPIO_LED, 1);  //LED initialization
 	device_led_setup(led_cfg[LED_POWER_ON]);
+#endif
+
 
 #if (BLE_REMOTE_OTA_ENABLE)
 	////////////////// OTA relative ////////////////////////
@@ -873,18 +878,8 @@ void user_init_normal()
 
 #if (REMOTE_IR_ENABLE)
 	user_key_mode = analog_read(DEEP_ANA_REG1);
-	//user_key_mode = KEY_MODE_IR;  //debug
-
-	rc_ir_init();
-
-	analog_write(DEEP_ANA_REG1, 0);  //clear
 #endif
 
-
-#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE )
-	extern void app_phytest_init(void);
-	app_phytest_init();
-#endif
 
 
 	advertise_begin_tick = clock_time();
@@ -911,8 +906,13 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 		}
 	}
 
-	device_led_init(GPIO_LED, 1);
+#if (BLE_REMOTE_LED_ENABLE)
+	device_led_init(GPIO_LED, 1);  //LED initialization
+#endif
 
+#if (REMOTE_IR_ENABLE)
+	user_key_mode = analog_read(DEEP_ANA_REG1);
+#endif
 
 	blc_ll_recoverDeepRetention();
 
@@ -953,11 +953,15 @@ void main_loop (void)
 			battery_power_check();
 		}
 	#endif
-	//lowBatt_alarmFlag =  //low battery detect
+
+
 
 	proc_keyboard (0,0, 0);
 
+
+#if (BLE_REMOTE_LED_ENABLE)
 	device_led_process();
+#endif
 
 	blt_pm_proc();
 }

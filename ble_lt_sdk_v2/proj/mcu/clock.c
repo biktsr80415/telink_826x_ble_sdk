@@ -29,23 +29,15 @@
 void clock_init(){
 
 
-#if(CLOCK_SYS_TYPE == CLOCK_TYPE_PLL)
-	#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-		REG_ADDR8(0x66) = 0x43;			//change to PLL clock: 48/3 = 16M
-	#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-		REG_ADDR8(0x66) = 0x42;
-	#else
-//		#error clock not set properly
-	#endif
-#elif(CLOCK_SYS_TYPE == CLOCK_TYPE_PAD)
 
-
-	
-#elif(CLOCK_SYS_TYPE == CLOCK_TYPE_OSC)
-
+#if (CLOCK_SYS_CLOCK_HZ == 16000000)
+	REG_ADDR8(0x66) = 0x43;			//change to PLL clock: 48/3 = 16M
+#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
+	REG_ADDR8(0x66) = 0x42;         //change to PLL clock: 48/2 = 24M
 #else
 	#error clock not set properly
 #endif
+
 
 //	reg_tmr_ctrl = MASK_VAL(FLD_TMR0_EN, 1
 //		, FLD_TMR_WD_CAPT, (MODULE_WATCHDOG_ENABLE ? (WATCHDOG_INIT_TIMEOUT * CLOCK_SYS_CLOCK_1MS >> WATCHDOG_TIMEOUT_COEFF):0)

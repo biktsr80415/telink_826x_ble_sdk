@@ -1,5 +1,5 @@
 
-#ifdef MCU_CORE_MSSOC_AAA
+#ifdef MCU_CORE_MSSOC
 
 #ifndef __LOAD_RAM_SIZE__
 #define	__LOAD_RAM_SIZE__		0xc
@@ -36,6 +36,7 @@ __start:					@ MUST,  referenced by boot.link
 	.extern  _ramcode_size_div_16_
 	.extern  _ramcode_size_div_256_
 	.extern  _ramcode_size_div_16_align_256_
+	.extern  _ramcode_size_align_256_
 	.extern  _ictag_start_
 	.extern  _ictag_end_
 
@@ -44,7 +45,7 @@ __start:					@ MUST,  referenced by boot.link
 	.word	(BUILD_VERSION)
 	.org 0x8
 	.word	(0x544c4e4b)
-	.word	(0x00880000 + _ramcode_size_div_16_align_256_)
+	.word	(0x00880000 + 0x08)    @_ramcode_size_div_16_align_256_
 
 	.org 0x10
 	tj		__irq
@@ -60,22 +61,81 @@ __start:					@ MUST,  referenced by boot.link
 __reset:
 
 	@ add debug, PA4 output 1
-	tloadr     	r1, DAT0 + 40    @0x800582  PA4 oen
-	tmov		r0, #139      @0b 11101111 = 0xef = #139
-	tstorerb	r0, [r1, #0]
+@	tloadr     	r1, DEBUG_GPIO    @0x800582  PA4 oen
+@	tmov		r0, #139      @0b 11101111 = 0xef = #139
+@	tstorerb	r0, [r1, #0]
 
-	tmov		r0, #16			@0b00010000 = 0x10 = #16
-	tstorerb	r0, [r1, #1]	@0x800583  PA4 output
+@	tmov		r0, #16			@0b00010000 = 0x10 = #16
+@	tstorerb	r0, [r1, #1]	@0x800583  PA4 output
 
 
-@	tloadr     	r0, DAT0 + 36
-@	tmov		r1, #1024		@ set sws to GPIO
-@	tstorer 	r1, [r0, #0]
+	@ add debug, PB7 output 1
+@	tloadr     	r1, DEBUG_GPIO    @0x80058a  PB7 oen
+@	tmov		r0, #127      @0b 01111111 = 0x7f = #127
+@	tstorerb	r0, [r1, #0]
 
-@	tloadr     	r0, DAT0 + 40		@**** enable watchdog at the very first time
-@	tloadr     	r1, DAT0 + 44
-@	tstorer		r1, [r0, #0]
+@	tmov		r0, #128			@0b10000000 = 0x80 = #128
+@	tstorerb	r0, [r1, #1]	@0x800583  PA4 output
 
+
+    tloadr  	r0, BOOT_CHECK              @r0 = 0x544c4e4b
+    tloadr  	r1, FLL_D+12				@r1 = others or 0x544c4e4b
+    tcmp    	r0, r1
+    tjeq    	CHECK_RET					@r0== r1 jump to FLL_STK_END
+
+	tloadr		r0, IC_IA             		@r0 = 0x800608
+	tloadr		r1, CODE_CPY				@r1 = 0x000060  -> 0x000070
+	tloadr		r2, CODE_CPY+4				@r2 = virtual_ram_code_size=vector_size+ram_code_size
+	tmov        r4, #1						@r4 = 1
+	tshftl      r4, r4, #24					@r4 = r4<<24
+
+PWR_ON_CPY:
+	tcmp		r1, r2						@
+	tjge		FLL_STK_I					@r1>=r2 jump to FLL_STK_I
+
+	tmov        r5, r4						@r5=r4
+	tadd        r5, r1						@r5=r5+r1
+	tstorer 	r5, [r0, #0]           		@*(unsigned int*)0x800608 = r5;
+
+LOOP_WHILE:
+	tloadr		r3, [r0, #0]           		@r3 = *(unsigned int*)0x800608;
+	tasr        r3, r3, #24					@r3 = r3>>24
+	tcmp        r3, #0
+    tjne        LOOP_WHILE					@r3!=0 jump to loop_wait
+
+    tadd    	r1, #16						@r1=r1+16
+    tj          PWR_ON_CPY					@jump to PWR_ON_CPY
+PWR_ON_CPY_END:
+
+CHECK_RET:
+	tloadr		r0, IC_IA+4
+	tmov		r1, #1
+	tstorer		r1, [r0,#0]        			@*(unsigned int*)0x800000 = 1    as flag used in C code
+	tj			FLL_STK_END					@斯辉：直接跳到FLL_STK_END，_start_data_到ram最后没有赋值为0xffffffff，是何考虑？
+
+    .balign 4
+BOOT_CHECK:
+    .word   (0x544c4e4b)
+
+IC_IA:
+    .word 0x00800608
+    .word 0x00800000
+
+CODE_CPY:
+    .word   (0x00000080)               		@0
+@    .word   (_ramcode_size_align_256_) 		@4
+	.word   (0x4000)
+
+	@ add debug, PA4 output 1
+DEBUG_GPIO:
+	.word	(0x80058a)                  @40  PA4 oen
+
+
+
+
+
+	.org 0x80
+FLL_STK_I:
 	tloadr	r0, FLL_D
 	tloadr	r1, FLL_D+4
 	tloadr	r2, FLL_D+8
@@ -165,12 +225,13 @@ DAT0:
 	.word	(_start_bss_)               @16
 	.word	(_end_bss_)                 @20
 	.word	(0x80060c)                  @24
-	.word	_ictag_start_               @28		@ IC tag start
-	.word	_ictag_end_	            	@32		@ IC tag end
-	.word	_ramcode_size_div_256_		@36
+	.word	(0x844000)                  @28
+	.word	(0x844100)                  @32
+	.word	(0x40)                      @36
+@	.word	_ictag_start_               @28		@ IC tag start
+@	.word	_ictag_end_	            	@32		@ IC tag end
+@	.word	_ramcode_size_div_256_		@36
 
-	@ add debug, PA4 output 1
-	.word	(0x800582)                  @40  PA4 oen
 
 @	.word	(0x808000 + __LOAD_RAM * 0x100)                  @28		@ IC tag start
 @	.word	(0x808000 + (__LOAD_RAM + 1) * 0x100)            @32		@ IC tag end
@@ -184,10 +245,14 @@ DATA_I:
 	.word	_end_data_
 
 FLL_D:
-	.word	0xffffffff
-	.word	(_start_data_)
-	@.word	(0x84c000)
+	.word	0xffffffff                	@0
+	.word	(_start_data_)             	@4
+	@.word	(0x84c000)					@8
 	.word	(_start_data_ + 32)
+	.word	(0x544c4e4b)               	@12
+	.word   (_retention_data_start_)    @16
+    .word   (_retention_data_end_)      @20
+    .word   (_rstored_)                 @24
 
 	.align 4
 __irq:
