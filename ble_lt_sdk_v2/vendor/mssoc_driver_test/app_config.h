@@ -38,8 +38,11 @@ extern "C" {
 #define TEST_PWM										60
 
 
+#define TEST_LOW_POWER									70
 
-#define DRIVER_TEST_MODE								TEST_GPIO_IRQ
+
+
+#define DRIVER_TEST_MODE								TEST_LOW_POWER
 
 
 

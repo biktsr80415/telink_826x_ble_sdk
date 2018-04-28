@@ -27,6 +27,8 @@ extern void app_gpio_irq_test_init(void);
 
 extern void app_led_init(void);
 
+extern void test_low_power(void);
+
 void user_init()
 {
 
@@ -58,6 +60,10 @@ void user_init()
 #elif (DRIVER_TEST_MODE == TEST_PWM)
 
 	app_pwm_test();
+
+#elif (DRIVER_TEST_MODE == TEST_LOW_POWER)
+
+	test_low_power();
 
 #else
 
