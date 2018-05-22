@@ -29,10 +29,19 @@ typedef enum {
 //#define IS_RF_1M_MODE(rf_mode)		( (rf_mode) & (RF_MODE_BLE_1M | RF_MODE_NORDIC_1M))
 
 typedef enum {
-	RF_POWER_10m4PdBm	= 63,
-	RF_POWER_8PdBm		= 50,
-	RF_POWER_6m3PdBm	= 45,
-	RF_POWER_5m4PdBm	= 40,
+	RF_POWER_10m5PdBm	= 63,
+	RF_POWER_9PdBm		= 45,  // 9
+	RF_POWER_8PdBm		= 38,  // 8
+	RF_POWER_5PdBm		= 25,  // 5
+	RF_POWER_2m5PdBm	= 18,  // 2.5
+	RF_POWER_1m5PdBm	= 16,  // 1.5
+	RF_POWER_0m5NdBm	= 12, // -0.5
+	RF_POWER_2m0NdBm	= 10, // -2.0
+	RF_POWER_4m0NdBm	= 8, // -4.0
+	RF_POWER_6m0NdBm	= 6, // -6.0
+	RF_POWER_9m5NdBm	= 4, // -9.5
+	RF_POWER_15m03NdBm	= 2, // -15.0
+	RF_POWER_20m0NdBm	= 1, // -20.0
 } RF_PowerTypeDef;
 
 #ifdef		RF_MODE_250K

@@ -748,7 +748,7 @@ typedef struct{
 	u8  opcode;
 	u8 handle;
 	u8 handle1;
-	u8 offset;
+	u8 offset0;
 	u8 offset1;
 }rf_packet_att_readBlob_t;
 

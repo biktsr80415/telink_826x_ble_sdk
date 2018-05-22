@@ -16,10 +16,8 @@ extern void main_loop (void);
 _attribute_ram_code_ void irq_handler(void)
 {
 
-
-	DBG_CHN3_HIGH;
 	irq_blt_sdk_handler ();
-	DBG_CHN3_LOW;
+
 }
 
 

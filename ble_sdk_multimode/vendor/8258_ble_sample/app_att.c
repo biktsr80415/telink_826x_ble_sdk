@@ -71,7 +71,7 @@ const u8 PROP_READ_WRITE_NORSP_NOTIFY = CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT
 
 
 
-const u8	my_devName[] = {'K','R','e','m','o','t','e'};
+const u8	my_devName[] = {'t','S','a','m','p','l','e'};
 
 
 

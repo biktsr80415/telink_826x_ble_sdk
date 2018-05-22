@@ -23,12 +23,12 @@
 #define 	MY_DIRECT_ADV_TMIE					2000000
 
 
-#define     MY_APP_ADV_CHANNEL					BLT_ENABLE_ADV_37
+#define     MY_APP_ADV_CHANNEL					BLT_ENABLE_ADV_ALL
 #define 	MY_ADV_INTERVAL_MIN					ADV_INTERVAL_30MS
 #define 	MY_ADV_INTERVAL_MAX					ADV_INTERVAL_35MS
 
 
-#define		MY_RF_POWER_INDEX					RF_POWER_10m4PdBm
+#define		MY_RF_POWER_INDEX					RF_POWER_10m5PdBm
 
 
 
@@ -42,14 +42,14 @@ MYFIFO_INIT(blt_txfifo, 40, 16);
 //	 Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
 const u8	tbl_advData[] = {
-	 0x05, 0x09, 'k', 'h', 'i', 'd',
+	 0x05, 0x09, 't', 'H', 'I', 'D',
 	 0x02, 0x01, 0x05, 							// BLE limited discoverable mode and BR/EDR not supported
 	 0x03, 0x19, 0x80, 0x01, 					// 384, Generic Remote Control, Generic category
 	 0x05, 0x02, 0x12, 0x18, 0x0F, 0x18,		// incomplete list of service class UUIDs (0x1812, 0x180F)
 };
 
 const u8	tbl_scanRsp [] = {
-		 0x08, 0x09, 'K', 'R', 'e', 'm', 'o', 't', 'e',
+		 0x08, 0x09, 't', 'S', 'a', 'm', 'p', 'l', 'e',
 	};
 
 
@@ -65,21 +65,6 @@ u32		advertise_begin_tick;
 int     ui_mtu_size_exchange_req = 0;
 
 
-//////////////////// key type ///////////////////////
-#define IDLE_KEY	   			0
-#define CONSUMER_KEY   	   		1
-#define KEYBOARD_KEY   	   		2
-#define IR_KEY   	   			3
-
-u8 		key_type;
-u8 		user_key_mode;
-u8      ir_hw_initialed = 0;
-
-u8 		key_buf[8] = {0};
-
-int 	key_not_released;
-
-int 	ir_not_released;
 
 _attribute_data_retention_	u32 	latest_user_event_tick;
 
@@ -89,27 +74,6 @@ u8 		ota_is_working = 0;
 
 
 
-static u16 vk_consumer_map[16] = {
-		MKEY_VOL_UP,
-		MKEY_VOL_DN,
-		MKEY_MUTE,
-		MKEY_CHN_UP,
-
-		MKEY_CHN_DN,
-		MKEY_POWER,
-		MKEY_AC_SEARCH,
-		MKEY_RECORD,
-
-		MKEY_PLAY,
-		MKEY_PAUSE,
-		MKEY_STOP,
-		MKEY_FAST_FORWARD,  //can not find fast_backword in <<HID Usage Tables>>
-
-		MKEY_FAST_FORWARD,
-		MKEY_AC_HOME,
-		MKEY_AC_BACK,
-		MKEY_MENU,
-};
 
 
 
@@ -149,92 +113,6 @@ static u16 vk_consumer_map[16] = {
 	}
 #endif
 
-#if (BLE_AUDIO_ENABLE)
-	u32 	key_voice_pressTick = 0;
-
-	void		ui_enable_mic (u8 en)
-	{
-		ui_mic_enable = en;
-
-		//AMIC Bias output
-		gpio_set_output_en (GPIO_AMIC_BIAS, en);
-		gpio_write (GPIO_AMIC_BIAS, en);
-
-		#if (BLE_REMOTE_LED_ENABLE)
-			device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
-		#endif
-
-		if(en){  //audio on
-
-			///////////////////// AUDIO initialization///////////////////
-			//buffer_mic set must before audio_init !!!
-			config_mic_buffer ((u32)buffer_mic, TL_MIC_BUFFER_SIZE);
-
-			#if (BLE_DMIC_ENABLE)  //Dmic config
-
-			#else  //Amic config
-				audio_amic_init(AUDIO_16K);
-			#endif
-
-		}
-		else{  //audio off
-
-		}
-	}
-
-	void voice_press_proc(void)
-	{
-		key_voice_press = 0;
-		ui_enable_mic (1);
-		if(ui_mtu_size_exchange_req && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
-			ui_mtu_size_exchange_req = 0;
-			blc_att_requestMtuSizeExchange(BLS_CONN_HANDLE, 0x009e);
-		}
-	}
-
-
-	void	task_audio (void)
-	{
-		static u32 audioProcTick = 0;
-		if(clock_time_exceed(audioProcTick, 500)){
-			audioProcTick = clock_time();
-		}
-		else{
-			return;
-		}
-
-		///////////////////////////////////////////////////////////////
-		log_event(TR_T_audioTask);
-
-
-		proc_mic_encoder ();
-
-		//////////////////////////////////////////////////////////////////
-		if (blc_ll_getTxFifoNumber() < 10)
-		{
-			int *p = mic_encoder_data_buffer ();
-			if (p)					//around 3.2 ms @16MHz clock
-			{
-				log_event (TR_T_audioData);
-				bls_att_pushNotifyData (AUDIO_MIC_INPUT_DP_H, (u8*)p, ADPCM_PACKET_LEN);
-			}
-		}
-	}
-
-
-
-	void blc_checkConnParamUpdate(void)
-	{
-		if(	 interval_update_tick && clock_time_exceed(interval_update_tick,5*1000*1000) && \
-			 blc_ll_getCurrentState() == BLS_LINK_STATE_CONN &&  bls_ll_getConnectionInterval()!= 8 )
-		{
-			interval_update_tick = clock_time() | 1;
-			bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);
-		}
-	}
-
-
-#endif
 
 
 
@@ -313,8 +191,6 @@ void	task_conn_update_done (u8 e, u8 *p, int n)
 void user_init_normal()
 {
 
-	gpio_config_baseband_debug_mode();
-
 	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
 
@@ -353,9 +229,6 @@ void user_init_normal()
 #else
 	bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
 #endif
-
-	//HID_service_on_android7p0_init();  //hid device on android 7.0/7.1
-
 
 
 
@@ -442,14 +315,11 @@ void user_init_normal()
 #endif
 
 
-
 	advertise_begin_tick = clock_time();
 
 }
 
 
-_attribute_data_retention_  int deep_ret_cnt = 0;
-_attribute_data_retention_  u32 deep_ret_tick = 0;
 
 
 
@@ -460,11 +330,43 @@ u32 tick_loop;
 
 void blt_pm_proc(void)
 {
-#if (BLE_REMOTE_PM_ENABLE)
+#if(BLE_REMOTE_PM_ENABLE)
+
 	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
-#else
-	bls_pm_setSuspendMask(SUSPEND_DISABLE);
-#endif
+
+
+	#if 1 //deepsleep
+		if(sendTerminate_before_enterDeep == 1){ //sending Terminate and wait for ack before enter deepsleep
+			if(user_task_flg){  //detect key Press again,  can not enter deep now
+				sendTerminate_before_enterDeep = 0;
+				bls_ll_setAdvEnable(1);   //enable adv again
+			}
+		}
+		else if(sendTerminate_before_enterDeep == 2){  //Terminate OK
+			cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
+		}
+
+
+		if( 1 ){  //no controller event pending
+			//adv 60s, deepsleep
+			if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && !sendTerminate_before_enterDeep && \
+				clock_time_exceed(advertise_begin_tick , ADV_IDLE_ENTER_DEEP_TIME * 1000000))
+			{
+				cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
+			}
+			//conn 60s no event(key/voice/led), enter deepsleep
+			else if( device_in_connection_state && !user_task_flg && \
+					clock_time_exceed(latest_user_event_tick, CONN_IDLE_ENTER_DEEP_TIME * 1000000) )
+			{
+
+				bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
+				bls_ll_setAdvEnable(0);   //disable adv
+				sendTerminate_before_enterDeep = 1;
+			}
+		}
+	#endif
+
+#endif  //END of  BLE_REMOTE_PM_ENABLE
 }
 
 void main_loop (void)

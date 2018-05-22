@@ -166,12 +166,12 @@ extern "C" {
 #else   //key map
 
 		#define		KB_MAP_NORMAL	{\
-						VK_NONE,	VK_NONE,		VK_NONE,		VK_NONE,			VK_NONE,	 \
+						VK_B,		VK_NONE,		VK_NONE,		VK_C,				VK_A,	 \
 						VOICE,		VK_NONE,		VK_NONE,		CR_VOL_UP,			CR_VOL_DN,	 \
 						VK_2,		VK_NONE,		VK_NONE,		VK_3,				VK_1,	 \
 						VK_5,		VK_NONE,		VK_NONE,		VK_6,				VK_4,	 \
 						VK_8,		VK_NONE,		VK_NONE,		VK_9,				VK_7,	 \
-						VK_0,		VK_NONE,		VK_NONE,		VK_NONE,			VK_NONE,	 }
+						VK_0,		VK_D,			VK_NONE,		VK_NONE,			VK_NONE,	 }
 
 #endif  //end of REMOTE_IR_ENABLE
 
@@ -370,7 +370,7 @@ typedef enum
 
 
 
-#define DEBUG_GPIO_ENABLE							1
+#define DEBUG_GPIO_ENABLE							0
 
 #if(DEBUG_GPIO_ENABLE)
 	//define debug GPIO here according to your hardware
