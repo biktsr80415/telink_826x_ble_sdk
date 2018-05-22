@@ -1,0 +1,25 @@
+#pragma once
+
+
+
+#include "drivers/8258/bsp.h"
+#include "drivers/8258/analog.h"
+#include "drivers/8258/compiler.h"
+#include "drivers/8258/register.h"
+#include "drivers/8258/gpio.h"
+#include "drivers/8258/pwm.h"
+#include "drivers/8258/irq.h"
+#include "drivers/8258/clock.h"
+#include "drivers/8258/random.h"
+#include "drivers/8258/flash.h"
+#include "drivers/8258/rf_drv.h"
+#include "drivers/8258/pm.h"
+#include "drivers/8258/audio.h"
+#include "drivers/8258/adc.h"
+#include "drivers/8258/uart.h"
+#include "drivers/8258/register.h"
+#include "drivers/8258/watchdog.h"
+#include "drivers/8258/usbhw_i.h"
+#include "drivers/8258/usbhw.h"
+#include "drivers/8258/usbkeycode.h"
+#include "drivers/8258/register.h"
