@@ -1,9 +1,9 @@
 #include "tl_common.h"
 #include "drivers.h"
+#include "stack/ble/ble.h"
 
 #include "../../vendor/common/user_config.h"
-#include "../../stack/ble/ll/ll.h"
-#include "../../stack/ble/blt_config.h"
+
 
 
 extern void user_init_normal();

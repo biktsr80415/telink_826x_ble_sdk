@@ -54,10 +54,9 @@ void _rijndaelSetKey (unsigned char *k);
 void _rijndaelEncrypt(unsigned char *a);
 void _rijndaelDecrypt (unsigned char *a);
 
-typedef	unsigned char u8;
 
 
-void tn_aes_128(u8 *key, u8 *plaintext, u8 *result);
+void tn_aes_128(unsigned char *key, unsigned char *plaintext, unsigned char *result);
 
 
 #endif

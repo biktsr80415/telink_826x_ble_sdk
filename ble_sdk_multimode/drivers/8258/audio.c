@@ -98,6 +98,12 @@ void audio_config_sdm_buf(signed short* pbuff, unsigned char size_buff)
 */
 void audio_amic_init(AudioRate_Typedef Audio_Rate)
 {
+
+	//adc reset
+	reg_rst1 = FLD_RST1_ADC;
+	reg_rst1 = 0;
+
+
 #if (AMIC_PIN_IN_PC2_PC3_ENABLE)
 
 #else

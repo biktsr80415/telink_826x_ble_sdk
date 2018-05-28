@@ -1,14 +1,15 @@
 #include "tl_common.h"
 #include "drivers.h"
 
+#include "stack/ble/ble.h"
+
 #include "../common/keyboard.h"
-#include "../../stack/ble/ll/ll.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
-#include "../../stack/ble/trace.h"
-#include "../../stack/ble/service/ble_ll_ota.h"
-#include "../../stack/ble/blt_config.h"
-#include "../../stack/ble/ble_smp.h"
+
+#if(REMOTE_IR_ENABLE)
+#include "rc_ir.h"
+#endif
 
 
 #define BLE_REMOTE_PM_ENABLE				1
@@ -170,6 +171,7 @@ static u16 vk_consumer_map[16] = {
 
 		if(type == TYPE_IR_SEND){
 			ir_nec_send(syscode,~(syscode),ircode);
+
 		}
 		else if(type == TYPE_IR_RELEASE){
 			ir_send_release();
@@ -458,6 +460,7 @@ void key_change_proc(void)
 	}
 
 
+
 	u8 key0 = kb_event.keycode[0];
 	u8 key1 = kb_event.keycode[1];
 	u8 key_value;
@@ -469,6 +472,7 @@ void key_change_proc(void)
 	}
 	else if(kb_event.cnt == 1)
 	{
+
 		if(key0 == KEY_MODE_SWITCH)
 		{
 			user_key_mode = !user_key_mode;
@@ -493,6 +497,7 @@ void key_change_proc(void)
 #if (REMOTE_IR_ENABLE)
 		else if(user_key_mode == KEY_MODE_BLE)
 		{
+
 			key_value = kb_map_ble[key0];
 			if(key_value >= 0xf0 ){
 				key_type = CONSUMER_KEY;

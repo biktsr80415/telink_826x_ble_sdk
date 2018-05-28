@@ -40,6 +40,9 @@ static inline void irq_clr_src(){
 	reg_irq_src = 0xffffffff;	// set to clear
 }
 
+static inline void irq_clr_src2(unsigned long msk){
+    reg_irq_src |= msk;   // set to clear
+}
 static inline void irq_enable_type(unsigned long msk){
 	irq_set_mask(msk);
 }
@@ -51,3 +54,20 @@ static inline void irq_disable_type(unsigned long msk){
 #define IRQ_Enable				 irq_enable
 #define IRQ_Disable				 irq_disable
 #define IRQ_Restore				 irq_restore
+#define IRQ_MaskSet				 irq_set_mask
+static inline void rf_irq_enable(unsigned int msk)
+{
+    reg_rf_irq_mask |= msk;
+}
+static inline void rf_irq_disable(unsigned int msk)
+{
+    reg_rf_irq_mask &= (~msk);
+}
+static inline unsigned short rf_irq_src_get(void)
+{
+    return reg_rf_irq_status;
+}
+static inline void rf_irq_src_clr(unsigned short msk)
+{
+    reg_rf_irq_status |= msk;
+}

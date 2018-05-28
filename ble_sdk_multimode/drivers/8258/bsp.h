@@ -99,29 +99,8 @@
 #define READ_REG32				read_reg32
 
 
-#define u8 u8_new
-typedef unsigned char u8 ;
-
-#define s8 s8_new
-typedef signed char s8;
-
-#define u16 u16_new
-typedef unsigned short u16;
-
-#define s16 s16_new
-typedef signed short s16;
 
 
-#define u32 u32_new
-typedef unsigned int u32;
-
-
-#define s32 s32_new
-typedef int s32;
-
-//#define u8 unsigned char
-//#define u16 unsigned short
-//#define u32 unsigned int
 
 
 #define TCMD_UNDER_RD		0x80

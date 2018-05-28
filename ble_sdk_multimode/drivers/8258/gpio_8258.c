@@ -47,11 +47,11 @@ mask_not 0x3f       0xcf	  0xf3       0xfc
 //if GPIO_DP,please check usb_dp_pullup_en() valid or not first.
 void gpio_setup_up_down_resistor(GPIO_PinTypeDef gpio, GPIO_PullTypeDef up_down)
 {
-	u8 r_val = up_down & 0x03;
+	unsigned char r_val = up_down & 0x03;
 
 
-    u8 base_ana_reg = 0x0e + ((gpio >> 8) << 1) + ( (gpio & 0xf0) ? 1 : 0 );  //group = gpio>>8;
-    u8 shift_num, mask_not;
+	unsigned char base_ana_reg = 0x0e + ((gpio >> 8) << 1) + ( (gpio & 0xf0) ? 1 : 0 );  //group = gpio>>8;
+	unsigned char shift_num, mask_not;
 
 	if(gpio & 0x11){
 		shift_num = 0;
@@ -84,7 +84,7 @@ void gpio_setup_up_down_resistor(GPIO_PinTypeDef gpio, GPIO_PullTypeDef up_down)
 
 void gpio_set_wakeup(GPIO_PinTypeDef pin, GPIO_LevelTypeDef level, int en)
 {
-    u8 bit = pin & 0xff;
+	unsigned char bit = pin & 0xff;
     if (en) {
         BM_SET(reg_gpio_irq_wakeup_en(pin), bit);
     }
@@ -100,10 +100,10 @@ void gpio_set_wakeup(GPIO_PinTypeDef pin, GPIO_LevelTypeDef level, int en)
 }
 
 
-void gpio_set_input_en(GPIO_PinTypeDef pin, u32 value)
+void gpio_set_input_en(GPIO_PinTypeDef pin, unsigned int value)
 {
-	u8	bit = pin & 0xff;
-	u16 group = pin & 0xf00;
+	unsigned char	bit = pin & 0xff;
+	unsigned short group = pin & 0xf00;
 
 	if(group == GPIO_GROUPA || group == GPIO_GROUPD || group == GPIO_GROUPE)
 	{
@@ -138,10 +138,10 @@ void gpio_set_input_en(GPIO_PinTypeDef pin, u32 value)
 
 
 
-void gpio_set_data_strength(GPIO_PinTypeDef pin, u32 value)
+void gpio_set_data_strength(GPIO_PinTypeDef pin, unsigned int value)
 {
-    u8 bit = pin & 0xff;
-    u16 group = pin & 0xf00;
+	unsigned char bit = pin & 0xff;
+	unsigned short group = pin & 0xf00;
     if( (group == GPIO_GROUPA) || (group==GPIO_GROUPD) || (group == GPIO_GROUPE))
     {
     	if(value){
@@ -351,7 +351,7 @@ void gpio_init(void)
  *********************************************************************************/
 void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 {
-	u8	bit = pin & 0xff;
+	unsigned char	bit = pin & 0xff;
 	if(func == AS_GPIO){
 		BM_SET(reg_gpio_gpio_func(pin), bit);
 		return;
@@ -361,8 +361,8 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 
 
 	//config gpio special func
-	u8 val = 0;
-	u8 mask = 0xff;
+	unsigned char val = 0;
+	unsigned char mask = 0xff;
 	switch(pin)
 	{
 		case GPIO_PA0:
@@ -371,7 +371,7 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			//0. DMIC_DI
 			//1. PWM0_N
 			//2. UART_RX
-			mask = (u8)~(BIT(1)|BIT(0));
+			mask = (unsigned char)~(BIT(1)|BIT(0));
 			if(func == AS_DMIC){
 
 			}else if(func == AS_PWM0_N){
@@ -389,7 +389,7 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			//0. DMIC_CLK
 			//1. UART_7816_CLK
 			//2. I2S_CLK
-			mask= (u8)~(BIT(3)|BIT(2));
+			mask= (unsigned char)~(BIT(3)|BIT(2));
 			if(func == AS_DMIC){
 
 			}else if(func == AS_UART){
@@ -402,17 +402,58 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		break;
 
 		case GPIO_PA2:
+		{
+			//0x5a8[5:4]
+			//0. DO
+			//1. UART_TX
+			//2. PWM0
+			mask= (unsigned char)~(BIT(5)|BIT(4));
+			if(func == AS_SPI){
+
+			}else if(func == AS_UART){
+				val = BIT(4);
+			}
+			else if(func == AS_PWM0){
+				val = BIT(5);
+			}
+		}
+		break;
+
+
 		case GPIO_PA3:
+		{
+			//0x5a8[7:6]
+			//0. DI
+			//1. UART_CTS
+			//2. PWM1
+			mask= (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_SPI){
+
+			}else if(func == AS_UART){
+				val = BIT(6);
+			}
+			else if(func == AS_PWM1){
+				val = BIT(7);
+			}
+		}
+		break;
+
+
 		case GPIO_PA4:
 		{
-			//PA2				PA3				PA4
-			//0x5a8[5:4]        0x5a8[7:6]      0x5a9[1:0]
-			//0. DO				DI				CK
-			//1. UART_TX	    UART_CTS		UART_RTS
-			//2. PAD_CLKBB		PAD_TX_EN		PAD_TX_CYC1
+			//0x5a9[1:0]
+			//0. DO
+			//1. UART_TX
+			//2. PWM0
+			mask= (unsigned char)~(BIT(1)|BIT(0));
+			if(func == AS_SPI){
 
-
-			//to be add
+			}else if(func == AS_UART){
+				val = BIT(0);
+			}
+			else if(func == AS_PWM2){
+				val = BIT(1);
+			}
 		}
 		break;
 
@@ -420,7 +461,8 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PA5:
 		case GPIO_PA6:
 		{
-			//only USB, no need set
+			//only USB, no need set special func, but we can DM/DP input enable here
+			 gpio_set_input_en(pin, 1);
 		}
 		break;
 
@@ -429,8 +471,8 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		{
 			//0x5a9[7:6]
 			//0. SWS:
-			//1. UART
-			mask = (u8)~(BIT(7)|BIT(6));
+			//1. UART_RTS
+			mask = (unsigned char)~(BIT(7)|BIT(6));
 			if(func == AS_SWIRE){
 
 			}else if(func == AS_UART){
@@ -443,16 +485,16 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PB0:
 		{
 			//0x5aa[1:0]
-			//0. PWM0
-			//1. UART_TX
-			//2. PWM1_N
-			mask = (u8)~(BIT(1)|BIT(0));
-			if(func == AS_PWM0){
+			//0. PWM3
+			//1. UART_RX
+			//2. ATSEL1
+			mask = (unsigned char)~(BIT(1)|BIT(0));
+			if(func == AS_PWM3){
 
 			}else if(func == AS_UART){
 				val = BIT(0);
 			}
-			else if(func == AS_PWM1_N){
+			else if(func == AS_ATS){
 				val = BIT(1);
 			}
 		}
@@ -462,16 +504,16 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PB1:
 		{
 			//0x5aa[3:2]
-			//0. PWM1
-			//1. UART_RX
-			//2. PWM0_N
-			mask = (u8)~(BIT(3)|BIT(2));
-			if(func == AS_PWM1){
+			//0. PWM4
+			//1. UART_TX
+			//2. ATSEL2
+			mask = (unsigned char)~(BIT(3)|BIT(2));
+			if(func == AS_PWM4){
 
 			}else if(func == AS_UART){
 				val = BIT(2);
 			}
-			else if(func == AS_PWM0_N){
+			else if(func == AS_ATS){
 				val = BIT(3);
 			}
 		}
@@ -481,13 +523,13 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PB2:
 		{
 			//0x5aa[5:4]
-			//0. PWM2
-			//1. CMP_D
+			//0. PWM5
+			//1. UART_CTS
 			//2. RX_CYC2LNA
-			mask = (u8)~(BIT(5)|BIT(4));
-			if(func == AS_PWM2){
+			mask = (unsigned char)~(BIT(5)|BIT(4));
+			if(func == AS_PWM5){
 
-			}else if(func == AS_CMP){
+			}else if(func == AS_UART){
 				val = BIT(4);
 			}
 //			else if(func == AS_CYC){
@@ -500,13 +542,13 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PB3:
 		{
 			//0x5aa[7:6]
-			//0. PWM3
+			//0. PWM0_N
 			//1. CMP_DF
 			//2. TX_CYC2PA
-			mask = (u8)~(BIT(7)|BIT(6));
-			if(func == AS_PWM3){
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_PWM0_N){
 
-			}else if(func == AS_CMP){
+			}else if(func == AS_UART){
 				val = BIT(6);
 			}
 //			else if(func == AS_CYC){
@@ -522,14 +564,14 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			//0x5ab[1:0]
 			//0. SDM_P0
 			//1. PWM4
-			//2. PWM0_N
-			mask = (u8)~(BIT(1)|BIT(0));
+			//2. CMP_D
+			mask = (unsigned char)~(BIT(1)|BIT(0));
 			if(func == AS_SDM){
 
 			}else if(func == AS_PWM4){
 				val = BIT(0);
 			}
-			else if(func == AS_PWM0_N){
+			else if(func == AS_CMP){
 				val = BIT(1);
 			}
 		}
@@ -541,14 +583,14 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			//0x5ab[3:2]
 			//0. SDM_N0
 			//1. PWM5
-			//2. PWM0
-			mask = (u8)~(BIT(3)|BIT(2));
+			//2. CMP_DF
+			mask = (unsigned char)~(BIT(3)|BIT(2));
 			if(func == AS_SDM){
 
 			}else if(func == AS_PWM5){
 				val = BIT(2);
 			}
-			else if(func == AS_PWM0){
+			else if(func == AS_CMP){
 				val = BIT(3);
 			}
 		}
@@ -560,12 +602,12 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		{
 			//0x5ab[5:4]
 			//0. SDM_P1
-			//1. PWM4_N
-			//2. UART_TX(7816)
-			mask = (u8)~(BIT(5)|BIT(4));
+			//1. SPI_DI
+			//2. UART_RTS
+			mask = (unsigned char)~(BIT(5)|BIT(4));
 			if(func == AS_SDM){
 
-			}else if(func == AS_PWM4_N){
+			}else if(func == AS_SPI){
 				val = BIT(4);
 			}
 			else if(func == AS_UART){
@@ -579,12 +621,12 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		{
 			//0x5ab[7:6]
 			//0. SDM_N1
-			//1. PWM5_N
+			//1. SPI_DO
 			//2. UART_RX
-			mask = (u8)~(BIT(7)|BIT(6));
+			mask = (unsigned char)~(BIT(7)|BIT(6));
 			if(func == AS_SDM){
 
-			}else if(func == AS_PWM5_N){
+			}else if(func == AS_SPI){
 				val = BIT(6);
 			}
 			else if(func == AS_UART){
@@ -598,15 +640,15 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		{
 			//0x5ac[1:0]
 			//0. I2C_SDA
-			//1. PWM4
-			//2. PWM1
-			mask = (u8)~(BIT(1)|BIT(0));
+			//1. PWM4_N
+			//2. UART_RTS
+			mask = (unsigned char)~(BIT(1)|BIT(0));
 			if(func == AS_I2C){
 
-			}else if(func == AS_PWM4){
+			}else if(func == AS_PWM4_N){
 				val = BIT(0);
 			}
-			else if(func == AS_PWM1){
+			else if(func == AS_UART){
 				val = BIT(1);
 			}
 		}
@@ -617,16 +659,16 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		{
 			//0x5ac[3:2]
 			//0. I2C_SCK
-			//1. PWM5
-			//2. PAD_RX_EN
-			mask = (u8)~(BIT(3)|BIT(2));
+			//1. PWM1_N
+			//2. PWM0
+			mask = (unsigned char)~(BIT(3)|BIT(2));
 			if(func == AS_I2C){
-			}else if(func == AS_PWM5){
+			}else if(func == AS_PWM1_N){
 				val = BIT(2);
 			}
-//			else if(func == AS_PAD){
-//				val = BIT(3);
-//			}
+			else if(func == AS_PWM0){
+				val = BIT(3);
+			}
 		}
 		break;
 
@@ -635,17 +677,18 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		{
 			//0x5ac[5:4]
 			//0. PWM0
-			//1. UART_RTS
-			//2. PAD_GAIN[0]
-			mask = (u8)~(BIT(5)|BIT(4));
+			//1. 7816_TRX
+			//2. I2C_SDA
+			mask = (unsigned char)~(BIT(5)|BIT(4));
 			if(func == AS_PWM0){
 
-			}else if(func == AS_UART){
+			}
+			else if(func == AS_UART){
 				val = BIT(4);
 			}
-//			else if(func == AS_PAD){
-//				val = BIT(5);
-//			}
+			else if(func == AS_I2C){
+				val = BIT(5);
+			}
 		}
 		break;
 
@@ -653,18 +696,18 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PC3:
 		{
 			//0x5ac[7:6]
-			//0. PWM1_N
-			//1. UART_CTS
-			//2. PAD_GAIN[1]
-			mask = (u8)~(BIT(7)|BIT(6));
-			if(func == AS_PWM1_N){
+			//0. PWM1
+			//1. UART_RX
+			//2. I2C_SCK
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_PWM1){
 
 			}else if(func == AS_UART){
 				val = BIT(6);
 			}
-//			else if(func == AS_PAD){
-//				val = BIT(7);
-//			}
+			else if(func == AS_I2C){
+				val = BIT(7);
+			}
 		}
 		break;
 
@@ -672,18 +715,18 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PC4:
 		{
 			//0x5ad[1:0]
-			//0. PWM2_N
-			//1. UART_TX(7816)
-			//2. PAD_GAIN[2]
-			mask = (u8)~(BIT(1)|BIT(0));
-			if(func == AS_PWM2_N){
+			//0. PWM2
+			//1. UART_CTS
+			//2. PWM0_N
+			mask = (unsigned char)~(BIT(1)|BIT(0));
+			if(func == AS_PWM2){
 
 			}else if(func == AS_UART){
 				val = BIT(0);
 			}
-//			else if(func == AS_PAD){
-//				PAD_FUNC_MUX_2PC |= BIT(1);
-//			}
+			else if(func == AS_PWM0_N){
+				val = BIT(1);
+			}
 		}
 		break;
 
@@ -693,15 +736,16 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			//0x5ad[3:2]
 			//0. PWM3_N
 			//1. UART_RX
-			//2. PAD_GAIN[3]
-			mask = (u8)~(BIT(3)|BIT(2));
+			//2. ATSEL_0
+			mask = (unsigned char)~(BIT(3)|BIT(2));
 			if(func == AS_PWM3_N){
+
 			}else if(func == AS_UART){
 				val = BIT(2);
 			}
-//			else if(func == AS_PAD){
-//				val = BIT(3);
-//			}
+			else if(func == AS_ATS){
+				val = BIT(3);
+			}
 		}
 		break;
 
@@ -710,8 +754,19 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		{
 			//0x5ad[5:4]
 			//0. RX_CYC2LNA
-			//1. CMP_D
-			//2. PAD_GAIN[4]
+			//1. ATSEL1
+			//2. PWM4_N
+			mask = (unsigned char)~(BIT(5)|BIT(4));
+//			if(func == ){
+//
+//			}
+//			else
+			if(func == AS_ATS){
+				val = BIT(4);
+			}
+			else if(func == AS_PWM4_N){
+				val = BIT(5);
+			}
 
 		}
 		break;
@@ -721,9 +776,19 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		{
 			//0x5ad[7:6]
 			//0. TX_CYC2PA
-			//1. CMP_DF
-			//2. PAD_TRX_CLK
-
+			//1. ATSEL2
+			//2. PWM5_N
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+//			if(func == ){
+//
+//			}
+//			else
+			if(func == AS_ATS){
+				val = BIT(6);
+			}
+			else if(func == AS_PWM5_N){
+				val = BIT(7);
+			}
 		}
 		break;
 
@@ -733,20 +798,17 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			//0x5ae[1:0]
 			//0. RX_CYC2LNA
 			//1. CMP_D
-			//2. UART_RTS
-			//3. PWM0
-			mask = (u8)~(BIT(1)|BIT(0));
-			if(func == 0){
-
-			}
-//			else if(func == AS_CMP){
-//				PAD_FUNC_MUX_1PD |= BIT(0);
+			//2. 7816_TRX
+			mask = (unsigned char)~(BIT(1)|BIT(0));
+//			if(func == ){
+//
 //			}
+//			else
+			if(func == AS_CMP){
+				val = BIT(0);
+			}
 			else if(func == AS_UART){
 				val = BIT(1);
-			}
-			else if(func == AS_PWM0){
-				val = (BIT(1)|BIT(0));
 			}
 		}
 		break;
@@ -758,19 +820,16 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			//0. TX_CYC2PA
 			//1. CMP_DF
 			//2. UART_CTS
-			//3. PWM1
-			mask = (u8)~(BIT(3)|BIT(2));
-			if(func == 0){
-
-			}
-//			else if(func == AS_CMP){
-//				val = BIT(0);
+			mask = (unsigned char)~(BIT(3)|BIT(2));
+//			if(func == ){
+//
 //			}
+//			else
+			if(func == AS_CMP){
+				val = BIT(0);
+			}
 			else if(func == AS_UART){
 				val = BIT(2);
-			}
-			else if(func == AS_PWM1){
-				val = (BIT(3)|BIT(2));
 			}
 		}
 		break;
@@ -781,19 +840,16 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			//0x5ae[5:4]
 			//0. SPI_CN
 			//1. I2S_LR
-			//2. UART_RX
-			//3. PWM2
-			mask = (u8)~(BIT(5)|BIT(4));
+			//2. PWM3
+			mask = (unsigned char)~(BIT(5)|BIT(4));
 			if(func == AS_SPI){
+
 			}
 			else if(func == AS_I2S){
-				val = BIT(0);
-			}
-			else if(func == AS_UART){
 				val = BIT(4);
 			}
-			else if(func == AS_PWM2){
-				val = (BIT(5)|BIT(4));
+			else if(func == AS_PWM3){
+				val = BIT(5);
 			}
 		}
 		break;
@@ -802,12 +858,11 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PD3:
 		{
 			//0x5ae[7:6]
-			//0. SPI_DO
+			//0. PWM1_N
 			//1. I2S_SDI
 			//2. UART_TX£¨7816£©
-			//3. PWM3
-			mask = (u8)~(BIT(7)|BIT(6));
-			if(func == AS_SPI){
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_PWM1_N){
 
 			}
 			else if(func == AS_I2S){
@@ -816,9 +871,6 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			else if(func == AS_UART){
 				val = BIT(7);
 			}
-			else if(func == AS_PWM3){
-				val = (BIT(7)|BIT(6));
-			}
 		}
 		break;
 
@@ -826,22 +878,18 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PD4:
 		{
 			//0x5af[1:0]
-			//0. SPI_CK
+			//0. SWM
 			//1. I2S_SDO
-			//2. PWM0
-			//3. PWM4
-			mask = (u8)~(BIT(1)|BIT(0));
-			if(func == AS_SPI){
+			//2. PWM2_N
+			mask = (unsigned char)~(BIT(1)|BIT(0));
+			if(func == AS_SWIRE){
 
 			}
 			else if(func == AS_I2S){
 				val = BIT(0);
 			}
-			else if(func == AS_PWM0){
+			else if(func == AS_PWM2_N){
 				val = BIT(1);
-			}
-			else if(func == AS_PWM4){
-				val = (BIT(1)|BIT(0));
 			}
 		}
 		break;
@@ -850,22 +898,18 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PD5:
 		{
 			//0x5af[3:2]
-			//0. SPI_DI
-			//1. I2S_BCK
+			//0. PWM0
+			//1. CMP_D
 			//2. PWM0_N
-			//3. PWM5
-			mask = (u8)~(BIT(3)|BIT(2));
-			if(func == AS_SPI){
+			mask = (unsigned char)~(BIT(3)|BIT(2));
+			if(func == AS_PWM0){
 
 			}
-			else if(func == AS_I2S){
+			else if(func == AS_CMP){
 				val = BIT(2);
 			}
 			else if(func == AS_PWM0_N){
 				val = BIT(3);
-			}
-			else if(func == AS_PWM5){
-				val = (BIT(3)|BIT(2));
 			}
 		}
 		break;
@@ -876,17 +920,17 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 			//0x5af[5:4]
 			//0. CN
 			//1. UART_RX
-			//2. PAD_TX_SD
-			mask = (u8)~(BIT(5)|BIT(4));
+			//2. ATSEL0
+			mask = (unsigned char)~(BIT(5)|BIT(4));
 			if(func == AS_SPI){
 
 			}
 			else if(func == AS_UART){
 				val = BIT(4);
 			}
-//			else if(func == AS_PAD){
-//				val = BIT(5);
-//			}
+			else if(func == AS_ATS){
+				val = BIT(5);
+			}
 		}
 		break;
 
@@ -894,16 +938,16 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PD7:
 		{
 			//0x5af[7:6]
-			//0. SWM
-			//1. CMP_D
-			//2. UART_TX(7816)
-			mask = (u8)~(BIT(7)|BIT(6));
-			if(func == AS_SWIRE){
+			//0. SPI_CK
+			//1. I2S_BCK
+			//2. 7816_TRX
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_SPI){
 
 			}
-//			else if(func == AS_CMP){
-//				val = BIT(6);
-//			}
+			else if(func == AS_I2S){
+				val = BIT(6);
+			}
 			else if(func == AS_UART){
 				val = BIT(7);
 			}
@@ -917,13 +961,14 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 	}
 
 
-	u16 reg = 0x5a8 + ((pin>>8)<<1) + ((pin&0x0f0) ? 1 : 0 );
+	unsigned short reg = 0x5a8 + ((pin>>8)<<1) + ((pin&0x0f0) ? 1 : 0 );
 	write_reg8(reg, ( read_reg8(reg) & mask) | val);
 
 }
 
 
 
+//debug baseband
 void gpio_config_baseband_debug_mode(void)
 {
 	//1. 5b6[0]: Aura_dbg input mode     0

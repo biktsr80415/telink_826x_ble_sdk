@@ -575,7 +575,12 @@ enum{
 	FLD_RF_IRQ_CMD_DONE  =		BIT(5),
 	FLD_RF_IRQ_FSM_TIMEOUT  =	BIT(6),
 	FLD_RF_IRQ_RETRY_HIT =		BIT(7),
+	FLD_RF_IRQ_TX_DS =          BIT(8),
+    FLD_RF_IRQ_RX_DR =          BIT(9),
 	FLD_RF_IRQ_FIRST_TIMEOUT =	BIT(10),
+	FLD_RF_IRQ_INVALID_PID =    BIT(11),
+	FLD_RF_IRQ_STX_TIMEOUT =    BIT(12),
+	FLD_RF_IRQ_ALL =            0X1FFF,
 };
 
 
@@ -718,35 +723,56 @@ enum{
 	FLD_PLL_POL_RX_SOF =		BIT(12),
 };
 
-#define reg_rf_rx_cap			REG_ADDR16(0x4f0)		//  µÁ»›
-#define reg_rf_tx_cap			REG_ADDR16(0x4f0)		//  µÁ»›
+#define reg_rf_rx_cap			REG_ADDR16(0x4f0)
+#define reg_rf_tx_cap			REG_ADDR16(0x4f0)
+
 
 /****************************************************
  dma mac regs struct: begin  addr : 0xC00
  *****************************************************/
 #define reg_dma0_addr			REG_ADDR16(0xc00)
 #define reg_dma0_ctrl			REG_ADDR16(0xc02)
+#define reg_dma0_size			REG_ADDR8(0xc02)
+#define reg_dma0_mode			REG_ADDR8(0xc03)
+
 #define reg_dma1_addr			REG_ADDR16(0xc04)
 #define reg_dma1_ctrl			REG_ADDR16(0xc06)
+#define reg_dma1_size			REG_ADDR8(0xc06)
+#define reg_dma1_mode			REG_ADDR8(0xc07)
+
+//rf rx dma
 #define reg_dma2_addr			REG_ADDR16(0xc08)
 #define reg_dma2_ctrl			REG_ADDR16(0xc0a)
+#define reg_dma2_size			REG_ADDR8(0xc0a)
+#define reg_dma2_mode			REG_ADDR8(0xc0b)
+
+//rf tx dma
 #define reg_dma3_addr			REG_ADDR16(0xc0c)
 #define reg_dma3_ctrl			REG_ADDR16(0xc0e)
+#define reg_dma3_size			REG_ADDR8(0xc0e)
+#define reg_dma3_mode			REG_ADDR8(0xc0f)
+
+
 #define reg_dma4_addr			REG_ADDR16(0xc10)
 #define reg_dma4_ctrl			REG_ADDR16(0xc12)
+#define reg_dma4_size			REG_ADDR8(0xc12)
+#define reg_dma4_mode			REG_ADDR8(0xc13)
+
+
 #define reg_dma5_addr			REG_ADDR16(0xc14)
 #define reg_dma5_ctrl			REG_ADDR16(0xc16)
+#define reg_dma5_size			REG_ADDR8(0xc16)
+#define reg_dma5_mode			REG_ADDR8(0xc17)
 
-#define reg_rf_manual_irq_status    REG_ADDR16(0xc26)   //Rx buf 0 data received
-#define FLD_RF_MANUAL_IRQ_RX     BIT(2)
+//pwm tx dma
+#define reg_dma7_addr			REG_ADDR16(0xc18)
+#define reg_dma7_ctrl			REG_ADDR16(0xc1a)
+#define reg_dma7_size			REG_ADDR8(0xc1a)
+#define reg_dma7_mode			REG_ADDR8(0xc1b)
 
+#define reg_dma_t_addr			REG_ADDR16(0xc1c)
+#define reg_dma_t_size			REG_ADDR8(0xc1e)
 
-#define reg_dma_rx_rptr			REG_ADDR8(0xc28)
-#define reg_dma_rx_wptr			REG_ADDR8(0xc29)
-
-#define reg_dma_tx_rptr			REG_ADDR8(0xc2a)
-#define reg_dma_tx_wptr			REG_ADDR8(0xc2b)
-#define reg_dma_tx_fifo			REG_ADDR16(0xc2c)
 enum{
 	FLD_DMA_BUF_SIZE =			BIT_RNG(0,7),
 	FLD_DMA_WR_MEM =			BIT(8),
@@ -761,21 +787,6 @@ enum{
 	FLD_DMA_RPTR_SET =			BIT(6),
 };
 
-#define reg_dma_chn_en			REG_ADDR8(0xc20)
-#define reg_dma_chn_irq_msk		REG_ADDR8(0xc21)
-#define reg_dma_tx_rdy0			REG_ADDR8(0xc24)
-#define reg_dma_tx_rdy1			REG_ADDR8(0xc25)
-#define reg_dma_rx_rdy0			REG_ADDR8(0xc26)
-#define reg_dma_irq_src			reg_dma_rx_rdy0
-#define reg_dma_rx_rdy1			REG_ADDR8(0xc27)
-enum{
-	FLD_DMA_UART_RX =			BIT(0),		//  not sure ???
-	FLD_DMA_UART_TX =			BIT(1),
-	FLD_DMA_RF_RX =				BIT(2),		//  not sure ???
-	FLD_DMA_RF_TX =				BIT(3),
-};
-
-#define reg_dma0_addrHi			REG_ADDR8(0xc40)
 
 //  The default channel assignment
 #define reg_dma_uart_rx_addr	reg_dma0_addr
@@ -788,6 +799,51 @@ enum{
 #define reg_dma_rf_tx_addr		reg_dma3_addr
 #define reg_dma_rf_tx_ctrl		reg_dma3_ctrl
 
+#define reg_dma_pwm_addr		reg_dma7_addr
+#define reg_dma_pwm_ctrl		reg_dma7_ctrl
+
+
+#define reg_dma_chn_en			REG_ADDR8(0xc20)
+#define reg_dma_chn_irq_msk		REG_ADDR8(0xc21)
+#define reg_dma_tx_rdy0			REG_ADDR8(0xc24)
+#define reg_dma_rx_rdy0			REG_ADDR8(0xc26)
+#define reg_dma_rx_rdy1			REG_ADDR8(0xc27)
+#define reg_dma_irq_src			reg_dma_rx_rdy0
+enum{
+	FLD_DMA_CHN0 =	BIT(0),		FLD_DMA_UART_RX =	BIT(0),
+	FLD_DMA_CHN1 =	BIT(1),		FLD_DMA_UART_TX =	BIT(1),
+	FLD_DMA_CHN2 =	BIT(2),		FLD_DMA_RF_RX =		BIT(2),
+	FLD_DMA_CHN3 =	BIT(3),		FLD_DMA_RF_TX =		BIT(3),
+	FLD_DMA_CHN4 =	BIT(4),
+	FLD_DMA_CHN5 =	BIT(5),
+	FLD_DMA_CHN7 =	BIT(7),		FLD_DMA_PWM   =		BIT(7),
+};
+
+
+
+#define reg_dma_rx_rptr			REG_ADDR8(0xc28)
+#define reg_dma_rx_wptr			REG_ADDR8(0xc29)
+
+#define reg_dma_tx_rptr			REG_ADDR8(0xc2a)
+#define reg_dma_tx_wptr			REG_ADDR8(0xc2b)
+#define reg_dma_tx_fifo			REG_ADDR16(0xc2c)
+
+
+
+#define reg_dma0_addrHi			REG_ADDR8(0xc40)
+#define reg_dma1_addrHi			REG_ADDR8(0xc41)
+#define reg_dma2_addrHi			REG_ADDR8(0xc42)
+#define reg_dma3_addrHi			REG_ADDR8(0xc43)
+#define reg_dma4_addrHi			REG_ADDR8(0xc44)
+#define reg_dma5_addrHi			REG_ADDR8(0xc45)
+#define reg_dma_ta_addrHi		REG_ADDR8(0xc46)
+#define reg_dma_a3_addrHi		REG_ADDR8(0xc47)
+#define reg_dma7_addrHi			REG_ADDR8(0xc48)
+
+
+/****************************************************
+ aes regs struct: begin  0x540
+ *****************************************************/
 #define reg_aes_ctrl            REG_ADDR8(0x540)
 #define reg_aes_data            REG_ADDR32(0x548)
 #define reg_aes_key(key_id)     reg_aes_key##key_id
@@ -975,6 +1031,7 @@ enum{
 	FLD_IRQ_CMP_EN		  = 	BIT(23),
 
 	FLD_IRQ_EN =				BIT_RNG(24,31),
+	FLD_IRQ_ALL           =     0XFFFFFFFF,
 };
 #define reg_irq_en				REG_ADDR8(0x643)
 
@@ -1004,42 +1061,40 @@ enum {
  PWM regs define:  begin  0x780
  *****************************************************/
 #define reg_pwm_enable			REG_ADDR8(0x780)
-#define reg_pwm_clk				REG_ADDR8(0x781)
+#define reg_pwm0_enable			REG_ADDR8(0x781)
+#define reg_pwm_clk				REG_ADDR8(0x782)
 
-#define reg_pwm_mode			REG_ADDR8(0x782)
-enum{
-	PWM_NORMAL_MODE = 0x00,
-	PWM_COUNT_MODE  = 0x01,
-	PWM_IR_MODE     = 0x03,
-	PWM_IR_FIFO_MODE  = 0x13,
-};
+#define reg_pwm0_mode			REG_ADDR8(0x783)
 
-#define reg_pwm_invert			REG_ADDR8(0x783)
-#define reg_pwm_n_invert		REG_ADDR8(0x784)
-#define reg_pwm_pol				REG_ADDR8(0x785)
+
+#define reg_pwm_invert			REG_ADDR8(0x784)
+#define reg_pwm_n_invert		REG_ADDR8(0x785)
+#define reg_pwm_pol				REG_ADDR8(0x786)
 
 #define reg_pwm_phase(i)		REG_ADDR16(0x788 + (i << 1))
-#define reg_pwm_cycle(i)		REG_ADDR32(0x794 + (i << 2))
-#define reg_pwm_cmp(i)			REG_ADDR16(0x794 + (i << 2))
-#define reg_pwm_max(i)			REG_ADDR16(0x796 + (i << 2))
+#define reg_pwm_cycle(i)		REG_ADDR32(0x794 + (i << 2))   //<15:0>: TCMP 0~5  <31:16>: TMAX 0~5
+#define reg_pwm_cmp(i)			REG_ADDR16(0x794 + (i << 2))   //TCMP 0~5
+#define reg_pwm_max(i)			REG_ADDR16(0x796 + (i << 2))   //TMAX 0~5
 enum{
 	FLD_PWM_CMP  = 				BIT_RNG(0,15),
 	FLD_PWM_MAX  = 				BIT_RNG(16,31),
 };
 
 #define reg_pwm_pulse_num		REG_ADDR16(0x7ac)
+
 #define reg_pwm_irq_mask		REG_ADDR8(0x7b0)
 #define reg_pwm_irq_sta			REG_ADDR8(0x7b1)
+enum{
+	FLD_IRQ_PWM0_PNUM =					BIT(0),
+	FLD_IRQ_PWM0_IR_DMA_FIFO_DONE  =	BIT(1),
+	FLD_IRQ_PWM0_FRAME =				BIT(2),
+	FLD_IRQ_PWM1_FRAME =				BIT(3),
+	FLD_IRQ_PWM2_FRAME =				BIT(4),
+	FLD_IRQ_PWM3_FRAME =				BIT(5),
+	FLD_IRQ_PWM4_FRAME 	=				BIT(6),
+	FLD_IRQ_PWM5_FRAME =				BIT(7),
+};
 
-typedef enum{
-	FLD_IRQ_PWM0_PNUM =			BIT(0),
-	FLD_IRQ_PWM0_FRAME =		BIT(2),
-	FLD_IRQ_PWM1_FRAME =		BIT(3),
-	FLD_IRQ_PWM2_FRAME =		BIT(4),
-	FLD_IRQ_PWM3_FRAME =		BIT(5),
-	FLD_IRQ_PWM4_FRAME 	=		BIT(6),
-	FLD_IRQ_PWM5_FRAME =		BIT(7),
-}PWM_IRQ;
 
 
 #define reg_pwm0_fifo_mode_irq_mask		REG_ADDR8(0x7b2)
@@ -1051,11 +1106,8 @@ enum{
 
 
 
-#define reg_pwm0_waveform_carrier_en					REG_ADDR16(0x7cc)
-#define reg_pwm0_waveform_carrier_pulse_num(i)			REG_ADDR16(0x7d0 + (i<<1))
-
-
-#define reg_pwm0_fifo_input								REG_ADDR16(0x7f0)
+#define reg_pwm_tcmp0_shadow		REG_ADDR16(0x7c4)   //<15:0>: TCMP 0~5  <31:16>: TMAX 0~5
+#define reg_pwm_tmax0_shadow		REG_ADDR16(0x7c6)   //TCMP 0~5
 
 //////////////////////////////////////////////////////////////
 // DFIFO
@@ -1230,6 +1282,7 @@ enum{
 #define reg_pga_gain_l			REG_ADDR8(0xb5e)   //used to check current left  channel gain in analog mode auto regulate
 #define reg_pga_gain_r			REG_ADDR8(0xb5f)   //used to check current right channel gain in analog mode auto regulate
 #define reg_pga_man_speed		REG_ADDR8(0xb60)
+
 
 
 

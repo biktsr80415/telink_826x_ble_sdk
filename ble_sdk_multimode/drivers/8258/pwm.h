@@ -1,7 +1,7 @@
 #ifndef PWM_H_
 #define PWM_H_
 
-
+#include "register.h"
 
 typedef enum {
 	PWM0_ID = 0,
@@ -13,12 +13,32 @@ typedef enum {
 }pwm_id;
 
 
+typedef enum{
+	PWM_NORMAL_MODE   = 0x00,
+	PWM_COUNT_MODE    = 0x01,
+	PWM_IR_MODE       = 0x03,
+	PWM_IR_FIFO_MODE  = 0x07,
+	PWM_IR_DMA_FIFO_MODE  = 0x0F,
+}pwm_mode;
 
 
 
-static inline void pwm_set_mode(pwm_id id, int mode){
+typedef enum{
+	PWM_IRQ_PWM0_PNUM =					BIT(0),
+	PWM_IRQ_PWM0_IR_DMA_FIFO_DONE =		BIT(1),
+	PWM_IRQ_PWM0_FRAME =				BIT(2),
+	PWM_IRQ_PWM1_FRAME =				BIT(3),
+	PWM_IRQ_PWM2_FRAME =				BIT(4),
+	PWM_IRQ_PWM3_FRAME =				BIT(5),
+	PWM_IRQ_PWM4_FRAME 	=				BIT(6),
+	PWM_IRQ_PWM5_FRAME =				BIT(7),
+}PWM_IRQ;
+
+
+
+static inline void pwm_set_mode(pwm_id id, pwm_mode mode){
 	if(PWM0_ID == id){
-		reg_pwm_mode = mode;  //only PWM0 has count/IR/fifo IR mode
+		reg_pwm0_mode = mode;  //only PWM0 has count/IR/fifo IR mode
 	}
 }
 
@@ -28,26 +48,33 @@ static inline void pwm_set_clk(int system_clock_hz, int pwm_clk){
 }
 
 
-static inline void pwm_set_cmp(pwm_id id, u16 cmp_tick){
+static inline void pwm_set_cmp(pwm_id id, unsigned short cmp_tick){
 	reg_pwm_cmp(id) = cmp_tick;
 }
 
-static inline void pwm_set_cycle(pwm_id id, u16 cycle_tick){
+static inline void pwm_set_cycle(pwm_id id, unsigned short cycle_tick){
 	reg_pwm_max(id) = cycle_tick;
 }
 
 
-static inline void pwm_set_cycle_and_duty(pwm_id id, u16 cycle_tick, u16 cmp_tick){
+static inline void pwm_set_cycle_and_duty(pwm_id id, unsigned short cycle_tick, unsigned short cmp_tick){
 	reg_pwm_cycle(id) = MASK_VAL(FLD_PWM_CMP, cmp_tick, FLD_PWM_MAX, cycle_tick);
 }
 
 
-static inline void pwm_set_phase(pwm_id id, u16 phase){
+static inline void pwm_set_pwm0_shadow_cycle_and_duty(unsigned short cycle_tick, unsigned short cmp_tick)
+{
+	reg_pwm_tcmp0_shadow = cmp_tick;
+	reg_pwm_tmax0_shadow = cycle_tick;
+}
+
+
+static inline void pwm_set_phase(pwm_id id, unsigned short phase){
 	reg_pwm_phase(id) = phase;
 }
 
 
-static inline void pwm_set_pulse_num(pwm_id id, u16 pulse_num){
+static inline void pwm_set_pulse_num(pwm_id id, unsigned short pulse_num){
 	if(PWM0_ID == id){
 		reg_pwm_pulse_num = pulse_num;
 	}
@@ -55,11 +82,21 @@ static inline void pwm_set_pulse_num(pwm_id id, u16 pulse_num){
 }
 
 static inline void pwm_start(pwm_id id){
-	BM_SET(reg_pwm_enable, BIT(id));
+	if(PWM0_ID == id){
+		BM_SET(reg_pwm0_enable, BIT(0));
+	}
+	else{
+		BM_SET(reg_pwm_enable, BIT(id));
+	}
 }
 
 static inline void pwm_stop(pwm_id id){
-	BM_CLR(reg_pwm_enable, BIT(id));
+	if(PWM0_ID == id){
+		BM_CLR(reg_pwm0_enable, BIT(0));
+	}
+	else{
+		BM_CLR(reg_pwm_enable, BIT(id));
+	}
 }
 
 //revert PWMx
@@ -100,80 +137,47 @@ static inline void pwm_clear_interrupt_status( PWM_IRQ irq){
 }
 
 
-typedef enum{
-	WAVEFORM0_ID = 0x00,
-	WAVEFORM1_ID = 0x01,
-	WAVEFORM2_ID = 0x02,
-	WAVEFORM3_ID = 0x03,
-	WAVEFORM4_ID = 0x04,
-	WAVEFORM5_ID = 0x05,
-	WAVEFORM6_ID = 0x06,
-	WAVEFORM7_ID = 0x07,
-}WAVEFORM_ID;
+
+
+
+
+
+
+
+
+/**********************************************************************************************
+ *
+ *     PWM FIFO DMA MODE
+ *
+ *********************************************************************************************/
 
 
 typedef enum{
-	WAVEFORM0_TAIL = 0x00,
-	WAVEFORM0_HEAD = 0x01,
-	WAVEFORM1_TAIL = 0x02,
-	WAVEFORM1_HEAD = 0x03,
-	WAVEFORM2_TAIL = 0x04,
-	WAVEFORM2_HEAD = 0x05,
-	WAVEFORM3_TAIL = 0x06,
-	WAVEFORM3_HEAD = 0x07,
-	WAVEFORM4_TAIL = 0x08,
-	WAVEFORM4_HEAD = 0x09,
-	WAVEFORM5_TAIL = 0x0a,
-	WAVEFORM5_HEAD = 0x0b,
-	WAVEFORM6_TAIL = 0x0c,
-	WAVEFORM6_HEAD = 0x0d,
-	WAVEFORM7_TAIL = 0x0e,
-	WAVEFORM7_HEAD = 0x0f,
-}WAVEFORM_TypeDef;
+	PWM0_PULSE_NORMAL =		0,       // duty cycle and period from TCMP0/TMAX0 					 0x794~0x797
+	PWM0_PULSE_SHADOW =		BIT(14), // duty cycle and period from TCMP0_SHADOW / TMAX0_SHADOW   0x7c4~0x7c7
+}Pwm0Pulse_SelectDef;
 
 
-
-
-
-static inline void pwm_set_waveform_carrier_en(WAVEFORM_TypeDef wf_type, int en)
+//carrier_en: must 1 or 0
+static inline unsigned short pwm_config_dma_fifo_waveform(int carrier_en, Pwm0Pulse_SelectDef pulse,  unsigned short pulse_num)
 {
-	u16 mask = BIT((wf_type^0x01));
-	if(en){
-		BM_SET(reg_pwm0_waveform_carrier_en, mask);
-	}
-	else{
-		BM_CLR(reg_pwm0_waveform_carrier_en, mask);
-	}
-}
-
-
-static inline void pwm_config_waveform_carrier_num(WAVEFORM_TypeDef wf_type, u16 carrier_num)
-{
-	reg_pwm0_waveform_carrier_pulse_num(wf_type) = carrier_num;
+	return  ( carrier_en<<15 | pulse | (pulse_num & 0x3fff) );
 }
 
 
 
-static inline void pwm_set_waveform_input_1(WAVEFORM_ID wf_id)
+static inline void pwm_set_dma_address(void * pdat)
 {
-	reg_pwm0_fifo_input = (0xfff0 | wf_id);
+	reg_dma_pwm_addr = (unsigned short)((unsigned int)pdat);
+	reg_dma7_addrHi = 0x04;
+	reg_dma_pwm_ctrl  &= ~FLD_DMA_WR_MEM;
 }
 
-static inline void pwm_set_waveform_input_2(WAVEFORM_ID wf_id1, WAVEFORM_ID wf_id2)
-{
-	reg_pwm0_fifo_input = (0xff00 | wf_id2<<4 | wf_id1);
-}
 
-static inline void pwm_set_waveform_input_3(WAVEFORM_ID wf_id1, WAVEFORM_ID wf_id2, WAVEFORM_ID wf_id3)
+static inline void pwm_start_dma_ir_sending(void)
 {
-	reg_pwm0_fifo_input = (0xf000 | wf_id3<<8 | wf_id2<<4 | wf_id1);
+	reg_dma_tx_rdy0 |= FLD_DMA_PWM;
 }
-
-static inline void pwm_set_waveform_input_4(WAVEFORM_ID wf_id1, WAVEFORM_ID wf_id2, WAVEFORM_ID wf_id3, WAVEFORM_ID wf_id4)
-{
-	reg_pwm0_fifo_input = (wf_id4<<12 | wf_id3<<8 | wf_id2<<4 | wf_id1);
-}
-
 
 
 

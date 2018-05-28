@@ -5,6 +5,7 @@
  *  @brief  Definition for Device info
  */
 #include "drivers.h"
+#include "tl_common.h"
 
 #define  MAX_DEV_NAME_LEN 				18
 

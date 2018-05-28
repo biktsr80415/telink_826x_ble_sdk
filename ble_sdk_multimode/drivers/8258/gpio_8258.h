@@ -49,10 +49,10 @@ typedef enum{
 		GPIO_PD6 = 0x300 | BIT(6),
 		GPIO_PD7 = 0x300 | BIT(7),
 
-		GPIO_PE0 = 0x400 | BIT(4),  GPIO_MSDO=GPIO_PE0,
-		GPIO_PE1 = 0x400 | BIT(5),  GPIO_MCLK=GPIO_PE1,
-		GPIO_PE2 = 0x400 | BIT(6),  GPIO_MSCN=GPIO_PE2,
-		GPIO_PE3 = 0x400 | BIT(7),  GPIO_MSDI=GPIO_PE3,
+		GPIO_PE0 = 0x400 | BIT(0),  GPIO_MSDO=GPIO_PE0,
+		GPIO_PE1 = 0x400 | BIT(1),  GPIO_MCLK=GPIO_PE1,
+		GPIO_PE2 = 0x400 | BIT(2),  GPIO_MSCN=GPIO_PE2,
+		GPIO_PE3 = 0x400 | BIT(3),  GPIO_MSDI=GPIO_PE3,
 
 }GPIO_PinTypeDef;
 
@@ -72,6 +72,7 @@ typedef enum{
 	AS_USB		= 10,
 	AS_ADC		= 11,
 	AS_CMP		= 12,
+	AS_ATS		= 13,
 
 	AS_PWM0 	= 20,
 	AS_PWM1		= 21,
@@ -95,6 +96,13 @@ typedef enum{
 	Level_High,
 }GPIO_LevelTypeDef;
 
+
+
+
+typedef enum{
+	pol_rising = 0,
+	pol_falling,
+}GPIO_PolTypeDef;
 
 
 
@@ -137,9 +145,9 @@ static inline int gpio_is_input_en(GPIO_PinTypeDef pin)
 	return BM_IS_SET(reg_gpio_ie(pin), pin & 0xff);
 }
 
-static inline void gpio_set_output_en(GPIO_PinTypeDef pin, u32 value)
+static inline void gpio_set_output_en(GPIO_PinTypeDef pin, unsigned int value)
 {
-	u8	bit = pin & 0xff;
+	unsigned char	bit = pin & 0xff;
 	if(!value){
 		BM_SET(reg_gpio_oen(pin), bit);
 	}else{
@@ -152,9 +160,9 @@ static inline void gpio_set_output_en(GPIO_PinTypeDef pin, u32 value)
 
 
 
-static inline void gpio_write(GPIO_PinTypeDef pin, u32 value)
+static inline void gpio_write(GPIO_PinTypeDef pin, unsigned int value)
 {
-	u8	bit = pin & 0xff;
+	unsigned char	bit = pin & 0xff;
 	if(value){
 		BM_SET(reg_gpio_out(pin), bit);
 	}else{
@@ -168,12 +176,12 @@ static inline void gpio_toggle(GPIO_PinTypeDef pin)
 }
 
 
-static inline u32 gpio_read(GPIO_PinTypeDef pin)
+static inline unsigned int gpio_read(GPIO_PinTypeDef pin)
 {
 	return BM_IS_SET(reg_gpio_in(pin), pin & 0xff);
 }
 
-static inline u32 gpio_read_cache(GPIO_PinTypeDef pin, u8 *p)
+static inline unsigned int gpio_read_cache(GPIO_PinTypeDef pin, unsigned char *p)
 {
 	return p[pin>>8] & (pin & 0xff);
 }
@@ -190,9 +198,9 @@ static inline void gpio_read_all(unsigned char *p)
 
 
 
-static inline void gpio_set_interrupt_pol(GPIO_PinTypeDef pin, u32 falling)
+static inline void gpio_set_interrupt_pol(GPIO_PinTypeDef pin, GPIO_PolTypeDef falling)
 {
-	u8	bit = pin & 0xff;
+	unsigned char	bit = pin & 0xff;
 	if(falling){
 		BM_SET(reg_gpio_pol(pin), bit);
 	}else{
@@ -204,7 +212,7 @@ static inline void gpio_set_interrupt_pol(GPIO_PinTypeDef pin, u32 falling)
 
 static inline void gpio_en_interrupt(GPIO_PinTypeDef pin, int en)   // reg_irq_mask: FLD_IRQ_GPIO_EN
 {
-	u8	bit = pin & 0xff;
+	unsigned char	bit = pin & 0xff;
 	if(en){
 		BM_SET(reg_gpio_irq_wakeup_en(pin), bit);
 	}
@@ -213,9 +221,9 @@ static inline void gpio_en_interrupt(GPIO_PinTypeDef pin, int en)   // reg_irq_m
 	}
 }
 
-static inline void gpio_set_interrupt(GPIO_PinTypeDef pin, u32 falling)
+static inline void gpio_set_interrupt(GPIO_PinTypeDef pin, GPIO_PolTypeDef falling)
 {
-	u8	bit = pin & 0xff;
+	unsigned char	bit = pin & 0xff;
 	BM_SET(reg_gpio_irq_wakeup_en(pin), bit);
 	if(falling){
 		BM_SET(reg_gpio_pol(pin), bit);
@@ -227,7 +235,7 @@ static inline void gpio_set_interrupt(GPIO_PinTypeDef pin, u32 falling)
 
 static inline void gpio_en_interrupt_risc0(GPIO_PinTypeDef pin, int en)  // reg_irq_mask: FLD_IRQ_GPIO_RISC0_EN
 {
-	u8	bit = pin & 0xff;
+	unsigned char	bit = pin & 0xff;
 	if(en){
 		BM_SET(reg_gpio_irq_risc0_en(pin), bit);
 	}
@@ -236,8 +244,8 @@ static inline void gpio_en_interrupt_risc0(GPIO_PinTypeDef pin, int en)  // reg_
 	}
 }
 
-static inline void gpio_set_interrupt_risc0(GPIO_PinTypeDef pin, u32 falling){
-	u8	bit = pin & 0xff;
+static inline void gpio_set_interrupt_risc0(GPIO_PinTypeDef pin, GPIO_PolTypeDef falling){
+	unsigned char	bit = pin & 0xff;
 	BM_SET(reg_gpio_irq_risc0_en(pin), bit);
 	if(falling){
 		BM_SET(reg_gpio_pol(pin), bit);
@@ -248,7 +256,7 @@ static inline void gpio_set_interrupt_risc0(GPIO_PinTypeDef pin, u32 falling){
 
 static inline void gpio_en_interrupt_risc1(GPIO_PinTypeDef pin, int en)  // reg_irq_mask: FLD_IRQ_GPIO_RISC1_EN
 {
-	u8	bit = pin & 0xff;
+	unsigned char	bit = pin & 0xff;
 	if(en){
 		BM_SET(reg_gpio_irq_risc1_en(pin), bit);
 	}
@@ -257,9 +265,9 @@ static inline void gpio_en_interrupt_risc1(GPIO_PinTypeDef pin, int en)  // reg_
 	}
 }
 
-static inline void gpio_set_interrupt_risc1(GPIO_PinTypeDef pin, u32 falling)
+static inline void gpio_set_interrupt_risc1(GPIO_PinTypeDef pin, GPIO_PolTypeDef falling)
 {
-	u8	bit = pin & 0xff;
+	unsigned char	bit = pin & 0xff;
 	BM_SET(reg_gpio_irq_risc1_en(pin), bit);
 	if(falling){
 		BM_SET(reg_gpio_pol(pin), bit);
@@ -277,5 +285,5 @@ static inline void gpio_set_interrupt_risc1(GPIO_PinTypeDef pin, u32 falling)
 void gpio_init(void);
 void gpio_set_wakeup(GPIO_PinTypeDef pin, GPIO_LevelTypeDef level, int en);
 void gpio_setup_up_down_resistor(GPIO_PinTypeDef gpio, GPIO_PullTypeDef up_down);
-void gpio_set_input_en(GPIO_PinTypeDef pin, u32 value);
+void gpio_set_input_en(GPIO_PinTypeDef pin, unsigned int value);
 void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func);

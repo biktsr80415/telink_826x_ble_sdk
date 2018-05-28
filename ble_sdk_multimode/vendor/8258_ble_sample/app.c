@@ -1,14 +1,11 @@
 #include "tl_common.h"
 #include "drivers.h"
+#include "stack/ble/ble.h"
 
 #include "../common/keyboard.h"
-#include "../../stack/ble/ll/ll.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
-#include "../../stack/ble/trace.h"
-#include "../../stack/ble/service/ble_ll_ota.h"
-#include "../../stack/ble/blt_config.h"
-#include "../../stack/ble/ble_smp.h"
+
 
 
 #define BLE_REMOTE_PM_ENABLE				1

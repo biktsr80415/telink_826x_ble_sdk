@@ -1,7 +1,5 @@
 #include "tl_common.h"
-
-
-#include <stack/ble/ble_common.h>
+#include "stack/ble/ble.h"
 
 
 

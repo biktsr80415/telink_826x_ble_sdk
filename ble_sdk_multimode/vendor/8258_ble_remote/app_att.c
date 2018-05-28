@@ -1,7 +1,6 @@
 #include "tl_common.h"
 
-
-#include <stack/ble/ble_common.h>
+#include "stack/ble/ble.h"
 
 #if (__PROJECT_8258_BLE_REMOTE__)
 
