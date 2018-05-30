@@ -23,3 +23,4 @@
 #include "drivers/8258/usbhw.h"
 #include "drivers/8258/usbkeycode.h"
 #include "drivers/8258/register.h"
+#include "drivers/8258/dfifo.h"

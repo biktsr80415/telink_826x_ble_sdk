@@ -70,28 +70,49 @@ enum{
 
 
 
-#define DEBUG_GPIO_ENABLE							1
+#define DEBUG_GPIO_ENABLE							0
 
 #if(DEBUG_GPIO_ENABLE)
 	//define debug GPIO here according to your hardware
+#if 0
+	#define GPIO_CHN0							GPIO_PB4
+	#define GPIO_CHN1							GPIO_PB5
+	#define GPIO_CHN2							GPIO_PB6
+	#define GPIO_CHN3							GPIO_PB7
+	#define GPIO_CHN4							GPIO_PB0
+	#define GPIO_CHN5							GPIO_PB1
+	#define GPIO_CHN6							GPIO_PC2
+	#define GPIO_CHN7							GPIO_PC3
 
-	#define GPIO_CHN0							GPIO_PD2
-	#define GPIO_CHN1							GPIO_PD3
-	#define GPIO_CHN2							GPIO_PD4
-	#define GPIO_CHN3							GPIO_PD5
-	#define GPIO_CHN4							GPIO_PB4
-	#define GPIO_CHN5							GPIO_PB5
-	#define GPIO_CHN6							GPIO_PB6
-	#define GPIO_CHN7							GPIO_PB7
-
-	#define PD2_OUTPUT_ENABLE					1
-	#define PD3_OUTPUT_ENABLE					1
-	#define PD4_OUTPUT_ENABLE					1
-	#define PD5_OUTPUT_ENABLE					1
 	#define PB4_OUTPUT_ENABLE					1
 	#define PB5_OUTPUT_ENABLE					1
 	#define PB6_OUTPUT_ENABLE					1
 	#define PB7_OUTPUT_ENABLE					1
+	#define PB0_OUTPUT_ENABLE					1
+	#define PB1_OUTPUT_ENABLE					1
+	#define PC2_OUTPUT_ENABLE					1
+	#define PC3_OUTPUT_ENABLE					1
+#else
+	#define GPIO_CHN0							GPIO_PD0
+	#define GPIO_CHN1							GPIO_PD1
+	#define GPIO_CHN2							GPIO_PD2
+	#define GPIO_CHN3							GPIO_PD3
+	#define GPIO_CHN4							GPIO_PD4
+	#define GPIO_CHN5							GPIO_PD5
+	#define GPIO_CHN6							GPIO_PD6
+	#define GPIO_CHN7							GPIO_PD7
+
+	#define PD0_OUTPUT_ENABLE					1
+	#define PD1_OUTPUT_ENABLE					1
+	#define PD2_OUTPUT_ENABLE					1
+	#define PD3_OUTPUT_ENABLE					1
+	#define PD4_OUTPUT_ENABLE					1
+	#define PD5_OUTPUT_ENABLE					1
+	#define PD6_OUTPUT_ENABLE					1
+	#define PD7_OUTPUT_ENABLE					1
+#endif
+
+
 
 
 	#define DBG_CHN0_LOW		gpio_write(GPIO_CHN0, 0)

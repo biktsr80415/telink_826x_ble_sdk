@@ -3,6 +3,12 @@
 
 #include "bsp.h"
 
+/*******************************************************************************************************************************
+ *
+ *									Digital  Register Table
+ *
+ ******************************************************************************************************************************/
+
 /****************************************************
   secondary i2c regs struct: begin  addr : 0x00
  *****************************************************/
@@ -1120,56 +1126,33 @@ enum{
 /****************************************************
  dfifo regs define:  begin  0xb00
  *****************************************************/
-#define reg_dfifo0_buf			REG_ADDR32(0xb00)
-#define reg_dfifo1_buf			REG_ADDR32(0xb04)
-#define reg_dfifo2_buf			REG_ADDR32(0xb08)
-enum{
-	FLD_DFIFO_BUF_ADDR =		BIT_RNG(0,15),
-	FLD_DFIFO_BUF_SIZE =		BIT_RNG(16,23),
-};
-
 #define reg_dfifo0_addr			REG_ADDR16(0xb00)
-#define reg_dfifo0_addr2		REG_ADDR8(0xb03)
-
 #define reg_dfifo0_size			REG_ADDR8(0xb02)
+#define reg_dfifo0_addHi		REG_ADDR8(0xb03)  //default 0x04, no need set
+
+#define reg_dfifo1_addr			REG_ADDR16(0xb04)
+#define reg_dfifo1_size			REG_ADDR8(0xb06)
+#define reg_dfifo1_addHi		REG_ADDR8(0xb07)  //default 0x04, no need set
+
+//misc channel only use dfifo2
+#define reg_dfifo2_addr			REG_ADDR16(0xb08)
+#define reg_dfifo2_size			REG_ADDR8(0xb0a)
+#define reg_dfifo2_addHi		REG_ADDR8(0xb0b)  //default 0x04, no need set
+
+#define reg_dfifo_audio_addr		reg_dfifo0_addr
+#define reg_dfifo_audio_size		reg_dfifo0_size
+
+#define reg_dfifo_misc_chn_addr		reg_dfifo2_addr
+#define reg_dfifo_misc_chn_size		reg_dfifo2_size
 
 
-
-#define reg_dfifo_ana_in		REG_ADDR8(0xb03)
-enum{
-	FLD_DFIFO_MIC0_RISING_EDGE = BIT(0),
-	FLD_DFIFO_MIC_ADC_IN 	= BIT(1),
-	FLD_DFIFO_EN               = BIT(4),
-	FLD_DFIFO_WPTR_EN          = BIT(5),
-	FLD_DFIFO_WPTR_CLR         = BIT(6),
-	FLD_DFIFO_AUD_INPUT_MONO =	BIT(4) | BIT(5),
-//	FLD_DFIFO_AUD_INPUT_BYPASS = BIT(5),
-};
-enum{
-	REG_AUD_INPUT_SEL_USB = 0,
-	REG_AUD_INPUT_SEL_I2S = 1,
-	REG_AUD_INPUT_SEL_ADC = 2,
-	REG_AUD_INPUT_SEL_DMIC = 3,
-};
-
-#define reg_dfifo_scale			REG_ADDR8(0xb04)
-enum{
-	FLD_DFIFO2_DEC_CIC =		BIT_RNG(0,3),
-	FLD_DFIFO0_DEC_SCALE =		BIT_RNG(4,6),
-};
+#define reg_dfifo0_l_level		REG_ADDR8(0xb0c)  //dfifo0  low int threshold(wptr - rptr)
+#define reg_dfifo0_h_level		REG_ADDR8(0xb0d)  //dfifo0 high int threshold(wptr - rptr)
+#define reg_dfifo1_h_level		REG_ADDR8(0xb0e)  //dfifo1 high int threshold(wptr - rptr)
+#define reg_dfifo2_h_level		REG_ADDR8(0xb0f)  //dfifo2 high int threshold(wptr - rptr)
 
 
-#define reg_aud_vol_step        REG_ADDR8(0xb0b)
-#define reg_aud_tick_interval   REG_ADDR16(0xb0c)
-enum {
-	FLD_AUD_ALC_VOL_TICK_L    = BIT_RNG(0,7),
-	FLD_AUD_ALC_VOL_TICK_H    = BIT_RNG(8,13),
-};
-
-
-
-#define	reg_audio_dfifo_mode	REG_ADDR8(0xb10)
-#define	REG_AUDIO_DFIFO_MODE    reg_audio_dfifo_mode
+#define	reg_dfifo_mode			REG_ADDR8(0xb10)
 enum{
 	FLD_AUD_DFIFO0_IN 		= BIT(0),
 	FLD_AUD_DFIFO1_IN 		= BIT(1),
@@ -1182,8 +1165,8 @@ enum{
 };
 
 
-#define	reg_audio_dfifo_ain		REG_ADDR8(0xb11)
-#define	REG_AUDIO_DFIFO_AIN		reg_audio_dfifo_ain
+
+#define	reg_dfifo_ain			REG_ADDR8(0xb11)
 enum{
 	FLD_AUD_DMIC0_DATA_IN_RISING_EDGE = BIT(0),
 	FLD_AUD_DMIC1_DATA_IN_RISING_EDGE = BIT(1),
@@ -1195,12 +1178,12 @@ enum{
 
 };
 
-enum{
+enum{  //core_b11<0> <1>  audio dmic_n  rising/falling edge
 	AUDIO_DMIC_DATA_IN_RISING_EDGE 		= 0,
 	AUDIO_DMIC_DATA_IN_FALLING_EDGE 	= 1,
 };
 
-enum{
+enum{  //core_b11<3:2>  audio input select
 	AUDIO_INPUT_USB  = 0x00,
 	AUDIO_INPUT_I2S  = 0x01,
 	AUDIO_INPUT_AMIC = 0x02,
@@ -1209,33 +1192,52 @@ enum{
 
 
 
-#define reg_audio_dec_ratio		REG_ADDR8(0xb12)
-#define REG_AUDIO_DEC_RATIO  	reg_audio_dec_ratio
+#define reg_dfifo_dec_ratio		REG_ADDR8(0xb12)
+
+#define reg_dfifo_irq_status	REG_ADDR8(0xb13)
+
+#define reg_dfifo0_rptr			REG_ADDR16(0xb14)
+#define reg_dfifo0_wptr			REG_ADDR16(0xb16)
+
+#define reg_dfifo1_rptr			REG_ADDR16(0xb18)
+#define reg_dfifo1_wptr			REG_ADDR16(0xb1a)
+
+#define reg_dfifo2_rptr			REG_ADDR16(0xb1c)
+#define reg_dfifo2_wptr			REG_ADDR16(0xb1e)
 
 
-
-
-
-#define reg_audio_wr_ptr		REG_ADDR16(0xb16)
-#define reg_mic_ptr				reg_audio_wr_ptr
-
+#define reg_audio_wptr			reg_dfifo0_wptr
 static inline unsigned short get_mic_wr_ptr (void)
 {
-	return reg_audio_wr_ptr >>1;
+	return reg_audio_wptr >>1;
 }
 
+#define reg_dfifo0_num			REG_ADDR16(0xb20)
+#define reg_dfifo1_num			REG_ADDR16(0xb24)
+#define reg_dfifo2_num			REG_ADDR16(0xb28)
 
+#define reg_dfifo0_manual		REG_ADDR8(0xb2c)
+enum{
+	FLD_DFIFO_MANUAL_MODE_EN	= BIT(0),
+};
+
+#define reg_dfifo0_man_dat		REG_ADDR32(0xb30)
+
+
+
+#define	reg_alc_sft				REG_ADDR8(0xb34)
 
 #define	reg_audio_dec_mode		REG_ADDR8(0xb35)
-#define	REG_AUDIO_DEC_MODE		reg_audio_dec_mode
 enum{
 	FLD_AUD_LNR_VALID_SEL	= BIT(0),
-	FLD_AUD_CIC_MODE  	= BIT(3)
+	FLD_AUD_CIC_MODE  		= BIT(3)
 };
 
 
-#define	reg_audio_alc_hpf_lpf_ctrl	 REG_ADDR8(0xb40)
-#define reg_aud_hpf_alc				 reg_audio_alc_hpf_lpf_ctrl
+#define	reg_adc_mul				REG_ADDR8(0xb36)
+#define	reg_adc_bias			REG_ADDR8(0xb37)
+
+#define	reg_aud_alc_hpf_lpf_ctrl	 REG_ADDR8(0xb40)
 enum {
 	FLD_AUD_IN_HPF_SFT		=	BIT_RNG(0,3),
 	FLD_AUD_IN_HPF_BYPASS	=	BIT(4),
@@ -1256,35 +1258,101 @@ enum{
 };
 
 
-#define reg_aud_alc_vol_h			REG_ADDR8(0xb43)
+#define reg_alc_vol_h				REG_ADDR8(0xb43)
 enum{
 	FLD_AUD_ALC_MAX_VOLUME_IN_DIGITAL_MODE 	= BIT_RNG(0,5),
 	FLD_AUD_ALC_MAX_PGA_IN_ANALOG_MODE	    = BIT_RNG(0,6),
 };
 
 
+#define reg_alc_vol_th_h			REG_ADDR16(0xb44)
+#define reg_alc_vol_th_l			REG_ADDR16(0xb46)
+#define reg_alc_vol_thn				REG_ADDR16(0xb48)
+#define reg_alc_vad_thn				REG_ADDR16(0xb4a)
+
+#define reg_alc_vol_step			REG_ADDR8(0xb4c)
+
+#define reg_alc_vol_l				REG_ADDR8(0xb4d)
+#define reg_alc_vol_r				REG_ADDR8(0xb4e)
+
+#define reg_alc_peak_tick			REG_ADDR16(0xb50)
+
+#define reg_alc_dec_tick			REG_ADDR8(0xb52)
+#define reg_alc_noi_tick			REG_ADDR8(0xb53)
 
 
-
-#define reg_aud_alc_cfg			REG_ADDR8(0xb54)   //default 0x00, will be 0x02 after ana_34 set to 0x80
+#define reg_aud_alc_cfg				REG_ADDR8(0xb54)   //default 0x00, will be 0x02 after ana_34 set to 0x80
 enum{
 	FLD_AUD_ALC_ANALOG_MODE_EN 		= BIT(0),    //alc mode select:   1 for analog mode;  0 for digital mode
 	FLD_AUD_ALC_NOISE_EN 			= BIT(1),
+};
+
+#define reg_alc_coef_iir			REG_ADDR8(0xb55)
+#define reg_alc_dat_mask			REG_ADDR8(0xb56)
+#define reg_alc_inc_spd				REG_ADDR8(0xb57)
+#define reg_alc_inc_max				REG_ADDR8(0xb58)
+#define reg_alc_dec_spd				REG_ADDR8(0xb59)
+#define reg_alc_dec_max				REG_ADDR8(0xb5a)
+#define reg_alc_noi_spd				REG_ADDR8(0xb5b)
+#define reg_alc_noi_max				REG_ADDR8(0xb5c)
+
+#define reg_pga_gain_init			REG_ADDR8(0xb5d)
+#define reg_pga_gain_l				REG_ADDR8(0xb5e)   //used to check current left  channel gain in analog mode auto regulate
+#define reg_pga_gain_r				REG_ADDR8(0xb5f)   //used to check current right channel gain in analog mode auto regulate
+#define reg_pga_man_speed			REG_ADDR8(0xb60)
+
+#define reg_pga_man_target_l		REG_ADDR8(0xb61)
+#define reg_pga_value_l				REG_ADDR8(0xb62)
+#define reg_pga_fix_value			REG_ADDR8(0xb63)
+#define reg_pga_r_l					REG_ADDR8(0xb64)
+#define reg_pga_man_target_r		REG_ADDR8(0xb65)
+#define reg_pga_value_r				REG_ADDR8(0xb66)
 
 
+
+
+
+
+
+
+
+
+/*******************************************************************************************************************************
+ *
+ *									Analog  Register Table
+ *
+ ******************************************************************************************************************************/
+
+/////////////////////////////////////////////////////////////////////////////////////
+//   analog register table 3.3 V
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+
+//afe_0x06
+//    BIT(4):    Power down Bandgap in PLL
+//    	1: Power down;     0: Power up
+#define anareg_06					0x06
+enum{
+	FLD_PLL_BG_POWER_DOWN = BIT(4),
 };
 
 
 
-
-
-#define reg_pga_gain_init		REG_ADDR8(0xb5d)
-#define reg_pga_gain_l			REG_ADDR8(0xb5e)   //used to check current left  channel gain in analog mode auto regulate
-#define reg_pga_gain_r			REG_ADDR8(0xb5f)   //used to check current right channel gain in analog mode auto regulate
-#define reg_pga_man_speed		REG_ADDR8(0xb60)
+/////////////////////////////////////////////////////////////////////////////////////
+//   analog register table 1.8 V
+/////////////////////////////////////////////////////////////////////////////////////
 
 
 
+#define anareg_82					0x82
+enum{
+	FLD_DCCC_DOUBLER_POWER_DOWN	  = BIT(3),
+	FLD_CLK_48M_TO_RX_EN 		  = BIT(4),
+	FLD_CLK_48M_TO_DIG_EN 		  = BIT(5),
+	FLD_CLK_24M_TO_SAR_EN 		  = BIT(6),
+	FLD_CLK_48M_TO_CAL_DIG_MAN_EN = BIT(7),
+};
 
 
 

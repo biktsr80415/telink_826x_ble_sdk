@@ -1,7 +1,7 @@
 #include "tl_common.h"
 #include "drivers.h"
 
-#if (__PROJECT_8255_DRIVER_TEST__)
+
 
 extern my_fifo_t hci_rx_fifo;
 extern void user_init();
@@ -50,9 +50,18 @@ int main (void) {
 
 	cpu_wakeup_init();
 
-	clock_init();
+	audio_amic_init(AUDIO_16K);
+//	write_reg8(0x40000, 0x11);
+//	while(1);
+//	write_reg8(0x40000, 0x22);
 
-	rf_drv_init();
+	#if (CLOCK_SYS_CLOCK_HZ == 16000000)
+		clock_init(SYS_CLK_16M_Crystal);
+	#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
+		clock_init(SYS_CLK_24M_Crystal);
+	#endif
+
+	rf_drv_init(RF_MODE_BLE_1M);
 
 	gpio_init();
 
@@ -69,4 +78,3 @@ int main (void) {
 
 
 
-#endif   //end of __PROJECT_ MSSOC_DRIVER_TEST__

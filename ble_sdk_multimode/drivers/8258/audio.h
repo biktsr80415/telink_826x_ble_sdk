@@ -99,18 +99,7 @@ enum{
 									   *(volatile unsigned char  *)0x8005b0 |= 0x01;\
 								    }while(0)
 
-/**
- * @brief     configure the mic buffer's address and size
- * @param[in] pbuff - the first address of SRAM buffer to store MIC data.
- * @param[in] size_buff - the size of pbuff.
- * @return    none
- */
-//void audio_config_mic_buf(signed short* pbuff,unsigned char size_buff);
-static inline void audio_config_mic_buf(signed short* pbuff,unsigned int size_buff)
-{
-	reg_dfifo0_addr = pbuff;
-	reg_dfifo0_size = (size_buff>>4)-1;
-}
+
 /**
  * @brief     configure the SDM buffer's address and size
  * @param[in] pbuff - the first address of buffer SDM read data from.

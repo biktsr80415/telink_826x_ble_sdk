@@ -2,8 +2,7 @@
 #include "drivers.h"
 
 
-
-#if (__PROJECT_8255_DRIVER_TEST__)
+extern void app_timer_test_init(void);
 
 extern void app_i2c_test_init(void);
 extern void app_i2c_test_start(void);
@@ -98,4 +97,3 @@ void main_loop (void)
 
 
 
-#endif  // end of __PROJECT_ MSSOC_DRIVER_TEST__

@@ -8,17 +8,18 @@ int timer1_irq_cnt = 0;
 int timer2_irq_cnt = 0;
 
 
-void app_timer_test_init(void){
+void app_timer_test_init(void)
+{
 	//timer0 10ms interval irq
 	reg_irq_mask |= FLD_IRQ_TMR0_EN;
-	reg_tmr0_tick = 0; //claer counter
+	reg_tmr0_tick = 0; //clear counter
 	reg_tmr0_capt = 10 * CLOCK_SYS_CLOCK_1MS;
 	reg_tmr_sta = FLD_TMR_STA_TMR0; //clear irq status
 	reg_tmr_ctrl |= FLD_TMR0_EN;  //start timer
 
 	//timer1 15ms interval irq
 	reg_irq_mask |= FLD_IRQ_TMR1_EN;
-	reg_tmr1_tick = 0; //claer counter
+	reg_tmr1_tick = 0; //clear counter
 	reg_tmr1_capt = 15 * CLOCK_SYS_CLOCK_1MS;
 	reg_tmr_sta = FLD_TMR_STA_TMR1; //clear irq status
 	reg_tmr_ctrl |= FLD_TMR1_EN;  //start timer
@@ -26,7 +27,7 @@ void app_timer_test_init(void){
 
 	//timer1 20ms interval irq
 	reg_irq_mask |= FLD_IRQ_TMR2_EN;
-	reg_tmr2_tick = 0; //claer counter
+	reg_tmr2_tick = 0; //clear counter
 	reg_tmr2_capt = 20 * CLOCK_SYS_CLOCK_1MS;
 	reg_tmr_sta = FLD_TMR_STA_TMR2; //clear irq status
 	reg_tmr_ctrl |= FLD_TMR2_EN;  //start timer

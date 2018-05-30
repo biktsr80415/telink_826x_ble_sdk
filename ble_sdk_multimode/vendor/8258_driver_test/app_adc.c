@@ -17,15 +17,21 @@
 
 
 
+signed int misc_dat_buf[4];  //must 16 byte
+
 
 //and do not change setting in this function
 void ADC_Init(void )
 {
+	//reset whole digital adc module
+	adc_reset_adc_module();
+
+	/******power on sar adc********/
+	adc_power_on_sar_adc(1);
 
 	/******enable signal of 24M clock to sar adc********/
-	SET_ADC_CLK_EN();
+	adc_enable_clk_24m_to_sar_adc(1);
 
-//	SET_ADC_BANDGAP_ON();
 
 	/******set adc sample clk as 4MHz******/
 	adc_set_sample_clk(5); //adc sample clk= 24M/(1+5)=4M
@@ -34,7 +40,7 @@ void ADC_Init(void )
 	adc_set_left_gain_bias(GAIN_STAGE_BIAS_PER100);
 	adc_set_right_gain_bias(GAIN_STAGE_BIAS_PER100);
 
-	adc_power_on(1); //powen on adc
+
 
 }
 
@@ -43,19 +49,17 @@ void ADC_Init(void )
 
 void adc_gpio_ain_init(void)
 {
-
-//	adc_set_mode(NORMAL_MODE);  	//set normal mode
-
-	//set misc channel en,  and max state cnt 2
+	//set misc channel en,  and adc state machine state cnt 2( "set" stage and "capture" state for misc channel)
 	adc_set_chn_enable_and_max_state_cnt(ADC_MISC_CHN, 2);  	//set total length for sampling state machine and channel
 
-
-	//set "capture state" length for misc channel  0xf0, 240 * 1/24M
-	//set "set state" length 0x0a, 10 * 1/24M
-	adc_set_state_length(0x0f0, 0, 0x0a);  	//set R_max_mc,R_max_c,R_max_s
+	//set "capture state" length for misc channel: 240
+	//set "set state" length for misc channel: 10
+	//adc state machine  period  = 24M/250 = 96K
+	adc_set_state_length(240, 0, 10);  	//set R_max_mc,R_max_c,R_max_s
 
 ////set misc channel use differential_mode,
 #if (TEST_ADC_SELECT == TEST_ADC_GPIO_SINGLE_IN)
+	//application use single in, but hardware must use differential_mode, negative channel set as GND
 	//PB4 positive channel, GND negative channel
 	gpio_set_func(GPIO_PB4, AS_GPIO);
 	gpio_set_input_en(GPIO_PB4, 0);
@@ -98,17 +102,17 @@ void adc_vbat_detect_init(void)
 {
 
 
-	//set misc channel en,  and max state cnt 2
+	//set misc channel en,  and adc state machine state cnt 2( "set" stage and "capture" state for misc channel)
 	adc_set_chn_enable_and_max_state_cnt(ADC_MISC_CHN, 2);  	//set total length for sampling state machine and channel
 
-
-	//set "capture state" length for misc channel  0xf0, 240 * 1/24M
-	//set "set state" length 0x0a, 10 * 1/24M
-	adc_set_state_length(0x0f0, 0, 0x0a);  	//set R_max_mc,R_max_c,R_max_s
+	//set "capture state" length for misc channel: 240
+	//set "set state" length for misc channel: 10
+	//adc state machine  period  = 24M/250 = 96K
+	adc_set_state_length(240, 0, 10);  	//set R_max_mc,R_max_c,R_max_s
 
 
 ////set misc channel use differential_mode,
-	//内部VBAT channel有问题， 选一个不用的GPIO，输出高电平，来测电源电压
+	//内部VBAT channel有问题， 选一个不用的GPIO，输出高电平（此电平值等于电源电压），来测电源电压
 	gpio_set_func(GPIO_PB0, AS_GPIO);
 	gpio_set_input_en(GPIO_PB0, 0);
 	gpio_set_output_en(GPIO_PB0, 1);
@@ -148,6 +152,10 @@ void app_adc_test_init(void)
 
 #endif
 
+
+	//use dfifo mode to get adc sample data
+	adc_config_misc_channel_buf((s16 *)misc_dat_buf, sizeof(misc_dat_buf));
+
 }
 
 
@@ -178,34 +186,49 @@ void app_adc_test_start(void)
 {
 	new_data_flg = 0 ;
 
-#if 1 //(TEST_ADC_SELECT == TEST_ADC_GPIO_SINGLE_IN)
+
 	//step 1. get raw data from adc sample
-	DBG_CHN1_HIGH;
-	Adc_cur_rawData =  ADC_SampleValueGet();
-	DBG_CHN1_LOW;
+//	DBG_CHN2_TOGGLE;
+
+//	DBG_CHN1_HIGH;  //debug
+	Adc_cur_rawData =  (u16)misc_dat_buf[0];
+//	DBG_CHN1_LOW;  //debug
 
 	Adc_raw_data[Adc_raw_datIndex ++]  = Adc_cur_rawData;
 	new_data_flg = 1;
 
 
 	//step 2. change raw data to real data in differential_mode
-	if(Adc_cur_rawData & BIT(13)) //14 bit resolution in differential_mode,  if 12 bit rers, here & BIT(11)
+#if (TEST_ADC_SELECT == TEST_ADC_GPIO_SINGLE_IN || TEST_ADC_SELECT == TEST_ADC_VBAT)
+	//application use single in, but hardware must use differential_mode, negative channel set as GND
+
+	if(Adc_cur_rawData & BIT(13))   //14 bit resolution in differential_mode,  BIT<13> is symbol bit
+//	if(Adc_cur_rawData & BIT(12)) 	//13 bit resolution in differential_mode,  BIT<12> is symbol bit
+//	if(Adc_cur_rawData & BIT(11)) 	//12 bit resolution in differential_mode,  BIT<11> is symbol bit
 	{
 		Adc_cur_rawData = 0;
 	}
 	else
 	{
-		Adc_cur_rawData &= 0x1FFF;   //if 12 bit res, here &= 0x7FF
+		Adc_cur_rawData &= 0x1FFF; //14 bit resolution, BIT<12:0> is valid data
+//	    Adc_cur_rawData &= 0x0FFF; //14 bit resolution, BIT<11:0> is valid data
+//		Adc_cur_rawData &= 0x07FF; //14 bit resolution, BIT<10:0> is valid data
 	}
+#elif (TEST_ADC_SELECT == TEST_ADC_GPIO_DIFF_IN)
+	//application use diff in
 
-
-
+	// to be add
+#endif
 
 
 	if(new_data_flg){
-//		Adc_cur_calData = Adc_cur_rawData * 1200/0x1FFF;  //14 bit resolution, vref = 1.2 V, pre_scaler = 1
-//		Adc_cur_calData = Adc_cur_rawData * 2400/0x1FFF;  //14 bit resolution, vref = 1.2 V, pre_scaler = 2
-		Adc_cur_calData = Adc_cur_rawData * 4800/0x1FFF;  //14 bit resolution, vref = 1.2 V, pre_scaler = 4
+//		Adc_cur_calData = Adc_cur_rawData * 1200/0x1FFF;  //14 bit resolution, vref = 1200 mV, pre_scaler = 1
+//		Adc_cur_calData = Adc_cur_rawData * 2400/0x1FFF;  //14 bit resolution, vref = 1200 mV, pre_scaler = 2
+		Adc_cur_calData = Adc_cur_rawData * 4800/0x1FFF;  //14 bit resolution, vref = 1200 mV, pre_scaler = 4
+//		Adc_cur_calData = Adc_cur_rawData * 2400/0x0FFF;  //13 bit resolution, vref = 1200 mV, pre_scaler = 2
+//		Adc_cur_calData = Adc_cur_rawData * 4800/0x0FFF;  //13 bit resolution, vref = 1200 mV, pre_scaler = 4
+//		Adc_cur_calData = Adc_cur_rawData * 2400/0x07FF;  //13 bit resolution, vref = 1200 mV, pre_scaler = 2
+//		Adc_cur_calData = Adc_cur_rawData * 4800/0x07FF;  //13 bit resolution, vref = 1200 mV, pre_scaler = 4
 
 		Adc_cal_data[Adc_cal_datIndex ++] = Adc_cur_calData;
 
@@ -216,10 +239,6 @@ void app_adc_test_start(void)
 		Adc_cal_vol_oct[Adc_cal_vol_octIndex ++] = Adc_cur_vol_oct;
 	}
 
-#else
-
-
-#endif
 
 }
 

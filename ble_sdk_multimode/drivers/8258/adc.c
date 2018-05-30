@@ -146,8 +146,11 @@ void adc_set_ain_channel_differential_mode(ADC_ChTypeDef ch_n, ADC_InputPchTypeD
 	}
 }
 
-
-void adc_set_state_length(short R_max_mc,short R_max_c,unsigned char R_max_s)
+//state length indicates number of 24M clock cycles occupied by the state
+//R_max_mc[9:0] serves to set length of "capture" state for RNS and Misc channel
+//R_max_c[9:0]  serves to set length of "capture" state for left and right channel
+//R_max_s[9:0]  serves to set length of "set" state for left, right and Misc channel
+void adc_set_state_length(unsigned short R_max_mc, unsigned short R_max_c,unsigned char R_max_s)
 {
 	unsigned char data[3]={0};
 	if(R_max_mc&0x3ff)    //r_max_mc[9:0]serves to set length of state for RNS and Misc channel.
@@ -233,35 +236,4 @@ unsigned short RNG_Read(void){
 	RngValue = (tmp1<<8) + tmp2;
 
 	return RngValue;
-}
-
-
-/**
- * @brief  get adc sampled value
- * @param  none
- * @return sampled_value, raw data
- */
-unsigned short ADC_SampleValueGet(void)
-{
-
-	unsigned short sampledValue;
-	unsigned char datL = 0, datH = 0;
-
-	//时序问题 需要深入研究下 怎么处理
-//	while(CHECK_ADC_MISC_STATUS);
-//	while(!CHECK_ADC_MISC_STATUS);
-
-	WaitUs (2);
-
-
-	datH = ReadAnalogReg(anareg_adc_misc_h);  //read
-	datL = ReadAnalogReg(anareg_adc_misc_l);
-	sampledValue = (datH<<8) | datL;
-
-
-	sampledValue = sampledValue & 0x3FFF;
-
-
-
-	return sampledValue;
 }

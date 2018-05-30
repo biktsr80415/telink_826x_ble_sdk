@@ -5,34 +5,40 @@
 
 #include "bsp.h"
 #include "analog.h"
-
-/**************************************************************************************
-afe_0x06
-    BIT(4):    Power down Bandgap in PLL
-    				1: Power down
-					0: Power up
- *************************************************************************************/
-enum{
-	FLD_PLL_BG_PD = BIT(4),
-};
-
-#define		SET_ADC_BANDGAP_ON()		do{ analog_write(0x06, analog_read(0x06) & (~FLD_PLL_BG_PD) );}while(0)
+#include "register.h"
 
 
-/**************************************************************************************
-afe_0x82
-    BIT(6):    	enable signal of 24M clock to sar
-    			1 for enable, 0 for disable
- *************************************************************************************/
-enum{
-	FLD_CLK_24M_TO_SAR_EN = BIT(6),
-};
 
-#define    	SET_ADC_CLK_EN()			do{ analog_write(0x82, analog_read(0x82) | FLD_CLK_24M_TO_SAR_EN);}while(0)
+static inline void	adc_reset_adc_module(void)
+{
+	reg_rst1 = FLD_RST1_ADC;
+	reg_rst1 = 0;
+}
+
+//on _off = 1 : power on   pll_bandgap
+//on _off = 0 : power off  pll_bandgap
+static inline void adc_power_on_pll_bandgap(unsigned int on_off)
+{
+	if(on_off){
+		analog_write(anareg_06, analog_read(anareg_82) & ~FLD_PLL_BG_POWER_DOWN);
+	}
+	else{
+		analog_write(anareg_06, analog_read(anareg_82) | FLD_PLL_BG_POWER_DOWN);
+	}
+}
 
 
 
 
+static inline void adc_enable_clk_24m_to_sar_adc(unsigned int en)  //1: enable;  0: disable
+{
+	if(en){
+		analog_write(anareg_82, analog_read(anareg_82) | FLD_CLK_24M_TO_SAR_EN);
+	}
+	else{
+		analog_write(anareg_82, analog_read(anareg_82) & ~FLD_CLK_24M_TO_SAR_EN);
+	}
+}
 
 
 
@@ -217,7 +223,7 @@ static inline void adc_set_ain_negative_chn_misc(ADC_InputNchTypeDef v_ain)
 	analog_write (anareg_adc_ain_chn_misc, (analog_read(anareg_adc_ain_chn_misc)&(~FLD_ADC_AIN_NEGATIVE)) | (v_ain) );
 }
 
-static inline void adc_set_ain_positive_chn_misc(ADC_InputNchTypeDef v_ain)
+static inline void adc_set_ain_positive_chn_misc(ADC_InputPchTypeDef v_ain)
 {
 	analog_write (anareg_adc_ain_chn_misc, (analog_read(anareg_adc_ain_chn_misc)&(~FLD_ADC_AIN_POSITIVE)) | (v_ain<<4) );
 }
@@ -227,7 +233,7 @@ static inline void adc_set_ain_negative_chn_left(ADC_InputNchTypeDef v_ain)
 	analog_write (anareg_adc_ain_chn_left, (analog_read(anareg_adc_ain_chn_left)&(~FLD_ADC_AIN_NEGATIVE)) | (v_ain) );
 }
 
-static inline void adc_set_ain_positive_chn_left(ADC_InputNchTypeDef v_ain)
+static inline void adc_set_ain_positive_chn_left(ADC_InputPchTypeDef v_ain)
 {
 	analog_write (anareg_adc_ain_chn_left, (analog_read(anareg_adc_ain_chn_left)&(~FLD_ADC_AIN_POSITIVE)) | (v_ain<<4) );
 }
@@ -237,7 +243,7 @@ static inline void adc_set_ain_negative_chn_right(ADC_InputNchTypeDef v_ain)
 	analog_write (anareg_adc_ain_chn_right, (analog_read(anareg_adc_ain_chn_right)&(~FLD_ADC_AIN_NEGATIVE)) | (v_ain) );
 }
 
-static inline void adc_set_ain_positive_chn_right(ADC_InputNchTypeDef v_ain)
+static inline void adc_set_ain_positive_chn_right(ADC_InputPchTypeDef v_ain)
 {
 	analog_write (anareg_adc_ain_chn_right, (analog_read(anareg_adc_ain_chn_right)&(~FLD_ADC_AIN_POSITIVE)) | (v_ain<<4) );
 }
@@ -519,6 +525,8 @@ enum{
 };
 
 
+
+//adc sample clk = 24M/(1+div)    div: 0~7
 static inline void adc_set_sample_clk(unsigned char div)
 {
 //	analog_write(anareg_adc_clk_div, (analog_read(anareg_adc_clk_div)&(~FLD_ADC_CLK_DIV)) | (div & 0x07) );
@@ -645,7 +653,7 @@ enum{                                              //ana_0xFC
 	FLD_PGA_ITRIM_GAIN_L		= BIT_RNG(0,1),
 	FLD_PGA_ITRIM_GAIN_R		= BIT_RNG(2,3),
 	FLD_ADC_MODE				= BIT(4),     //0 for  normal mode
-	FLD_ADC_POWER_DOWN 			= BIT(5),
+	FLD_SAR_ADC_POWER_DOWN 		= BIT(5),
 	FLD_POWER_DOWN_PGA_CHN_L 	= BIT(6),
 	FLD_POWER_DOWN_PGA_CHN_R 	= BIT(7),
 };
@@ -673,22 +681,22 @@ static inline void adc_set_mode(ADCModeTypeDef adc_m)
 
 }
 
-//on _off = 1 : power on
-//on _off = 0 : power off
-static inline void adc_power_on(unsigned char on_off)
+//on _off = 1 : power on   sar_adc
+//on _off = 0 : power off  sar_adc
+static inline void adc_power_on_sar_adc(unsigned char on_off)
 {
-	analog_write (anareg_adc_pga_ctrl, (analog_read(anareg_adc_pga_ctrl)&(~FLD_ADC_POWER_DOWN)) | (!on_off)<<5  );
+	analog_write (anareg_adc_pga_ctrl, (analog_read(anareg_adc_pga_ctrl)&(~FLD_SAR_ADC_POWER_DOWN)) | (!on_off)<<5  );
 }
 
-//on _off = 1 : power on
-//on _off = 0 : power off
+//on _off = 1 : power on   pga_left_chn
+//on _off = 0 : power off  pga_left_chn
 static inline void pga_left_chn_power_on(unsigned char on_off)
 {
 	analog_write (anareg_adc_pga_ctrl, (analog_read(anareg_adc_pga_ctrl)&(~FLD_POWER_DOWN_PGA_CHN_L)) | (!on_off)<<6 );
 }
 
-//on _off = 1 : power on
-//on _off = 0 : power off
+//on _off = 1 : power on   pga_right_chn
+//on _off = 0 : power off  pga_right_chn
 static inline void pga_right_chn_power_on(unsigned char on_off)
 {
 	analog_write (anareg_adc_pga_ctrl, (analog_read(anareg_adc_pga_ctrl)&(~FLD_POWER_DOWN_PGA_CHN_R)) | (!on_off)<<7 );
@@ -755,7 +763,7 @@ typedef enum {
 
 
 
-void adc_set_state_length(short R_max_mc,short R_max_c,unsigned char R_max_s);
+void adc_set_state_length(unsigned short R_max_mc, unsigned short R_max_c,unsigned char R_max_s);
 
 void adc_set_ref_voltage(ADC_ChTypeDef ch_n, ADC_RefVolTypeDef v_ref);
 

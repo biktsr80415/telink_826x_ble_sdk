@@ -18,7 +18,7 @@
 #define  GPIO_LED3_PIN				GPIO_PA2
 
 
-#define  LED_INIT_LEVEL				1
+#define  LED_INIT_LEVEL				0
 
 
 #define GPIO_TEST_PIN1				GPIO_PD0
@@ -42,7 +42,7 @@ void app_gpio_irq_test_init(void)
 
 	/***step2.      set the polarity and open pullup ***/
 	gpio_setup_up_down_resistor(GPIO_TEST_PIN1, PM_PIN_PULLUP_10K);  //open pull up resistor
-	gpio_set_interrupt_pol(GPIO_TEST_PIN1, 1);    //falling edge
+	gpio_set_interrupt_pol(GPIO_TEST_PIN1, pol_falling);    //falling edge
 
 	/***step3.      set irq enable  ***/
 	reg_irq_src = FLD_IRQ_GPIO_EN; //clean irq status
@@ -61,7 +61,7 @@ void app_gpio_irq_test_init(void)
 
 	/***step2.      set the polarity and open pullup ***/
 	gpio_setup_up_down_resistor(GPIO_TEST_PIN2, PM_PIN_PULLUP_10K);  //open pull up resistor
-	gpio_set_interrupt_pol(GPIO_TEST_PIN2, 1);    //falling edge
+	gpio_set_interrupt_pol(GPIO_TEST_PIN2, pol_falling);    //falling edge
 
 	/***step3.      set irq enable  ***/
 	reg_irq_src = FLD_IRQ_GPIO_RISC0_EN; //clean irq status
@@ -79,7 +79,7 @@ void app_gpio_irq_test_init(void)
 
 	/***step2.      set the polarity and open pullup ***/
 	gpio_setup_up_down_resistor(GPIO_TEST_PIN3, PM_PIN_PULLDOWN_100K);  //open pull down resistor
-	gpio_set_interrupt_pol(GPIO_TEST_PIN3, 0);    //rising edge
+	gpio_set_interrupt_pol(GPIO_TEST_PIN3, pol_rising);    //rising edge
 
 	/***step3.      set irq enable  ***/
 	reg_irq_src = FLD_IRQ_GPIO_RISC1_EN; //clean irq status
