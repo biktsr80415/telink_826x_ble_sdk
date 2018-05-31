@@ -29,7 +29,7 @@ _attribute_ram_code_ void irq_handler(void)
 
 
 
-_attribute_ram_code_ int main (void)    //must run in ramcode
+_attribute_ram_code_ int main (void)
 {
 	cpu_wakeup_init();
 
@@ -45,12 +45,7 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 
 	//deep_wakeup_proc();
 
-	if( pm_is_MCU_deepRetentionWakeup() ){
-		user_init_deepRetn ();
-	}
-	else{
-		user_init_normal ();
-	}
+	user_init_normal ();
 
     irq_enable();
 

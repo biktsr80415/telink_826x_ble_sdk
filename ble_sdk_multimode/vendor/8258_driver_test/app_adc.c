@@ -227,8 +227,8 @@ void app_adc_test_start(void)
 		Adc_cur_calData = Adc_cur_rawData * 4800/0x1FFF;  //14 bit resolution, vref = 1200 mV, pre_scaler = 4
 //		Adc_cur_calData = Adc_cur_rawData * 2400/0x0FFF;  //13 bit resolution, vref = 1200 mV, pre_scaler = 2
 //		Adc_cur_calData = Adc_cur_rawData * 4800/0x0FFF;  //13 bit resolution, vref = 1200 mV, pre_scaler = 4
-//		Adc_cur_calData = Adc_cur_rawData * 2400/0x07FF;  //13 bit resolution, vref = 1200 mV, pre_scaler = 2
-//		Adc_cur_calData = Adc_cur_rawData * 4800/0x07FF;  //13 bit resolution, vref = 1200 mV, pre_scaler = 4
+//		Adc_cur_calData = Adc_cur_rawData * 2400/0x07FF;  //12 bit resolution, vref = 1200 mV, pre_scaler = 2
+//		Adc_cur_calData = Adc_cur_rawData * 4800/0x07FF;  //12 bit resolution, vref = 1200 mV, pre_scaler = 4
 
 		Adc_cal_data[Adc_cal_datIndex ++] = Adc_cur_calData;
 

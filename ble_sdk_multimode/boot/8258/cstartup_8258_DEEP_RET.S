@@ -67,7 +67,9 @@ __reset:
 @	tstorerb	r0, [r1, #1]	@0x800583  PB4 output
 
 
-
+@******************************************************************
+@                 RETENTION DATA INITIALIZATION
+@******************************************************************
 @ANALOG_CLK:
 	@write_reg8(0x61, 0x00)
 	@write_reg8(0x64, 0xff)
@@ -78,7 +80,7 @@ __reset:
 	tstorerb	r0, [r1, #3]  	@write_reg8(0x64, 0xff)
 
 
-	@analog_write(0x82, 0x64);
+@analog_write(0x82, 0x64);
 	tloadr     	r1, FLASH_RECOVER + 4	@0x8000b8
 	tmov      	r0, #130   	@0x82
 	tstorerb	r0, [r1, #0]		@ reg_ana_addr = addr;
@@ -101,7 +103,7 @@ LOOP_WAIT1:
 
 
 
-	@analog_write(0x0c, 0xc4);
+@analog_write(0x0c, 0xc4);
 	tloadr     	r1, FLASH_RECOVER + 4	@0x8000b8
 	tmov      	r0, #12   	@0x0c
 	tstorerb	r0, [r1, #0]		@ reg_ana_addr = addr;
@@ -121,6 +123,26 @@ LOOP_WAIT2:
 	tjne		LOOP_WAIT2
 
 	tstorerb	r3, [r1, #0]
+
+
+
+
+@send flash cmd 0xab to wakeup flash;
+FLASH_WAKEUP_BEGIN:
+	tloadr      r0,FLASH_RECOVER+12
+	tmov		r1,#0
+	tstorerb    r1,[r0,#1]
+	tmov        r1,#171						@Flash deep cmd: 0xAB
+	tstorerb    r1,[r0,#0]
+	tmov		r2,#0
+	tmov        r3,#6
+TNOP:
+	tadd        r2,#1
+	tcmp        r2,r3
+	tjle        TNOP
+	tmov		r1,#1
+	tstorerb    r1,[r0,#1]
+FLASH_WAKEUP_END:
 
 
 
@@ -224,9 +246,9 @@ DAT0:
 @	.word	(0x800620)                  @40		watchdog
 @	.word	(0x802c01)                  @44		watchdog
 DATA_I:	
-	.word	_dstored_
-	.word	_start_data_
-	.word	_end_data_
+	.word	_dstored_					@0
+	.word	_start_data_				@4
+	.word	_end_data_					@8
 
 FLL_D:
 	.word	0xffffffff
@@ -243,7 +265,7 @@ FLASH_RECOVER:
 	.word	(0x800061)                  @0
 	.word	(0x8000b8)                  @4
 	.word	(0x8000ba)                  @8
-
+	.word	(0x80000c)                  @12
 
 	.align 4
 __irq:
