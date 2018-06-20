@@ -90,7 +90,7 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
 
 	/***set resolution,reference voltage,sample cycle***/
 	BM_CLR(reg_adc_ref,FLD_ADC_REF_L);
-	reg_adc_ref      |= MASK_VAL(FLD_ADC_REF_L,RV_AVDD);       //1.set reference voltage
+	reg_adc_ref      |= MASK_VAL(FLD_ADC_REF_L,RV_1P428);       //1.set reference voltage
 	BM_CLR(reg_adc_res_lr,FLD_ADC_RESOLUTION_SEL);
 	reg_adc_res_lr   |= MASK_VAL(FLD_ADC_RESOLUTION_SEL,RES14); //2.set resolution
 	BM_CLR(reg_adc_tsamp_lr,FLD_ADC_SAMPLE_TIME);
@@ -129,10 +129,13 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
 		tmp_shift = 0x03;
 		break;
 	case R6:
-		tmp_shift = 0x04;
+		tmp_shift = 0x05;
+		break;
+	case R8:
+		tmp_shift = 0x06;
 		break;
 	default:
-		tmp_shift = 0x05;
+		tmp_shift = 0x06;
 		break;
 	}
 	reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,tmp_shift);
@@ -140,7 +143,7 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
 	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_SFT);
 	reg_aud_hpf_alc |= MASK_VAL(FLD_AUD_IN_HPF_SFT,0x09);//different pcb may set different value.
 	/***************ALC Volume[5:0]manual volume [6]0:manual 1:auto**************************/
-	reg_aud_alc_vol = MASK_VAL(FLD_AUD_MANUAL_VOLUME,0x24,FLD_AUD_VOLUME_CTRL_MODE,AUD_VOLUME_MANUAL);//0x1c is the level of volume.0x1c
+	reg_aud_alc_vol = MASK_VAL(FLD_AUD_MANUAL_VOLUME,0x1c,FLD_AUD_VOLUME_CTRL_MODE,AUD_VOLUME_MANUAL);//0x1c is the level of volume.0x1c
 }
 
 /**

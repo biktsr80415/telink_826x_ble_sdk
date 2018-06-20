@@ -44,9 +44,13 @@ extern "C" {
 	#define	ADPCM_PACKET_LEN				128
 	#define TL_MIC_ADPCM_UNIT_SIZE			248
 
-	#define	TL_MIC_32K_FIR_16K				1
+	#define	TL_MIC_8K						0
+	#define	TL_MIC_16K						1
+	#define	TL_MIC_RATE						TL_MIC_8K
 
-	#if TL_MIC_32K_FIR_16K
+	#define	TL_MIC_SOFT_DOWNSAMPLING		0
+
+	#if TL_MIC_SOFT_DOWNSAMPLING
 		#define	TL_MIC_BUFFER_SIZE				1984
 	#else
 		#define	TL_MIC_BUFFER_SIZE				992

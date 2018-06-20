@@ -838,14 +838,15 @@ void user_init()
 		gpio_set_output_en(GPIO_PA3, 1);
 		gpio_write(GPIO_PA3, 0);
 
-		#if TL_MIC_32K_FIR_16K
+		#if TL_MIC_SOFT_DOWNSAMPLING
 			audio_dmic_init(1, R32, CLOCK_SYS_TYPE);  //1 indicate 1M; 32K
 		#else
 			audio_dmic_init(1, R64, CLOCK_SYS_TYPE);  //1 indicate 1M; 16K
 		#endif
 	#else  //Amic config
 		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
-		#if TL_MIC_32K_FIR_16K
+#if (TL_MIC_RATE==TL_MIC_16K)
+		#if TL_MIC_SOFT_DOWNSAMPLING
 			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
 				audio_amic_init( DIFF_MODE, 26,  9, R2, CLOCK_SYS_TYPE);
 				audio_finetune_sample_rate(2);  //reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
@@ -870,6 +871,36 @@ void user_init()
 				audio_amic_init( DIFF_MODE, 65, 15, R6, CLOCK_SYS_TYPE);
 			#endif
 		#endif
+#elif(TL_MIC_RATE==TL_MIC_8K)
+		#if TL_MIC_SOFT_DOWNSAMPLING/* GET THE BEST FREQUENCY RESPONSE*/
+			#if(CLOCK_SYS_CLOCK_HZ==16000000)
+				audio_amic_init(DIFF_MODE,18,11,R4, CLOCK_SYS_TYPE);//64k
+				audio_finetune_sample_rate(2);
+			#elif(CLOCK_SYS_CLOCK_HZ==24000000)
+				audio_amic_init(DIFF_MODE,53,10,R4, CLOCK_SYS_TYPE);//64k
+				audio_finetune_sample_rate(3);
+			#elif(CLOCK_SYS_CLOCK_HZ==32000000)
+				audio_amic_init(DIFF_MODE,65,15,R4, CLOCK_SYS_TYPE);//64k
+			#elif(CLOCK_SYS_CLOCK_HZ==48000000)
+				audio_amic_init(DIFF_MODE,87,25,R4, CLOCK_SYS_TYPE);//64k
+				audio_finetune_sample_rate(2);
+			#endif
+		#else/*GET THE BEST SNR AND THD*/
+			#if (CLOCK_SYS_CLOCK_HZ==16000000)
+				audio_amic_init(DIFF_MODE,18,11,R8, CLOCK_SYS_TYPE);//64k
+				audio_finetune_sample_rate(2);
+			#elif (CLOCK_SYS_CLOCK_HZ==24000000)
+				audio_amic_init(DIFF_MODE,53,10,R8, CLOCK_SYS_TYPE);//64k
+				audio_finetune_sample_rate(3);
+			#elif (CLOCK_SYS_CLOCK_HZ==32000000)
+				audio_amic_init(DIFF_MODE,65,15,R8, CLOCK_SYS_TYPE);//64k
+			#elif (CLOCK_SYS_CLOCK_HZ==48000000)
+				audio_amic_init(DIFF_MODE,87,25,R8, CLOCK_SYS_TYPE);//64k
+				audio_finetune_sample_rate(2);
+			#endif
+		#endif
+
+#endif
 	audio_amic_input_set(PGA_CH);//audio input set, ignore the input parameter
 	#endif//end of BLE_DMIC_ENABLE
 #endif

@@ -1,8 +1,8 @@
 #include "tl_audio.h"
 #include "../../proj_lib/ble/trace.h"
 
-#ifndef		TL_MIC_32K_FIR_16K
-#define		TL_MIC_32K_FIR_16K		0
+#ifndef		TL_MIC_SOFT_DOWNSAMPLING
+#define		TL_MIC_SOFT_DOWNSAMPLING		0
 #endif
 
 int md_long =0;
@@ -187,7 +187,7 @@ void mic_to_adpcm_split (signed short *ps, int len, signed short *pds, int start
 	//byte5- byte128: 124 byte(62 sample) adpcm data
 	for (i=0; i<len; i++) {
 
-		s16 di = ps[TL_MIC_32K_FIR_16K ? i * 2 : i];
+		s16 di = ps[TL_MIC_SOFT_DOWNSAMPLING ? i * 2 : i];
 		int step = steptbl[predict_idx];
 		int diff = di - predict;
 
