@@ -7,6 +7,8 @@
 	#include "../8258_ble_remote/app_config.h"
 #elif (__PROJECT_8258_BLE_SAMPLE__)
 	#include "../8258_ble_sample/app_config.h"
+#elif (__PROJECT_8258_MODULE__)
+	#include "../8258_module/app_config.h"
 #else
 	#include "../common/default_config.h"
 #endif

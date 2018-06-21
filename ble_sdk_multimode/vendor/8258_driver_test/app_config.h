@@ -37,15 +37,57 @@ extern "C" {
 
 
 
-#define DRIVER_TEST_MODE								TEST_ADC
+#define DRIVER_TEST_MODE								TEST_SPI
 
 
 
 
 
 #if (DRIVER_TEST_MODE == TEST_ADC)
+
 	#define BATT_CHECK_ENABLE    0
+
+#elif (DRIVER_TEST_MODE == TEST_IIC)
+	/**************************************************************************************
+	   8258 Demo Code Config
+	   1. select i2c demo:  master or slave( app_config.h )
+	   2. if i2c slave demo,  select slave working mode: mapping mode or dma mode
+	   3. if i2c master demo, select the peer device i2c slave address mode:
+					826x/8255 mapping mode/dma mode or other not telink's device
+
+	 *************************************************************************************/
+	#define  	I2C_DEMO_MASTER        	1   //i2c master demo
+	#define     I2C_DEMO_SLAVE			2   //i2c master demo
+
+
+	//select i2c demo here(master or slave)
+	#define     I2C_DEMO_SELECT 		I2C_DEMO_SLAVE
+
+
+
+	#define 	DBG_DATA_LEN					16
+	#define 	DBG_DATA_NUM					16
+
+
+	#define 	SLAVE_DMA_MODE_ADDR_WRITE		0x4A000  //i2c master write data to  0x4A000
+	#define 	SLAVE_DMA_MODE_ADDR_READ		0x4A100  //i2c master read data from 0x4A100
+
+#elif (DRIVER_TEST_MODE == TEST_SPI)
+
+	#define SPI_MASTER_MODE	1   //spi use master mode
+	#define SPI_SLAVE_MODE	2   //spi use slave mode
+	#define SPI_MODE		SPI_MASTER_MODE
+
+	#define SLAVE_REGADDR1  0x04
+	#define SLAVE_REGADDR2  0x80
+	#define SLAVE_REGADDR3  0x00
+	#define SPI_READ_CMD  	0x80// spi read command
+	#define SPI_WRITE_CMD 	0x00// spi write command
+	#define DBG_DATA_LEN    16
+
 #endif
+
+
 
 
 /////////////////// Clock  /////////////////////////////////

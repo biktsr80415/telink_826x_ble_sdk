@@ -36,6 +36,7 @@ void clock_init(SYS_CLK_TYPEDEF SYS_CLK)
     	    WRITE_REG8(0x70,READ_REG8(0x70)&0xfe);
     		break;
     }
+    write_reg16(0x750, 8000);
 }
 
 

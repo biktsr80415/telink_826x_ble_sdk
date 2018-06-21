@@ -18,9 +18,10 @@
 #endif
 
 static void uart_put_char(u8 byte){
+#if 0
 	u8 j = 0;
 	u32 t1 = 0,t2 = 0;
-	
+
 	REG_ADDR8(0x582+((DEBUG_INFO_TX_PIN>>8)<<3)) &= ~(DEBUG_INFO_TX_PIN & 0xff) ;//Enable output
 
 
@@ -52,6 +53,7 @@ static void uart_put_char(u8 byte){
 		write_reg8(pcTxReg,bit[j]);        //send bit0
 	}
 	//irq_restore(r);
+#endif
 }
 void printb(unsigned char byte)
 {

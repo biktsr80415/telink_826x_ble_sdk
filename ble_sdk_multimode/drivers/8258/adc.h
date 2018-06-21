@@ -458,8 +458,8 @@ static inline void adc_set_length_set_state(unsigned char r_max_s)
 
 static inline void adc_set_length_capture_state_for_chn_misc_rns(unsigned short r_max_mc)
 {
-	analog_write(anareg_r_max_mc,  r_max_mc & 0xff);
-	analog_write(anareg_r_max_s,  (analog_read(anareg_r_max_s)&(~FLD_R_MAX_MC1)) | (r_max_mc>>8)<<6 );
+	analog_write(anareg_r_max_mc,  (r_max_mc & 0x0ff));
+	analog_write(anareg_r_max_s,  ((analog_read(anareg_r_max_s)&(~FLD_R_MAX_MC1)) | (r_max_mc>>8)<<6 ));
 }
 
 static inline void adc_set_length_capture_state_for_chn_left_right(unsigned short r_max_c)

@@ -123,10 +123,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 
-#ifndef		BLS_SEND_TLK_MODULE_EVENT_ENABLE
-#define 	BLS_SEND_TLK_MODULE_EVENT_ENABLE				0
-#endif
-
 
 
 #ifndef		BLS_ADV_INTERVAL_CHECK_ENABLE
@@ -173,15 +169,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 #define BLS_PROC_LONG_SUSPEND_ENABLE					0
 #endif
 
-
-
-
-/////////////////////HCI UART variables///////////////////////////////////////
-#define UART_DATA_LEN    64      // data max 252
-typedef struct{
-    unsigned int len;        // data max 252
-    unsigned char data[UART_DATA_LEN];
-}uart_data_t;
 
 
 

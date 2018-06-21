@@ -251,7 +251,7 @@ void adpcm_to_pcm (signed short *ps, signed short *pd, int len){
 	//byte2,byte1: predict;  byte3: predict_idx; byte4:adpcm data len
 	int predict = ps[0];
 	int predict_idx = ps[1] & 0xff;
-	int adpcm_len = (ps[1]>>8) & 0xff;
+//	int adpcm_len = (ps[1]>>8) & 0xff;
 
 	unsigned char *pcode = (unsigned char *) (ps + NUM_OF_ORIG_SAMPLE);
 

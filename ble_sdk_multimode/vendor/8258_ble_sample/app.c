@@ -25,7 +25,7 @@
 #define 	MY_ADV_INTERVAL_MAX					ADV_INTERVAL_35MS
 
 
-#define		MY_RF_POWER_INDEX					RF_POWER_10m5PdBm
+#define		MY_RF_POWER_INDEX					RF_POWER_P3p01dBm
 
 
 
@@ -188,8 +188,6 @@ void	task_conn_update_done (u8 e, u8 *p, int n)
 void user_init_normal()
 {
 
-	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
-
 
 ////////////////// BLE stack initialization ////////////////////////////////////
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
@@ -254,7 +252,7 @@ void user_init_normal()
 										bondInfo.peer_addr_type,  bondInfo.peer_addr,
 										MY_APP_ADV_CHANNEL,
 										ADV_FP_NONE);
-		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
+		if(status != BLE_SUCCESS) { write_reg8(0x40002, 0x11); 	while(1); }  //debug: adv setting err
 
 		//it is recommended that direct adv only last for several seconds, then switch to indirect adv
 		bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE, 1);
@@ -269,7 +267,7 @@ void user_init_normal()
 										 0,  NULL,
 										 MY_APP_ADV_CHANNEL,
 										 ADV_FP_NONE);
-		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
+		if(status != BLE_SUCCESS) { write_reg8(0x40002, 0x11); 	while(1); }  //debug: adv setting err
 	}
 
 	bls_ll_setAdvEnable(1);  //adv enable

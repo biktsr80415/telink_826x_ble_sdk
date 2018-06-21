@@ -71,3 +71,4 @@ static inline void rf_irq_src_clr(unsigned short msk)
 {
     reg_rf_irq_status |= msk;
 }
+

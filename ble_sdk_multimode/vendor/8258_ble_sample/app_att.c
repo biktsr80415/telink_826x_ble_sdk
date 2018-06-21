@@ -270,7 +270,7 @@ const u8 my_OtaServiceUUID[16]		= TELINK_OTA_UUID_SERVICE;
 const u16 userdesc_UUID		= GATT_UUID_CHAR_USER_DESC;
 
 
-static u8 		micDataCCC[2];
+
 u8		my_MicData 		= 0x80;
 u8		my_SpeakerData 	= 0x81;
 u8	 	my_OtaData 		= 0x00;

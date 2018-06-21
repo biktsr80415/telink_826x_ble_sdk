@@ -2,28 +2,20 @@
 #pragma once
 
 
-#define u8 u8_old
 typedef unsigned char u8 ;
 
-#define s8  s8_old
 typedef signed char s8;
 
-#define u16 u16_old
 typedef unsigned short u16;
 
-#define s16 s16_old
 typedef signed short s16;
 
-#define s32 s32_old
 typedef int s32;
 
-#define u32 u32_old
 typedef unsigned int u32;
 
-#define s64  s64_old
 typedef long long s64;
 
-#define u64 u64_old
 typedef unsigned long long u64;
 
 #ifndef NULL

@@ -80,29 +80,6 @@ __reset:
 	tstorerb	r0, [r1, #3]  	@write_reg8(0x64, 0xff)
 
 
-@analog_write(0x82, 0x64);
-	tloadr     	r1, FLASH_RECOVER + 4	@0x8000b8
-	tmov      	r0, #130   	@0x82
-	tstorerb	r0, [r1, #0]		@ reg_ana_addr = addr;
-	tmov      	r0, #100	@0x64
-	tstorerb	r0, [r1, #1]		@ reg_ana_data = v;
-
-	tloadr		r1, FLASH_RECOVER + 8	@0x8000ba
-	tmov      	r0, #96		@0x60
-	tstorerb	r0, [r1, #0]		@ reg_ana_ctrl = (FLD_ANA_START | FLD_ANA_RW);
-
-	tmov		r2, #1
-
-	@ while(reg_ana_ctrl & FLD_ANA_BUSY);
-LOOP_WAIT1:
-    tloadrb		r3, [r1, #0]
-    tand		r3, r2
-	tjne		LOOP_WAIT1
-
-	tstorerb	r3, [r1, #0]
-
-
-
 @analog_write(0x0c, 0xc4);
 	tloadr     	r1, FLASH_RECOVER + 4	@0x8000b8
 	tmov      	r0, #12   	@0x0c
@@ -232,7 +209,7 @@ DAT0:
 	.word	0x12			    @IRQ    @0
 	.word	0x13			    @SVC    @4
 	.word	(irq_stk + IRQ_STK_SIZE)
-	.word	(0x84c000)		    @12  stack end
+	.word	(0x850000)		    @12  stack end
 	.word	(_start_bss_)               @16
 	.word	(_end_bss_)                 @20
 	.word	(0x80060c)                  @24
@@ -253,7 +230,7 @@ DATA_I:
 FLL_D:
 	.word	0xffffffff
 	.word	(_start_data_)
-	@.word	(0x84c000)
+	@.word	(0x850000)
 	.word	(_start_data_ + 32)
 
 

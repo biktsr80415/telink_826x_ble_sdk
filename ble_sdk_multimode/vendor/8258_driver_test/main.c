@@ -28,6 +28,7 @@ _attribute_ram_code_ void irq_handler(void)
 
 /***i2c demo***/
 #elif (DRIVER_TEST_MODE == TEST_IIC)
+
 	app_i2c_test_irq_proc();
 
 /***spi demo ***/
@@ -49,11 +50,6 @@ _attribute_ram_code_ void irq_handler(void)
 int main (void) {
 
 	cpu_wakeup_init();
-
-	audio_amic_init(AUDIO_16K);
-//	write_reg8(0x40000, 0x11);
-//	while(1);
-//	write_reg8(0x40000, 0x22);
 
 	#if (CLOCK_SYS_CLOCK_HZ == 16000000)
 		clock_init(SYS_CLK_16M_Crystal);

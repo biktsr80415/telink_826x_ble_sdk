@@ -224,7 +224,8 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_SUSPEND_EXIT			15
 #define			BLT_EV_FLAG_READ_P256_KEY			16
 #define			BLT_EV_FLAG_GENERATE_DHKEY			17
-#define			BLT_EV_FLAG_BEACON_DONE				18
+#define			BLT_EV_FLAG_SMP_PINCODE_PROCESS	    18
+
 
 
 
@@ -365,7 +366,9 @@ static inline void blc_ll_recordRSSI(u8 rssi)
 static inline void blc_ll_initBasicMCU (void)
 {
 	reg_dma_rf_rx_addr = (u16)(u32) (blt_rxfifo_b);
-	reg_dma2_ctrl = FLD_DMA_WR_MEM | (blt_rxfifo.size>>4);   // rf rx buffer enable & size
+	reg_dma_rf_rx_size = (blt_rxfifo.size>>4);   // rf rx buffer enable & size
+	reg_dma_rf_rx_mode = FLD_DMA_WR_MEM;
+
 
 	reg_system_tick_irq = BIT(31); //set to a big value, avoid irq happens unnormally
 

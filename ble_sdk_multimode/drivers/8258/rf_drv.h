@@ -34,19 +34,58 @@ typedef enum {
 } RF_StatusTypeDef;
 
 typedef enum {
-	RF_POWER_10m5PdBm	= 63,
-	RF_POWER_9PdBm		= 45,  // 9
-	RF_POWER_8PdBm		= 38,  // 8
-	RF_POWER_5PdBm		= 25,  // 5
-	RF_POWER_2m5PdBm	= 18,  // 2.5
-	RF_POWER_1m5PdBm	= 16,  // 1.5
-	RF_POWER_0m5NdBm	= 12, // -0.5
-	RF_POWER_2m0NdBm	= 10, // -2.0
-	RF_POWER_4m0NdBm	= 8, // -4.0
-	RF_POWER_6m0NdBm	= 6, // -6.0
-	RF_POWER_9m5NdBm	= 4, // -9.5
-	RF_POWER_15m03NdBm	= 2, // -15.0
-	RF_POWER_20m0NdBm	= 1, // -20.0
+	 /*VBAT*/
+	 RF_POWER_P10p46dBm = 63, //  10.46 dbm
+	 RF_POWER_P10p29dBm = 61, //  10.29 dbm
+	 RF_POWER_P10p01dBm = 58, //  10.01 dbm
+	 RF_POWER_P9p81dBm  = 56, //   9.81 dbm
+	 RF_POWER_P9p48dBm  = 53, //   9.48 dbm
+	 RF_POWER_P9p24dBm  = 51, //   9.24 dbm
+	 RF_POWER_P8p97dBm  = 49, //   8.97 dbm
+	 RF_POWER_P8p73dBm  = 47, //   8.73 dbm
+	 RF_POWER_P8p44dBm  = 45, //   8.44 dbm
+	 RF_POWER_P8p13dBm  = 43, //   8.13 dbm
+	 RF_POWER_P7p79dBm  = 41, //   7.79 dbm
+	 RF_POWER_P7p41dBm  = 39, //   7.41 dbm
+	 RF_POWER_P7p02dBm  = 37, //   7.02 dbm
+	 RF_POWER_P6p60dBm  = 35, //   6.60 dbm
+	 RF_POWER_P6p14dBm  = 33, //   6.14 dbm
+	 RF_POWER_P5p65dBm  = 31, //   5.65 dbm
+	 RF_POWER_P5p13dBm  = 29, //   5.13 dbm
+	 RF_POWER_P4p57dBm  = 27, //   4.57 dbm
+	 RF_POWER_P3p94dBm  = 25, //   3.94 dbm
+	 RF_POWER_P3p23dBm  = 23, //   3.23 dbm
+	 /*VANT*/
+	 RF_POWER_P3p01dBm  = BIT(7) | 63,   //   3.01 dbm
+	 RF_POWER_P2p81dBm  = BIT(7) | 61,   //   2.81 dbm
+	 RF_POWER_P2p61dBm  = BIT(7) | 59,   //   2.61 dbm
+	 RF_POWER_P2p39dBm  = BIT(7) | 57,   //   2.39 dbm
+	 RF_POWER_P1p99dBm  = BIT(7) | 54,   //   1.99 dbm
+	 RF_POWER_P1p73dBm  = BIT(7) | 52,   //   1.73 dbm
+	 RF_POWER_P1p45dBm  = BIT(7) | 50,   //   1.45 dbm
+	 RF_POWER_P1p17dBm  = BIT(7) | 48,   //   1.17 dbm
+	 RF_POWER_P0p90dBm  = BIT(7) | 46,   //   0.90 dbm
+	 RF_POWER_P0p58dBm  = BIT(7) | 44,   //   0.58 dbm
+	 RF_POWER_P0p04dBm  = BIT(7) | 41,   //   0.04 dbm
+	 RF_POWER_N0p14dBm  = BIT(7) | 40,   //  -0.14 dbm
+	 RF_POWER_N0p97dBm  = BIT(7) | 36,   //  -0.97 dbm
+	 RF_POWER_N1p42dBm  = BIT(7) | 34,   //  -1.42 dbm
+	 RF_POWER_N1p89dBm  = BIT(7) | 32,   //  -1.89 dbm
+	 RF_POWER_N2p48dBm  = BIT(7) | 30,   //  -2.48 dbm
+	 RF_POWER_N3p03dBm  = BIT(7) | 28,   //  -3.03 dbm
+	 RF_POWER_N3p61dBm  = BIT(7) | 26,   //  -3.61 dbm
+	 RF_POWER_N4p26dBm  = BIT(7) | 24,   //  -4.26 dbm
+	 RF_POWER_N5p03dBm  = BIT(7) | 22,   //  -5.03 dbm
+	 RF_POWER_N5p81dBm  = BIT(7) | 20,   //  -5.81 dbm
+	 RF_POWER_N6p67dBm  = BIT(7) | 18,   //  -6.67 dbm
+	 RF_POWER_N7p65dBm  = BIT(7) | 16,   //  -7.65 dbm
+	 RF_POWER_N8p65dBm  = BIT(7) | 14,   //  -8.65 dbm
+	 RF_POWER_N9p89dBm  = BIT(7) | 12,   //  -9.89 dbm
+	 RF_POWER_N11p4dBm  = BIT(7) | 10,   //  -11.4 dbm
+	 RF_POWER_N13p29dBm = BIT(7) | 8,   //  -13.29 dbm
+	 RF_POWER_N15p88dBm = BIT(7) | 6,   //  -15.88 dbm
+	 RF_POWER_N19p27dBm = BIT(7) | 4,   //  -19.27 dbm
+	 RF_POWER_N25p18dBm = BIT(7) | 2,   //  -25.18 dbm
 } RF_PowerTypeDef;
 
 #ifdef		RF_MODE_250K
@@ -106,6 +145,8 @@ unsigned char is_rf_packet_length_ok(unsigned char *p);
 #define    RF_ZIGBEE_PACKET_LENGTH_OK(p)    (p[0]  == p[4]+9)
 #define    RF_ZIGBEE_PACKET_CRC_OK(p)       ((p[p[0]+3] & 0x51) == 0x10)
 #define    RF_ZIGBEE_PACKET_RSSI_GET(p)     (p[p[0]+2])
+#define    RF_ZIGBEE_PACKET_TIMESTAMP_GET(p)           (p[p[0]-4] | (p[p[0]-3]<<8) | (p[p[0]-2]<<16) | (p[p[0]-1]<<24))
+#define    RF_ZIGBEE_PACKET_PAYLOAD_LENGTH_GET(p)      (p[4])
 #define    RF_NRF_ESB_PACKET_LENGTH_OK(p)              (p[0] == (p[4] & 0x3f) + 11)
 #define    RF_NRF_ESB_PACKET_CRC_OK(p)                 ((p[p[0]+3] & 0x01) == 0x00)
 #define    RF_NRF_ESB_PACKET_RSSI_GET(p)               (p[p[0]+2])
@@ -263,6 +304,7 @@ void rf_start_stx2rx  (void* addr, unsigned int tick);
 void rf_start_srx2tx  (void* addr, unsigned int tick);
 
 extern int rf_trx_state_set(RF_StatusTypeDef rf_status, signed char rf_channel);
+extern RF_StatusTypeDef rf_trx_state_get(void);
 extern void rf_tx_pkt(unsigned char *rf_txaddr);
 static inline unsigned char rf_tx_finish(void)
 {
@@ -297,4 +339,10 @@ extern void rf_tx_500k_simulate_100k(unsigned char *preamble, unsigned char prea
                                      unsigned char *acc_code, unsigned char acc_len,
                                      unsigned char *payload, unsigned char pld_len,
                                      unsigned char *tx_buf, unsigned short crc_init);
+extern void rf_ed_detecct_154(void);
+extern unsigned char rf_stop_ed_154(void);
+
+void rf_ble_1m_param_init(void);
+
+
 #endif

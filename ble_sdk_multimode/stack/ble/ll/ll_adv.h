@@ -102,7 +102,8 @@ ble_sts_t 	bls_hci_le_setAdvParam(adv_para_t *para);
 ble_sts_t 	bls_hci_le_readChannelMap(u16 connHandle, u8 *returnChannelMap);
 
 
-
+ble_sts_t   bls_ll_setAdvType(u8 advType);
+ble_sts_t 	blt_set_adv_addrtype(u8* cmdPara);
 
 
 

@@ -423,13 +423,14 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PA3:
 		{
 			//0x5a8[7:6]
-			//0. DI
+			//0. SPI_DI / I2C_SDA
 			//1. UART_CTS
 			//2. PWM1
 			mask= (unsigned char)~(BIT(7)|BIT(6));
-			if(func == AS_SPI){
+			if(func == AS_SPI || func == AS_I2C){
 
-			}else if(func == AS_UART){
+			}
+			else if(func == AS_UART){
 				val = BIT(6);
 			}
 			else if(func == AS_PWM1){
@@ -442,13 +443,14 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PA4:
 		{
 			//0x5a9[1:0]
-			//0. DO
+			//0. SPI_DO / I2C_SCL
 			//1. UART_TX
 			//2. PWM0
 			mask= (unsigned char)~(BIT(1)|BIT(0));
-			if(func == AS_SPI){
+			if(func == AS_SPI || func == AS_I2C){
 
-			}else if(func == AS_UART){
+			}
+			else if(func == AS_UART){
 				val = BIT(0);
 			}
 			else if(func == AS_PWM2){
@@ -602,12 +604,13 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		{
 			//0x5ab[5:4]
 			//0. SDM_P1
-			//1. SPI_DI
+			//1. SPI_DI/I2C_SDA
 			//2. UART_RTS
 			mask = (unsigned char)~(BIT(5)|BIT(4));
 			if(func == AS_SDM){
 
-			}else if(func == AS_SPI){
+			}
+			else if(func == AS_SPI || func == AS_I2C){
 				val = BIT(4);
 			}
 			else if(func == AS_UART){
@@ -938,11 +941,11 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 		case GPIO_PD7:
 		{
 			//0x5af[7:6]
-			//0. SPI_CK
+			//0. SPI_CK/I2C_SCL
 			//1. I2S_BCK
 			//2. 7816_TRX
 			mask = (unsigned char)~(BIT(7)|BIT(6));
-			if(func == AS_SPI){
+			if(func == AS_SPI || func == AS_I2C){
 
 			}
 			else if(func == AS_I2S){

@@ -10,7 +10,7 @@
  ******************************************************************************************************************************/
 
 /****************************************************
-  secondary i2c regs struct: begin  addr : 0x00
+  i2c regs struct: begin  addr : 0x00
  *****************************************************/
 #define reg_i2c_set				REG_ADDR32(0x00)
 #define reg_i2c_speed			REG_ADDR8(0x00)
@@ -32,6 +32,7 @@ enum{
 	FLD_I2C_ADDR_AUTO 		=	BIT(0),
 	FLD_I2C_MODE_MASTER		= 	BIT(1),		// 1: master, 0: slave
 	FLD_I2C_MEM_MAP 		=	BIT(2), 	// write i2c data to predefined memory address which set by other register
+	FLD_I2C_HOLD_MASTER     =   BIT(3),  //r_clk_stretch_en in kite register table, Congqing do not know its meaning, should ask Guangjun & Mingjian
 };
 
 #define reg_i2c_adr_dat			REG_ADDR16(0x04)
@@ -42,15 +43,36 @@ enum{
 #define reg_i2c_di				REG_ADDR8(0x06)
 #define reg_i2c_ctrl			REG_ADDR8(0x07)
 enum{
-	FLD_I2C_CMD_ID		= 		BIT(0),
-	FLD_I2C_CMD_ADR		= 		BIT(1),
-	FLD_I2C_CMD_DO		= 		BIT(2),
-	FLD_I2C_CMD_DI		= 		BIT(3),
-	FLD_I2C_CMD_START	= 		BIT(4),
-	FLD_I2C_CMD_STOP	= 		BIT(5),
-	FLD_I2C_CMD_READ_ID	= 		BIT(6),
-	FLD_I2C_CMD_NAK		= 		BIT(7),
+	FLD_I2C_CMD_ID			= 		BIT(0),
+	FLD_I2C_CMD_ADDR		= 		BIT(1),
+	FLD_I2C_CMD_DO			= 		BIT(2),
+	FLD_I2C_CMD_DI			= 		BIT(3),
+	FLD_I2C_CMD_START		= 		BIT(4),
+	FLD_I2C_CMD_STOP		= 		BIT(5),
+	FLD_I2C_CMD_READ_ID		= 		BIT(6),
+	FLD_I2C_CMD_ACK			= 		BIT(7),
 };
+
+/****************************************************
+i2c map regs struct: begin  addr : 0xe0
+ *****************************************************/
+#define reg_i2c_map_hadr		 REG_ADDR8(0xe0)   //what meaning ?
+
+#define reg_slave_map_addrl      REG_ADDR8(0xe1)
+#define reg_slave_map_addrm      REG_ADDR8(0xe2)
+#define reg_slave_map_addrh      REG_ADDR8(0xe3)
+
+#define reg_i2c_map_host_status	 	REG_ADDR8(0xe4)
+enum{
+	FLD_HOST_CMD_IRQ = 		BIT(0),   //both host write & read trigger this status
+	FLD_HOST_READ_IRQ = 	BIT(1),   //only host read trigger this status
+};
+
+
+//what meaning ?
+#define reg_i2c_map_read0		 REG_ADDR8(0xe5)
+#define reg_i2c_map_read1		 REG_ADDR8(0xe6)
+#define reg_i2c_map_read2		 REG_ADDR8(0xe7)
 
 /****************************************************
   secondary spi regs struct: begin  addr : 0x08
@@ -58,12 +80,13 @@ enum{
 #define reg_spi_data			REG_ADDR8(0x08)
 #define reg_spi_ctrl			REG_ADDR8(0x09)
 enum{
-	FLD_SPI_CS = 				BIT(0),
-	FLD_SPI_MASTER_MODE_EN = 	BIT(1),
-	FLD_SPI_DATA_OUT_DIS = 		BIT(2),
-	FLD_SPI_RD = 				BIT(3),
-	FLD_SPI_ADDR_AUTO =			BIT(4),
-	FLD_SPI_BUSY = 				BIT(6),		// diff from doc,  bit 6 working
+	FLD_SPI_CS 				= 	BIT(0),
+	FLD_SPI_MASTER_MODE_EN 	= 	BIT(1),
+	FLD_SPI_DATA_OUT_DIS 	= 	BIT(2),
+	FLD_SPI_RD			    = 	BIT(3),
+	FLD_SPI_ADDR_AUTO       =	BIT(4),
+	FLD_SPI_SHARE_MODE      =   BIT(5),
+	FLD_SPI_BUSY            = 	BIT(6),		// diff from doc,  bit 6 working
 };
 #define reg_spi_sp				REG_ADDR8(0x0a)
 enum{
@@ -72,10 +95,9 @@ enum{
 	FLD_SPI_PAD_SEL = 			BIT(7),
 };
 
-#define reg_spi_inv_clk			REG_ADDR8(0x0b)
-enum{
-	FLD_INVERT_SPI_CLK =        BIT(0),
-	FLD_DAT_DLY_HALF_CLK =      BIT(1),
+#define reg_spi_inv_clk			REG_ADDR8(0x0b)//spi supports four modes
+enum {
+    FLD_SPI_MODE_WORK_MODE = BIT_RNG(0,1),
 };
 
 /****************************************************
@@ -92,18 +114,6 @@ enum{
 	FLD_MASTER_SPI_BUSY = 		BIT(4),
 };
 
-
-
-#define reg_i2c_irq_status		REG_ADDR8(0x21)
-#define reg_i2c_clr_status		REG_ADDR8(0x22)
-enum{
-	FLD_I2C_STATUS_WR = 		BIT(1),
-	FLD_SPI_STATUS_WR =         BIT(1),
-	FLD_I2C_STATUS_RD = 		BIT(2),
-};
-
-#define reg_spi_irq_status      reg_i2c_irq_status
-#define reg_spi_clr_status      reg_i2c_clr_status
 
 
 
@@ -216,70 +226,118 @@ enum{
 #define reg_mcu_wakeup_mask		REG_ADDR32(0x78)
 
 
-/////////////  Uart  //////////////////////////////////
+/****************************************************
+ uart regs struct: begin  0x90
+ *****************************************************/
+#define reg_uart_data_buf0		REG_ADDR8(0x90)
+#define reg_uart_data_buf1		REG_ADDR8(0x91)
+#define reg_uart_data_buf2		REG_ADDR8(0x92)
+#define reg_uart_data_buf3		REG_ADDR8(0x93)
+
+#define reg_uart_data_buf(i)    REG_ADDR8(0x90 + (i))  //i = 0~3
+
+
 #define reg_uart_clk_div		REG_ADDR16(0x94)
 enum{
 	FLD_UART_CLK_DIV = 			BIT_RNG(0,14),
 	FLD_UART_CLK_DIV_EN = 		BIT(15)
 };
 
-#define reg_uart_ctrl0			REG_ADDR16(0x96)
+#define reg_uart_ctrl0			REG_ADDR8(0x96)
 enum{
 	FLD_UART_BPWC = 			BIT_RNG(0,3),
 	FLD_UART_RX_DMA_EN = 		BIT(4),
 	FLD_UART_TX_DMA_EN =		BIT(5),
 	FLD_UART_RX_IRQ_EN = 		BIT(6),
 	FLD_UART_TX_IRQ_EN =		BIT(7),
-	FLD_UART_CTS_I_SELECT =		BIT(8),
-	FLD_UART_CTS_EN = 			BIT(9),
-	FLD_UART_PARITY_EN =		BIT(10),
-    FLD_UART_PARITY_SEL =       BIT(11),
-    FLD_UART_STOP_BIT =         BIT_RNG(12,13),
-    FLD_UART_TTL =              BIT(14),
-    FLD_UART_LOOPBACK =         BIT(15),
 };
 
-#define reg_uart_crtl1         		REG_ADDR8(0x97)
+#define reg_uart_ctrl1         		REG_ADDR8(0x97)
 enum {
-    FLD_UART_CTRL1_CTS_SELECT = BIT(0),
-    FLD_UART_CTRL1_CTS_EN = BIT(1),
-    FLD_UART_CTRL1_PARITY_EN = BIT(2),
-    FLD_UART_CTRL1_PARITY = BIT(3),
-    FLD_UART_CTRL1_STOP_BIT = BIT_RNG(4,5),
-    FLD_UART_CTRL1_TTL = BIT(6),
-    FLD_UART_CTRL1_LOOPBACK = BIT(7),
+    FLD_UART_CTRL1_CTS_SELECT	   = BIT(0),
+    FLD_UART_CTRL1_CTS_EN 		   = BIT(1),
+    FLD_UART_CTRL1_PARITY_EN 	   = BIT(2),
+    FLD_UART_CTRL1_PARITY_POLARITY = BIT(3),   //1:odd parity   0:even parity
+    FLD_UART_CTRL1_STOP_BIT 	   = BIT_RNG(4,5),
+    FLD_UART_CTRL1_TTL 			   = BIT(6),
+    FLD_UART_CTRL1_LOOPBACK 	   = BIT(7),
 };
 
 #define reg_uart_ctrl2			REG_ADDR16(0x98)
 enum {
-    FLD_UART_CTRL2_RTS_TRIG_LVL = BIT_RNG(0,3),
-    FLD_UART_CTRL2_RTS_PARITY = BIT(4),
-    FLD_UART_CTRL2_RTS_MANUAL_VAL = BIT(5),
-    FLD_UART_CTRL2_RTS_MANUAL_EN = BIT(6),
-    FLD_UART_CTRL2_RTS_EN = BIT(7),
+    FLD_UART_CTRL2_RTS_TRIG_LVL   	 = BIT_RNG(0,3),
+    FLD_UART_CTRL2_RTS_PARITY 		 = BIT(4),
+    FLD_UART_CTRL2_RTS_MANUAL_VAL 	 = BIT(5),
+    FLD_UART_CTRL2_RTS_MANUAL_EN 	 = BIT(6),
+    FLD_UART_CTRL2_RTS_EN 			 = BIT(7),
 	FLD_UART_CTRL3_RX_IRQ_TRIG_LEVEL = BIT_RNG(8,11),
 	FLD_UART_CTRL3_TX_IRQ_TRIG_LEVEL = BIT_RNG(12,15),
 };
 
+
+#define reg_uart_ctrl3        	REG_ADDR8(0x99)
+enum {
+	FLD_UART_RX_IRQ_TRIG_LEV = BIT_RNG(0,3),
+	FLD_UART_TX_IRQ_TRIG_LEV = BIT_RNG(4,7),
+};
+
+
+
+#if 0
 #define reg_uart_rx_timeout		REG_ADDR16(0x9a)
 enum{
-	FLD_UART_TIMEOUT_BW = 		BIT_RNG(0,7),		//  timeout bit width
-	FLD_UART_TIMEOUT_MUL = 		BIT_RNG(8,15),
+	FLD_UART_TIMEOUT		 = 	BIT_RNG(0,9),		//  timeout bit width
+	FLD_UART_P7816_EN	 	 =  BIT(13),
+	FLD_UART_MASK_TXDONE_IRQ =  BIT(14),
+	FLD_UART_MASK_ERR_IRQ 	 =  BIT(15),
+};
+#else
+
+#define reg_uart_rx_timeout0	REG_ADDR8(0x9a)
+enum{
+	FLD_UART_TIMEOUT_BW		 = 	BIT_RNG(0,7),		//  timeout bit width
+};
+
+#define reg_uart_rx_timeout1    REG_ADDR8(0x9b)
+enum{
+	FLD_UART_TIMEOUT_MUL	 = 	BIT_RNG(0,1),		//  timeout bit width
+	FLD_UART_P7816_EN	 	 =  BIT(5),
+	FLD_UART_MASK_TXDONE_IRQ =  BIT(6),
+	FLD_UART_MASK_ERR_IRQ 	 =  BIT(7),
+};
+
+#endif
+
+
+#define reg_uart_buf_cnt       REG_ADDR8(0x9c)
+enum{
+	FLD_UART_RX_BUF_CNT		=  BIT_RNG(0,3),
+	FLD_UART_TX_BUF_CNT		=  BIT_RNG(4,7),
 };
 
 #define reg_uart_status0       REG_ADDR8(0x9d)
-
-
 enum{
-	FLD_UART_IRQ_FLAG  =  BIT(3),
-	FLD_UART_RX_ERR_CLR=  BIT(6),
-	FLD_UART_RX_ERR_FLAG= BIT(7),
+	FLD_UART_RBCNT 	     =  BIT_RNG(0,2),
+	FLD_UART_IRQ_FLAG    =  BIT(3),
+	FLD_UART_WBCNT 	     =  BIT_RNG(4,6),
+	FLD_UART_RX_ERR_FLAG =  BIT(7),
 };
 
 #define reg_uart_status1       REG_ADDR8(0x9e)
 enum{
-	FLD_UART_TX_DONE   =  BIT(0),
+	FLD_UART_TX_DONE   	  =  BIT(0),
+	FLD_UART_TX_BUF_IRQ   =  BIT(1),
+	FLD_UART_RX_DONE   	  =  BIT(2),
+	FLD_UART_RX_BUF_IRQ   =  BIT(3),
 };
+
+
+#define reg_uart_state       REG_ADDR8(0x9f)
+enum{
+	FLD_UART_TSTATE_I 	     =  BIT_RNG(0,2),
+	FLD_UART_RSTATE_I	     =  BIT_RNG(4,7),
+};
+
 
 /****************************************************
  swire regs struct: begin  addr : 0xb0
@@ -736,77 +794,75 @@ enum{
 /****************************************************
  dma mac regs struct: begin  addr : 0xC00
  *****************************************************/
+//uart rx
 #define reg_dma0_addr			REG_ADDR16(0xc00)
-#define reg_dma0_ctrl			REG_ADDR16(0xc02)
 #define reg_dma0_size			REG_ADDR8(0xc02)
 #define reg_dma0_mode			REG_ADDR8(0xc03)
+enum{
+	FLD_DMA_WR_MEM =			BIT(0),
+	FLD_DMA_PINGPONG_EN =		BIT(1),
+	FLD_DMA_FIFO_EN =			BIT(2),
+	FLD_DMA_AUTO_MODE =			BIT(3),
+	FLD_DMA_BYTE_MODE =			BIT(4),
+	FLD_DMA_FIFO8 	=			(BIT(7) | BIT(6) | FLD_DMA_WR_MEM | FLD_DMA_PINGPONG_EN),
+};
 
+
+//uart tx
 #define reg_dma1_addr			REG_ADDR16(0xc04)
-#define reg_dma1_ctrl			REG_ADDR16(0xc06)
 #define reg_dma1_size			REG_ADDR8(0xc06)
 #define reg_dma1_mode			REG_ADDR8(0xc07)
 
 //rf rx dma
 #define reg_dma2_addr			REG_ADDR16(0xc08)
-#define reg_dma2_ctrl			REG_ADDR16(0xc0a)
 #define reg_dma2_size			REG_ADDR8(0xc0a)
 #define reg_dma2_mode			REG_ADDR8(0xc0b)
 
 //rf tx dma
 #define reg_dma3_addr			REG_ADDR16(0xc0c)
-#define reg_dma3_ctrl			REG_ADDR16(0xc0e)
 #define reg_dma3_size			REG_ADDR8(0xc0e)
 #define reg_dma3_mode			REG_ADDR8(0xc0f)
 
-
 #define reg_dma4_addr			REG_ADDR16(0xc10)
-#define reg_dma4_ctrl			REG_ADDR16(0xc12)
 #define reg_dma4_size			REG_ADDR8(0xc12)
 #define reg_dma4_mode			REG_ADDR8(0xc13)
 
-
 #define reg_dma5_addr			REG_ADDR16(0xc14)
-#define reg_dma5_ctrl			REG_ADDR16(0xc16)
 #define reg_dma5_size			REG_ADDR8(0xc16)
 #define reg_dma5_mode			REG_ADDR8(0xc17)
 
 //pwm tx dma
 #define reg_dma7_addr			REG_ADDR16(0xc18)
-#define reg_dma7_ctrl			REG_ADDR16(0xc1a)
 #define reg_dma7_size			REG_ADDR8(0xc1a)
 #define reg_dma7_mode			REG_ADDR8(0xc1b)
+
 
 #define reg_dma_t_addr			REG_ADDR16(0xc1c)
 #define reg_dma_t_size			REG_ADDR8(0xc1e)
 
-enum{
-	FLD_DMA_BUF_SIZE =			BIT_RNG(0,7),
-	FLD_DMA_WR_MEM =			BIT(8),
-	FLD_DMA_PINGPONG_EN =		BIT(9),
-	FLD_DMA_FIFO_EN =			BIT(10),
-	FLD_DMA_AUTO_MODE =			BIT(11),
-	FLD_DMA_BYTE_MODE =			BIT(12),
-	FLD_DMA_FIFO8 	=			(BIT(15) | BIT(14) | FLD_DMA_WR_MEM | FLD_DMA_PINGPONG_EN),
-
-	FLD_DMA_RPTR_CLR =			BIT(4),
-	FLD_DMA_RPTR_NEXT =			BIT(5),
-	FLD_DMA_RPTR_SET =			BIT(6),
-};
 
 
 //  The default channel assignment
 #define reg_dma_uart_rx_addr	reg_dma0_addr
-#define reg_dma_uart_rx_ctrl	reg_dma0_ctrl
+#define reg_dma_uart_rx_size	reg_dma0_size
+#define reg_dma_uart_rx_mode	reg_dma0_mode
+
 #define reg_dma_uart_tx_addr	reg_dma1_addr
-#define reg_dma_uart_tx_ctrl	reg_dma1_ctrl
+#define reg_dma_uart_tx_size	reg_dma1_size
+#define reg_dma_uart_tx_mode	reg_dma1_mode
 
 #define reg_dma_rf_rx_addr		reg_dma2_addr
-#define reg_dma_rf_rx_ctrl		reg_dma2_ctrl
+#define reg_dma_rf_rx_size		reg_dma2_size
+#define reg_dma_rf_rx_mode		reg_dma2_mode
+
 #define reg_dma_rf_tx_addr		reg_dma3_addr
-#define reg_dma_rf_tx_ctrl		reg_dma3_ctrl
+#define reg_dma_rf_tx_size		reg_dma3_size
+#define reg_dma_rf_tx_mode		reg_dma3_mode
 
 #define reg_dma_pwm_addr		reg_dma7_addr
-#define reg_dma_pwm_ctrl		reg_dma7_ctrl
+#define reg_dma_pwm_size		reg_dma7_size
+#define reg_dma_pwm_mode		reg_dma7_mode
+
 
 
 #define reg_dma_chn_en			REG_ADDR8(0xc20)
@@ -814,23 +870,38 @@ enum{
 #define reg_dma_tx_rdy0			REG_ADDR8(0xc24)
 #define reg_dma_rx_rdy0			REG_ADDR8(0xc26)
 #define reg_dma_rx_rdy1			REG_ADDR8(0xc27)
-#define reg_dma_irq_src			reg_dma_rx_rdy0
+#define reg_dma_irq_status		reg_dma_rx_rdy0
 enum{
-	FLD_DMA_CHN0 =	BIT(0),		FLD_DMA_UART_RX =	BIT(0),
-	FLD_DMA_CHN1 =	BIT(1),		FLD_DMA_UART_TX =	BIT(1),
-	FLD_DMA_CHN2 =	BIT(2),		FLD_DMA_RF_RX =		BIT(2),
-	FLD_DMA_CHN3 =	BIT(3),		FLD_DMA_RF_TX =		BIT(3),
-	FLD_DMA_CHN4 =	BIT(4),
-	FLD_DMA_CHN5 =	BIT(5),
-	FLD_DMA_CHN7 =	BIT(7),		FLD_DMA_PWM   =		BIT(7),
+	FLD_DMA_CHN0 =	BIT(0),		FLD_DMA_CHN_UART_RX =	BIT(0),
+	FLD_DMA_CHN1 =	BIT(1),		FLD_DMA_CHN_UART_TX =	BIT(1),
+	FLD_DMA_CHN2 =	BIT(2),		FLD_DMA_CHN_RF_RX =		BIT(2),
+	FLD_DMA_CHN3 =	BIT(3),		FLD_DMA_CHN_RF_TX =		BIT(3),
+	FLD_DMA_CHN4 =	BIT(4),		FLD_DMA_CHN_AES_DECO =  BIT(4),
+	FLD_DMA_CHN5 =	BIT(5),     FLD_DMA_CHN_AES_CODE =  BIT(5),
+	FLD_DMA_CHN7 =	BIT(7),		FLD_DMA_CHN_PWM  	 =	BIT(7),
 };
 
+typedef enum {
+    FLD_DMA_IRQ_UART_RX  = BIT(0),
+    FLD_DMA_IRQ_UART_TX  = BIT(1),
+    FLD_DMA_IRQ_RF_RX    = BIT(2),
+    FLD_DMA_IRQ_RF_TX    = BIT(3),
+    FLD_DMA_IRQ_AES_DECO = BIT(4),
+    FLD_DMA_IRQ_AES_CODE = BIT(5),
+    FLD_DMA_IRQ_PWM		 = BIT(7),
+    FLD_DMA_IRQ_ALL      = 0xff,
+} IRQ_DMAIrqTypeDef;
 
 
 #define reg_dma_rx_rptr			REG_ADDR8(0xc28)
 #define reg_dma_rx_wptr			REG_ADDR8(0xc29)
 
 #define reg_dma_tx_rptr			REG_ADDR8(0xc2a)
+enum{
+	FLD_DMA_RPTR_CLR =			BIT(4),
+	FLD_DMA_RPTR_NEXT =			BIT(5),
+	FLD_DMA_RPTR_SET =			BIT(6),
+};
 #define reg_dma_tx_wptr			REG_ADDR8(0xc2b)
 #define reg_dma_tx_fifo			REG_ADDR16(0xc2c)
 
@@ -845,7 +916,6 @@ enum{
 #define reg_dma_ta_addrHi		REG_ADDR8(0xc46)
 #define reg_dma_a3_addrHi		REG_ADDR8(0xc47)
 #define reg_dma7_addrHi			REG_ADDR8(0xc48)
-
 
 /****************************************************
  aes regs struct: begin  0x540
@@ -955,8 +1025,25 @@ enum{
 #define    PAD_FUNC_MUX_2PD     	REG_ADDR8(0x5af)
 
 
+#define reg_pin_i2c_spi_out_en	    REG_ADDR8(0x5b6)
+enum{
+	FLD_PIN_PAGROUP_SPI_EN =	BIT_RNG(4,5),
+	FLD_PIN_PBGROUP_SPI_EN =	BIT(6),
+	FLD_PIN_PDGROUP_SPI_EN =	BIT(7),
+};
 
 
+#define reg_pin_i2c_spi_en			REG_ADDR8(0x5b7)  //poweron default  0xff
+enum{
+	FLD_PIN_PA3_SPI_EN =	BIT(0),
+	FLD_PIN_PA4_SPI_EN =	BIT(1),
+	FLD_PIN_PB6_SPI_EN =	BIT(2),
+	FLD_PIN_PD7_SPI_EN =	BIT(3),
+	FLD_PIN_PA3_I2C_EN =	BIT(4),
+	FLD_PIN_PA4_I2C_EN =	BIT(5),
+	FLD_PIN_PB6_I2C_EN =	BIT(6),
+	FLD_PIN_PD7_I2C_EN =	BIT(7),
+};
 
 
 /****************************************************

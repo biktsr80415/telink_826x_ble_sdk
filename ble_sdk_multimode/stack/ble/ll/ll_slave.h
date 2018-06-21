@@ -115,7 +115,7 @@ bool		bls_ll_pushTxFifo (int hanlde, u8 *p);
 ble_sts_t  	bls_hci_reset(void);
 
 ble_sts_t	bls_hci_receiveHostACLData(u16 connHandle, u8 PB_Flag, u8 BC_Flag, u8 *pData );
-
+ble_sts_t 	bls_hci_le_getRemoteSupportedFeatures(u16 connHandle);
 
 
 #endif /* LL_SLAVE_H_ */

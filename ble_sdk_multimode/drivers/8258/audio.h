@@ -23,9 +23,12 @@ typedef enum{
 
 
 
-
-
-
+typedef enum{
+	AMIC,
+	DMIC,
+	I2S_IN,
+	USB_IN,
+}AudioInput_Typedef;
 
 
 
@@ -125,6 +128,8 @@ void audio_amic_init(AudioRate_Typedef Audio_Rate);
 *	@return	none
 */
 void audio_amic_input_set(enum audio_input_t adc_ch);
+
+void Audio_SetUSBOutput(AudioInput_Typedef Input_type,AudioRate_Typedef Audio_Rate,unsigned char* flag);
 
 /**
  * @brief     audio DMIC init function, config the speed of DMIC and downsample audio data to required speed.

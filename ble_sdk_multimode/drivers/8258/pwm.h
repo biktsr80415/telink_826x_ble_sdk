@@ -2,6 +2,7 @@
 #define PWM_H_
 
 #include "register.h"
+#include "clock.h"
 
 typedef enum {
 	PWM0_ID = 0,
@@ -170,16 +171,24 @@ static inline void pwm_set_dma_address(void * pdat)
 {
 	reg_dma_pwm_addr = (unsigned short)((unsigned int)pdat);
 	reg_dma7_addrHi = 0x04;
-	reg_dma_pwm_ctrl  &= ~FLD_DMA_WR_MEM;
+	reg_dma_pwm_mode  &= ~FLD_DMA_WR_MEM;
 }
 
 
 static inline void pwm_start_dma_ir_sending(void)
 {
-	reg_dma_tx_rdy0 |= FLD_DMA_PWM;
+	reg_dma_chn_en |= FLD_DMA_CHN_PWM;
+	reg_dma_tx_rdy0 |= FLD_DMA_CHN_PWM;
 }
 
 
+static inline void pwm_stop_dma_ir_sending(void)
+{
+//	reg_dma_tx_rdy0 &= ~FLD_DMA_PWM;
 
+	reg_rst0 = FLD_RST0_PWM;
+	sleep_us(20);  //1us <-> 4 byte
+	reg_rst0 = 0;
+}
 
 #endif /* PWM_H_ */

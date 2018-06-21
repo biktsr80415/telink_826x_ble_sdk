@@ -32,7 +32,7 @@
 #define 	MY_ADV_INTERVAL_MAX					ADV_INTERVAL_35MS
 
 
-#define		MY_RF_POWER_INDEX					RF_POWER_10m5PdBm
+#define		MY_RF_POWER_INDEX					RF_POWER_P3p01dBm
 
 
 
@@ -359,6 +359,14 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 
 
 
+
+_attribute_ram_code_ void	user_set_rf_power (u8 e, u8 *p, int n)
+{
+	rf_set_power_level_index (MY_RF_POWER_INDEX);
+}
+
+
+
 void	task_connect (u8 e, u8 *p, int n)
 {
 	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);  //interval=10ms latency=99 timeout=4s
@@ -462,7 +470,7 @@ void key_change_proc(void)
 
 
 	u8 key0 = kb_event.keycode[0];
-	u8 key1 = kb_event.keycode[1];
+//	u8 key1 = kb_event.keycode[1];
 	u8 key_value;
 
 	key_not_released = 1;
@@ -733,10 +741,6 @@ void user_init_normal()
 {
 
 
-
-	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
-
-
 ////////////////// BLE stack initialization ////////////////////////////////////
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
@@ -803,7 +807,7 @@ void user_init_normal()
 										bondInfo.peer_addr_type,  bondInfo.peer_addr,
 										MY_APP_ADV_CHANNEL,
 										ADV_FP_NONE);
-		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
+		if(status != BLE_SUCCESS) { write_reg8(0x40002, 0x11); 	while(1); }  //debug: adv setting err
 
 		//it is recommended that direct adv only last for several seconds, then switch to indirect adv
 		bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE, 1);
@@ -818,11 +822,17 @@ void user_init_normal()
 										 0,  NULL,
 										 MY_APP_ADV_CHANNEL,
 										 ADV_FP_NONE);
-		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
+		if(status != BLE_SUCCESS) { write_reg8(0x40002, 0x11); 	while(1); }  //debug: adv setting err
 	}
 
 	bls_ll_setAdvEnable(1);  //adv enable
-	rf_set_power_level_index (MY_RF_POWER_INDEX);
+
+
+	//set rf power index, user must set it after every suspend wakeup, cause relative setting will be reset in suspend
+	user_set_rf_power(0, 0, 0);
+	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_EXIT, &user_set_rf_power);
+
+
 
 	//ble event call back
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
@@ -899,7 +909,7 @@ _attribute_ram_code_
 #endif
 void user_init_deepRetn(void)
 {
-	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
+
 	blc_ll_initBasicMCU();   //mandatory
 	rf_set_power_level_index (MY_RF_POWER_INDEX);
 

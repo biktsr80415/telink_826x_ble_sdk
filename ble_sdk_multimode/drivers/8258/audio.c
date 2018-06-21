@@ -1,9 +1,9 @@
 #include "audio.h"
 #include "pga.h"
 #include "adc.h"
+//#include "usb8258.h"
+#include "irq.h"
 #include "register.h"
-
-
 
 
 unsigned char AMIC_ADC_SampleLength[2] = {0xf0/*96K*/,0xab/*132K*/};
@@ -18,7 +18,7 @@ unsigned char DMIC_CIC_Rate[RATE_SIZE] = {0x23/*8k 7.978723		CIC_MODE 0*/,	0x22/
 										  0x11/*44k 44.11765	CIC_MODE 0*/,	0x11/*48k 46.875	CIC_MODE 0*/,
 										  0x00/*96k 93.75 		CIC_MODE 0*/};
 
-unsigned char AMIC_CIC_Rate[RATE_SIZE] = {0xab/*8k  96/12	*/,	0x85/*16k 96/6	*/,
+unsigned char AMIC_CIC_Rate[RATE_SIZE] = {0xab/*8k  96/12	*/,	0x32/*16k 96/6	*/,
 										  0x85/*22k 132/6	*/,	0x42/*32k 96/3	*/,
 										  0x42/*44k 132/3	*/,	0x31/*48k 96/2	*/,
 										  0x20/*96k			*/};
@@ -34,32 +34,6 @@ unsigned long DSDM_Rate_Matching[RATE_SIZE] = {0x00820001/*8 k*/,0x01058001/*16k
 											   0x01697001/*22k*/,0x020AF001/*32k*/,
 											   0x02D2E001/*44k*/,0x03000001/*48k*/,
 											   0x06000001/*96k*/};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 enum {
@@ -98,8 +72,6 @@ void audio_config_sdm_buf(signed short* pbuff, unsigned char size_buff)
 */
 void audio_amic_init(AudioRate_Typedef Audio_Rate)
 {
-
-
 #if (AMIC_PIN_IN_PC2_PC3_ENABLE)
 
 #else
@@ -206,8 +178,75 @@ void audio_amic_init(AudioRate_Typedef Audio_Rate)
 
 #endif
 
-
 }
+
+static void SendDataToUSB(AudioInput_Typedef Input_Type,AudioRate_Typedef Audio_Rate)
+{
+	WRITE_REG8(0x800117, 0);//reset pointer of Endpoint7's buf
+
+    int i=0;
+    short md;
+    unsigned char length = 0;
+    short mdl,mdr;
+
+    switch(Audio_Rate)
+    {
+    case 	AUDIO_8K:		length = 8;break;
+    case	AUDIO_16K:		length = 16;break;
+    case	AUDIO_22K:		length = 22;break;
+    case	AUDIO_32K:		length = 32;break;
+    case	AUDIO_44K:		length = 44;break;
+    case	AUDIO_48K:		length = 48;break;
+    case	AUDIO_96K:		length = 96;break;
+    default:				length = 96;break;
+    }
+
+    if(Input_Type==DMIC)
+    {
+		for (i=0; (i<length)&&(!(READ_REG8(0x800b13)&0x10)); i++) {
+			if(i%2) {
+			md = READ_REG16(0x801802);
+			WRITE_REG8(0x80011f, md);//write data to endpoint7's buf
+			WRITE_REG8(0x80011f, md>>8);
+			}
+			else{
+			md = READ_REG16(0x801800);
+			WRITE_REG8(0x80011f, md);//write data to endpoint7's buf
+			WRITE_REG8(0x80011f, md>>8);
+			}
+		}
+    }
+    else
+    {
+		for (i=0; (i<length); i++) {
+			if(!(READ_REG8(0x800b13)&0x10))
+			{
+				if(i%2) {
+				mdl = READ_REG16(0x801802);
+				WRITE_REG8(0x80011f, mdl);//write data to endpoint7's buf
+				WRITE_REG8(0x80011f, mdl>>8);
+				}
+				else{
+				mdr = READ_REG16(0x801800);
+				WRITE_REG8(0x80011f, mdr);//write data to endpoint7's buf
+				WRITE_REG8(0x80011f, mdr>>8);
+				}
+			}
+			else{
+				if(i%2) {
+				WRITE_REG8(0x80011f, mdl);//write data to endpoint7's buf
+				WRITE_REG8(0x80011f, mdl>>8);
+				}
+				else{
+				WRITE_REG8(0x80011f, mdr);//write data to endpoint7's buf
+				WRITE_REG8(0x80011f, mdr>>8);
+				}
+			}
+		}
+    }
+	WRITE_REG8(0x800127, 0x01);
+}
+
 
 /**
  * @brief     audio DMIC init function, config the speed of DMIC and downsample audio data to required speed.
@@ -250,7 +289,7 @@ void audio_finetune_sample_rate(unsigned char fine_tune)
  */
 unsigned char audio_tune_deci_shift(unsigned char deci_shift)
 {
-
+	 return 0;
 }
 /**
  *   @brief       tune the HPF shift .i.e register 0xb05 in datasheet.
@@ -259,7 +298,7 @@ unsigned char audio_tune_deci_shift(unsigned char deci_shift)
  */
  unsigned char audio_tune_hpf_shift(unsigned char hpf_shift)
  {
-
+	 return 0;
  }
  /**
  *
