@@ -27,7 +27,7 @@
 
 
 	//select i2c slave mode here(dma mode or mapping mode)
-	#define     I2C_SLAVE_MODE			SLAVE_MAPPING_MODE
+	#define     I2C_SLAVE_MODE			SLAVE_DMA_MODE
 #endif
 
 /**************************************************************************************

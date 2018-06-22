@@ -1,6 +1,10 @@
 #include "tl_common.h"
 #include "drivers.h"
 
+#if (DRIVER_TEST_MODE == TEST_SPI)
+
+
+
 
 /**************************************************************************************
    8258 Demo Code Config
@@ -45,3 +49,8 @@ void spi_master_mainloop(void)
     spi_read( slaveRegAddr_ReadCMD , 3,(unsigned char*)spi_master_rx__buff,DBG_DATA_LEN,SPI_CS_PIN);
 #endif
 }
+
+
+
+
+#endif //end of DRIVER_TEST_MODE == TEST_SPI

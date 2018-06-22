@@ -61,7 +61,7 @@ extern "C" {
 
 
 	//select i2c demo here(master or slave)
-	#define     I2C_DEMO_SELECT 		I2C_DEMO_SLAVE
+	#define     I2C_DEMO_SELECT 		I2C_DEMO_MASTER
 
 
 

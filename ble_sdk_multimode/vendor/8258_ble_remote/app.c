@@ -699,7 +699,7 @@ void blt_pm_proc(void)
 		}
 
 
-		if( 1 ){  //no controller event pending
+		if(  !blc_ll_isControllerEventPending() ){  //no controller event pending
 			//adv 60s, deepsleep
 			if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && !sendTerminate_before_enterDeep && \
 				clock_time_exceed(advertise_begin_tick , ADV_IDLE_ENTER_DEEP_TIME * 1000000))
