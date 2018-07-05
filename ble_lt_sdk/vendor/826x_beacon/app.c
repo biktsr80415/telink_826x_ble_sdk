@@ -291,7 +291,7 @@ void app_power_management ()
 //////////////////////////////////////////////////////////////////////////////
 //	Initialization: MAC address, Adv Packet, Response Packet
 //////////////////////////////////////////////////////////////////////////////
-u8  tbl_mac [] = {0xef, 0xe1, 0xe2, 0x11, 0x12, 0xc5};
+u8  tbl_mac [] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
 const u8	tbl_advData[] = {
 	0x02, 0x01, 0x05,					   //BLE litmited discoverable mode and BR/EDR not supported
 	0x02, 0x0A, 0x07,					   //Tx transmission power 7dBm
@@ -353,17 +353,29 @@ void blt_system_power_optimize(void)  //to lower system power
 
 }
 
+#define	DONGLE_LED_R	GPIO_PC2 // 8267 dongle v1.3
+
+
 void main_loop ()
 {
 	static u32 tick_loop = 0;
+	static u32 led_toggle = FALSE;
+	static u32 led_toggle_tick = 0;
+
+
 	tick_loop ++;
 	if(current_state == MODULE_STATE_BEACON){
-		#if BEACON_ADV_CNT_ENABLE
-			beacon_adv_couter++; //Used for Eddystone TLM ADV Counter
-		#endif
-		blt_send_beacon_adv(BEACON_ADV_CHANNEL, beacon_p_pkt);//beacon_advPDUAddrBuf[firstAdvType]);
-	}else
-	{
+		if (clock_time_exceed(led_toggle_tick, 1000 * 1000)) {
+
+			#if BEACON_ADV_CNT_ENABLE
+				beacon_adv_couter++; //Used for Eddystone TLM ADV Counter
+			#endif
+			blt_send_beacon_adv(BEACON_ADV_CHANNEL, beacon_p_pkt); //beacon_advPDUAddrBuf[firstAdvType]);
+
+			gpio_write(DONGLE_LED_R, led_toggle);
+			led_toggle = !led_toggle;
+			led_toggle_tick = clock_time();
+		}
 	}
 
 	blt_sdk_main_loop();
@@ -384,7 +396,8 @@ void main_loop ()
 	}
 #endif
 
-	app_power_management ();
+	// not implemented currently
+	//app_power_management ();
 }
 
 void user_init()
@@ -435,7 +448,9 @@ void user_init()
 	/*Load para from Flash or not*/
 	beacon_para_init();
 
-	bls_pm_setSuspendMask(SUSPEND_CONN | SUSPEND_ADV);
+	//bls_pm_setSuspendMask(SUSPEND_CONN | SUSPEND_ADV);
+	bls_pm_setSuspendMask(SUSPEND_DISABLE); // for test
+
     
     // adc and battery
 #if (BATT_CHECK_ENABLE)
@@ -454,6 +469,12 @@ void user_init()
 
 	bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
 #endif
+
+
+	// dongle led indicator
+	gpio_set_func(DONGLE_LED_R,AS_GPIO);
+	gpio_set_output_en (DONGLE_LED_R,1);
+
 }
 
 void beacon_para_init()
@@ -857,6 +878,20 @@ int resetBeaconCharater(void*p){
 
 void updateAdvDataPointer(u8*p){
 	beacon_p_pkt = p;
+}
+
+
+//#include <math.h>
+int test_double (void) {
+
+	double a = 9.0;
+
+	WaitMs(500);
+	while (1) {
+		double b = sqrt(a);
+		printf("%lf\n",b);
+	}
+	return 0;
 }
 
 
