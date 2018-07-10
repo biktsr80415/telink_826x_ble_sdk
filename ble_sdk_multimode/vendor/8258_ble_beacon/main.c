@@ -21,12 +21,10 @@ _attribute_ram_code_ void irq_handler(void)
 	irq_blt_sdk_handler() ;
 }
 
+int loop_cnt = 0;
 int main (void) {
 
 	cpu_wakeup_init();
-
-	//no more 32k pm select in 8258
-	//blc_pm_select_internal_32k_crystal();
 
 	#if (CLOCK_SYS_CLOCK_HZ == 16000000)
 		clock_init(SYS_CLK_16M_Crystal);
@@ -34,19 +32,32 @@ int main (void) {
 		clock_init(SYS_CLK_24M_Crystal);
 	#endif
 
-	gpio_init();
-
 	rf_drv_init(RF_MODE_BLE_1M);
 
-    user_init ();
+	gpio_init();
+
+	//deep_wakeup_proc();
+
+	if( pm_is_MCU_deepRetentionWakeup() ){
+		//user_init_deepRetn ();
+		user_init();
+	}
+	else{
+		//user_init_normal ();
+		user_init();
+	}
 
     irq_enable();
 
 	while (1) {
+		loop_cnt++;
 		main_loop ();
 
 		//TODO : enable printf
 		//printf(".");
+		//reg_usb_ep8_dat = 0x80;
+		//reg_usb_ep8_ctrl = 0x80;
+
 	}
 }
 

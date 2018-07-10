@@ -451,7 +451,9 @@ void user_init()
 	/*Load para from Flash or not*/
 	beacon_para_init();
 
-	bls_pm_setSuspendMask(SUSPEND_CONN | SUSPEND_ADV);
+	//bls_pm_setSuspendMask(SUSPEND_CONN | SUSPEND_ADV);
+	bls_pm_setSuspendMask(SUSPEND_DISABLE);
+
     
     // adc and battery
 #if (BATT_CHECK_ENABLE)

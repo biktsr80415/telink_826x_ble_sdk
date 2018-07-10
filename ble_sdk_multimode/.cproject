@@ -356,7 +356,7 @@
 								<option id="com.telink.tc32eclipse.objdump.option.output.118490598" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8258_ble_remote.lst" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug.790355138" name="TC32 Create Flash image" superClass="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug">
-								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.423826597" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8258_ble_remote.bin" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.423826597" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" useByScannerDiscovery="false" value="8258_ble_beacon.bin" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.size.TC32Win.app.debug.2060124976" name="Print Size" superClass="com.telink.tc32eclipse.tool.size.TC32Win.app.debug"/>
 						</toolChain>
