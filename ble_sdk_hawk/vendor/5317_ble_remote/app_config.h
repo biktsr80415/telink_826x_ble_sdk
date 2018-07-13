@@ -3,8 +3,8 @@
 /* Function Select -----------------------------------------------------------*/
 #define BLE_REMOTE_PM_ENABLE		1
 #define BLE_REMOTE_SECURITY_ENABLE  1
-#define BLE_REMOTE_OTA_ENABLE		0
-#define REMOTE_IR_ENABLE			0
+#define BLE_REMOTE_OTA_ENABLE		1
+#define REMOTE_IR_ENABLE			1
 #define BATT_CHECK_ENABLE       	1//enable or disable battery voltage detection
 
 /* Audio Configuration -------------------------------------------------------*/

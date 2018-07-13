@@ -11,7 +11,7 @@
 #include "clock.h"
 
 
-#if 1
+#if 0
 
 static inline void	adc_reset_adc_module(void)
 {
@@ -744,9 +744,10 @@ void adc_set_ain_pre_scaler(ADC_PreScalingTypeDef v_scl);
 
 unsigned short ADC_SampleValueGet(void);
 
-void ADC_Init(void);
+//void ADC_Init(void);
 
 #else
+
 /**
   ******************************************************************************
   * @File: 		 adc.h
@@ -1018,6 +1019,7 @@ void ADC_StableTime(eADC_ModuleTypeDef ADC_Module, eADC_StableTimeTypeDef ADC_St
 void ADC_StateNumSet(unsigned char ADC_StateNum);
 //void ADC_InputVolDivFactor(eADC_InputVolDivFactorTypeDef ADC_InputVolDivFactor);
 void ADC_InputVolDivFactor(eADC_VrefTypeDef ADC_Vref, eADC_InputVolDivFactorTypeDef ADC_InputVolDivFactor);
+void ADC_VbatDivFactorSet(eADC_VbatDivFactorTypeDef ADC_VbatDivFactor);
 
 void ADC_SetStateTimeSet(unsigned char ADC_SetTime);
 void ADC_CaptureTimeSet(eADC_ModuleTypeDef ADC_Module,unsigned short ADC_CaptureTime);
@@ -1028,11 +1030,116 @@ void ADC_Cmd(eADC_ModuleTypeDef ADC_Module, unsigned char ADC_Enable);
 unsigned short ADC_GetConvertValue(void);
 
 
-/* Battery check */
-void ADC_BatteryCheckInit(eADC_ChannelTypeDef ADC_Channel);
-//void BobbleSort(unsigned short *pData, unsigned int len);
-void BattteryCheckProc(void);
 #endif
+
+//use for audio
+typedef enum{
+	GAIN_STAGE_BIAS_PER75 = 0,
+	GAIN_STAGE_BIAS_PER100,
+	GAIN_STAGE_BIAS_PER125,
+	GAIN_STAGE_BIAS_PER150,
+}Gain_BiasTypeDef;
+
+typedef enum {
+	NOINPUTN,
+	RSVD_A6N,
+	A7N,
+	B0N,
+	B1N,
+	B2N,
+	B3N,
+	B4N,
+	B5N,
+	B6N,
+	B7N,
+	PGA0N,
+	PGA1N,
+	TEMSENSORN,
+	RSVD_N,
+	GND,
+}ADC_InputNchTypeDef;
+
+/*ADC analog positive input channel selection enum*/
+typedef enum {
+	NOINPUTP,
+	RSVD_A6P,
+	A7P,
+	B0P,
+	B1P,
+	B2P,
+	B3P,
+	B4P,
+	B5P,
+	B6P,
+	B7P,
+	PGA0P,
+	PGA1P,
+	TEMSENSORP,
+	RSVD_P,
+	VBAT,
+}ADC_InputPchTypeDef;
+
+typedef enum{
+	ADC_LEFT_CHN 	= BIT(0),
+	ADC_RIGHT_CHN	= BIT(1),
+	ADC_MISC_CHN	= BIT(2),
+	ADC_RNS_CHN 	= BIT(3),
+}ADC_ChTypeDef;
+
+typedef enum{
+	SAMPLING_CYCLES_3,
+	SAMPLING_CYCLES_6,
+	SAMPLING_CYCLES_9,
+	SAMPLING_CYCLES_12,
+	SAMPLING_CYCLES_15,
+	SAMPLING_CYCLES_18,
+	SAMPLING_CYCLES_21,
+	SAMPLING_CYCLES_24,
+	SAMPLING_CYCLES_27,
+	SAMPLING_CYCLES_30,
+	SAMPLING_CYCLES_33,
+	SAMPLING_CYCLES_36,
+	SAMPLING_CYCLES_39,
+	SAMPLING_CYCLES_42,
+	SAMPLING_CYCLES_45,
+	SAMPLING_CYCLES_48,
+}ADC_SampCycTypeDef;
+
+typedef enum{
+	 ADC_CUR_TRIM_PER75,
+	 ADC_CUR_TRIM_PER100,
+	 ADC_CUR_TRIM_PER125,
+	 ADC_CUR_TRIM_PER150
+}CUrrent_TrimTypeDef;
+
+typedef enum{
+	ADC_PRESCALER_1,
+	ADC_PRESCALER_1F2,
+	ADC_PRESCALER_1F4,
+	ADC_PRESCALER_1F8
+}ADC_PreScalingTypeDef;
+
+//ADC reference voltage
+typedef enum{
+	ADC_VREF_0P6V,
+	ADC_VREF_0P9V,
+	ADC_VREF_1P2V,
+	ADC_VREF_VBAT_N,  //here N(1/2/3/4) is configed by interface adc_set_vref_vbat_divider
+}ADC_RefVolTypeDef;
+
+typedef enum{
+	RES8,
+	RES10,
+	RES12,
+	RES14
+}ADC_ResTypeDef;
+
+typedef enum{
+	ADC_VBAT_DIVIDER_OFF,
+	ADC_VBAT_DIVIDER_1F4,
+	ADC_VBAT_DIVIDER_1F3,
+	ADC_VBAT_DIVIDER_1F2
+}ADC_VbatDivTypeDef;
 
 #endif/* End of ADC_H */
 /*----------------------------------File End----------------------------------*/

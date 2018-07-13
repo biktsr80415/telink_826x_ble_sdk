@@ -702,6 +702,9 @@
 								<option id="com.telink.tc32eclipse.linker.option.libpath.830956346" name="Libraries Path (-L)" superClass="com.telink.tc32eclipse.linker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj_lib}&quot;"/>
 								</option>
+								<option id="com.telink.tc32eclipse.linker.option.libs.487202208" name="Libraries (-l)" superClass="com.telink.tc32eclipse.linker.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="lt_5317"/>
+								</option>
 								<inputType id="com.telink.tc32eclipse.tool.linker.input.555003058" name="OBJ Files" superClass="com.telink.tc32eclipse.tool.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1341,7 +1344,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
 								</option>
 								<option id="com.telink.tc32eclipse.compiler.option.def.810617408" name="Define Syms (-D)" superClass="com.telink.tc32eclipse.compiler.option.def" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__PROJECT_5317_BLE_REMOTE__=1"/>
+									<listOptionValue builtIn="false" value="__PROJECT_5317_FEATURE_TEST__=1"/>
 									<listOptionValue builtIn="false" value="CHIP_TYPE=CHIP_TYPE_5317"/>
 								</option>
 								<option id="com.telink.tc32eclipse.compiler.option.std.448932770" name="Language Standard" superClass="com.telink.tc32eclipse.compiler.option.std" value="com.telink.tc32eclipse.compiler.option.std.gnu99" valueType="enumerated"/>
@@ -1355,6 +1358,9 @@
 								<option id="com.telink.tc32eclipse.linker.option.libpath.1938893375" name="Libraries Path (-L)" superClass="com.telink.tc32eclipse.linker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj_lib}&quot;"/>
 								</option>
+								<option id="com.telink.tc32eclipse.linker.option.libs.1176564986" name="Libraries (-l)" superClass="com.telink.tc32eclipse.linker.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="lt_5317"/>
+								</option>
 								<inputType id="com.telink.tc32eclipse.tool.linker.input.277321339" name="OBJ Files" superClass="com.telink.tc32eclipse.tool.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -1362,7 +1368,7 @@
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.archiver.TC32Win.base.136106703" name="TC32 Archiver" superClass="com.telink.tc32eclipse.tool.archiver.TC32Win.base"/>
 							<tool id="com.telink.tc32eclipse.tool.objdump.TC32Win.app.debug.671680001" name="TC32 Create Extended Listing" superClass="com.telink.tc32eclipse.tool.objdump.TC32Win.app.debug">
-								<option id="com.telink.tc32eclipse.objdump.option.output.965838875" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="5317_ble_remote.lst" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objdump.option.output.965838875" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="5317_feature_test.lst" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug.1300855598" name="TC32 Create Flash image" superClass="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug">
 								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1413640582" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="" valueType="string"/>

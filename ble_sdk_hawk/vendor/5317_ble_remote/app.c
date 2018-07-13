@@ -201,9 +201,9 @@ static u16 vk_consumer_map[16] = {
 			gpio_set_input_en(GPIO_PB0,1);
 
 			audio_amic_init(AUDIO_16K);
-			adc_power_on_sar_adc(1);//ADC power ON
+			//adc_power_on_sar_adc(1);//ADC power ON
 			//AUDIO_AmicInit(AUDIO_Rate_32K, buffer_mic, TL_MIC_BUFFER_SIZE);
-			//ADC_PowerOn();
+			ADC_PowerOn();
 		}else{  //Audio OFF
 			lowBattDet_enable = 1;
 
@@ -213,9 +213,9 @@ static u16 vk_consumer_map[16] = {
 			gpio_set_input_en(GPIO_PA7,0);
 			gpio_set_input_en(GPIO_PB0,0);
 
-			//ADC_BatteryCheckInit(ADC_Channel_PB3);
-			//ADC_PowerOff();
-			adc_power_on_sar_adc(0);//ADC power OFF
+			TL_BatteryCheckInit(ADC_Channel_PB3);
+			ADC_PowerOff();
+			//adc_power_on_sar_adc(0);//ADC power OFF
 		}
 	}
 
@@ -655,198 +655,8 @@ _attribute_ram_code_ void  ble_remote_set_sleep_wakeup(u8 e, u8 *p, int n)
 }
 
 
-/* 5317 Driver test. ---------------------------------------------------------*/
-#define PM_TEST  	            PM_NONE
-
-#define PM_NONE                 0xff
-#define PM_GPIO_WAKEUP_SUSPEND  0
-#define PM_PAD_WAKEUP_SUSPEND   1
-#define PM_32K_WAKEUP_SUSPEND   2
-#define PM_PAD_WAKEUP_DEEP      3
-#define PM_32K_WAKEUP_DEEP      4
-/* End of 5317 Driver test. --------------------------------------------------*/
-
-//u8 AA[2];
-//u16 ADC_SampleValue[16];
 void user_init()
 {
-#if 0
-//	sleep_us(2000000);
-//	if(blt_miscParam.pad32k_en)
-//	{
-//		blt_miscParam.pm_enter_en = 1;
-//	}
-
-#if 0 // ADC test
-//	gpio_set_func(GPIO_LED,AS_GPIO);
-//	gpio_set_output_en(GPIO_LED, 1);
-//	gpio_write(GPIO_LED,0);//LED2 ON
-
-	UART_GPIO_INIT_PB4B5();
-	uart_Init(9, 13, PARITY_NONE, STOP_BIT_ONE);//baudrate 115200
-	uart_notDmaModeInit(1, 1, 0, 0);
-
-//	gpio_set_func(GPIO_PA6,AS_GPIO);
-//	gpio_set_input_en(GPIO_PA6,1);
-//	gpio_setup_up_down_resistor(GPIO_PA6, PM_PIN_PULLDOWN_100K);
-
-//	sleep_us(2000000);
-
-//	gpio_set_func(GPIO_PB6,AS_GPIO);
-//	gpio_set_func(GPIO_PB7,AS_GPIO);
-//	gpio_set_input_en(GPIO_PB6,0);
-//	gpio_set_input_en(GPIO_PB7,0);
-//	gpio_write(GPIO_PB6,0);
-//	gpio_write(GPIO_PB7,0);
-
-//	ADC_ClockSet(3000000);//3MHz
-//	ADC_Init(ADC_Module_M,ADC_Mode_Diff,ADC_Vref_1p2, ADC_Resolution_14b);
-//	ADC_DifferChannelSet(ADC_Module_L,ADC_Channel_PA6, ADC_Channel_PA7);
-//	ADC_Cmd(ADC_Module_M,ENABLE);
-
-	ADC_BatteryCheckInit(ADC_Channel_PB3);
-	//ADC_VbatDivFactorSet(ADC_Vbat_Div_Factor_2);
-#endif
-
-#if 0 // IR test
-	IR_Init(IR_Pin_PA0);
-    irq_enable();
-    u8 cnt = 10;
-#endif
-//    gpio_set_func(GPIO_PA0,AS_AF);
-//    GPIOA_AF->RegBits.P0_AF = GPIOA0_32K_CLK_OUTPUT;
-
-//    gpio_set_func(GPIO_LED,AS_GPIO);
-//	gpio_set_output_en(GPIO_LED, 1);
-//	gpio_write(GPIO_LED,1);//LED2 ON
-//	AA[0] = REG_ADDR8(0X620);
-
-    gpio_set_func(GPIO_PA6,AS_GPIO);//PA6 act as AMIC Bias
-	gpio_set_output_en(GPIO_PA6,1);
-	gpio_set_input_en(GPIO_PA6,0);
-	gpio_write(GPIO_PA6,1);
-
-    gpio_set_input_en(GPIO_PA7,1);
-    gpio_set_input_en(GPIO_PB0,1);
-//    gpio_setup_up_down_resistor(GPIO_PA7,GPIO_PULL_DOWN_100K);
-//    gpio_setup_up_down_resistor(GPIO_PB0,GPIO_PULL_DOWN_100K);
-//	gpio_set_output_en(GPIO_PA7,1);
-//	gpio_set_output_en(GPIO_PB0,1);
-//	gpio_write(GPIO_PB0,0);
-
-
-    audio_config_mic_buf(buffer_mic, TL_MIC_BUFFER_SIZE);
-    audio_amic_init(AUDIO_16K);
-    audio_sdm_output_set(AMIC,AUDIO_16K,1);
-//	AUDIO_AmicInit(AUDIO_Rate_16K, buffer_mic, TL_MIC_BUFFER_SIZE);
-//	//ADC_PowerOff();
-//	Audio_SetSDMOutput(0,1,1);
-
-	sleep_us(2000000);
-
-	while(1)
-	{
-
-		#if 0 //BLE RF test
-			ble_tx_adv_test();
-		#endif
-
-		#if 0 //Watch Dog test.
-			wd_clear();
-			sleep_us(300000);
-			if(REG_ADDR8(0x72) & 0x01)
-			{
-				gpio_toggle(GPIO_LED);
-				REG_ADDR8(0x72) |= 0x01;
-			}
-		#endif
-
-		#if 0 //IR test
-			while(cnt)
-			{
-				if(IR_GetIrState() == IR_STATE_IDLE)
-				{
-					u8 addr = 0x00;
-					IR_Send(addr,(~addr),0x00);
-					sleep_us(110000);
-					cnt--;
-				}
-
-				if(cnt == 0)
-				{
-					//IR_KeyRelease();
-				}
-			}
-			//IR_KeyRelease();
-			//IR_RepeatCodeSend();
-			sleep_us(1000000);
-		#endif
-
-		#if 0 //ADC Test
-			u32 sum = 0;
-			u16 adcValue = 0;
-			for(volatile int i = 0; i< 16; i++)
-			{
-				adcValue = ADC_GetConvertValue();
-				if((adcValue & BIT(14)) != 0)
-				{
-					adcValue += 1;
-					adcValue = ~adcValue;
-				}
-				sum += adcValue;
-			}
-			//u16 adcValue = ADC_GetConvertValue();
-			adcValue = (u16)(sum/16);
-			u16 vol = 0;
-			//vol = adcValue *1200*8 /(1<<13);//Unit:mV
-			vol = (adcValue *1200*8)>>13;//Unit:mV
-			write_reg16(0x8000,vol);
-			printf("vol = %dmV\n",vol);
-			sleep_us(100000);
-		#endif
-
-
-		#if(PM_TEST == PM_GPIO_WAKEUP_SUSPEND)
-			DBG_CHN3_TOGGLE;
-			gpio_set_wakeup(GPIO_PB2,1,1);
-			cpu_sleep_wakeup(0,PM_WAKEUP_CORE,0);
-
-		#elif(PM_TEST == PM_PAD_WAKEUP_SUSPEND)
-//			DBG_CHN3_TOGGLE;
-			DBG_CHN1_LOW;
-
-			cpu_set_gpio_wakeup(GPIO_PB2,1,1);
-			//pm_set_filter(1);
-			cpu_sleep_wakeup(SUSPEND_MODE,PM_WAKEUP_PAD,0);
-
-			DBG_CHN1_HIGH;
-			sleep_us(100000);
-
-		#elif(PM_TEST == PM_32K_WAKEUP_SUSPEND)
-
-			DBG_CHN1_LOW;
-			cpu_sleep_wakeup(0,PM_WAKEUP_TIMER, (30*1000*16) + clock_time());
-			DBG_CHN1_HIGH;
-
-			sleep_us(10000);
-			//for(volatile int i=0; i<1000; i++);// (16MHz)
-
-		#elif(PM_TEST == PM_PAD_WAKEUP_DEEP)
-
-			gpio_write(GPIO_PB2,0);
-			gpio_set_input_en(GPIO_PB2,0);
-			cpu_set_gpio_wakeup(GPIO_PB2,1,1);
-			//pm_set_filter(1);
-			cpu_sleep_wakeup(1, PM_WAKEUP_PAD, 0);
-
-		#elif(PM_TEST == PM_32K_WAKEUP_DEEP)
-
-			sleep_us(20000);
-			cpu_sleep_wakeup(1,PM_WAKEUP_TIMER, 2*1000*1000*16+clock_time());
-		#endif
-	}
-
-#else
 	/* load customized freq_offset CAP value and TP value.*/
 	blc_app_loadCustomizedParameters();
 
@@ -956,7 +766,7 @@ void user_init()
 
 	/* Battery Check Function Initialization */
 #if(BATT_CHECK_ENABLE)
-	TL_BatteryCheckInit();
+	TL_BatteryCheckInit(ADC_Channel_PB3);
 	lowBattDet_enable = 1;
 #endif
 
@@ -982,12 +792,6 @@ void user_init()
 	device_led_init(GPIO_LED, 1);
 
 	advertise_begin_tick = clock_time();
-#endif
-
-	/* Debug */
-//	gpio_set_func(GPIO_LED, AS_GPIO);
-//	gpio_set_output_en(GPIO_LED,1);
-//	gpio_write(GPIO_LED,1);
 }
 
 /*----------------------------------------------------------------------------*/

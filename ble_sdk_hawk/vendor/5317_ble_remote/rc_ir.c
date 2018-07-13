@@ -52,12 +52,12 @@ void IR_Init(eIR_PinTypeDef IR_Pin)
 {
 	if(IR_Pin == IR_Pin_PA0)//PA0
 	{
-		gpio_set_func(GPIO_PA0, AS_PWM);
+		gpio_set_func(GPIO_PA0, AS_AF);
 		GPIOA_AF->RegBits.P0_AF = GPIOA0_PWM0;
 	}
 	else if(IR_Pin == IR_Pin_PB3)//PB3
 	{
-		gpio_set_func(GPIO_PB3, AS_PWM);
+		gpio_set_func(GPIO_PB3, AS_AF);
 		GPIOB_AF->RegBits.P3_AF = GPIOB3_PWM0;
 	}
 	else
@@ -250,10 +250,9 @@ void IR_Release(void)
 void IR_Stop(void)
 {
 	//Reset PWM
-	reg_rst_clk0 |= FLD_RST_PWM;
+	reg_rst1 |= FLD_RST1_PWM;
 	for(int i = 0; i < CLOCK_SYS_CLOCK_1US*20; i++);
-	reg_rst_clk0 &= ~FLD_RST_PWM;
-
+    reg_rst1 &= ~FLD_RST1_PWM;
 	pwm_clear_irq_status(PWM_IRQ_PWM0_IR_DMA_FIFO_EMPTY);
 	pwm_interrupt_disable(PWM_IRQ_PWM0_IR_DMA_FIFO_EMPTY);
 

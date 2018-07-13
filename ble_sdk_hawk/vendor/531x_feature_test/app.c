@@ -7,9 +7,6 @@
 #include "vendor/common/tl_audio.h"
 
 
-#if (__PROJECT_5317_BLE_REMOTE__)
-
-
 void user_init()
 {
 
@@ -24,7 +21,6 @@ void main_loop (void)
 
 }
 
-#endif  //End of __PROJECT_5317_BLE_REMOTE__
 /*----------------------------- End of File ----------------------------------*/
 
 

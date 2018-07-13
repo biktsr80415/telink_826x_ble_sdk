@@ -1,6 +1,6 @@
 #include "adc.h"
 
-#if 1
+#if 0
 
 void adc_set_ref_voltage(ADC_ChTypeDef ch_n, ADC_RefVolTypeDef v_ref)
 {
@@ -251,7 +251,25 @@ void ADC_Init(void){
 	adc_set_atb(ADC_SEL_ATB_1);
 }
 
+/**
+ * @Brief: ADC power on.
+ * @Param:
+ * @RetVal: None.
+ */
+void ADC_PowerOn(void)
+{
+	WriteAnalogReg (0x80+124, analog_read(0x80+124) & (~BIT(5)));
+}
 
+/**
+ * @Brief: ADC power off.
+ * @Param:
+ * @RetVal: None.
+ */
+void ADC_PowerOff(void)
+{
+	WriteAnalogReg (0x80+124,analog_read(0x80+124)|BIT(5));
+}
 #else
 
 /**
@@ -1044,124 +1062,6 @@ unsigned short ADC_GetRandomNumber(void)
 	rndNum = (rndNumH<<8)|rndNumL;
 
 	return rndNum;
-}
-
-
-/**
- * @Brief:  Bubble sort.
- * @Param:  pData -> pointer point to data
- * @Param:  len -> lenght of data
- * @Return: None.
- */
-void BubbleSort(unsigned short *pData, unsigned int len)
-{
-	for(int i = 0; i< len-1; i++)
-	{
-		for(int j = 0; j<len-1 - i; j++)
-		{
-			if(pData[j] > pData[j+1])
-			{
-				unsigned short temp = pData[j];
-				pData[j] = pData[j+1];
-				pData[j+1] = temp;
-			}
-		}
-	}
-}
-
-/**
- * @Brief:  Battery check.
- * @Param:  None.
- * @Return: None.
- */
-#define SAMPLE_NUM   8
-u16 batteryVol[SAMPLE_NUM];
-u8 batteryVolCnt = 0;
-void BattteryCheckProc(void)
-{
-	/* Battery check frequency is 1 per 100ms. */
-	static unsigned int batteryCheckStartTick = 0;
-	if(clock_time_exceed(batteryCheckStartTick, 50*1000)){
-		batteryCheckStartTick = clock_time();
-
-		//Power on ADC
-		ADC_PowerOn();
-	}else{
-		return;
-	}
-
-	/* Get ADC value. */
-	unsigned short adcValue[SAMPLE_NUM] = {0};
-	for(int i = 0; i < SAMPLE_NUM; i++)
-	{
-		adcValue[i] = ADC_GetConvertValue();
-		if((adcValue[i] & BIT(14)) != 0)
-		{
-			adcValue[i] += 1;
-			adcValue[i] = ~adcValue[i];
-		}
-	}
-
-	BubbleSort(adcValue, SAMPLE_NUM);
-
-	/* Process ADC value. */
-	unsigned int sum = 0;
-	for(int i = 1; i< SAMPLE_NUM - 1; i++)
-	{
-		sum += adcValue[i];
-	}
-	unsigned short adcAverageValue = sum / (SAMPLE_NUM-2);
-
-	/* Battery voltage calculation. */
-	unsigned short vol = ((adcAverageValue * 1200)>>13) * 8;
-
-	/* Power off ADC for saving power */
-	ADC_PowerOff();
-
-	/* Low voltage processing. Enter deep sleep. */
-#if 0
-	if(vol < 2000){
-		analog_write(DEEP_ANA_REG2, ADC_BATTERY_VOL_LOW);
-		cpu_sleep_wakeup(PM_SLeepMode_Deep, PM_WAKEUP_PAD, 0);
-	}else{
-		static u8 isVolRecovery = 0;
-		if(isVolRecovery == 0){
-			analog_write(DEEP_ANA_REG2, ADC_BATTERY_VOL_OK);
-			isVolRecovery = 1;
-		}
-	}
-#else
-	batteryVol[batteryVolCnt++] = vol;
-	u8 lowVolCnt = 0;
-	u8 highVolCnt = 0;
-	if(batteryVolCnt < 5){
-		return;
-	}else{
-		for(int i = 0; i<batteryVolCnt; i++)
-		{
-			if(batteryVol[i] > 2000){
-				highVolCnt++;
-			}else{
-				lowVolCnt++;
-			}
-		}
-	}
-
-	if(highVolCnt > lowVolCnt){
-		batteryVolCnt = 0;
-
-		//Run a time after power on.
-		static u8 isVolRecovery = 0;
-		if(isVolRecovery == 0){
-			analog_write(DEEP_ANA_REG2, ADC_BATTERY_VOL_OK);
-			isVolRecovery = 1;
-		}
-	}else{
-		batteryVolCnt = 0;
-		analog_write(DEEP_ANA_REG2, ADC_BATTERY_VOL_LOW);
-		cpu_sleep_wakeup(PM_SLeepMode_Deep, PM_WAKEUP_PAD, 0);
-	}
-#endif
 }
 
 #endif
