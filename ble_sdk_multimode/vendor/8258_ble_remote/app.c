@@ -13,7 +13,7 @@
 
 
 #define BLE_REMOTE_PM_ENABLE				1
-#define PM_DEEPSLEEP_RETENTION_ENABLE		0
+#define PM_DEEPSLEEP_RETENTION_ENABLE		1
 
 
 
@@ -244,7 +244,8 @@ static u16 vk_consumer_map[16] = {
 
 		}
 		else{  //audio off
-
+			adc_power_on_sar_adc(0);   //power off sar adc
+//			adc_enable_clk_24m_to_sar_adc(0);  //disable signal of 24M clock to sar adc
 		}
 	}
 
@@ -737,7 +738,7 @@ _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 
 
 
-void user_init_normal()
+void user_init_normal(void)
 {
 
 
@@ -865,7 +866,8 @@ void user_init_normal()
 	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
 		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
 		blc_pm_setDeepsleepRetentionThreshold(200, 200);
-		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(1300);
+		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(1100);
+		blc_pm_setDeepsleepRetentionType(DEEPSLEEP_MODE_RET_SRAM_LOW32K);
 	#else
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 	#endif
@@ -935,7 +937,7 @@ void user_init_deepRetn(void)
 
 
 
-//	DBG_CHN7_HIGH;   //debug   PB7 high
+	DBG_CHN0_HIGH;    //debug
 }
 
 
