@@ -81,6 +81,8 @@ typedef enum{
 	SYS_CLK_24M_RC,
 }SYS_CLK_TYPEDEF;
 
+
+
 void clock_init(SYS_CLK_TYPEDEF SYS_CLK);
 
 _attribute_ram_code_ void sleep_us (unsigned long microsec);		//  use register counter to delay

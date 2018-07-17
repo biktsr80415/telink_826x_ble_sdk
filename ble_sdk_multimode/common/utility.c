@@ -41,7 +41,7 @@ u8 addrExtCmp(const u8 * pAddr1, const u8 * pAddr2)
 }
 
 
-
+#if 0 // not used
 void freeTimerEvent(void **arg)
 {
     if ( *arg != NULL ) {
@@ -55,6 +55,7 @@ void freeTimerEvent(void **arg)
         *arg = NULL;
     }
 }
+#endif
 
 void freeTimerTask(void **arg)
 {

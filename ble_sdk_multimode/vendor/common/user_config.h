@@ -5,6 +5,8 @@
 	#include "../8258_driver_test/app_config.h"
 #elif (__PROJECT_8258_BLE_REMOTE__)
 	#include "../8258_ble_remote/app_config.h"
+#elif (__PROJECT_8258_BLE_BEACON__)
+	#include "../8258_ble_beacon/app_config.h"
 #elif (__PROJECT_8258_BLE_SAMPLE__)
 	#include "../8258_ble_sample/app_config.h"
 #elif (__PROJECT_8258_MODULE__)

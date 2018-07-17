@@ -226,6 +226,9 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_GENERATE_DHKEY			17
 #define			BLT_EV_FLAG_SMP_PINCODE_PROCESS	    18
 
+#define			BLT_EV_FLAG_BEACON_DONE				19 // for complete tx a single beacon packet
+
+
 
 
 
