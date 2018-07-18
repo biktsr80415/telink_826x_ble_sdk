@@ -78,7 +78,6 @@ void audio_amic_init(AudioRate_Typedef Audio_Rate)
 	/*******1.ADC setting for analog audio sample**************************/
 	adc_reset_adc_module();   //reset whole digital adc module
 	adc_power_on_sar_adc(1);   //power on sar adc
-	adc_power_on_pll_bandgap(1); //power on pll bandgap
 	adc_enable_clk_24m_to_sar_adc(1);  //enable signal of 24M clock to sar adc
 
 
@@ -107,11 +106,11 @@ void audio_amic_init(AudioRate_Typedef Audio_Rate)
 	adc_set_input_mode(ADC_LEFT_CHN, DIFFERENTIAL_MODE);  				//left channel differential mode
 	adc_set_ain_channel_differential_mode(ADC_LEFT_CHN, PGA0P, PGA0N);  //left channel positive and negative data in
 
-	adc_set_ref_voltage(ADC_LEFT_CHN, ADC_VREF_0P9V);					//left channel vref
+	adc_set_ref_voltage(ADC_LEFT_CHN, ADC_VREF_0P6V);					//left channel vref
+
 	adc_set_resolution(ADC_LEFT_CHN, RES14);							//left channel resolution
 	adc_set_tsample_cycle(ADC_LEFT_CHN, SAMPLING_CYCLES_6);				//left channel tsample
 
-	adc_set_vref_vbat_divider(ADC_VBAT_DIVIDER_1F2);                    //vbat vref divider
 	adc_set_ain_pre_scaler(ADC_PRESCALER_1);                            //ain pre scaler none
 
 	adc_set_itrim_preamp(ADC_CUR_TRIM_PER100);
@@ -129,8 +128,8 @@ void audio_amic_init(AudioRate_Typedef Audio_Rate)
 	//
 	adc_set_left_boost_bias(GAIN_STAGE_BIAS_PER75);
 
-	analog_write (anareg_adc_pga_ctrl, MASK_VAL( FLD_PGA_ITRIM_GAIN_L, GAIN_STAGE_BIAS_PER75, \
-												  FLD_PGA_ITRIM_GAIN_R,GAIN_STAGE_BIAS_PER75, \
+	analog_write (anareg_adc_pga_ctrl, MASK_VAL( FLD_PGA_ITRIM_GAIN_L, GAIN_STAGE_BIAS_PER150, \
+												  FLD_PGA_ITRIM_GAIN_R,GAIN_STAGE_BIAS_PER150, \
 												  FLD_ADC_MODE, 0, \
 												  FLD_SAR_ADC_POWER_DOWN, 0, \
 												  FLD_POWER_DOWN_PGA_CHN_L, 0, \
@@ -174,7 +173,7 @@ void audio_amic_init(AudioRate_Typedef Audio_Rate)
 
 	reg_audio_dec_mode  |= FLD_AUD_LNR_VALID_SEL | FLD_AUD_CIC_MODE;
 //	reg_dfifo_dec_ratio = AMIC_CIC_Rate[Audio_Rate];
-	reg_dfifo_dec_ratio = 0x32;  // 96k/3 = 32k, down sampling to 16K by set core_b40<7>
+	reg_dfifo_dec_ratio = 0x42;  // 96k/3 = 32k, down sampling to 16K by set core_b40<7>
 
 #endif
 

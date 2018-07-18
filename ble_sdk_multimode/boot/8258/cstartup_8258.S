@@ -66,6 +66,64 @@ __reset:
 @	tmov		r0, #16			@0b00010000 = 0x10 = #16
 @	tstorerb	r0, [r1, #1]	@0x800583  PB4 output
 
+
+@******************************************************************
+@                 RETENTION DATA INITIALIZATION
+@******************************************************************
+@ANALOG_CLK:
+	@write_reg8(0x61, 0x00)
+	@write_reg8(0x64, 0xff)
+	tloadr     	r1, FLASH_RECOVER + 0	@0x800061
+	tmov      	r0, #0
+	tstorerb	r0, [r1, #0]  @write_reg8(0x61, 0x00)
+	tmov      	r0, #255
+	tstorerb	r0, [r1, #3]  	@write_reg8(0x64, 0xff)
+
+
+@analog_write(0x0c, 0xc4);
+	tloadr     	r1, FLASH_RECOVER + 4	@0x8000b8
+	tmov      	r0, #12   	@0x0c
+	tstorerb	r0, [r1, #0]		@ reg_ana_addr = addr;
+	tmov      	r0, #196	@0xc4
+	tstorerb	r0, [r1, #1]		@ reg_ana_data = v;
+
+	tloadr		r1, FLASH_RECOVER + 8	@0x8000ba
+	tmov      	r0, #96		@0x60
+	tstorerb	r0, [r1, #0]		@ reg_ana_ctrl = (FLD_ANA_START | FLD_ANA_RW);
+
+	tmov		r2, #1
+
+	@ while(reg_ana_ctrl & FLD_ANA_BUSY);
+LOOP_WAIT2:
+    tloadrb		r3, [r1, #0]
+    tand		r3, r2
+	tjne		LOOP_WAIT2
+
+	tstorerb	r3, [r1, #0]
+
+
+
+
+@send flash cmd 0xab to wakeup flash;
+FLASH_WAKEUP_BEGIN:
+	tloadr      r0,FLASH_RECOVER+12
+	tmov		r1,#0
+	tstorerb    r1,[r0,#1]
+	tmov        r1,#171						@Flash deep cmd: 0xAB
+	tstorerb    r1,[r0,#0]
+	tmov		r2,#0
+	tmov        r3,#6
+TNOP:
+	tadd        r2,#1
+	tcmp        r2,r3
+	tjle        TNOP
+	tmov		r1,#1
+	tstorerb    r1,[r0,#1]
+FLASH_WAKEUP_END:
+
+
+
+
 	tloadr	r0, FLL_D
 	tloadr	r1, FLL_D+4
 	tloadr	r2, FLL_D+8
@@ -151,32 +209,34 @@ DAT0:
 	.word	0x12			    @IRQ    @0
 	.word	0x13			    @SVC    @4
 	.word	(irq_stk + IRQ_STK_SIZE)
-	.word	(0x84c000)		    @12  stack end
+	.word	(0x850000)		    @12  stack end
 	.word	(_start_bss_)               @16
 	.word	(_end_bss_)                 @20
 	.word	(0x80060c)                  @24
 	.word	_ictag_start_               @28		@ IC tag start
 	.word	_ictag_end_	            	@32		@ IC tag end
 	.word	_ramcode_size_div_256_		@36
-@	.word	(0x808000 + __LOAD_RAM * 0x100)                  @28		@ IC tag start
-@	.word	(0x808000 + (__LOAD_RAM + 1) * 0x100)            @32		@ IC tag end
-@	.word	(0x80000e)    				@36
-@	.word	(0x80058c)                  @36		gpio
-@	.word	(0x800620)                  @40		watchdog
-@	.word	(0x802c01)                  @44		watchdog
 DATA_I:	
-	.word	_dstored_
-	.word	_start_data_
-	.word	_end_data_
+	.word	_dstored_					@0
+	.word	_start_data_				@4
+	.word	_end_data_					@8
 
 FLL_D:
 	.word	0xffffffff
 	.word	(_start_data_)
-	@.word	(0x84c000)
+	@.word	(0x850000)
 	.word	(_start_data_ + 32)
+
 
 DEBUG_GPIO:
 	.word	(0x80058a)                  @  PBx oen
+
+
+FLASH_RECOVER:
+	.word	(0x800061)                  @0
+	.word	(0x8000b8)                  @4
+	.word	(0x8000ba)                  @8
+	.word	(0x80000c)                  @12
 
 	.align 4
 __irq:
