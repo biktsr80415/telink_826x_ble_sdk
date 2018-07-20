@@ -1,5 +1,5 @@
 
-#ifdef MCU_STARTUP_8258
+#ifdef MCU_STARTUP_8258_RET_16K
 
 #ifndef __LOAD_RAM_SIZE__
 #define	__LOAD_RAM_SIZE__		0xc
@@ -36,6 +36,7 @@ __start:					@ MUST,  referenced by boot.link
 	.extern  _ramcode_size_div_16_
 	.extern  _ramcode_size_div_256_
 	.extern  _ramcode_size_div_16_align_256_
+	.extern  _ramcode_size_align_256_
 	.extern  _ictag_start_
 	.extern  _ictag_end_
 
@@ -44,7 +45,8 @@ __start:					@ MUST,  referenced by boot.link
 @	.word	(BUILD_VERSION)
 	.org 0x8
 	.word	(0x544c4e4b)
-	.word	(0x00880000 + _ramcode_size_div_16_align_256_)
+	.word	(0x00880000 + _ram_use_size_div_16_)
+@	.word	(0x00880000 + 0x400)
 
 	.org 0x10
 	tj		__irq
@@ -59,12 +61,12 @@ __start:					@ MUST,  referenced by boot.link
 	.org 0x20
 __reset:
 	@ add debug, PB4 output 1
-@	tloadr     	r1, DEBUG_GPIO    @0x80058a  PB4 oen
-@	tmov		r0, #139      @0b 11101111 = 0xef = #139
+@	tloadr     	r1, DEBUG_GPIO    @0x80058a  PB oen
+@	tmov		r0, #139      @0b 11101111
 @	tstorerb	r0, [r1, #0]
 
-@	tmov		r0, #16			@0b00010000 = 0x10 = #16
-@	tstorerb	r0, [r1, #1]	@0x800583  PB4 output
+@	tmov		r0, #16			@0b 00010000
+@	tstorerb	r0, [r1, #1]	@0x800583  PB output
 
 
 @******************************************************************
@@ -213,9 +215,12 @@ DAT0:
 	.word	(_start_bss_)               @16
 	.word	(_end_bss_)                 @20
 	.word	(0x80060c)                  @24
-	.word	_ictag_start_               @28		@ IC tag start
-	.word	_ictag_end_	            	@32		@ IC tag end
-	.word	_ramcode_size_div_256_		@36
+	.word	(0x844000)                  @28
+	.word	(0x844100)                  @32
+	.word	(0x40)                      @36
+@	.word	_ictag_start_               @28		@ IC tag start
+@	.word	_ictag_end_	            	@32		@ IC tag end
+@	.word	_ramcode_size_div_256_		@36
 DATA_I:	
 	.word	_dstored_					@0
 	.word	_start_data_				@4
@@ -226,7 +231,10 @@ FLL_D:
 	.word	(_start_data_)
 	@.word	(0x850000)
 	.word	(_start_data_ + 32)
-
+	.word   (_retention_data_start_)    @16
+    .word   (_retention_data_end_)      @20
+    .word   (_rstored_)                 @24
+    .word	(_ram_use_size_div_16_)
 
 DEBUG_GPIO:
 	.word	(0x80058a)                  @  PBx oen

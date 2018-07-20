@@ -304,6 +304,8 @@ void		bls_app_registerEventCallback (u8 e, blt_event_callback_t p);
 void 		blc_ll_recoverDeepRetention(void);
 
 
+bool 		blc_ll_isBrxBusy (void);
+
 /************************* Stack Interface, user can not use!!! ***************************/
 //encryption
 ble_sts_t 		blc_hci_ltkRequestNegativeReply (u16 connHandle);
