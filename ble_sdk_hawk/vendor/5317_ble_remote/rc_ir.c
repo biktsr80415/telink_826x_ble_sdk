@@ -187,8 +187,8 @@ void IR_SendNec(u8 addr1, u8 addr2, u8 cmd)
 	irData.len = cnt * 2;
 
 	//PWM Start
-	pwm_dma_ir_data_config((u16*)&irData);
-	pwm_dma_enable();
+	pwm_set_dma_address((u16*)&irData);
+	pwm_start_dma_ir_sending();
 	pwm_clear_irq_status(PWM_IRQ_PWM0_IR_DMA_FIFO_EMPTY);
 	pwm_interrupt_enable(PWM_IRQ_PWM0_IR_DMA_FIFO_EMPTY);
 
@@ -224,8 +224,8 @@ void IR_SendRepeat(void)
 	irData.len = cnt * 2;
 
 	//PWM Start
-	pwm_dma_ir_data_config((u16*)&irData);
-	pwm_dma_enable();
+	pwm_set_dma_address((u16*)&irData);
+	pwm_start_dma_ir_sending();
 	pwm_clear_irq_status(PWM_IRQ_PWM0_IR_DMA_FIFO_EMPTY);
 	pwm_interrupt_enable(PWM_IRQ_PWM0_IR_DMA_FIFO_EMPTY);
 

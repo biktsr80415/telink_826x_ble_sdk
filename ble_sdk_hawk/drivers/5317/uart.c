@@ -130,14 +130,13 @@ void uart_pin_set(UART_TxPinDef tx_pin, UART_RxPinDef rx_pin)
 	/**
 	 * Note: pullup setting must before uart gpio config,
 	 *       cause it will lead to ERR data to uart RX buffer
-	 *
 	 * PM_PIN_PULLUP_1M   PM_PIN_PULLUP_10K
 	 */
 	gpio_setup_up_down_resistor(tx_pin, PM_PIN_PULLUP_1M);  //must, for stability and prevent from current leakage
 	gpio_setup_up_down_resistor(rx_pin, PM_PIN_PULLUP_10K);  //must  for stability and prevent from current leakage
 
-	gpio_set_func(tx_pin, AS_AF); // set tx pin
-	gpio_set_func(rx_pin, AS_AF); // set rx pin
+	gpio_set_func(tx_pin, AS_UART); // set tx pin
+	gpio_set_func(rx_pin, AS_UART); // set rx pin
 
 	gpio_set_input_en(tx_pin, 1);  //experiment shows that tx_pin should open input en(confirmed by qiuwei)
 	gpio_set_input_en(rx_pin, 1);  //
@@ -145,9 +144,9 @@ void uart_pin_set(UART_TxPinDef tx_pin, UART_RxPinDef rx_pin)
 #endif
 
 /**
- *	@brief	reset uart module
- *	@param	none
- *	@return	none
+ *	@brief：	reset uart module
+ *	@param：	none
+ *	@return：none
  */
 void uart_reset(void){
 	BM_SET(reg_rst1, FLD_RST1_RS232);
@@ -192,12 +191,12 @@ static unsigned char IsPrime(unsigned int n)
 }
 
 /**
- * @Brief:  calculate the best bwpc(bit width) .i.e reg0x96
+ * @Brief:     calculate the best bwpc(bit width) .i.e reg0x96
  * @Algorithm: BaudRate*(div+1)*(bwpc+1)=system clock
- *    simplify the expression: div*bwpc =  constant(z)
- *    bwpc range from 3 to 15.so loop and
- *    get the minimum one decimal point
- * @Return the position of getting the minimum value
+ *             simplify the expression: div*bwpc =  constant(z)
+ *             bwpc range from 3 to 15.so loop and
+ *             get the minimum one decimal point
+ * @Return:    the position of getting the minimum value
  */
 static unsigned char g_bwpc = 0;
 static unsigned int  g_uart_div = 0;
@@ -208,7 +207,7 @@ static void GetBetterBwpc(unsigned int baut_rate)
 	unsigned char primeDec = 0;
 	unsigned int D_intdec[13],D_int[13];
 	unsigned char D_dec[13];
-	unsigned int tmp_sysclk = CLOCK_SYS_CLOCK_1US *1000*1000;
+	unsigned int tmp_sysclk = CLOCK_SYS_CLOCK_1US *1000*1000;//计算波特率是随系统时钟自动变化的
 	primeInt = tmp_sysclk/baut_rate;
 	primeDec = 10*tmp_sysclk/baut_rate - 10*primeInt;
 
@@ -316,12 +315,44 @@ void uart_init(unsigned int BaudRate, UART_ParityTypeDef Parity, UART_StopBitTyp
 }
 
 /**
+ * @brief     enable uart DMA mode,config uart dam interrupt.
+ * @param[in] dmaTxIrqEn -- whether or not enable UART TX interrupt.
+ * @param[in] dmaRxIrqEn -- whether or not enable UART RX interrupt.
+ * @return    none
+ */
+void uart_dma_mode_init(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn)
+{
+	//1.enable UART DMA mode
+	BM_SET(reg_uart_ctrl0, FLD_UART_RX_DMA_EN | FLD_UART_TX_DMA_EN);
+
+    //2.config DMAx mode
+	BM_SET(reg_dma0_ctrl, FLD_DMA_WR_MEM); //set DMA0 mode to 0x01 for receive.write to memory
+	BM_CLR(reg_dma1_ctrl, FLD_DMA_WR_MEM); //set DMA1 mode to 0x00 for send. read from memory
+
+	//3.config dma irq
+	if(dmaRxIrqEn){
+		BM_SET(reg_dma_chn_irq_msk, FLD_DMA_UART_RX); //enable uart rx dma interrupt
+		BM_SET(reg_irq_mask, FLD_IRQ_DMA_EN);
+	}else{
+		BM_CLR(reg_dma_chn_irq_msk, FLD_DMA_UART_RX); //disable uart rx dma interrupt
+	}
+
+	if(dmaTxIrqEn){
+		BM_SET(reg_dma_chn_irq_msk, FLD_DMA_UART_TX);  //enable uart tx dma interrupt
+		BM_SET(reg_irq_mask, FLD_IRQ_DMA_EN);
+	}else{
+		BM_CLR(reg_dma_chn_irq_msk, FLD_DMA_UART_TX);  //disable uart tx dma interrupt
+	}
+}
+
+/**
  * @brief     enable uart DMA mode
  * @param[in] none
  * @return    none
  */
 void uart_dma_enable(unsigned char rx_dma_en, unsigned char tx_dma_en)
 {
+
 	//enable DMA function of tx and rx
 	if(rx_dma_en){
 		reg_uart_ctrl0 |= FLD_UART_RX_DMA_EN ;
@@ -334,37 +365,7 @@ void uart_dma_enable(unsigned char rx_dma_en, unsigned char tx_dma_en)
 	}else{
 		reg_uart_ctrl0	&= (~FLD_UART_TX_DMA_EN);
 	}
-}
 
-/**
- * @brief     config the irq of uart tx and rx
- * @param[in] rx_irq_en - 1:enable rx irq. 0:disable rx irq
- * @param[in] tx_irq_en - 1:enable tx irq. 0:disable tx irq
- * @return    none
- */
-void uart_irq_enable(unsigned char rx_irq_en, unsigned char tx_irq_en)
-{
-	BM_SET(reg_dma0_ctrl, FLD_DMA_WR_MEM); //set DMA0 mode to 0x01 for receive.write to memory
-	BM_CLR(reg_dma1_ctrl, FLD_DMA_WR_MEM); //set DMA1 mode to 0x00 for send. read from memory
-
-	if(rx_irq_en){
-		reg_dma_chn_irq_msk |= FLD_DMA_UART_RX; //enable uart rx dma interrupt
-	}else{
-		reg_dma_chn_irq_msk &= ~FLD_DMA_UART_RX; //disable uart rx dma interrupt
-	}
-
-	if(tx_irq_en){
-		reg_dma_chn_irq_msk |=  FLD_DMA_UART_TX;  //enable uart tx dma interrupt
-	}else{
-		reg_dma_chn_irq_msk &= ~FLD_DMA_UART_TX;  //disable uart tx dma interrupt
-	}
-
-	if(tx_irq_en||rx_irq_en){
-		reg_irq_mask |= FLD_IRQ_UART_EN;
-	}
-	else{
-		reg_irq_mask &= ~FLD_IRQ_UART_EN;
-	}
 }
 
 /**
@@ -380,7 +381,7 @@ void uart_irq_enable(unsigned char rx_irq_en, unsigned char tx_irq_en)
  * @return    none
  * @notice    suggust closing tx irq.
  */
-void uart_notDmaModeInit(unsigned char rx_level,unsigned char tx_level,unsigned char rx_irq_en,unsigned char tx_irq_en)
+void uart_not_dma_mode_init(unsigned char rx_level,unsigned char tx_level,unsigned char rx_irq_en,unsigned char tx_irq_en)
 {
 	//1.set the trig level.
 	BM_CLR(reg_uart_ctrl2, FLD_UART_CTRL3_RX_IRQ_TRIG_LEVEL);
@@ -412,7 +413,7 @@ void uart_notDmaModeInit(unsigned char rx_level,unsigned char tx_level,unsigned 
  * @ return    the data received from the uart.
  */
 unsigned char rx_id = 0;
-unsigned char uart_notDmaModeRevData(void)
+unsigned char uart_not_dma_mode_rev_data(void)
 {
 	//static unsigned char rx_id = 0;
 	unsigned char res = 0;
@@ -431,7 +432,7 @@ unsigned char uart_notDmaModeRevData(void)
  * @return    1: send success ; 0: uart busy
  */
 unsigned char tx_id = 0;
-unsigned char uart_notDmaModeSendByte(unsigned char uartData)
+unsigned char uart_not_dma_mode_send_byte(unsigned char uartData)
 {
 	//static unsigned char uart_TxIndex = 0;
 
@@ -449,7 +450,7 @@ unsigned char uart_notDmaModeSendByte(unsigned char uartData)
  *	@param	sendBuff - send data buffer
  *	@return	'1' send success; '0' DMA busy
  */
-unsigned char uart_Send(unsigned char* addr){
+unsigned char uart_dma_send(unsigned char* addr){
 	if(uart_tx_is_busy()){
 		return 0;
 	}
@@ -465,7 +466,6 @@ unsigned char uart_Send(unsigned char* addr){
  *			recBuffLen:	receive buffer's length, the maximum uart packet length should be smaller than (recBuffLen - 4)
  *	@return	none
  */
-
 void uart_rx_buff_init(unsigned char *recAddr, unsigned short recBuffLen){
 	unsigned char bufLen;
 	bufLen = recBuffLen>>4;
@@ -481,7 +481,7 @@ void uart_rx_buff_init(unsigned char *recAddr, unsigned short recBuffLen){
  * @Param: txBuffLen ->
  * @Return: None.
  */
-void uart_txBuffInit(unsigned short txBuffLen){
+void uart_tx_buff_init(unsigned short txBuffLen){
 	unsigned char bufLen;
 	bufLen = txBuffLen >> 4;
 
@@ -497,7 +497,7 @@ void uart_txBuffInit(unsigned short txBuffLen){
  *	@return	none
  */
 static unsigned char   *tx_buff = 0;
-void uart_BuffInit(unsigned char *recAddr, unsigned short recBuffLen, unsigned char *txAddr){
+void uart_buff_Init(unsigned char *recAddr, unsigned short recBuffLen, unsigned char *txAddr){
 	unsigned char bufLen;
 	bufLen = recBuffLen>>4;
 	reg_dma0_addr = (unsigned short)((unsigned int)(recAddr)); //set receive buffer address
@@ -513,7 +513,7 @@ void uart_BuffInit(unsigned char *recAddr, unsigned short recBuffLen, unsigned c
  * @Param:
  * @Return:
  */
-unsigned char uart_ndma_get_rx_irq_flag(void)
+unsigned char uart_not_dma_get_rx_irq_flag(void)
 {
 	return (reg_uart_status0 & FLD_UART_IRQ_FLAG) ? 1:0;
 }
@@ -624,211 +624,6 @@ unsigned char uart_Send_kma(unsigned char* addr){
  */
 void UART_FlowCtrlPinInit(UART_FlowCtrlPinTypeDef flowCtrlPin)
 {
-#if(MCU_CORE_TYPE == MCU_CORE_5316)
-	/* CTS Pin Configuration. ------------------------------------------------*/
-	if(flowCtrlPin == UART_FLOW_CTRL_CTS_PA1)
-	{
-		//Disable GPIO function of PA1
-		gpio_set_func(GPIO_PA1,AS_UART);//CTS
-
-		//Set PA1 as CTS function
-		GPIOA_AF->RegBits.P1_AF = GPIOA1_UART_CTS;
-
-		/* Disable CTS function of other GPIO Pin. */
-		//PB2
-		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_UART_CTS_OR_SPI_DI)
-		{
-			gpio_set_func(GPIO_PB2,AS_GPIO);
-		}
-		//PC2
-		if(GPIOC_AF->RegBits.P2_AF == GPIOC2_UART_CTS)
-		{
-			gpio_set_func(GPIO_PC2,AS_GPIO);
-		}
-		//PB7
-		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_UART_CTS)
-		{
-			gpio_set_func(GPIO_PB7,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_CTS_PB2)
-	{
-		//Disable GPIO function of PB2
-		gpio_set_func(GPIO_PB2,AS_UART);//CTS
-
-		//Set PB2 as CTS function
-		GPIOB_AF->RegBits.P2_AF = GPIOB2_UART_CTS_OR_SPI_DI;
-
-		/* Disable CTS function of other GPIO Pin. */
-		//PA1
-		if(GPIOA_AF->RegBits.P1_AF == GPIOA1_UART_CTS)
-		{
-			gpio_set_func(GPIO_PA1,AS_GPIO);
-		}
-		//PC2
-		if(GPIOC_AF->RegBits.P2_AF == GPIOC2_UART_CTS)
-		{
-			gpio_set_func(GPIO_PC2,AS_GPIO);
-		}
-		//PB7
-		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_UART_CTS)
-		{
-			gpio_set_func(GPIO_PB7,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_CTS_PB7)
-	{
-		//Disable GPIO function of PB7
-		gpio_set_func(GPIO_PB7,AS_UART);
-
-		//Set PB7 as CTS function
-		GPIOB_AF->RegBits.P7_AF = GPIOB7_UART_CTS;
-
-		/* Disable CTS function of other GPIO Pin. */
-		//PA1
-		if(GPIOA_AF->RegBits.P1_AF == GPIOA1_UART_CTS)
-		{
-			gpio_set_func(GPIO_PA1,AS_GPIO);
-		}
-		//PB2
-		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_UART_CTS_OR_SPI_DI)
-		{
-			gpio_set_func(GPIO_PB2,AS_GPIO);
-		}
-		//PC2
-		if(GPIOC_AF->RegBits.P2_AF == GPIOC2_UART_CTS)
-		{
-			gpio_set_func(GPIO_PC2,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_CTS_PC2)
-	{
-		//Disable GPIO function of PC2
-		gpio_set_func(GPIO_PC2,AS_UART);//CTS
-
-		//Set PC2 as CTS function
-		GPIOC_AF->RegBits.P2_AF = GPIOC2_UART_CTS;
-
-		/* Disable CTS function of other GPIO Pin. */
-		//PA1
-		if(GPIOA_AF->RegBits.P1_AF == GPIOA1_UART_CTS)
-		{
-			gpio_set_func(GPIO_PA1,AS_GPIO);
-		}
-		//PB2
-		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_UART_CTS_OR_SPI_DI)
-		{
-			gpio_set_func(GPIO_PB2,AS_GPIO);
-		}
-		//PB7
-		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_UART_CTS)
-		{
-			gpio_set_func(GPIO_PB7,AS_GPIO);
-		}
-	}
-	/* RTS Pin Configuration. ------------------------------------------------*/
-	else if(flowCtrlPin == UART_FLOW_CTRL_RTS_PA2)
-	{
-		//Disable GPIO function of PA2
-		gpio_set_func(GPIO_PA2,AS_UART);//RTS
-
-		//Set PA2 as RTS function
-		GPIOA_AF->RegBits.P2_AF = GPIOA2_UART_RTS;
-
-		/* Disable RTS function of other GPIO Pin. */
-		//PB3
-		if(GPIOB_AF->RegBits.P3_AF == GPIOB3_UART_RTS_OR_SPI_CK)
-		{
-			gpio_set_func(GPIO_PB3,AS_GPIO);
-		}
-		//PB6
-		if(GPIOB_AF->RegBits.P6_AF ==GPIOB6_UART_RTS)
-		{
-			gpio_set_func(GPIO_PB6,AS_GPIO);
-		}
-		//PC3
-		if(GPIOC_AF->RegBits.P3_AF == GPIOC3_UART_RTS)
-		{
-			gpio_set_func(GPIO_PC3,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_RTS_PB3)
-	{
-		//Disable GPIO function of PB3
-		gpio_set_func(GPIO_PB3,AS_UART);//RTS
-
-		//Set PB3 as RTS function
-		GPIOB_AF->RegBits.P3_AF = GPIOB3_UART_RTS_OR_SPI_CK;
-		reg_gpio_pb_multi_func_select |= FLD_PB_MULTI_FUNC_SEL;//must
-
-		/* Disable RTS function of other GPIO Pin. */
-		//PA2
-		if(GPIOA_AF->RegBits.P2_AF == GPIOA2_UART_RTS)
-		{
-			gpio_set_func(GPIO_PA2,AS_GPIO);
-		}
-		//PB6
-		if(GPIOB_AF->RegBits.P6_AF ==GPIOB6_UART_RTS)
-		{
-			gpio_set_func(GPIO_PB6,AS_GPIO);
-		}
-		//PC3
-		if(GPIOC_AF->RegBits.P3_AF == GPIOC3_UART_RTS)
-		{
-			gpio_set_func(GPIO_PC3,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_RTS_PB6)
-	{
-		//Disable GPIO function of PB6
-		gpio_set_func(GPIO_PB6,AS_UART);
-
-		//Set PB6 as RTS function
-		GPIOB_AF->RegBits.P6_AF = GPIOB6_UART_RTS;
-
-		/* Disable RTS function of other GPIO Pin. */
-		//PA2
-		if(GPIOA_AF->RegBits.P2_AF == GPIOA2_UART_RTS)
-		{
-			gpio_set_func(GPIO_PA2,AS_GPIO);
-		}
-		//PB3
-		if(GPIOB_AF->RegBits.P3_AF == GPIOB3_UART_RTS_OR_SPI_CK)
-		{
-			gpio_set_func(GPIO_PB3,AS_GPIO);
-		}
-		//PC3
-		if(GPIOC_AF->RegBits.P3_AF == GPIOC3_UART_RTS)
-		{
-			gpio_set_func(GPIO_PC3,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_RTS_PC3)
-	{
-		//Disable GPIO function of PC3
-		gpio_set_func(GPIO_PC3,AS_UART);//RTS
-
-		//Set PC3 as RTS function
-		GPIOC_AF->RegBits.P3_AF = GPIOC3_UART_RTS;
-
-		/* Disable RTS function of other GPIO Pin. */
-		//PA2
-		if(GPIOA_AF->RegBits.P2_AF == GPIOA2_UART_RTS)
-		{
-			gpio_set_func(GPIO_PA2,AS_GPIO);
-		}
-		//PB3
-		if(GPIOB_AF->RegBits.P3_AF == GPIOB3_UART_RTS_OR_SPI_CK)
-		{
-			gpio_set_func(GPIO_PB3,AS_GPIO);
-		}
-		//PB6
-		if(GPIOB_AF->RegBits.P6_AF == GPIOB6_UART_RTS)
-		{
-			gpio_set_func(GPIO_PB6,AS_GPIO);
-		}
-	}
-#elif(MCU_CORE_TYPE == MCU_CORE_5317)
 	/* CTS Pin Configuration. ------------------------------------------------*/
 	if(flowCtrlPin == UART_FLOW_CTRL_CTS_PB2)
 	{
@@ -917,7 +712,6 @@ void UART_FlowCtrlPinInit(UART_FlowCtrlPinTypeDef flowCtrlPin)
 			gpio_set_func(GPIO_PB6,AS_GPIO);
 		}
 	}
-#endif
 }
 
 /**

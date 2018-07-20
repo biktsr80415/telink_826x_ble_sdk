@@ -201,9 +201,9 @@ static u16 vk_consumer_map[16] = {
 			gpio_set_input_en(GPIO_PB0,1);
 
 			audio_amic_init(AUDIO_16K);
-			//adc_power_on_sar_adc(1);//ADC power ON
+			adc_power_on_sar_adc(1);//ADC power ON
 			//AUDIO_AmicInit(AUDIO_Rate_32K, buffer_mic, TL_MIC_BUFFER_SIZE);
-			ADC_PowerOn();
+			//ADC_PowerOn();
 		}else{  //Audio OFF
 			lowBattDet_enable = 1;
 
@@ -213,9 +213,9 @@ static u16 vk_consumer_map[16] = {
 			gpio_set_input_en(GPIO_PA7,0);
 			gpio_set_input_en(GPIO_PB0,0);
 
-			TL_BatteryCheckInit(ADC_Channel_PB3);
-			ADC_PowerOff();
-			//adc_power_on_sar_adc(0);//ADC power OFF
+			TL_BatteryCheckInit();
+			adc_power_on_sar_adc(0);//ADC power OFF
+			//ADC_PowerOff();
 		}
 	}
 
@@ -766,7 +766,7 @@ void user_init()
 
 	/* Battery Check Function Initialization */
 #if(BATT_CHECK_ENABLE)
-	TL_BatteryCheckInit(ADC_Channel_PB3);
+	TL_BatteryCheckInit();
 	lowBattDet_enable = 1;
 #endif
 

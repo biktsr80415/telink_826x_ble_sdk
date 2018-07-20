@@ -37,8 +37,6 @@ typedef enum{
 	UART_FLOW_CTRL_CTS_PC2,
 	UART_FLOW_CTRL_RTS_PC3,
 }UART_FlowCtrlPinTypeDef;
-#endif
-
 
 /**
  *  @brief  Define parity type
@@ -64,50 +62,7 @@ typedef enum{
 	UART_Flag_TxDone = 0x02,
 }UART_IrqFlagTypeDef;
 
-
-enum {
-	UART_DMA_RX_IRQ_DIS = 0,
-	UART_DMA_RX_IRQ_EN  = 1,
-	UART_DMA_TX_IRQ_DIS = 0,
-	UART_DMA_TX_IRQ_EN  = 1,
-};
-
-enum {
-	UART_NODMA_RX_IRQ_DIS = 0,
-	UART_NODMA_RX_IRQ_EN  = 1,
-	UART_NODMA_TX_IRQ_DIS = 0,
-	UART_NODMA_TX_IRQ_EN  = 1,
-};
-
-#define CLK32M_UART9600         do{\
-									uart_Init(302,10,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
-								}while(0)
-#define CLK32M_UART115200       do{\
-									uart_Init(30,8,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
-								}while(0)
-#define CLK16M_UART115200       do{\
-									uart_Init(9,13,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
-								}while(0)
-#define CLK16M_UART9600         do{\
-									uart_Init(118,13,PARITY_NONE,STOP_BIT_ONE);\
-									uart_DmaModeInit(UART_DMA_TX_IRQ_EN, UART_DMA_RX_IRQ_EN);\
-								}while(0)
-
-#if (MCU_CORE_TYPE == MCU_CORE_5316)
-                     	 //TxRx
-	#define UART_GPIO_INIT_PA3A4()   uart_pin_init(UART_PIN_PA3A4)
-	#define UART_GPIO_INIT_PB4B5()   uart_pin_init(UART_PIN_PB4B5)
-	#define UART_GPIO_INIT_PC4C5()   uart_pin_init(UART_PIN_PC4C5)
-#elif(MCU_CORE_TYPE == MCU_CORE_5317)
-						  //TxRx
-	#define UART_GPIO_INIT_PA1A2()   uart_pin_init(UART_PIN_PA1A2)
-	#define UART_GPIO_INIT_PB4B5()   uart_pin_init(UART_PIN_PB4B5)
-	#define UART_GPIO_INIT_PC4C5()   uart_pin_init(UART_PIN_PC4C5)
-#endif
-
+//void uart_pin_init(UART_PinTypeDef uartPin);
 extern void uart_pin_set(UART_TxPinDef tx_pin, UART_RxPinDef rx_pin);
 extern void uart_init(unsigned int BaudRate, UART_ParityTypeDef Parity,
 		                       UART_StopBitTypeDef StopBit);
@@ -115,21 +70,20 @@ extern void uart_Reset(void);
 extern unsigned char uart_error_clr(void);
 
 /* Only use for Normal Mode. -------------------------------------------------*/
-extern void uart_notDmaModeInit(unsigned char rx_level,unsigned char tx_level,
+extern void uart_not_dma_mode_init(unsigned char rx_level,unsigned char tx_level,
 		                        unsigned char rx_irq_en,unsigned char tx_irq_en);
 extern unsigned char rx_id;
-extern unsigned char uart_notDmaModeRevData(void);
+extern unsigned char uart_not_dma_mode_rev_data(void);
 extern unsigned char tx_id;
-extern unsigned char uart_notDmaModeSendByte(unsigned char uartData);
+extern unsigned char uart_not_dma_mode_send_byte(unsigned char uartData);
 //interrupt flag will be cleared automatically
-extern unsigned char uart_ndma_get_rx_irq_flag(void);
+extern unsigned char uart_not_dma_get_rx_irq_flag(void);
 
 /* Only use for DMA mode -----------------------------------------------------*/
-//extern void uart_DmaModeInit(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn);
+extern void uart_dma_mode_init(unsigned char dmaTxIrqEn, unsigned char dmaRxIrqEn);
 extern void uart_dma_enable(unsigned char rx_dma_en, unsigned char tx_dma_en);
 extern void uart_rx_buff_init(unsigned char *recAddr, unsigned short recBuffLen);
-extern unsigned char uart_Send(unsigned char* addr);
-extern void uart_irq_enable(unsigned char rx_irq_en,unsigned char tx_irq_en);
+extern unsigned char uart_dma_send(unsigned char* addr);
 extern unsigned char uart_get_irq_flag(UART_IrqFlagTypeDef UART_Flag);
 extern void uart_clear_irq_flag(UART_IrqFlagTypeDef UART_Flag);
 extern unsigned char uart_tx_is_busy(void);
@@ -143,7 +97,7 @@ extern void UART_CTS_Init(unsigned char pinValue, unsigned char ctsEnable);
 
 
 
-/* Reserved for compatibility */
+/* Reserved for compatibility ------------------------------------------------*/
 enum UARTIRQSOURCE{
 	UARTNONEIRQ = 0,
 	UARTRXIRQ = BIT(0),
@@ -166,3 +120,4 @@ extern enum UARTIRQSOURCE uart_IRQSourceGet_kma(void);
 extern void uart_BuffInit(unsigned char *recAddr, unsigned short recBuffLen, unsigned char *txAddr);
 //void uart_clr_tx_busy_flag(void);
 
+#endif

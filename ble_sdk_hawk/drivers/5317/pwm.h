@@ -180,7 +180,7 @@ static inline void pwm_interrupt_enable(ePWM_IrqTypeDef irq)
 		reg_pwm_irq_mask0 |= irq;
 	}
 
-	reg_irq_mask |= FLD_IRQ_PWM_EN;
+	reg_irq_mask |= FLD_IRQ_SW_PWM_EN;
 }
 
 static inline void pwm_interrupt_disable(ePWM_IrqTypeDef irq)
@@ -195,12 +195,12 @@ static inline void pwm_interrupt_disable(ePWM_IrqTypeDef irq)
 		reg_pwm_irq_mask0 &= ~irq;
 	}
 
-	reg_irq_mask &= ~FLD_IRQ_PWM_EN;
+	reg_irq_mask &= ~FLD_IRQ_SW_PWM_EN;
 }
 
 static inline unsigned char pwm_get_irq_status(ePWM_IrqTypeDef irq)
 {
-	if(reg_irq_src & FLD_IRQ_PWM_EN)//must
+	if(reg_irq_src & FLD_IRQ_SW_PWM_EN)//must
 	{
 		if(irq == PWM_IRQ_PWM0_IR_FIFO_CNT)
 		{
@@ -226,22 +226,23 @@ static inline void pwm_clear_irq_status(ePWM_IrqTypeDef irq)
 	}
 }
 
-static inline unsigned short pwm_set_waveform_data(unsigned char hasCarrier, ePWM_SrcTypeDef pwmSrc,
-		                                unsigned int frameNum)
+static inline unsigned short pwm_set_waveform_data(unsigned char hasCarrier,
+		                                           ePWM_SrcTypeDef pwmSrc,
+		                                           unsigned short frameNum)
 {
 	return (((hasCarrier)<<15) | (pwmSrc) | ((frameNum) & 0x3fff));
 }
 
-static inline void pwm_dma_ir_data_config(unsigned short* pdat)
+static inline void pwm_set_dma_address(void * pdat)
 {
-	reg_dma5_addr = (unsigned int)pdat & 0xffff;
+	reg_dma5_addr = (unsigned short)((unsigned int)pdat);
 
 	reg_dma5_ctrl &= ~(FLD_DMA_BUF_SIZE|FLD_DMA_WR_MEM);
 	reg_dma5_ctrl |= MASK_VAL(FLD_DMA_BUF_SIZE,0x20);
 	//reg_dma5_ctrl  &= ~FLD_DMA_WR_MEM;
 }
 
-static inline void pwm_dma_enable(void)
+static inline void pwm_start_dma_ir_sending(void)
 {
 	reg_dma_tx_rdy0 |= FLD_DMA_PWM;
 }

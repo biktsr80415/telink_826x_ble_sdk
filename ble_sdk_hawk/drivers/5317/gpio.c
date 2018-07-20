@@ -339,20 +339,452 @@ void gpio_set_wakeup(GPIO_PinTypeDef pin, GPIO_LevelTypeDef level, int en)
     reg_gpio_wakeup_and_irq_en |= FLD_GPIO_CORE_WAKEUP_EN;
 }
 
+void gpio_clear_gpio_irq_flag(void)
+{
+	REG_ADDR8(0x64A) |= BIT(2);
+}
 
+#if 0
 void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 {
 	unsigned char bit = pin & 0xff;
 	if(func == AS_GPIO){
 		BM_SET(reg_gpio_gpio_func(pin), bit);
+		return;
 	}else{
 		BM_CLR(reg_gpio_gpio_func(pin), bit);
 	}
 }
-
-void gpio_clear_gpio_irq_flag(void)
+#else
+void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 {
-	REG_ADDR8(0x64A) |= BIT(2);
+	unsigned char bit = pin & 0xff;
+	if(func == AS_GPIO){
+		BM_SET(reg_gpio_gpio_func(pin), bit);
+		return;
+	}else{
+		BM_CLR(reg_gpio_gpio_func(pin), bit);
+	}
+
+	//config gpio special func
+	unsigned char val = 0;
+	unsigned char mask = 0xff;
+	switch(pin)
+	{
+		case GPIO_PA0:
+		{
+			//0x5a8[1:0]
+			//0. PWM0
+			//1. PWM3
+			mask = (unsigned char)~(BIT(1)|BIT(0));
+			if(func == AS_PWM0){
+
+			}else if(func == AS_PWM3){
+				val = BIT(0);
+			}
+		}
+		break;
+		case GPIO_PA1:
+		{
+			//0x5a8[3:2]
+			//0. PWM3N/PWM0N
+			//1. UART_TX
+			//2. I2C_MCK
+			mask= (unsigned char)~(BIT(3)|BIT(2));
+			if(func == AS_PWM3_N){
+				BM_SET(reg_gpio_pb_multi_func_select, BIT(1));
+			}
+			else if(func == AS_PWM0_N){
+				BM_CLR(reg_gpio_pb_multi_func_select, BIT(1));
+			}
+			else if(func == AS_UART){
+				val = BIT(2);
+			}
+			else if(func == AS_I2C_M){
+				val = BIT(3);
+			}
+		}
+		break;
+
+		case GPIO_PA2:
+		{
+			//0x5a8[5:4]
+			//0. PWM1_N
+			//1. UART_RX
+			//2. I2C_MCK
+			mask= (unsigned char)~(BIT(5)|BIT(4));
+			if(func == AS_PWM1_N){
+
+			}else if(func == AS_UART){
+				val = BIT(4);
+			}
+			else if(func == AS_I2C_M){
+				val = BIT(5);
+			}
+		}
+		break;
+
+		case GPIO_PA3:
+		{
+			//0x5a8[7:6]
+			//0. PWM4
+			//1. DMIC
+			mask= (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_PWM4){
+
+			}else if(func == AS_DMIC){
+				val = BIT(6);
+			}
+		}
+		break;
+
+
+		case GPIO_PA4:
+		{
+			//0x5a9[1:0]
+			//0. PWM2
+			//1. DMIC_CLK
+			mask= (unsigned char)~(BIT(1)|BIT(0));
+			if(func == AS_PWM2){
+
+			}else if(func == AS_DMIC){
+				val = BIT(0);
+			}
+		}
+		break;
+
+		case GPIO_PA5:
+		{
+//			//0x5a9[3:2]
+//			//0. PWM5
+//			//1. I2C_S_CLK
+//			//2. I2C_M_CLK
+//			mask= (unsigned char)~(BIT(3)|BIT(2));
+//			if(func == AS_PWM5){
+//
+//			}else if(func == AS_I2C_S){
+//				val = BIT(2);
+//			}else if(func == AS_I2C_M){
+//				val = BIT(3);
+//			}
+		}
+		case GPIO_PA6:
+		{
+//			//0x5a9[5:4]
+//			//0. AS_PWM4_N
+//			//1. I2C_S_SD
+//			//2. I2C_M_SD
+//			mask= (unsigned char)~(BIT(5)|BIT(4));
+//			if(func == AS_PWM4_N){
+//
+//			}else if(func == AS_I2C_S){
+//				val = BIT(4);
+//			}else if(func == AS_I2C_M){
+//				val = BIT(5);
+//			}
+		}
+		break;
+
+		case GPIO_PA7:
+		{
+			//0x5a9[7:6]
+			//0. SWS:
+			//1. UART_RTS
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_PWM5){
+
+			}else if(func == AS_DMIC){
+				val = BIT(6);
+			}
+		}
+		break;
+
+		case GPIO_PB0:
+		{
+			//0x5aa[1:0]
+			//0. PWM3
+			//1. AS_DMIC
+			//2. AS_SPI
+			mask = (unsigned char)~(BIT(1)|BIT(0));
+			if(func == AS_PWM3){
+
+			}else if(func == AS_DMIC){
+				val = BIT(0);
+			}
+			else if(func == AS_SPI){
+				val = BIT(1)|BIT(0);
+			}
+		}
+		break;
+
+
+		case GPIO_PB1:
+		{
+			//0x5aa[3:2]
+			//0. PWM1
+			//1.
+			//3. AS_SPI
+			mask = (unsigned char)~(BIT(3)|BIT(2));
+			if(func == AS_PWM1){
+
+			}
+			else if(func == AS_SPI){
+				val = BIT(3)|BIT(2);
+			}
+		}
+		break;
+
+
+		case GPIO_PB2:
+		{
+			//0x5aa[5:4]
+			//0. PWM2
+			//1. AS_SDM
+			//2. RX_CYC2LNA
+			mask = (unsigned char)~(BIT(5)|BIT(4));
+			if(func == AS_PWM2){
+
+			}else if(func == AS_SDM){
+				val = BIT(4);
+			}
+			else if(func == AS_UART){
+				val = BIT(5);
+			}
+		}
+		break;
+
+
+		case GPIO_PB3:
+		{
+			//0x5aa[7:6]
+			//0. PWM0
+			//1. CMP_DF
+			//2. TX_CYC2PA
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_PWM0){
+
+			}else if(func == AS_SDM){
+				val = BIT(6);
+			}
+			else if(func == AS_UART){
+				val = BIT(7);
+			}
+		}
+		break;
+
+		case GPIO_PB4:
+		{
+			//0x5ab[1:0]
+			//0. AS_PWM1_N
+			//1. RX_CYC2LNA
+			//2. UART
+			mask = (unsigned char)~(BIT(1)|BIT(0));
+			if(func == AS_PWM1_N){
+
+			}else if(func == AS_ETH_MAC){
+				val = BIT(0);
+			}
+			else if(func == AS_UART){
+				val = BIT(1);
+			}
+		}
+		break;
+
+
+		case GPIO_PB5:
+		{
+			//0x5ab[3:2]
+			//0. AS_PWM
+			//1. RX_CYC2LNA
+			//2. UART
+			mask = (unsigned char)~(BIT(3)|BIT(2));
+			if(func == AS_PWM4){
+
+			}else if(func == AS_ETH_MAC){
+				val = BIT(2);
+			}
+			else if(func == AS_UART){
+				val = BIT(3);
+			}
+		}
+		break;
+
+		case GPIO_PB6:
+		{
+			//0x5ab[5:4]
+			//0. AS_PWM5_N
+			//1. AS_I2C_S
+			//2. UART_RTS
+			mask = (unsigned char)~(BIT(5)|BIT(4));
+			if(func == AS_PWM5_N){
+
+			}else if(func == AS_I2C_S){
+				val = BIT(4);
+			}
+			else if(func == AS_UART){
+				val = BIT(5);
+			}
+		}
+		break;
+
+
+		case GPIO_PB7:
+		{
+			//0x5ab[7:6]
+			//0. AS_PWM1
+			//1. AS_I2C_S
+			//2. UART_RX
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_PWM1){
+
+			}else if(func == AS_I2C_S){
+				val = BIT(6);
+			}
+			else if(func == AS_UART){
+				val = BIT(7);
+			}
+		}
+		break;
+
+		case GPIO_PC0:
+		{
+			//NO PIN
+		}
+		break;
+
+		case GPIO_PC1:
+		{
+			//0x5ac[3:2]
+			//0. AS_PWM2_N
+			mask = (unsigned char)~(BIT(3)|BIT(2));
+			if(func == AS_PWM2_N){
+			}
+		}
+		break;
+
+
+		case GPIO_PC2:
+		{
+			//0x5ac[5:4]
+			//0. SPI_CN
+			//1. AS_PWM0_N
+			//2. I2C_SDA
+			mask = (unsigned char)~(BIT(5)|BIT(4));
+			if(func == AS_SPI){
+
+			}
+			else if(func == AS_PWM0_N){
+				val = BIT(4);
+			}
+			else if(func == AS_SPI){
+				val = BIT(5);
+			}
+		}
+		break;
+
+
+		case GPIO_PC3:
+		{
+			//0x5ac[7:6]
+			//0. PWM1
+			//1. UART_RX
+			//2. I2C_SCK
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_SPI){
+
+			}else if(func == AS_PWM5_N){
+				val = BIT(6);
+			}
+			else if(func == AS_SPI){
+				val = BIT(7);
+			}
+		}
+		break;
+
+		case GPIO_PC4:
+		{
+			//0x5ad[1:0]
+			//0. PWM2
+			//1. UART_CTS
+			//2. PWM0_N
+			mask = (unsigned char)~(BIT(1)|BIT(0));
+			if(func == AS_SPI){
+
+			}else if(func == AS_I2C_M){
+				val = BIT(0);
+			}
+			else if(func == AS_SPI){
+				val = BIT(1);
+			}
+			else if(func == AS_UART){
+				val = BIT(1)|BIT(0);
+			}
+		}
+		break;
+
+		case GPIO_PC5:
+		{
+			//0x5ad[3:2]
+			//0. PWM3_N
+			//1. UART_RX
+			//2. ATSEL_0
+			//3. UART_RX
+			mask = (unsigned char)~(BIT(3)|BIT(2));
+			if(func == AS_SPI){
+
+			}else if(func == AS_I2C_M){
+				val = BIT(2);
+			}
+			else if(func == AS_SPI){
+				val = BIT(3);
+			}
+			else if(func == AS_UART){
+				val = BIT(2)|BIT(3);
+			}
+		}
+		break;
+
+		case GPIO_PC6:
+		{
+			//0x5ad[5:4]
+			//0. RX_CYC2LNA
+			//1. ATSEL1
+			//2. PWM4_N
+			mask = (unsigned char)~(BIT(5)|BIT(4));
+			if(func ==AS_PWM4 ){
+
+			}
+			else
+			if(func == AS_PWM3_N){
+				val = BIT(4);
+			}
+
+		}
+		break;
+
+
+		case GPIO_PC7:
+		{
+			//0x5ad[7:6]
+			//0. SWS_IO
+			//1. PWM5
+			mask = (unsigned char)~(BIT(7)|BIT(6));
+			if(func == AS_SWS ){
+
+			}
+			else if(func == AS_PWM5){
+				val = BIT(6);
+			}
+		}
+		break;
+
+		default: break;
+	}
+	unsigned short reg = 0x5a8 + ((pin>>8)<<1) + ((pin&0x0f0) ? 1 : 0 );
+	write_reg8(reg, ( read_reg8(reg) & mask) | val);
 }
+#endif
+
+
 
 

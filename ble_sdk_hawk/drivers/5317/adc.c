@@ -1,7 +1,6 @@
 #include "adc.h"
 
-#if 0
-
+#if 1
 void adc_set_ref_voltage(ADC_ChTypeDef ch_n, ADC_RefVolTypeDef v_ref)
 {
 	if(ch_n & ADC_LEFT_CHN)
@@ -32,7 +31,6 @@ void adc_set_ref_voltage(ADC_ChTypeDef ch_n, ADC_RefVolTypeDef v_ref)
 		//Comparator preamp bias current trimming:  100%
 		analog_write(anareg_ain_scale, (analog_read(anareg_ain_scale)&(0xC0)) | 0x15 );
 	}
-
 }
 
 
@@ -226,50 +224,6 @@ unsigned short ADC_SampleValueGet(void){
 	return sampledValue;
 }
 
-void ADC_Init(void){
-
-	/****** sar adc Reset ********/
-	//reset whole digital adc module
-	adc_reset_adc_module();
-
-	/******power on sar adc********/
-	adc_power_on_sar_adc(1);
-
-	/******enable signal of 24M clock to sar adc********/
-	adc_enable_clk_24m_to_sar_adc(1);
-
-	/******set adc clk as 4MHz******/
-	adc_set_sample_clk(5);
-
-	/******set adc L R channel Gain Stage bias current trimming******/
-	pga_left_chn_power_on(1);
-	pga_right_chn_power_on(1);
-	adc_set_left_gain_bias(GAIN_STAGE_BIAS_PER100);
-	adc_set_right_gain_bias(GAIN_STAGE_BIAS_PER100);
-
-	/****	优化了ADC低温抖动的问题******************/
-	adc_set_atb(ADC_SEL_ATB_1);
-}
-
-/**
- * @Brief: ADC power on.
- * @Param:
- * @RetVal: None.
- */
-void ADC_PowerOn(void)
-{
-	WriteAnalogReg (0x80+124, analog_read(0x80+124) & (~BIT(5)));
-}
-
-/**
- * @Brief: ADC power off.
- * @Param:
- * @RetVal: None.
- */
-void ADC_PowerOff(void)
-{
-	WriteAnalogReg (0x80+124,analog_read(0x80+124)|BIT(5));
-}
 #else
 
 /**
@@ -281,6 +235,7 @@ void ADC_PowerOff(void)
   * @Brief:
   ******************************************************************************
   */
+#include "adc.h"
 
 /**
  * @Brief: ADC power on.
@@ -967,50 +922,6 @@ void ADC_Cmd(eADC_ModuleTypeDef ADC_Module, unsigned char ADC_Enable)
 }
 
 /**
- * @Brief:  Check battery voltage.
- * @Param:  ADC_Module ->
- * @RetVal: None.
- */
-void ADC_BatteryCheckInit(eADC_ChannelTypeDef ADC_Channel)
-{
-	//ADC clock settings.
-	ADC_ClockSet(3000000);//3M
-
-	//Clear ADC Enable register.
-	analog_write(ADC_ENABLE_ADDR,0x00);//Must
-
-	//Set ADC stable time.
-	ADC_StableTime(ADC_Module_M, ADC_Stable_Time_6Cyc);
-
-	//Reference voltage settings
-	ADC_VrefSet(ADC_Vref_1p2);
-
-	//Resolution settings
-	ADC_ResolutionSet(ADC_Module_M, ADC_Resolution_14b);
-
-	//Battery divider voltage factor settings
-	ADC_VbatDivFactorSet(ADC_Vbat_Div_Factor_Off);
-
-	//ADC mode settings:singlend or differential
-	ADC_ModeSet(ADC_Module_M, ADC_Mode_Diff);
-
-	//ADC channel settings
-	gpio_set_output_en(ADC_BATTERY_CHECK_PIN,1);//must
-	gpio_set_input_en(ADC_BATTERY_CHECK_PIN,0);//must
-	gpio_write(ADC_BATTERY_CHECK_PIN,1);//must
-	ADC_DifferChannelSet(ADC_Module_M,ADC_Channel,ADC_Channel_GND);
-
-	//ADC input voltage divider factor settings
-	ADC_InputVolDivFactor(ADC_Vref_1p2, ADC_Input_Vol_Div_Factor_8);
-
-	//Sample Rate settings.
-	ADC_SampleRateSet(ADC_Module_M,0x0a,0x0f0);
-
-	//ADC enable
-	ADC_Cmd(ADC_Module_M, ENABLE);
-}
-
-/**
  * @Brief:  Get ADC Busy flag.
  * @Param:  None.
  * @RetVal: 1:busy, 0:convert completely.
@@ -1032,7 +943,7 @@ unsigned short ADC_GetConvertValue(void)
 	unsigned char adcValueH = 0;
 	unsigned short adcValue = 0;
 
-//	while(!ADC_IsBusy());
+	while(!ADC_IsBusy());
 	while(ADC_IsBusy());
 	sleep_us(2);
 
