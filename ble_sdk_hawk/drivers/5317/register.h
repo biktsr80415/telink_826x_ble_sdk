@@ -1177,7 +1177,7 @@ enum//Use for "reg_irq_mask"
 	FLD_IRQ_RSVD_11       =	BIT(11),
 	FLD_IRQ_SOFT_IRQ_EN   =	BIT(12),
 	FLD_IRQ_ZB_RT_EN      =	BIT(13),
-	FLD_IRQ_PWM_EN        =	BIT(14),
+	FLD_IRQ_SW_PWM_EN     =	BIT(14),
 	FLD_IRQ_AN_EN         =	BIT(15),
 
 	FLD_IRQ_RSVD_16       =	BIT(16),
@@ -1304,6 +1304,17 @@ enum{
 //PWM interrupt manager
 #define reg_pwm_irq_mask0		 REG_ADDR8(0x7b0)
 #define reg_pwm_irq_state0		 REG_ADDR8(0x7b1)
+enum{
+	FLD_IRQ_PWM0_PNUM =					BIT(0),
+	FLD_IRQ_PWM0_IR_DMA_FIFO_DONE  =	BIT(1),
+	FLD_IRQ_PWM0_FRAME =				BIT(2),
+	FLD_IRQ_PWM1_FRAME =				BIT(3),
+	FLD_IRQ_PWM2_FRAME =				BIT(4),
+	FLD_IRQ_PWM3_FRAME =				BIT(5),
+	FLD_IRQ_PWM4_FRAME 	=				BIT(6),
+	FLD_IRQ_PWM5_FRAME =				BIT(7),
+};
+
 #define reg_pwm_irq_mask1		 REG_ADDR8(0x7b2)
 #define reg_pwm_irq_state1		 REG_ADDR8(0x7b3)
 

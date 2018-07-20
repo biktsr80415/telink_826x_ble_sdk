@@ -5,20 +5,12 @@
 
 typedef enum {
 	I2C_PIN_GROUP_M_A1A2 = 0x00,//IIC Master GPIO
-	I2C_PIN_GROUP_M_A5A6 = 0x01,//(A5A6目前不能使用)
 	I2C_PIN_GROUP_M_C4C5 = 0x02,
 
-	I2C_PIN_GROUP_S_A5A6 = 0x03,//IIC slave GPIO (A5A6目前不能使用)
 	I2C_PIN_GROUP_S_B6B7 = 0x04,
 	I2C_PIN_GROUP_S_C4C5 = 0x05,
 }eI2C_PinTypeDef;
 
-//I2C irq handler
-//typedef enum {
-//	I2C_IRQ_NONE = 0,
-//	I2C_IRQ_HOST_WRITE_ONLY,
-//	I2C_IRQ_HOST_READ_ONLY,
-//}eI2C_IrqSrcTypeDef;
 
 /* IIC irq Flag define */
 typedef enum{
@@ -29,10 +21,6 @@ typedef enum{
 typedef enum{
 	I2C_SlaveMode_DMA = 0x00,
 	I2C_SlaveMode_MAP = 0x01,
-
-	/* Reserved for compatibility */
-//	I2C_SLAVE_DMA = 0,
-//	I2C_SLAVE_MAP = 1,
 }eI2C_SlaveModeTypeDef;
 
 #define I2C_IRQ_EN()    BM_SET(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)
@@ -61,12 +49,8 @@ void i2c_burst_read(unsigned short addr, unsigned char addr_len, unsigned char* 
 		            unsigned int len);
 
 /* Only use for I2C slave */
-#if 1
 unsigned char i2c_get_irq_flag(eI2C_IrqFlagTypeDef I2C_IrqFlag);
 void i2c_clear_irq_flag(eI2C_IrqFlagTypeDef I2C_IrqFlag);
-#else
-eI2C_IrqSrcTypeDef i2c_get_slave_irq_flag(void);
-void i2c_clear_slave_irq_flag(eI2C_IrqSrcTypeDef I2C_IrqSrc);
-#endif
+
 
 

@@ -43,32 +43,6 @@ void i2c_pin_init(eI2C_PinTypeDef i2c_pin){
 		}
 		break;
 
-	case I2C_PIN_GROUP_M_A5A6:
-		gpio_scl = GPIO_PA5;
-		gpio_sda = GPIO_PA6;
-
-		GPIOA_AF->RegBits.P5_AF = GPIOA5_I2C_MCK;
-		GPIOA_AF->RegBits.P6_AF = GPIOA6_I2C_MSD;
-
-		if(GPIOA_AF->RegBits.P1_AF == GPIOA1_I2C_MCK)
-		{
-			gpio_set_func(GPIO_PA1,AS_GPIO);
-		}
-		if(GPIOA_AF->RegBits.P2_AF == GPIOA2_I2C_MSD)
-		{
-			gpio_set_func(GPIO_PA2,AS_GPIO);
-		}
-
-		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_I2C_MSD)
-		{
-			gpio_set_func(GPIO_PC4,AS_GPIO);
-		}
-		if(GPIOC_AF->RegBits.P5_AF == GPIOC5_I2C_MCK)
-		{
-			gpio_set_func(GPIO_PC5,AS_GPIO);
-		}
-		break;
-
 	case I2C_PIN_GROUP_M_C4C5:
 		gpio_scl = GPIO_PC5;
 		gpio_sda = GPIO_PC4;
@@ -92,32 +66,6 @@ void i2c_pin_init(eI2C_PinTypeDef i2c_pin){
 		if(GPIOA_AF->RegBits.P6_AF == GPIOA6_I2C_MSD)
 		{
 			gpio_set_func(GPIO_PA6,AS_GPIO);
-		}
-		break;
-
-	case I2C_PIN_GROUP_S_A5A6://Slave
-		gpio_scl = GPIO_PA5;
-		gpio_sda = GPIO_PA6;
-
-		GPIOA_AF->RegBits.P5_AF = GPIOA5_I2C_CK;
-		GPIOA_AF->RegBits.P6_AF = GPIOA6_I2C_SD;
-
-		if(GPIOB_AF->RegBits.P6_AF == GPIOB6_I2C_CK)
-		{
-			gpio_set_func(GPIO_PB6,AS_GPIO);
-		}
-		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_I2C_SD)
-		{
-			gpio_set_func(GPIO_PB7,AS_GPIO);
-		}
-
-		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_SPI_DI_OR_I2C_SD)
-		{
-			gpio_set_func(GPIO_PC4,AS_GPIO);
-		}
-		if(GPIOC_AF->RegBits.P5_AF == GPIOC5_SPI_CK_OR_I2C_CK);
-		{
-			gpio_set_func(GPIO_PC5,AS_GPIO);
 		}
 		break;
 
@@ -495,8 +443,6 @@ void i2c_burst_read(unsigned short addr, unsigned char addr_len, unsigned char* 
 	while(I2C_CMD_BUSY_FLAG);
 }
 
-
-#if 1
 /**
  * @Brief:  Get IIC slave Irq flag.
  * @Param:  I2C_IrqFlag ->
@@ -517,45 +463,5 @@ void i2c_clear_irq_flag(eI2C_IrqFlagTypeDef I2C_IrqFlag)
 	reg_i2c_irq_status |= (I2C_IrqFlag);
 }
 
-#else
-/**
- * @Brief   judge what the irq source is. host write or host read.
- * @Param:  None.
- * @return: I2C_IRQ_HOST_READ_ONLY/I2C_IRQ_HOST_WRITE_ONLY/I2C_IRQ_NONE
- */
-eI2C_IrqSrcTypeDef i2c_get_irq_flag(void){
-	unsigned char irqFlag = reg_i2c_irq_status;
-
-	if(irqFlag & FLD_I2C_STATUS_RD)
-	{
-		return I2C_IRQ_HOST_READ_ONLY;
-	}
-	else if(irqFlag & FLD_I2C_STATUS_WR)
-	{
-		return I2C_IRQ_HOST_WRITE_ONLY;
-	}
-	else
-	{
-		return I2C_IRQ_NONE;
-	}
-}
-
-/**
- * @Brief:  clear the irq of IIC.
- * @Param:  I2C_IrqSrc ->
- * @Return: None.
- */
-void i2c_clear_irq_flag(eI2C_IrqSrcTypeDef I2C_IrqSrc)
-{
- 	if(I2C_IrqSrc == I2C_IRQ_HOST_READ_ONLY)
- 	{
- 		reg_i2c_irq_status |= FLD_I2C_STATUS_RD;//write 1 to clear.
- 	}
- 	else
- 	{
- 		reg_i2c_irq_status |= FLD_I2C_STATUS_WR;//write 1 to clear.
- 	}
-}
-#endif
 /*---------------------------End of File -------------------------------------*/
 

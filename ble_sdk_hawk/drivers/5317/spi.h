@@ -7,15 +7,15 @@
 #include "register.h"
 #include "gpio.h"
 
-#if(MCU_CORE_TYPE == MCU_CORE_5316 || MCU_CORE_TYPE == MCU_CORE_5317 )
-	/* SPI Read/Write Command define. */
-	#ifndef SPI_WRITE_CMD
-	#define SPI_WRITE_CMD   0x00
-	#endif
-	#ifndef SPI_READ_CMD
-	#define SPI_READ_CMD    0x80
-	#endif
+
+/* SPI Read/Write Command define. */
+#ifndef SPI_WRITE_CMD
+#define SPI_WRITE_CMD   0x00
 #endif
+#ifndef SPI_READ_CMD
+#define SPI_READ_CMD    0x80
+#endif
+
 
 /* SPI irq handler */
 #define SPI_IRQ_EN()      BM_SET(reg_irq_mask, FLD_IRQ_HOST_CMD_EN)

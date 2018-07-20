@@ -77,6 +77,7 @@ typedef enum{
 	AS_SWM	   = 13,
 	AS_ADC	   = 14,
 
+	AS_PWM      = 19,
 	AS_PWM0 	= 20,
 	AS_PWM1		= 21,
 	AS_PWM2 	= 22,
@@ -90,6 +91,7 @@ typedef enum{
 	AS_PWM4_N	= 30,
 	AS_PWM5_N	= 31,
 }GPIO_FuncTypeDef;
+
 /* PA Port Alternative Function define */
 //PA0
 #define GPIOA0_PWM0                       0

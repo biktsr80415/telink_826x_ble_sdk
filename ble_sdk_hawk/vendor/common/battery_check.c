@@ -2,7 +2,7 @@
 #include "tl_common.h"
 #include "drivers.h"
 
-#if 1
+#if 0
 
 /**
  * @Brief:  Check battery voltage.
@@ -121,12 +121,12 @@ void TL_BattteryCheckProc(void)
 	/* Low voltage processing. Enter deep sleep. */
 #if 0
 	if(vol < 2000){
-		analog_write(DEEP_ANA_REG2, ADC_BATTERY_VOL_LOW);
+		analog_write(DEEP_ANA_REG2, BATTERY_VOL_LOW);
 		cpu_sleep_wakeup(PM_SLeepMode_Deep, PM_WAKEUP_PAD, 0);
 	}else{
 		static u8 isVolRecovery = 0;
 		if(isVolRecovery == 0){
-			analog_write(DEEP_ANA_REG2, ADC_BATTERY_VOL_OK);
+			analog_write(DEEP_ANA_REG2, BATTERY_VOL_OK);
 			isVolRecovery = 1;
 		}
 	}
@@ -153,27 +153,20 @@ void TL_BattteryCheckProc(void)
 		//Run a time after power on.
 		static u8 isVolRecovery = 0;
 		if(isVolRecovery == 0){
-			analog_write(DEEP_ANA_REG2, ADC_BATTERY_VOL_OK);
+			analog_write(DEEP_ANA_REG2, BATTERY_VOL_OK);
 			isVolRecovery = 1;
 		}
 	}else{
 		batteryVolCnt = 0;
-		analog_write(DEEP_ANA_REG2, ADC_BATTERY_VOL_LOW);
+		analog_write(DEEP_ANA_REG2, BATTERY_VOL_LOW);
 		cpu_sleep_wakeup(PM_SLeepMode_Deep, PM_WAKEUP_PAD, 0);
 	}
 #endif
 }
 
-
 #else
 void TL_BatteryCheckInit(void)
 {
-	//must
-	gpio_set_func(BATTERY_CHECK_PIN,AS_GPIO);
-	gpio_set_input_en(BATTERY_CHECK_PIN,0);
-	gpio_set_output_en(BATTERY_CHECK_PIN,1);
-	gpio_write(BATTERY_CHECK_PIN,1);
-
 	/****** sar adc Reset ********/
 	//reset whole digital adc module
 	adc_reset_adc_module();
@@ -184,40 +177,33 @@ void TL_BatteryCheckInit(void)
 	/******enable signal of 24M clock to sar adc********/
 	adc_enable_clk_24m_to_sar_adc(1);
 
-	/******set adc clk as 4MHz******/
-	adc_set_sample_clk(5);
-
-	/******set adc L R channel Gain Stage bias current trimming******/
-	pga_left_chn_power_on(1);
-	pga_right_chn_power_on(1);
-	adc_set_left_gain_bias(GAIN_STAGE_BIAS_PER100);
-	adc_set_right_gain_bias(GAIN_STAGE_BIAS_PER100);
+	/******set adc clk as 3MHz******/
+	adc_set_sample_clk(7);
 
 	/**** 优化了ADC低温抖动的问题 ******************/
 	adc_set_atb(ADC_SEL_ATB_1);
 
 	//set R_max_mc,R_max_c,R_max_s
-	adc_set_length_capture_state_for_chn_misc_rns(0xf0);						//max_mc
-//	adc_set_length_capture_state_for_chn_left_right(AMIC_ADC_SampleLength[0]);	//max_c	96K
-	adc_set_length_set_state(0x0a);									//max_s
-
-	//set total length for sampling state machine and channel
-	adc_set_chn_enable(ADC_MISC_CHN);
-	adc_set_max_state_cnt(0x02);
+	adc_set_length_capture_state_for_chn_misc_rns(0xf0);//max_mc
+	adc_set_length_set_state(0x0a);	//max_s
 
 	//set channel Vref
-	adc_set_ref_voltage(ADC_LEFT_CHN, ADC_VREF_0P6V);
-	adc_set_ref_voltage(ADC_RIGHT_CHN, ADC_VREF_0P6V);
 	adc_set_ref_voltage(ADC_MISC_CHN, ADC_VREF_1P2V);
 
 	//set Vbat divider select,
 	adc_set_vref_vbat_divider(ADC_VBAT_DIVIDER_OFF);
 
+	//must
+	gpio_set_func(BATTERY_CHECK_PIN,AS_GPIO);
+	gpio_set_input_en(BATTERY_CHECK_PIN,0);
+	gpio_set_output_en(BATTERY_CHECK_PIN,1);
+	gpio_write(BATTERY_CHECK_PIN,1);
+
 	//set channel mode and channel
 	adc_set_input_mode(ADC_MISC_CHN, DIFFERENTIAL_MODE);
 	adc_set_ain_channel_differential_mode(ADC_MISC_CHN, B3P, GND);
 
-	//set resolution for RNG
+	//set resolution for MISC
 	adc_set_resolution(ADC_MISC_CHN, RES14);
 
 	//Number of ADC clock cycles in sampling phase
@@ -229,6 +215,9 @@ void TL_BatteryCheckInit(void)
 	//set RNG mode
 	adc_set_mode(NORMAL_MODE);
 
+	//set total length for sampling state machine and channel
+	adc_set_max_state_cnt(0x02);
+	adc_set_chn_enable(ADC_MISC_CHN);
 }
 
 /**
@@ -269,8 +258,8 @@ void TL_BattteryCheckProc(void)
 		batteryCheckStartTick = clock_time();
 
 		//Power on ADC
-		ADC_PowerOn();
-		//adc_power_on_sar_adc(1);
+		//ADC_PowerOn();
+		adc_power_on_sar_adc(1);
 	}else{
 		return;
 	}
@@ -301,8 +290,8 @@ void TL_BattteryCheckProc(void)
 	unsigned short vol = ((adcAverageValue * 1200)>>13) * 8;
 
 	/* Power off ADC for saving power */
-	ADC_PowerOff();
-	//adc_power_on_sar_adc(0);
+	//ADC_PowerOff();
+	adc_power_on_sar_adc(0);
 
 	/* Low voltage processing. Enter deep sleep. */
 #if 1
