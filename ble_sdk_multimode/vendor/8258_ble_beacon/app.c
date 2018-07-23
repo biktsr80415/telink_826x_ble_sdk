@@ -454,7 +454,21 @@ void user_init()
 	//bls_pm_setSuspendMask(SUSPEND_CONN | SUSPEND_ADV);
 	bls_pm_setSuspendMask(SUSPEND_DISABLE);
 
-    
+
+	smp_param_save_t  bondInfo;
+	blc_smp_param_loadByIndex( 0, &bondInfo);  //get the latest bonding device (index: bond_number-1 )
+
+	//u8 status =
+	bls_ll_setAdvParam( 46,
+						58,
+						ADV_TYPE_NONCONNECTABLE_UNDIRECTED,
+						OWN_ADDRESS_PUBLIC,
+						bondInfo.peer_addr_type,
+						bondInfo.peer_addr,
+						BLT_ENABLE_ADV_ALL,
+						ADV_FP_NONE);
+
+
     // adc and battery
 #if (BATT_CHECK_ENABLE)
 	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
@@ -759,6 +773,7 @@ void beacon_init(void ){
 	/*Start send beacon adv*/
 	u16 adv_interval = (telink_beacon_config.beacon_period * 1000)/625;
 	bls_ll_setAdvInterval(adv_interval, adv_interval);
+
 }
 
 void rf_beaconInit(void){
