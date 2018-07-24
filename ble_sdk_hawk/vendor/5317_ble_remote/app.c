@@ -192,6 +192,11 @@ static u16 vk_consumer_map[16] = {
 		gpio_set_output_en(GPIO_AMIC_BIAS, en);
 		gpio_write(GPIO_AMIC_BIAS, en);
 
+
+		//DMIC bias ouput
+		//gpio_set_output_en(GPIO_PA2,1);//DMIC
+		//gpio_write(GPIO_PA2,1);//DMIC
+
 		device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
 
 		if(en){  //Audio ON
@@ -200,8 +205,10 @@ static u16 vk_consumer_map[16] = {
 			gpio_set_input_en(GPIO_PA7,1);
 			gpio_set_input_en(GPIO_PB0,1);
 
+			//audio_dmic_init(AUDIO_16K, TL_MIC_BUFFER_SIZE);//AMIC
 			audio_amic_init(AUDIO_16K);
 			adc_power_on_sar_adc(1);//ADC power ON
+
 			//AUDIO_AmicInit(AUDIO_Rate_32K, buffer_mic, TL_MIC_BUFFER_SIZE);
 			//ADC_PowerOn();
 		}else{  //Audio OFF
