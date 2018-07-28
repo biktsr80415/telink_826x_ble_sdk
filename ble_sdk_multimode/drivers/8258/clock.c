@@ -3,6 +3,8 @@
 #include "clock.h"
 #include "irq.h"
 #include "analog.h"
+
+#if 0
 void clock_init(SYS_CLK_TYPEDEF SYS_CLK)
 {
     switch(SYS_CLK)
@@ -36,8 +38,8 @@ void clock_init(SYS_CLK_TYPEDEF SYS_CLK)
     	    WRITE_REG8(0x70,READ_REG8(0x70)&0xfe);
     		break;
     }
-    write_reg16(0x750, 8000);
 }
+#endif
 
 
 _attribute_ram_code_ void sleep_us (unsigned long us)

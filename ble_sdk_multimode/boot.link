@@ -47,7 +47,7 @@ SECTIONS
 	PROVIDE(_ramcode_size_div_16_align_256_ = ( (. + 255) / 256) * 16);
 	PROVIDE(_ramcode_size_align_256_ = ( _ramcode_size_div_16_align_256_)* 16);
 
-    . = 0x8000; 	
+    . = 0x4000; 	
         .text :
         {
         *(.text)
@@ -75,7 +75,7 @@ SECTIONS
         }        
           
 
-	. = 0x848900;
+	. = 0x844900;
         .data :
           AT ( _dstored_ )
          {

@@ -58,57 +58,75 @@ __start:					@ MUST,  referenced by boot.link
 	.extern  main
 
 
+
 	.org 0x20
+	.align 4
+	.global start_suspend
+	.thumb_func
+	.type start_suspend, %function
+
+start_suspend:
+	tpush   {r2-r3}
+
+    tmovs r2, #129    @0x81
+    tloadr r3, __suspend_data      @0x80006f
+    tstorerb r2, [r3, #0]  @*(volatile unsigned char *)0x80006f = 0x81
+
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+    tmov r8, r8
+
+    tpop {r2-r3}
+    tjex lr
+
+__suspend_data:
+	.word   (0x80006f)
+
+
+
 __reset:
+
+#if 0
 	@ add debug, PB4 output 1
-@	tloadr     	r1, DEBUG_GPIO    @0x80058a  PB oen
-@	tmov		r0, #139      @0b 11101111
-@	tstorerb	r0, [r1, #0]
+	tloadr     	r1, DEBUG_GPIO    @0x80058a  PB oen
+	tmov		r0, #139      @0b 11101111
+	tstorerb	r0, [r1, #0]
 
-@	tmov		r0, #16			@0b 00010000
-@	tstorerb	r0, [r1, #1]	@0x800583  PB output
+	tmov		r0, #16			@0b 00010000
+	tstorerb	r0, [r1, #1]	@0x800583  PB output
+#endif
 
+SET_BOOT:
+	tmov        r2, #4
+	tloadrb     r1, [r2]		@read form core_840004
+	tmov     	r0, #165    @A5
+	tcmp        r0, r1
+	tjne		SET_BOOT_END
 
-@******************************************************************
-@                 RETENTION DATA INITIALIZATION
-@******************************************************************
-@ANALOG_CLK:
-	@write_reg8(0x61, 0x00)
-	@write_reg8(0x64, 0xff)
-	tloadr     	r1, FLASH_RECOVER + 0	@0x800061
-	tmov      	r0, #0
-	tstorerb	r0, [r1, #0]  @write_reg8(0x61, 0x00)
-	tmov      	r0, #255
-	tstorerb	r0, [r1, #3]  	@write_reg8(0x64, 0xff)
-
-
-@analog_write(0x0c, 0xc4);
-	tloadr     	r1, FLASH_RECOVER + 4	@0x8000b8
-	tmov      	r0, #12   	@0x0c
-	tstorerb	r0, [r1, #0]		@ reg_ana_addr = addr;
-	tmov      	r0, #196	@0xc4
-	tstorerb	r0, [r1, #1]		@ reg_ana_data = v;
-
-	tloadr		r1, FLASH_RECOVER + 8	@0x8000ba
-	tmov      	r0, #96		@0x60
-	tstorerb	r0, [r1, #0]		@ reg_ana_ctrl = (FLD_ANA_START | FLD_ANA_RW);
-
-	tmov		r2, #1
-
-	@ while(reg_ana_ctrl & FLD_ANA_BUSY);
-LOOP_WAIT2:
-    tloadrb		r3, [r1, #0]
-    tand		r3, r2
-	tjne		LOOP_WAIT2
-
-	tstorerb	r3, [r1, #0]
-
+	tmov        r2, #5
+	tloadrb     r1, [r2]		@read form core_840005
+	tloadr     	r0, BOOT_SEL_D
+	tstorerb	r1, [r0, #0]
+SET_BOOT_END:
 
 
 
 @send flash cmd 0xab to wakeup flash;
 FLASH_WAKEUP_BEGIN:
-	tloadr      r0,FLASH_RECOVER+12
+	tloadr      r0,FLASH_RECOVER + 0
 	tmov		r1,#0
 	tstorerb    r1,[r0,#1]
 	tmov        r1,#171						@Flash deep cmd: 0xAB
@@ -240,11 +258,11 @@ DEBUG_GPIO:
 	.word	(0x80058a)                  @  PBx oen
 
 
+BOOT_SEL_D:
+	.word	(0x80063e)
+
 FLASH_RECOVER:
-	.word	(0x800061)                  @0
-	.word	(0x8000b8)                  @4
-	.word	(0x8000ba)                  @8
-	.word	(0x80000c)                  @12
+	.word	(0x80000c)                  @0
 
 	.align 4
 __irq:

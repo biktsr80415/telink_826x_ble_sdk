@@ -113,7 +113,8 @@ void cpu_stall_wakeup_by_timer2(unsigned int tick_stall);
 typedef int (*suspend_handler_t)(void);
 void	bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
 
-
+typedef unsigned short (*tick_32k_get_t)(void);
+void pm_register_tick32kGet_callback(tick_32k_get_t cb);
 
 
 void cpu_wakeup_init(void);

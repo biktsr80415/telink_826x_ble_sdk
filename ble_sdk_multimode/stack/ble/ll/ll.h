@@ -226,9 +226,6 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_GENERATE_DHKEY			17
 #define			BLT_EV_FLAG_SMP_PINCODE_PROCESS	    18
 
-#define			BLT_EV_FLAG_BEACON_DONE				19 // for complete tx a single beacon packet
-
-
 
 
 
@@ -269,7 +266,6 @@ typedef int (*blt_LTK_req_callback_t)(u16 handle, u8* rand, u16 ediv);
 
 
 extern my_fifo_t		hci_tx_fifo;
-extern u32     blc_system_tick_irq;
 
 
 
@@ -293,7 +289,9 @@ u16   		blc_ll_setInitTxDataLength (u16 maxTxOct);   //core4.2 long data packet
 
 bool		blc_ll_isControllerEventPending(void);
 
+u8  		blc_ll_getTxFifoNumber (void);
 
+void 		blc_ll_initBasicMCU (void);
 
 // application
 void		bls_app_registerEventCallback (u8 e, blt_event_callback_t p);
@@ -337,20 +335,6 @@ int blm_send_acl_to_btusb (u16 conn, u8 *p);
 
 
 
-
-static inline u8  blc_ll_getTxFifoNumber (void)
-{
-	return  ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 )  +  ( (blt_txfifo.wptr - blt_txfifo.rptr) & 31 ) ;
-}
-
-
-static inline u8  blc_ll_getTxHardWareFifoNumber (void)
-{
-	return  ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 );
-}
-
-
-
 static inline void blc_ll_resetInfoRSSI(void)
 {
 	bltParam.ll_recentAvgRSSI = 0;
@@ -367,19 +351,6 @@ static inline void blc_ll_recordRSSI(u8 rssi)
 }
 
 
-
-static inline void blc_ll_initBasicMCU (void)
-{
-	reg_dma_rf_rx_addr = (u16)(u32) (blt_rxfifo_b);
-	reg_dma_rf_rx_size = (blt_rxfifo.size>>4);   // rf rx buffer enable & size
-	reg_dma_rf_rx_mode = FLD_DMA_WR_MEM;
-
-
-	reg_system_tick_irq = BIT(31); //set to a big value, avoid irq happens unnormally
-
-	reg_system_tick_mode |= FLD_SYSTEM_TICK_IRQ_EN;
-	reg_irq_mask |= FLD_IRQ_ZB_RT_EN;
-}
 
 /************************************************************* RF DMA RX\TX data strcut ***************************************************************************************
 ----RF RX DMA buffer struct----:
@@ -412,5 +383,28 @@ note: type(1B):llid(2bit) nesn(1bit) sn(1bit) md(1bit),实际向RF 硬件FIFO中压数据
 
 
 
+#if (BLC_REGISTER_DBG_GPIO_IN_STACK)
+
+
+void app_register_debug_gpio(GPIO_PinTypeDef io_pm,
+							 GPIO_PinTypeDef io_brx,
+							 GPIO_PinTypeDef io_rx,
+							 GPIO_PinTypeDef io_rxOK,
+							 GPIO_PinTypeDef io_snOK);
+
+
+extern unsigned	int		gpio_dbg_pm_reg;
+extern unsigned	int		gpio_dbg_brx_reg;
+extern unsigned	int		gpio_dbg_rx_reg;
+extern unsigned	int		gpio_dbg_rxOK_reg;
+extern unsigned	int		gpio_dbg_snOK_reg;
+
+extern unsigned char	gpio_dbg_pm_bit;
+extern unsigned char	gpio_dbg_brx_bit;
+extern unsigned char	gpio_dbg_rx_bit;
+extern unsigned char	gpio_dbg_rxOK_bit;
+extern unsigned char	gpio_dbg_snOK_bit;
+
+#endif
 
 #endif /* LL__H_ */

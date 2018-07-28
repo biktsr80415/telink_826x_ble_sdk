@@ -8,13 +8,16 @@ extern "C" {
 
 
 
-/////////////////// MODULE /////////////////////////////////
-#define BLE_REMOTE_SECURITY_ENABLE      1
-#define BLE_REMOTE_OTA_ENABLE			0
-#define REMOTE_IR_ENABLE				0
-#define BATT_CHECK_ENABLE       		0   //enable or disable battery voltage detection
-#define BLE_AUDIO_ENABLE				1
-#define BLE_REMOTE_LED_ENABLE			1
+/////////////////// FEATURE SELECT /////////////////////////////////
+#define BLE_REMOTE_PM_ENABLE				1
+#define PM_DEEPSLEEP_RETENTION_ENABLE		1
+
+#define BLE_REMOTE_SECURITY_ENABLE      	1
+#define BLE_REMOTE_OTA_ENABLE				0
+#define REMOTE_IR_ENABLE					0
+#define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
+#define BLE_AUDIO_ENABLE					1
+#define BLE_REMOTE_LED_ENABLE				1
 
 
 
@@ -50,7 +53,7 @@ extern "C" {
 
 #define	KB_LINE_HIGH_VALID				0   //dirve pin output 0 when keyscan, scanpin read 0 is valid
 #define DEEPBACK_FAST_KEYSCAN_ENABLE	0   //proc fast scan when deepsleep back trigged by key press, in case key loss
-#define LONG_PRESS_KEY_POWER_OPTIMIZE	0   //lower power when pressing key without release
+#define LONG_PRESS_KEY_POWER_OPTIMIZE	1   //lower power when pressing key without release
 
 //stuck key
 #define STUCK_KEY_PROCESS_ENABLE		0
