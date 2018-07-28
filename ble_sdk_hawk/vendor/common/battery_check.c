@@ -181,7 +181,14 @@ void TL_BatteryCheckInit(void)
 	adc_set_sample_clk(7);
 
 	/**** 优化了ADC低温抖动的问题 ******************/
+#if CHIP_5317_A1
 	adc_set_atb(ADC_SEL_ATB_1);
+#endif
+
+	pga_left_chn_power_on(1);
+	pga_right_chn_power_on(1);
+	adc_set_left_gain_bias(GAIN_STAGE_BIAS_PER100);
+	adc_set_right_gain_bias(GAIN_STAGE_BIAS_PER100);
 
 	//set R_max_mc,R_max_c,R_max_s
 	adc_set_length_capture_state_for_chn_misc_rns(0xf0);//max_mc
