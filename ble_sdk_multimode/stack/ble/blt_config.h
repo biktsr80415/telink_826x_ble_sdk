@@ -272,3 +272,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 #endif
 
 
+#ifndef	BLC_REGISTER_DBG_GPIO_IN_STACK
+#define BLC_REGISTER_DBG_GPIO_IN_STACK		1
+#endif
