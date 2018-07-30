@@ -25,6 +25,8 @@ _attribute_ram_code_ void irq_handler(void)
 
 int main(void){
 
+	pm_init(LSC_32kSrc_RC);
+
 	cpu_wakeup_init();
 
 	clock_init();
