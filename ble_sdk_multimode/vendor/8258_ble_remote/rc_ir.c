@@ -319,9 +319,9 @@ void rc_ir_init(void)
 {
 
 //only pwm0 support fifo mode
+	pwm_n_revert(PWM0_ID);	//if use PWMx_N, user must set "pwm_n_revert" before gpio_set_func(pwmx_N).
 	gpio_set_func(GPIO_PB3, AS_PWM0_N);
 	pwm_set_mode(PWM0_ID, PWM_IR_DMA_FIFO_MODE);
-	pwm_n_revert(PWM0_ID);
 	pwm_set_phase(PWM0_ID, 0);   //no phase at pwm beginning
 	pwm_set_cycle_and_duty(PWM0_ID, PWM_CARRIER_CYCLE_TICK,  PWM_CARRIER_HIGH_TICK ); 	//config carrier: 38k, 1/3 duty
 
