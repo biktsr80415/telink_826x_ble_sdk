@@ -7,8 +7,6 @@
 
 #define PM_PAD_FILTER_EN           (0)//Pad filter enable/disable
 
-#define EXTERNAL_32K_XTAL_EN       (0)
-
 #define SUSPEND_MODE	0
 #define DEEPSLEEP_MODE	1
 

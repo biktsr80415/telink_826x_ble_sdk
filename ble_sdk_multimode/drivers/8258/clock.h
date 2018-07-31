@@ -73,17 +73,16 @@ static inline unsigned long get_system_tick(void)
 #endif
 
 typedef enum{
-	SYS_CLK_12M_Crystal,
-	SYS_CLK_16M_Crystal,
-	SYS_CLK_24M_Crystal,
-	SYS_CLK_32M_Crystal,
-	SYS_CLK_48M_Crystal,
-	SYS_CLK_24M_RC,
+	SYS_CLK_12M_Crystal = 0x44,
+	SYS_CLK_16M_Crystal = 0x43,
+	SYS_CLK_24M_Crystal = 0x42,
+	SYS_CLK_32M_Crystal = 0x60,
+	SYS_CLK_48M_Crystal = 0x20,
+	SYS_CLK_24M_RC      = 0x00,
 }SYS_CLK_TYPEDEF;
 
-
-
-void clock_init(SYS_CLK_TYPEDEF SYS_CLK);
+//void clock_init(SYS_CLK_TYPEDEF SYS_CLK);
+#define clock_init(sys_clk) 	   ( reg_clk_sel = (sys_clk) )
 
 _attribute_ram_code_ void sleep_us (unsigned long microsec);		//  use register counter to delay
 

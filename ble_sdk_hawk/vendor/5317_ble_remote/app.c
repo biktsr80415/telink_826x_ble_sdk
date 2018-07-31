@@ -29,8 +29,8 @@ MYFIFO_INIT(blt_txfifo, 40, 16);
 /* ADV Packet, SCAN Response Packet define */
 const u8 tbl_advData[] = {
    0x05, 0x09, 'G', 'h', 'i', 'd',
-   0x02, 0x01, 0x05, 					// BLE limited discoverable mode and BR/EDR not supported
-   0x03, 0x19, 0x80, 0x01, 			// 384, Generic Remote Control, Generic category
+   0x02, 0x01, 0x05, 			      // BLE limited discoverable mode and BR/EDR not supported
+   0x03, 0x19, 0x80, 0x01, 			  // 384, Generic Remote Control, Generic category
    0x05, 0x02, 0x12, 0x18, 0x0F, 0x18,// incomplete list of service class UUIDs (0x1812, 0x180F)
 };
 
@@ -121,26 +121,26 @@ static u16 vk_consumer_map[16] = {
 /*----------------------------------------------------------------------------*/
 /*------------- IR  Function                                  ----------------*/
 /*----------------------------------------------------------------------------*/
-#if (REMOTE_IR_ENABLE)
-	//ir key
-	#define TYPE_IR_SEND			1
-	#define TYPE_IR_RELEASE			2
+#if(REMOTE_IR_ENABLE)
+//ir key
+#define TYPE_IR_SEND			1
+#define TYPE_IR_RELEASE			2
 
-	///////////////////// key mode //////////////////////
-	#define KEY_MODE_BLE	   		0    //ble key
-	#define KEY_MODE_IR        		1    //ir  key
+///////////////////// key mode //////////////////////
+#define KEY_MODE_BLE	   		0    //ble key
+#define KEY_MODE_IR        		1    //ir  key
 
-	static const u8 kb_map_ble[] = KB_MAP_BLE;  //5*6
-	static const u8 kb_map_ir[]  = KB_MAP_IR;   //5*6
+static const u8 kb_map_ble[] = KB_MAP_BLE;  //5*6
+static const u8 kb_map_ir[]  = KB_MAP_IR;   //5*6
 
-	void ir_dispatch(u8 type, u8 syscode ,u8 ircode){
-		if(type == TYPE_IR_SEND){
-			IR_SendNec(syscode,~(syscode),ircode);
-		}
-		else if(type == TYPE_IR_RELEASE){
-			IR_Stop();
-		}
+void ir_dispatch(u8 type, u8 syscode ,u8 ircode){
+	if(type == TYPE_IR_SEND){
+		IR_SendNec(syscode,~(syscode),ircode);
 	}
+	else if(type == TYPE_IR_RELEASE){
+		IR_Stop();
+	}
+}
 #endif
 
 
@@ -148,33 +148,33 @@ static u16 vk_consumer_map[16] = {
 /*------------- OTA  Function                                 ----------------*/
 /*----------------------------------------------------------------------------*/
 #if (BLE_REMOTE_OTA_ENABLE)
-	void entry_ota_mode(void)
-	{
-		ota_is_working = 1;
-		device_led_setup(led_cfg[LED_SHINE_OTA]);
-		bls_ota_setTimeout(15 * 1000 * 1000); //set OTA timeout  15 seconds
-	}
+void entry_ota_mode(void)
+{
+	ota_is_working = 1;
+	device_led_setup(led_cfg[LED_SHINE_OTA]);
+	bls_ota_setTimeout(15 * 1000 * 1000); //set OTA timeout  15 seconds
+}
 
-	void LED_show_ota_result(int result)
-	{
-		#if 0
-			irq_disable();
-			WATCHDOG_DISABLE;
+void LED_show_ota_result(int result)
+{
+	#if 0
+		irq_disable();
+		WATCHDOG_DISABLE;
 
-			gpio_set_output_en(GPIO_LED, 1);
+		gpio_set_output_en(GPIO_LED, 1);
 
-			if(result == OTA_SUCCESS){  //OTA success
-				gpio_write(GPIO_LED, 1);
-				sleep_us(2000000);  //led on for 2 second
-				gpio_write(GPIO_LED, 0);
-			}
-			else{  //OTA fail
+		if(result == OTA_SUCCESS){  //OTA success
+			gpio_write(GPIO_LED, 1);
+			sleep_us(2000000);  //led on for 2 second
+			gpio_write(GPIO_LED, 0);
+		}
+		else{  //OTA fail
 
-			}
+		}
 
-			gpio_set_output_en(GPIO_LED, 0);
-		#endif
-	}
+		gpio_set_output_en(GPIO_LED, 0);
+	#endif
+}
 #endif
 
 
@@ -182,88 +182,97 @@ static u16 vk_consumer_map[16] = {
 /*------------- Audio  Function                               ----------------*/
 /*----------------------------------------------------------------------------*/
 #if (BLE_AUDIO_ENABLE)
-	u32 key_voice_pressTick = 0;
+u32 key_voice_pressTick = 0;
 
-	void ui_enable_mic (u8 en)
-	{
-		ui_mic_enable = en;
+void ui_enable_mic(u8 en)
+{
+	ui_mic_enable = en;
 
-		//AMIC Bias output
-		gpio_set_output_en(GPIO_AMIC_BIAS, en);
-		gpio_write(GPIO_AMIC_BIAS, en);
+	//AMIC Bias output
+	gpio_set_output_en(GPIO_AMIC_BIAS, en);
+	gpio_write(GPIO_AMIC_BIAS, en);
 
-		device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
 
-		if(en){  //Audio ON
-			lowBattDet_enable = 0;
+	//DMIC bias ouput
+	//gpio_set_output_en(GPIO_PA2,1);//DMIC
+	//gpio_write(GPIO_PA2,1);//DMIC
 
-			gpio_set_input_en(GPIO_PA7,1);
-			gpio_set_input_en(GPIO_PB0,1);
+	device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
 
-			audio_amic_init(AUDIO_16K);
-			adc_power_on_sar_adc(1);//ADC power ON
-			//AUDIO_AmicInit(AUDIO_Rate_32K, buffer_mic, TL_MIC_BUFFER_SIZE);
-			//ADC_PowerOn();
-		}else{  //Audio OFF
-			lowBattDet_enable = 1;
+	if(en){  //Audio ON
+		lowBattDet_enable = 0;
 
-			gpio_write(GPIO_AMIC_BIAS, 0);
-			gpio_set_output_en(GPIO_AMIC_BIAS,0);
+		gpio_set_input_en(GPIO_PA7,1);
+		gpio_set_input_en(GPIO_PB0,1);
 
-			gpio_set_input_en(GPIO_PA7,0);
-			gpio_set_input_en(GPIO_PB0,0);
+		//audio_dmic_init(AUDIO_16K, TL_MIC_BUFFER_SIZE);//AMIC
+		audio_amic_init(AUDIO_16K);
+		adc_power_on_sar_adc(1);//ADC power ON
 
-			TL_BatteryCheckInit();
-			adc_power_on_sar_adc(0);//ADC power OFF
-			//ADC_PowerOff();
-		}
+		//AUDIO_AmicInit(AUDIO_Rate_32K, buffer_mic, TL_MIC_BUFFER_SIZE);
+		//ADC_PowerOn();
+	}else{  //Audio OFF
+		lowBattDet_enable = 1;
+
+		gpio_write(GPIO_AMIC_BIAS, 0);
+		gpio_set_output_en(GPIO_AMIC_BIAS,0);
+
+		gpio_set_input_en(GPIO_PA7,0);
+		gpio_set_input_en(GPIO_PB0,0);
+
+	#if(BATT_CHECK_ENABLE)
+		TL_BatteryCheckInit();
+	#endif
+		adc_power_on_sar_adc(0);//ADC power OFF
+		//ADC_PowerOff();
+	}
+}
+
+void voice_press_proc(void)
+{
+	key_voice_press = 0;
+	ui_enable_mic(1);
+	if(ui_mtu_size_exchange_req && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
+		ui_mtu_size_exchange_req = 0;
+		blc_att_requestMtuSizeExchange(BLS_CONN_HANDLE, 0x009e);
+	}
+}
+
+void task_audio (void)
+{
+	static u32 audioProcTick = 0;
+	if(clock_time_exceed(audioProcTick, 5000)){
+		audioProcTick = clock_time();
+	}else{
+		return;
 	}
 
-	void voice_press_proc(void)
+	///////////////////////////////////////////////////////////////
+	log_event(TR_T_audioTask);
+
+	proc_mic_encoder();
+
+	//////////////////////////////////////////////////////////////////
+	if (blc_ll_getTxFifoNumber() < 10)
 	{
-		key_voice_press = 0;
-		ui_enable_mic(1);
-		if(ui_mtu_size_exchange_req && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
-			ui_mtu_size_exchange_req = 0;
-			blc_att_requestMtuSizeExchange(BLS_CONN_HANDLE, 0x009e);
-		}
-	}
-
-	void task_audio (void)
-	{
-		static u32 audioProcTick = 0;
-		if(clock_time_exceed(audioProcTick, 5000)){
-			audioProcTick = clock_time();
-		}else{
-			return;
-		}
-
-		///////////////////////////////////////////////////////////////
-		log_event(TR_T_audioTask);
-
-		proc_mic_encoder();
-
-		//////////////////////////////////////////////////////////////////
-		if (blc_ll_getTxFifoNumber() < 10)
+		int *p = mic_encoder_data_buffer ();
+		if (p)					//around 3.2 ms @16MHz clock
 		{
-			int *p = mic_encoder_data_buffer ();
-			if (p)					//around 3.2 ms @16MHz clock
-			{
-				log_event (TR_T_audioData);
-				bls_att_pushNotifyData (AUDIO_MIC_INPUT_DP_H, (u8*)p, ADPCM_PACKET_LEN);
-			}
+			log_event (TR_T_audioData);
+			bls_att_pushNotifyData (AUDIO_MIC_INPUT_DP_H, (u8*)p, ADPCM_PACKET_LEN);
 		}
 	}
+}
 
-	void blc_checkConnParamUpdate(void)
+void blc_checkConnParamUpdate(void)
+{
+	if(	 interval_update_tick && clock_time_exceed(interval_update_tick,5*1000*1000) && \
+		 blc_ll_getCurrentState() == BLS_LINK_STATE_CONN &&  bls_ll_getConnectionInterval()!= 8 )
 	{
-		if(	 interval_update_tick && clock_time_exceed(interval_update_tick,5*1000*1000) && \
-			 blc_ll_getCurrentState() == BLS_LINK_STATE_CONN &&  bls_ll_getConnectionInterval()!= 8 )
-		{
-			interval_update_tick = clock_time() | 1;
-			bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);
-		}
+		interval_update_tick = clock_time() | 1;
+		bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);
 	}
+}
 #endif
 
 
@@ -281,7 +290,6 @@ void app_switch_to_indirect_adv(u8 e, u8 *p, int n)
 	bls_ll_setAdvEnable(1);  //must: set adv enable
 }
 
-//u32 A_BleDisconnectCnt = 0;
 void ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 {
 	device_in_connection_state = 0;
@@ -310,9 +318,6 @@ void ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 #endif
 
 	advertise_begin_tick = clock_time();
-
-	//A_BleDisconnectCnt++;
-	//gpio_write(GPIO_LED,1);
 }
 
 void task_connect (u8 e, u8 *p, int n)
@@ -509,7 +514,6 @@ void key_change_proc(void)
 }
 
 
-
 #define GPIO_WAKEUP_KEYPROC_CNT				3
 
 void proc_keyboard (u8 e, u8 *p, int n)
@@ -685,7 +689,7 @@ void user_init()
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);
 
 	/*-- BLE SMP initialization ----------------------------------------------*/
-#if (BLE_REMOTE_SECURITY_ENABLE)
+#if(BLE_REMOTE_SECURITY_ENABLE)
 	blc_smp_param_setBondingDeviceMaxNumber(4);  	//default is SMP_BONDING_DEVICE_MAX_NUM, can not bigger that this value
 													//and this func must call before bls_smp_enableParing
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
@@ -778,13 +782,13 @@ void user_init()
 #endif
 
 	/* OTA Function Initialization  */
-#if (BLE_REMOTE_OTA_ENABLE)
+#if(BLE_REMOTE_OTA_ENABLE)
 	bls_ota_clearNewFwDataArea(); //must
 	bls_ota_registerStartCmdCb(entry_ota_mode);
 	bls_ota_registerResultIndicateCb(LED_show_ota_result);
 #endif
 
-#if (BLE_AUDIO_ENABLE)
+#if(BLE_AUDIO_ENABLE)
 	audio_config_mic_buf(buffer_mic, TL_MIC_BUFFER_SIZE);
 #endif
 

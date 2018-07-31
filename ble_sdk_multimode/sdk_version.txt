@@ -1,1 +1,1 @@
-Telink BLE SDK_VERSION = 0.4
+Telink BLE SDK_VERSION = 0.5

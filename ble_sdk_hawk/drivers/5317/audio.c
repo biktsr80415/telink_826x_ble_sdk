@@ -292,7 +292,7 @@ void audio_amic_init(AUDIO_RateTypeDef Audio_Rate)
 
 	SET_LEFT_BOOST_BIAS(GAIN_STAGE_BIAS_PER100);
 
-	WriteAnalogReg(0x80+125,0x00);					//PGA
+	WriteAnalogReg(0x80+125,0x00);					//PGA 0xfd<0> = 0 -> PA7/PB0;0xfd<0> = 1 -> PB5/PB4
 	WriteAnalogReg(0x80+126,0x05);					//0x80+126  = 0x05
 
 	SET_ADC_LEFT_VREF(ADC_VREF_0P9V);
