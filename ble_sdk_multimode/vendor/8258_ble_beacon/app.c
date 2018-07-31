@@ -48,15 +48,21 @@ u32 system_boot_time = 0;
 u8*	beacon_p_pkt = 0;
 
 /*Default Ibeacon UUID(NID+BID), note it should be set as big-endian mode*/
-#define IBeacon_UUID_WeChat_Telink01  	1
+#define IBeacon_UUID_WeChat_Telink01  	0
 #define IBeacon_UUID_WeChat_Telink02  	0
 #define IBeacon_UUID_WeChat_Test        0
+#define IBEACON_UUID_SYSGRATION         1
+
 
 #if (IBeacon_UUID_WeChat_Telink01 | IBeacon_UUID_WeChat_Telink02 | IBeacon_UUID_WeChat_Test)
 /*Wechat (weixin yaoyiyao) mode*/
 const u8 telink_uuid4beacon[16]= {0xFD,0xA5,0x06,0x93,0xA4,0xE2,0x4F,0xB1,0xAF,0xCF,0xC6,0xEB,0x07,0x64,0x78,0x25};
 
+#elif (IBEACON_UUID_SYSGRATION)
+const u8 telink_uuid4beacon[16]= {0xb5,0x4a,0xdc,0x00,0x67,0xf9,0x11,0xd9,0x96,0x69,0x08,0x00,0x20,0x0c,0x9a,0x6A};
+
 #else
+
 /*Telink defined mode*/
 const u8 telink_uuid4beacon[16]= {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10};
 
@@ -671,7 +677,7 @@ void beacon_iBeaconPDUassemble( ibeacon_adv_t* ibeacon_p){
     ibeacon_p->flag = 0x06;
     ibeacon_p->ibeacon_len = 0x1A;
     ibeacon_p->manu_spec = 0xFF;
-    ibeacon_p->commpany_ID = 0x004C;
+    ibeacon_p->commpany_ID = 0x004C; //apple
 
     ibeacon_p->beacon_type = 0x1502;//0x0215
     memcpy(ibeacon_p->proximity_UUID, (u8 *)telink_uuid4beacon, 16); //Defined by Customer
@@ -686,6 +692,11 @@ void beacon_iBeaconPDUassemble( ibeacon_adv_t* ibeacon_p){
     #elif IBeacon_UUID_WeChat_Test
     ibeacon_p->major = 0x0A00; //Defined by Customer, Big Edian, 0x0A00->10
     ibeacon_p->minor = 0x0700; //Defined by Customer, Big Edian,0x0700->7
+
+	#elif IBEACON_UUID_SYSGRATION
+    ibeacon_p->major = 0x0A00; //Defined by Customer, Big Edian, 0x0A00->10
+    ibeacon_p->minor = 0x0700; //Defined by Customer, Big Edian,0x0700->7
+
     #endif
     ibeacon_p->measured_power = beacon_txPowerValue[(telink_beacon_config.txpower_mode)]-41;//Measured power one meter distance, link loss -41dbm
 }

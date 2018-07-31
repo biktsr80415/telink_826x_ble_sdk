@@ -63,13 +63,13 @@ extern "C" {
 /*TODO: define beacon configuration parameter:Period / TX_Power  /  PM mode enable / connectible mode duration time  */
 #define BEACON_PERIOD_DEFAULT		100 //default beacon period 1000ms
 #define BEACON_TX_POWER_DEFAULT 	1 //default tx power, level 1, 0 dbm
-#define BEACON_MODE_WAIT_TIME		(2*CLOCK_16M_SYS_TIMER_CLK_1S) //wait 10 seconds before switch to the beacon mode, maximum 60s//test Eason
+#define BEACON_MODE_WAIT_TIME		(1*CLOCK_16M_SYS_TIMER_CLK_1S) //wait 10 seconds before switch to the beacon mode, maximum 60s//test Eason
 
 /*TODO: Define beacon type supported by this firmware*/
 #define IBEACON_ADV_ENABLE    1
-#define EDDYSTONE_UID_ENABLE  1
-#define EDDYSTONE_URL_ENABLE  1
-#define EDDYSTONE_TLM_ENABLE  1
+#define EDDYSTONE_UID_ENABLE  0//1
+#define EDDYSTONE_URL_ENABLE  0//1
+#define EDDYSTONE_TLM_ENABLE  0//1
 
 /*TODO: Define beacon parameter save address of flash*/
 #define 			ADV_STORE_IN_FLASH_EN  			0//ADV data store flash
@@ -91,7 +91,7 @@ extern "C" {
 #define				IBEACON_PDU_LEN					41//2bytes header + 3bytes crc +36 bytes adv
 #define				EDDYSTONE_UID_PDU_LEN			42//2bytes header + 3bytes crc +37 bytes adv
 #define             EDDYSTONE_URL_PDU_MAX_LEN       42//2bytes header + 3bytes crc +37 bytes adv
-#define             EDDYSTONE_TLM_PDU_LEN           36//2bytes header + 3bytes crc +31bytes adv
+#define             EDDYSTONE_TLM_PDU_LEN           36//2bytes header + 3bytes crc +31 bytes adv
 
 #define             FLASH_IBEACON_ADV_LEN           48
 #define             FLASH_EDDYSTONE_UID_LEN         48
@@ -151,6 +151,9 @@ typedef struct{
     u8 proximity_UUID[16];//Defined by customer
     u16 major;//Defied by Customer
     u16 minor;//Defied by Customer
+    //u32 major;//Defied by Customer
+    //u32 minor;//Defied by Customer
+
     s8 measured_power;//Defied by Customer, TX Power-41
     u8 adv_crc[3];
 }ibeacon_adv_t;
