@@ -213,8 +213,9 @@ unsigned short ADC_SampleValueGet(void){
 	unsigned short sampledValue,tmp1,tmp2;
 
 	while(CHECK_ADC_MISC_STATUS);
-	while(!CHECK_ADC_MISC_STATUS);
-	WaitUs (2);
+	//while(!CHECK_ADC_MISC_STATUS);
+	sleep_us(2);
+
 	tmp1 = ReadAnalogReg(0x80+120);  //read
 	tmp2 = ReadAnalogReg(0x80+119);
 	sampledValue = (tmp1<<8) + tmp2;
