@@ -37,7 +37,7 @@ extern "C" {
 
 
 
-#define DRIVER_TEST_MODE								TEST_SPI
+#define DRIVER_TEST_MODE								TEST_LOW_POWER
 
 
 

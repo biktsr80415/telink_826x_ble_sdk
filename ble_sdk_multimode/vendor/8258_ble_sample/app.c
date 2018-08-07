@@ -8,10 +8,6 @@
 
 
 
-#define BLE_REMOTE_PM_ENABLE				1
-#define PM_DEEPSLEEP_RETENTION_ENABLE		0
-
-
 
 
 #define 	ADV_IDLE_ENTER_DEEP_TIME			60  //60 s
@@ -28,10 +24,38 @@
 #define		MY_RF_POWER_INDEX					RF_POWER_P3p01dBm
 
 
+#define RX_FIFO_SIZE	64
+#define RX_FIFO_NUM		8
+
+#define TX_FIFO_SIZE	40
+#define TX_FIFO_NUM		16
 
 
-MYFIFO_INIT(blt_rxfifo, 64, 8);
-MYFIFO_INIT(blt_txfifo, 40, 16);
+#if 0
+	MYFIFO_INIT(blt_rxfifo, RX_FIFO_SIZE, RX_FIFO_NUM);
+#else
+_attribute_data_retention_  u8 		 	blt_rxfifo_b[RX_FIFO_SIZE * RX_FIFO_NUM] = {0};
+_attribute_data_retention_	my_fifo_t	blt_rxfifo = {
+												RX_FIFO_SIZE,
+												RX_FIFO_NUM,
+												0,
+												0,
+												blt_rxfifo_b,};
+#endif
+
+
+#if 0
+	MYFIFO_INIT(blt_txfifo, TX_FIFO_SIZE, TX_FIFO_NUM);
+#else
+	_attribute_data_retention_  u8 		 	blt_txfifo_b[TX_FIFO_SIZE * TX_FIFO_NUM] = {0};
+	_attribute_data_retention_	my_fifo_t	blt_txfifo = {
+													TX_FIFO_SIZE,
+													TX_FIFO_NUM,
+													0,
+													0,
+													blt_txfifo_b,};
+#endif
+
 
 
 
@@ -50,65 +74,17 @@ const u8	tbl_scanRsp [] = {
 	};
 
 
-u32 interval_update_tick = 0;
 _attribute_data_retention_	int device_in_connection_state;
 
+_attribute_data_retention_	u32 advertise_begin_tick;
+
+_attribute_data_retention_	u32	interval_update_tick;
+
+_attribute_data_retention_	u8	sendTerminate_before_enterDeep = 0;
+
+_attribute_data_retention_	u32	latest_user_event_tick;
 
 
-
-u32		advertise_begin_tick;
-
-
-int     ui_mtu_size_exchange_req = 0;
-
-
-
-_attribute_data_retention_	u32 	latest_user_event_tick;
-
-u8 		user_task_flg;
-u8 		sendTerminate_before_enterDeep = 0;
-u8 		ota_is_working = 0;
-
-
-
-
-
-
-
-
-
-
-#if (BLE_REMOTE_OTA_ENABLE)
-	void entry_ota_mode(void)
-	{
-		ota_is_working = 1;
-		device_led_setup(led_cfg[LED_SHINE_OTA]);
-		bls_ota_setTimeout(15 * 1000 * 1000); //set OTA timeout  15 seconds
-	}
-
-
-
-	void LED_show_ota_result(int result)
-	{
-		#if 0
-			irq_disable();
-			WATCHDOG_DISABLE;
-
-			gpio_set_output_en(GPIO_LED, 1);
-
-			if(result == OTA_SUCCESS){  //OTA success
-				gpio_write(GPIO_LED, 1);
-				sleep_us(2000000);  //led on for 2 second
-				gpio_write(GPIO_LED, 0);
-			}
-			else{  //OTA fail
-
-			}
-
-			gpio_set_output_en(GPIO_LED, 0);
-		#endif
-	}
-#endif
 
 
 
@@ -148,8 +124,25 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 
 
 
+#if (BLE_APP_PM_ENABLE)
+	 //user has push terminate pkt to ble TX buffer before deepsleep
+	if(sendTerminate_before_enterDeep == 1){
+		sendTerminate_before_enterDeep = 2;
+	}
+#endif
+
+
+
 	advertise_begin_tick = clock_time();
 
+}
+
+
+
+
+_attribute_ram_code_ void	user_set_rf_power (u8 e, u8 *p, int n)
+{
+	rf_set_power_level_index (MY_RF_POWER_INDEX);
 }
 
 
@@ -161,8 +154,6 @@ void	task_connect (u8 e, u8 *p, int n)
 
 
 	latest_user_event_tick = clock_time();
-
-	ui_mtu_size_exchange_req = 1;
 
 	device_in_connection_state = 1;//
 
@@ -181,13 +172,66 @@ void	task_conn_update_done (u8 e, u8 *p, int n)
 }
 
 
-
-
-
-
-void user_init_normal()
+_attribute_ram_code_
+void blt_pm_proc(void)
 {
 
+#if(BLE_APP_PM_ENABLE)
+
+
+	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
+	#else
+		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+	#endif
+
+
+	#if 1 //deepsleep
+		if(sendTerminate_before_enterDeep == 2){  //Terminate OK
+			analog_write(DEEP_ANA_REG0, CONN_DEEP_FLG);
+			cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
+		}
+
+
+		if(  !blc_ll_isControllerEventPending() ){  //no controller event pending
+			//adv 60s, deepsleep
+			if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && !sendTerminate_before_enterDeep && \
+				clock_time_exceed(advertise_begin_tick , ADV_IDLE_ENTER_DEEP_TIME * 1000000))
+			{
+				cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
+			}
+			//conn 60s no event(key/voice/led), enter deepsleep
+			else if( device_in_connection_state && \
+					clock_time_exceed(latest_user_event_tick, CONN_IDLE_ENTER_DEEP_TIME * 1000000) )
+			{
+
+				bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
+				bls_ll_setAdvEnable(0);   //disable adv
+				sendTerminate_before_enterDeep = 1;
+			}
+		}
+
+	#endif
+
+
+
+#endif
+}
+
+
+
+_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
+{
+	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_16M_SYS_TIMER_CLK_1MS){  //suspend time > 30ms.add gpio wakeup
+		bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio pad wakeup suspend/deepsleep
+	}
+}
+
+
+
+
+void user_init_normal(void)
+{
 
 ////////////////// BLE stack initialization ////////////////////////////////////
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
@@ -224,6 +268,9 @@ void user_init_normal()
 #else
 	bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
 #endif
+
+	//HID_service_on_android7p0_init();  //hid device on android 7.0/7.1
+
 
 
 
@@ -271,7 +318,13 @@ void user_init_normal()
 	}
 
 	bls_ll_setAdvEnable(1);  //adv enable
-	rf_set_power_level_index (MY_RF_POWER_INDEX);
+
+
+	//set rf power index, user must set it after every suspend wakeup, cause relative setting will be reset in suspend
+	user_set_rf_power(0, 0, 0);
+	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_EXIT, &user_set_rf_power);
+
+
 
 	//ble event call back
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
@@ -283,86 +336,50 @@ void user_init_normal()
 
 
 
-
-
-		///////////////////// Power Management initialization///////////////////
-#if(BLE_REMOTE_PM_ENABLE)
+	///////////////////// Power Management initialization///////////////////
+#if(BLE_APP_PM_ENABLE)
 	blc_ll_initPowerManagement_module();
 
 	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
 		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
-		blc_pm_setDeepsleepRetentionThreshold(200, 200);
-		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(1300);
+		blc_pm_setDeepsleepRetentionThreshold(95, 95);
+		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(400);
+		blc_pm_setDeepsleepRetentionType(DEEPSLEEP_MODE_RET_SRAM_LOW32K);
 	#else
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 	#endif
 
+	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &ble_remote_set_sleep_wakeup);
 #else
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 #endif
 
 
-#if (BLE_REMOTE_OTA_ENABLE)
-	////////////////// OTA relative ////////////////////////
-	bls_ota_clearNewFwDataArea(); //must
-	bls_ota_registerStartCmdCb(entry_ota_mode);
-	bls_ota_registerResultIndicateCb(LED_show_ota_result);
-#endif
-
 
 	advertise_begin_tick = clock_time();
-
 }
 
 
 
+#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+_attribute_ram_code_ void user_init_deepRetn(void)
+{
 
+	blc_ll_initBasicMCU();   //mandatory
+	rf_set_power_level_index (MY_RF_POWER_INDEX);
+
+	blc_ll_recoverDeepRetention();
+
+	DBG_CHN0_HIGH;    //debug
+}
+#endif
 
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
 u32 tick_loop;
 
-void blt_pm_proc(void)
-{
-#if(BLE_REMOTE_PM_ENABLE)
 
-	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
-
-
-	#if 1 //deepsleep
-		if(sendTerminate_before_enterDeep == 1){ //sending Terminate and wait for ack before enter deepsleep
-			if(user_task_flg){  //detect key Press again,  can not enter deep now
-				sendTerminate_before_enterDeep = 0;
-				bls_ll_setAdvEnable(1);   //enable adv again
-			}
-		}
-		else if(sendTerminate_before_enterDeep == 2){  //Terminate OK
-			cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
-		}
-
-
-		if( !blc_ll_isControllerEventPending() ){  //no controller event pending
-			//adv 60s, deepsleep
-			if( blc_ll_getCurrentState() == BLS_LINK_STATE_ADV && !sendTerminate_before_enterDeep && \
-				clock_time_exceed(advertise_begin_tick , ADV_IDLE_ENTER_DEEP_TIME * 1000000))
-			{
-				cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
-			}
-			//conn 60s no event(key/voice/led), enter deepsleep
-			else if( device_in_connection_state && !user_task_flg && \
-					clock_time_exceed(latest_user_event_tick, CONN_IDLE_ENTER_DEEP_TIME * 1000000) )
-			{
-
-				bls_ll_terminateConnection(HCI_ERR_REMOTE_USER_TERM_CONN); //push terminate cmd into ble TX buffer
-				bls_ll_setAdvEnable(0);   //disable adv
-				sendTerminate_before_enterDeep = 1;
-			}
-		}
-	#endif
-
-#endif  //END of  BLE_REMOTE_PM_ENABLE
-}
 
 void main_loop (void)
 {
@@ -376,10 +393,11 @@ void main_loop (void)
 	////////////////////////////////////// UI entry /////////////////////////////////
 
 
-
-
-
-
+	#if (BATT_CHECK_ENABLE)
+		if(lowBattDet_enable){
+			battery_power_check();
+		}
+	#endif
 
 
 	blt_pm_proc();

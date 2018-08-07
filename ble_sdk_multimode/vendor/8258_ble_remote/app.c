@@ -35,7 +35,7 @@
 #define TX_FIFO_NUM		16
 
 
-#if 1
+#if 0
 	MYFIFO_INIT(blt_rxfifo, RX_FIFO_SIZE, RX_FIFO_NUM);
 #else
 _attribute_data_retention_  u8 		 	blt_rxfifo_b[RX_FIFO_SIZE * RX_FIFO_NUM] = {0};
@@ -48,7 +48,7 @@ _attribute_data_retention_	my_fifo_t	blt_rxfifo = {
 #endif
 
 
-#if 1
+#if 0
 	MYFIFO_INIT(blt_txfifo, TX_FIFO_SIZE, TX_FIFO_NUM);
 #else
 	_attribute_data_retention_  u8 		 	blt_txfifo_b[TX_FIFO_SIZE * TX_FIFO_NUM] = {0};
@@ -183,7 +183,7 @@ void	task_conn_update_done (u8 e, u8 *p, int n)
 }
 
 
-_attribute_ram_code_
+
 void blt_pm_proc(void)
 {
 
@@ -262,7 +262,7 @@ void blt_pm_proc(void)
 
 
 
-_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
+void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
 	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_16M_SYS_TIMER_CLK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_PAD);  //gpio pad wakeup suspend/deepsleep
@@ -385,8 +385,7 @@ void user_init_normal(void)
 	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
 		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
 		blc_pm_setDeepsleepRetentionThreshold(95, 95);
-		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(850);
-		blc_pm_setDeepsleepRetentionType(DEEPSLEEP_MODE_RET_SRAM_LOW32K);
+		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(500);
 	#else
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 	#endif
@@ -414,9 +413,12 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 	blc_ll_initBasicMCU();   //mandatory
 	rf_set_power_level_index (MY_RF_POWER_INDEX);
 
+	blc_ll_recoverDeepRetention();
+
+	DBG_CHN0_HIGH;    //debug
+
 	app_ui_init_deepRetn();
 
-	blc_ll_recoverDeepRetention();
 }
 #endif
 
@@ -456,7 +458,7 @@ void main_loop (void)
 
 
 
-#if (BLE_REMOTE_LED_ENABLE)
+#if (BLT_APP_LED_ENABLE)
 	device_led_process();
 #endif
 

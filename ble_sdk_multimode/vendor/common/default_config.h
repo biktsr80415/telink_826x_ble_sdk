@@ -39,6 +39,9 @@ extern "C" {
 #endif
 
 
+#ifndef PM_DEEPSLEEP_RETENTION_ENABLE
+#define PM_DEEPSLEEP_RETENTION_ENABLE	0
+#endif
 
 
 ///////////////////  USB   /////////////////////////////////

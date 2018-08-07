@@ -138,7 +138,7 @@ static inline int pm_is_deepPadWakeup(void)
 
 //only for debug below, will remove them later
 void shutdown_gpio(void);  //for debug
-
+void rc_24m_cal (void);
 
 
 #define PM_Get32kTick			 cpu_get_32k_tick

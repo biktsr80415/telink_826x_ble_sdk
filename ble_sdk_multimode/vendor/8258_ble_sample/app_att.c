@@ -1,4 +1,5 @@
 #include "tl_common.h"
+
 #include "stack/ble/ble.h"
 
 
@@ -270,7 +271,6 @@ const u8 my_OtaServiceUUID[16]		= TELINK_OTA_UUID_SERVICE;
 const u16 userdesc_UUID		= GATT_UUID_CHAR_USER_DESC;
 
 
-
 u8		my_MicData 		= 0x80;
 u8		my_SpeakerData 	= 0x81;
 u8	 	my_OtaData 		= 0x00;
@@ -380,12 +380,11 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_RDWR,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
 	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
 
-
-
 };
 
 void	my_att_init ()
 {
 	bls_att_setAttributeTable ((u8 *)my_Attributes);
 }
+
 

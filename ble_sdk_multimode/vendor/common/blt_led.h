@@ -11,6 +11,12 @@
 #include "tl_common.h"
 
 
+
+#ifndef BLT_APP_LED_ENABLE
+#define BLT_APP_LED_ENABLE				0
+#endif
+
+
 //led management
 typedef struct{
 	unsigned short onTime_ms;
@@ -44,9 +50,11 @@ int device_led_setup(led_cfg_t led_cfg);
 
 static inline void device_led_process(void)
 {
+#if (BLT_APP_LED_ENABLE)
 	if(DEVICE_LED_BUSY){
 		led_proc();
 	}
+#endif
 }
 
 

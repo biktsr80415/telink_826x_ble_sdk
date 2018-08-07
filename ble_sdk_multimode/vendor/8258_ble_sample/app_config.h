@@ -8,9 +8,19 @@ extern "C" {
 
 
 
-/////////////////// MODULE /////////////////////////////////
-#define BLE_REMOTE_SECURITY_ENABLE      1
-#define BLE_REMOTE_OTA_ENABLE			0
+/////////////////// FEATURE SELECT /////////////////////////////////
+#define BLE_APP_PM_ENABLE					1
+#define PM_DEEPSLEEP_RETENTION_ENABLE		1
+
+#define BLE_REMOTE_SECURITY_ENABLE      	1
+#define BLE_REMOTE_OTA_ENABLE				0
+#define REMOTE_IR_ENABLE					0
+#define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
+
+
+
+
+//#define	PULL_WAKEUP_SRC_PB3		PM_PIN_PULLDOWN_100K
 
 
 
@@ -132,35 +142,34 @@ typedef enum
 	OTA_CMD_OUT_DESC_H,						//UUID: 2901, 	VALUE: otaName
 
 
-
-
 	ATT_END_H,
 
 }ATT_HANDLE;
 
 
 
-#define DEBUG_GPIO_ENABLE							1
+#define DEBUG_GPIO_ENABLE							0
 
 #if(DEBUG_GPIO_ENABLE)
 	//define debug GPIO here according to your hardware
-	#define GPIO_CHN0							GPIO_PD0
-	#define GPIO_CHN1							GPIO_PD1
-	#define GPIO_CHN2							GPIO_PD2
-	#define GPIO_CHN3							GPIO_PD3
-	#define GPIO_CHN4							GPIO_PD4
-	#define GPIO_CHN5							GPIO_PD5
-	#define GPIO_CHN6							GPIO_PD6
-	#define GPIO_CHN7							GPIO_PD7
 
-	#define PD0_OUTPUT_ENABLE					1
-	#define PD1_OUTPUT_ENABLE					1
-	#define PD2_OUTPUT_ENABLE					1
-	#define PD3_OUTPUT_ENABLE					1
-	#define PD4_OUTPUT_ENABLE					1
-	#define PD5_OUTPUT_ENABLE					1
-	#define PD6_OUTPUT_ENABLE					1
-	#define PD7_OUTPUT_ENABLE					1
+	#define GPIO_CHN0							GPIO_PB4
+	#define GPIO_CHN1							GPIO_PB5
+	#define GPIO_CHN2							GPIO_PB6
+	#define GPIO_CHN3							GPIO_PB7
+	#define GPIO_CHN4							GPIO_PB0
+	#define GPIO_CHN5							GPIO_PB1
+	#define GPIO_CHN6							GPIO_PC2
+	#define GPIO_CHN7							GPIO_PC3
+
+	#define PB4_OUTPUT_ENABLE					1
+	#define PB5_OUTPUT_ENABLE					1
+	#define PB6_OUTPUT_ENABLE					1
+	#define PB7_OUTPUT_ENABLE					1
+	#define PB0_OUTPUT_ENABLE					1
+	#define PB1_OUTPUT_ENABLE					1
+	#define PC2_OUTPUT_ENABLE					1
+	#define PC3_OUTPUT_ENABLE					1
 
 
 	#define DBG_CHN0_LOW		gpio_write(GPIO_CHN0, 0)
@@ -213,6 +222,7 @@ typedef enum
 	#define DBG_CHN7_HIGH
 	#define DBG_CHN7_TOGGLE
 #endif  //end of DEBUG_GPIO_ENABLE
+
 
 
 

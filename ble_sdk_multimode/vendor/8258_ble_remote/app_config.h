@@ -17,9 +17,11 @@ extern "C" {
 #define REMOTE_IR_ENABLE					0
 #define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
 #define BLE_AUDIO_ENABLE					1
-#define BLE_REMOTE_LED_ENABLE				1
 
-
+//led
+#define BLT_APP_LED_ENABLE					1
+#define	GPIO_LED							GPIO_PC6
+#define PC6_FUNC							AS_GPIO
 
 
 ////////////////////////// AUDIO CONFIG /////////////////////////////
@@ -42,8 +44,8 @@ extern "C" {
 
 
 
-//PB0 IRout 100K pulldown when  IR not working,  when IR begin, disable this 100K pulldown
-#define	PULL_WAKEUP_SRC_PB0		PM_PIN_PULLDOWN_100K
+//PB3 IRout 100K pulldown when  IR not working,  when IR begin, disable this 100K pulldown
+#define	PULL_WAKEUP_SRC_PB3		PM_PIN_PULLDOWN_100K
 
 
 
@@ -136,8 +138,6 @@ extern "C" {
 #define			T_VK_CH_UP		0xd0
 #define			T_VK_CH_DN		0xd1
 
-
-#define			GPIO_LED				GPIO_PC6
 
 #if (REMOTE_IR_ENABLE)  //with IR keymap
 		#define 		GPIO_IR_CONTROL			GPIO_PD0

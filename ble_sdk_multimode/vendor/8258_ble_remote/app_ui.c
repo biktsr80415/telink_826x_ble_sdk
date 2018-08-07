@@ -76,7 +76,7 @@ static u16 vk_consumer_map[16] = {
 
 
 /////////////////////////// led management /////////////////////
-#if (BLE_REMOTE_LED_ENABLE)
+#if (BLT_APP_LED_ENABLE)
 
 	enum{
 		LED_POWER_ON = 0,
@@ -113,7 +113,7 @@ static u16 vk_consumer_map[16] = {
 		gpio_set_output_en (GPIO_AMIC_BIAS, en);
 		gpio_write (GPIO_AMIC_BIAS, en);
 
-		#if (BLE_REMOTE_LED_ENABLE)
+		#if (BLT_APP_LED_ENABLE)
 			device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
 		#endif
 
@@ -358,7 +358,7 @@ void key_change_proc(void)
 		{
 			user_key_mode = !user_key_mode;
 			analog_write(DEEP_ANA_REG1, user_key_mode);
-			#if (BLE_REMOTE_LED_ENABLE)
+			#if (BLT_APP_LED_ENABLE)
 				device_led_setup(led_cfg[LED_SHINE_SLOW + user_key_mode]);
 			#endif
 		}
@@ -545,7 +545,7 @@ void app_ui_init_normal(void)
 
 
 
-#if (BLE_REMOTE_LED_ENABLE)
+#if (BLT_APP_LED_ENABLE)
 	device_led_init(GPIO_LED, 1);  //LED initialization
 	device_led_setup(led_cfg[LED_POWER_ON]);
 #endif
@@ -565,15 +565,13 @@ void app_ui_init_normal(void)
 
 
 #if (DEBUG_GPIO_ENABLE)
-	app_register_debug_gpio(GPIO_CHN0, GPIO_CHN1, GPIO_CHN2, GPIO_CHN3, GPIO_CHN4);
+//	app_register_debug_gpio(GPIO_CHN0, GPIO_CHN1, GPIO_CHN2, GPIO_CHN3, GPIO_CHN4);
 #endif
+
 }
 
 
 
-#if	(PM_DEEPSLEEP_RETENTION_ENABLE)
-_attribute_ram_code_
-#endif
 void app_ui_init_deepRetn(void)
 {
 	/////////// keyboard gpio wakeup init ////////
@@ -584,7 +582,7 @@ void app_ui_init_deepRetn(void)
 	}
 
 
-#if (BLE_REMOTE_LED_ENABLE)
+#if (BLT_APP_LED_ENABLE)
 	device_led_init(GPIO_LED, 1);  //LED initialization
 #endif
 

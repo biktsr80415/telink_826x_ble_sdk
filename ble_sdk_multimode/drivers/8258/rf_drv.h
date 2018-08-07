@@ -22,6 +22,7 @@ typedef enum {
     RF_MODE_PRIVATE_500K   =    BIT(7),
     RF_MODE_PRIVATE_1M     =    BIT(8),
     RF_MODE_PRIVATE_2M     =    BIT(9),
+    RF_MODE_BLE_2M_NO_PN   =    BIT(10),
 } RF_ModeTypeDef;
 
 
@@ -265,13 +266,6 @@ void	rf_set_channel (signed char chn, unsigned short set);
 void 	rf_set_ble_channel (signed char chn_num);
 
 //manual mode
-
-#define PHY_POWER_DOWN
-#define PHY_POWER_UP
-#define POWER_DOWN_64MHZ_CLK			//analog_write(0x82, IS_XTAL_12M(xtalType_rfMode) ? 0x00 : 0x14)
-#define POWER_ON_64MHZ_CLK				//analog_write(0x82, IS_XTAL_12M(xtalType_rfMode) ? 0x20 : 0x34)
-
-
 static inline void rf_set_rxmode (void)
 {
     write_reg8 (0x800428, RF_TRX_MODE | BIT(0));	// rx enable

@@ -58,7 +58,6 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 		user_init_normal ();
 	}
 
-	DBG_CHN0_HIGH;    //debug
 
     irq_enable();
 
