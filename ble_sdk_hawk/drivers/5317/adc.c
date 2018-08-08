@@ -16,7 +16,6 @@ void adc_set_ref_voltage(ADC_ChTypeDef ch_n, ADC_RefVolTypeDef v_ref)
 		adc_set_vref_chn_misc(v_ref);
 	}
 
-
 	if(v_ref == ADC_VREF_1P2V)
 	{
 		//Vref buffer bias current trimming: 		150%
@@ -203,27 +202,6 @@ unsigned short RNG_Read(void){
 	return RngValue;
 }
 
-/**
- * @brief  get adc sampled value
- * @param  none
- * @return sampled_value, raw data
- */
-unsigned short ADC_SampleValueGet(void){
-
-	unsigned short sampledValue,tmp1,tmp2;
-
-	while(CHECK_ADC_MISC_STATUS);
-	//while(!CHECK_ADC_MISC_STATUS);
-	sleep_us(2);
-
-	tmp1 = ReadAnalogReg(0x80+120);  //read
-	tmp2 = ReadAnalogReg(0x80+119);
-	sampledValue = (tmp1<<8) + tmp2;
-
-	sampledValue = sampledValue & 0x7FFF;
-
-	return sampledValue;
-}
 
 #else
 
