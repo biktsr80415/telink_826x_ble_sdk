@@ -220,7 +220,7 @@ enum{
 							}while(0)
 
 
-unsigned char AMIC_ADC_SampleLength[2] = {0xf0/*96K*/,0xab/*132K*/};
+unsigned char AMIC_ADC_SampleLength[3] = {0xf0/*96K*/,0xab/*132K*/,0x75/*192K*/};
 
 unsigned char DMIC_CLK_Mode[RATE_SIZE] = {47/*8	k	1021.277*/,	47/*16k	1021.277*/,
 										  34/*22k	1411.765*/,	47/*32k	1021.277*/,
@@ -270,65 +270,96 @@ void audio_set_alc_hpf_lpf(Audio_ALC_HPF_LPF_Typedef Pro_M,unsigned char HPF_ADJ
  */
 void audio_amic_init(AUDIO_RateTypeDef Audio_Rate)
 {
-	/******1.initiate audio input mode************************************/
-	SET_AUDIO_OUTPUT_CTRL(AUDIO_OUTPUT_OFF);
-	REG_AUDIO_DFIFO_MODE = AUDIO_DFIFO0_IN|AUDIO_DFIFO0_OUT|AUDIO_DFIFO0_L_INT;//0x19
-	REG_CLK2_EN |= FLD_CLK2_DFIFO_EN; 		//enable the DFIFO clock
+	/*******1.ADC setting for analog audio sample**************************/
+	set_ana_ldo_trim(LDO_OUT_VOLT_TRIM_1P9);
+	adc_set_atb(ADC_SEL_ATB_1);//·ÀÖ¹µÍÎÂ¶¶¶¯
+	adc_reset_adc_module();   //reset whole digital adc module
+	adc_enable_clk_24m_to_sar_adc(1);  //enable signal of 24M clock to sar adc
 
-	REG_AUDIO_DEC_RATIO = AMIC_CIC_Rate[Audio_Rate];
-	SET_AUDIO_INPUT_CTRL(AUDIO_INPUT_AMIC);
-	/*******2.ADC setting for analog audio sample**************************/
-	SET_ADC_CLK_EN();										//enable 24M clk to SAR ADC
-	SET_LEFT_GAIN_BIAS(GAIN_STAGE_BIAS_PER100);
-	SET_ADC_MODE(ADC_NORMAL_MODE);
-	SET_ADC_POWER_ON(ADC_POWER_ON|LEFT_CHN_PGA_POWER_ON);   //0x80+124=0xfc->e0??
-	SET_ADC_CLK(7);											//adc_clk= 24M/(1+7)=3M
-	SET_ADC_VBAT_DIVIDER(ADC_VBAT_DIVIDER_OFF);             //pga atb adc atb 0x80+121=f9 ->00
+	adc_set_sample_clk(5); //adc sample clk= 24M/(1+5)=4M
 
-	SET_ADC_PRESCALER(ADC_PRESCALER_1);				//0x80+122  = 0x15? 0x00
-	SET_ADC_ITRIM_PREAMP(ADC_CUR_TRIM_PER100);
-	SET_ADC_ITRIM_VREFBUF(ADC_CUR_TRIM_PER100);
-	SET_ADC_ITRIM_VCMBUF(ADC_CUR_TRIM_PER100);
+	//adc state machine state cnt 2( "set" stage and "capture" state for left channel)
+	adc_set_max_state_cnt(0x02);
 
-	SET_LEFT_BOOST_BIAS(GAIN_STAGE_BIAS_PER100);
-
-	WriteAnalogReg(0x80+125,0x00);					//PGA 0xfd<0> = 0 -> PA7/PB0;0xfd<0> = 1 -> PB5/PB4
-	WriteAnalogReg(0x80+126,0x05);					//0x80+126  = 0x05
-
-	SET_ADC_LEFT_VREF(ADC_VREF_0P9V);
-	SET_ADC_MISC_N_CHN_AIN(NOINPUTN);
-	SET_ADC_MISC_P_CHN_AIN(NOINPUTP);
-	SET_ADC_LEFT_N_CHN_AIN(PGA0N);
-	SET_ADC_LEFT_P_CHN_AIN(PGA0P);
-
-	SET_ADC_LEFT_RES(RES14);
-	SET_ADC_CHN_DIFF_EN(ADC_LEFT_CHN_MODE);
-	SET_ADC_LEFT_TSAMP_CYCLE(SAMPLING_CYCLES_6);
-
-	SET_ADC_M_RNS_CAPTURE_LEN(0xf0);						//max_mc
+	//set "capture state" length for misc channel: 240
+	//set "set state" length for misc channel: 10
+	//adc state machine  period  = 24M/250 = 96K
+	adc_set_length_set_state(8);									//max_s
 	if((Audio_Rate == AUDIO_44K)||(Audio_Rate == AUDIO_22K))
 	{
-		SET_ADC_L_R_CAPTURE_LEN(AMIC_ADC_SampleLength[1]);	//max_c	132K
+		adc_set_length_capture_state_for_chn_left_right(AMIC_ADC_SampleLength[1]);	//max_c	132K
 	}
 	else
 	{
-		SET_ADC_L_R_CAPTURE_LEN(AMIC_ADC_SampleLength[0]);	//max_c	96K
+		adc_set_length_capture_state_for_chn_left_right(AMIC_ADC_SampleLength[2]);	//max_c	192K
 	}
-	SET_ADC_SET_LEN(0x0a);									//max_s
-	SET_ADC_CHN_EN(ADC_LEFT_CHN);
-	SET_ADC_MAX_SCNT(0x02);
 
-	SET_PGA_GAIN_VALUE(0x0d);
+	adc_set_chn_enable(ADC_LEFT_CHN);    								//left channel enable
+	adc_set_input_mode(ADC_LEFT_CHN, DIFFERENTIAL_MODE);  				//left channel differential mode
+	adc_set_ain_channel_differential_mode(ADC_LEFT_CHN, PGA0P, PGA0N);  //left channel positive and negative data in
+
+	adc_set_ref_voltage(ADC_LEFT_CHN, ADC_VREF_1P2V);					//left channel vref
+	adc_set_resolution(ADC_LEFT_CHN, RES14);							//left channel resolution
+	adc_set_tsample_cycle(ADC_LEFT_CHN, SAMPLING_CYCLES_3);				//left channel tsample
+
+	adc_set_ain_pre_scaler(ADC_PRESCALER_1);                            //ain pre scaler none
+
+	adc_set_itrim_preamp(ADC_CUR_TRIM_PER75);
+	adc_set_itrim_vrefbuf(ADC_CUR_TRIM_PER100);
+	adc_set_itrim_vcmbuf(ADC_CUR_TRIM_PER100);
+
+	//PGA0 left  1: B4/B5£»0:A7/B0 ,
+	analog_write(anareg_adc_pga_sel_vin, MASK_VAL(FLD_PGA_SEL_VIN_LEFT_P, PGA_AIN_A7_B0));
+
+	adc_set_left_boost_bias(GAIN_STAGE_BIAS_PER75);
+
+	analog_write (anareg_adc_pga_ctrl, MASK_VAL( FLD_PGA_ITRIM_GAIN_L, GAIN_STAGE_BIAS_PER100,
+												 FLD_ADC_MODE, 0,
+												 FLD_SAR_ADC_POWER_DOWN, 0,
+												 FLD_POWER_DOWN_PGA_CHN_L, 0));
+
+	WriteAnalogReg(0xfe,0x05);					//0xfe default value is 0xe5,for output audio, mast claer 0xfe<7:5>
+
+	adc_power_on_sar_adc(1);   //power on sar adc
+
+	PGA_SetGain(PGA_PreGain_26dB,PGA_PostGain_0dB);
+
+	////////////////////////////// ALC HPF LPF setting /////////////////////////////////
+	//Enable HPF, Enable LPF, Disable ALC, Enable double_down_sampling
+	reg_audio_alc_hpf_lpf_en = MASK_VAL( FLD_AUD_IN_HPF_SFT,    0x0b,   //different pcb may set different value.
+										 FLD_AUD_IN_HPF_BYPASS, 0,
+										 FLD_AUD_IN_ALC_BYPASS, 1,
+										 FLD_AUD_IN_LPF_BYPASS, 0,
+										 FLD_DOUBLE_DOWN_SAMPLING_ON, 1);
+	//ALC mode select digital mode
+	reg_audio_alc_cfg &= ~FLD_AUDIO_ALC_ANALOG_AGC_EN;
+	//ALC left channel select manual regulate, and set volume
+	reg_audio_alc_vol_l = MASK_VAL( FLD_AUDIO_ALC_VOL_VALUE,  0x24,
+									FLD_AUDIO_ALC_AUTO_MODE_EN, 0);
+
+
+	//2. Dfifo setting
+	reg_clk_en2 |= FLD_CLK2_DFIFO_EN; //enable dfifo clock, this will be initialed in cpu_wakeup_int()
+	reg_dfifo_mode = FLD_AUD_DFIFO0_IN;
+
+	//amic input, mono mode, enable decimation filter
+	reg_audio_input_select = MASK_VAL(FLD_AUDIO_DMIC_CLK_RISING_EDGE,AUDIO_DMIC_DATA_IN_FALLING_EDGE,
+									  FLD_AUDIO_DMIC_DISABLE,1,
+									  FLD_AUDIO_INPUT_SELECT, AUDIO_INPUT_AMIC,
+									  FLD_AUDIO_DEC_DISABLE, 0);
+
+	reg_audio_dec_mode |= FLD_AUD_LNR_VALID_SEL | FLD_AUD_CIC_MODE;
+	reg_audio_dec = 0x65;  // 96k/3 = 32k, down sampling to 16K by set core_b40<7>
 }
 
 
 void  audio_dmic_init (AUDIO_RateTypeDef Audio_Rate,unsigned int MicBufSize)
 {
 	/*******1.Dmic setting for audio input**************************/
-	SET_AUDIO_OUTPUT_CTRL(AUDIO_OUTPUT_OFF);
+	reg_audio_ctrl = 0x00;
 //	REG_AUDIO_DEC_RATIO = DMIC_CIC_Rate[Audio_Rate];
-	REG_AUDIO_DEC_RATIO = 0x3a;
-	write_reg8(0x800b40,0xfb);
+	REG_AUDIO_DEC_RATIO = 0x3a;//32K
+	//write_reg8(0x800b40,0xfb);
 	REG_AUDIO_DFIFO_MODE = AUDIO_DFIFO0_IN|AUDIO_DFIFO0_OUT|AUDIO_DFIFO0_L_INT;
 	REG_CLK2_EN |= FLD_CLK2_DFIFO_EN; 		//enable the DFIFO clock
 
@@ -341,6 +372,12 @@ void  audio_dmic_init (AUDIO_RateTypeDef Audio_Rate,unsigned int MicBufSize)
 	SET_DMIC_PIN_EN();
 	SET_DMIC_STEP(0x82);						//set dmic step  0x6c<6:0>  <7>enable
 	SET_DMIC_MODE(DMIC_CLK_Mode[Audio_Rate]);   //set dmic mode  0x6d<7:0>
+
+	reg_audio_alc_hpf_lpf_en = MASK_VAL( FLD_AUD_IN_HPF_SFT,    0x0b,   //different pcb may set different value.
+										 FLD_AUD_IN_HPF_BYPASS, 0,
+										 FLD_AUD_IN_ALC_BYPASS, 0,
+										 FLD_AUD_IN_LPF_BYPASS, 0,
+										 FLD_DOUBLE_DOWN_SAMPLING_ON, 1);//down sample 1:enable -> /2; 0:disable
 }
 
 /**
@@ -380,11 +417,11 @@ void audio_sdm_output_set(AudioInput_Typedef InType,AUDIO_RateTypeDef Audio_Rate
 		REG_PN1_RIGHT &= (unsigned char)(~(EXCHANGE_SDM_DATA_EN));
 		REG_PN2_RIGHT &= (unsigned char)(~(SDM_LEFT_CHN_CONST_EN));
 
-	    SET_AUDIO_OUTPUT_CTRL(AUDIO_OUTPUT_MONO_MODE|AUDIO_SDM_PLAYER);
+	    reg_audio_ctrl = FLD_AUDIO_SDM_PLAYER_EN;
 	}
 	else
 	{
-		SET_AUDIO_OUTPUT_CTRL(AUDIO_OUTPUT_OFF);
+		reg_audio_ctrl = 0x00;
 	}
 }
 

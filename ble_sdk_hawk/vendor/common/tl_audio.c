@@ -333,7 +333,7 @@ void adpcm_to_pcm (signed short *ps, signed short *pd, int len){
 #define		ADPCM_PACKET_LEN					128
 #endif
 
-#if		TL_MIC_BUFFER_SIZE
+#if(TL_MIC_BUFFER_SIZE)
 
 #define	BUFFER_PACKET_SIZE		((ADPCM_PACKET_LEN >> 2) * TL_MIC_PACKET_BUFFER_NUM)
 
@@ -343,12 +343,14 @@ u8		buffer_mic_pkt_rptr;
 
 u32		adb_t2;
 
+#define TL_NOISE_SUPRESSION_ENABLE   0 // TODO : too much calculation can have packet drop
 
-#define TL_NOISE_SUPRESSION_ENABLE 0 // TODO : too much calculation can have packet drop
-#if 	IIR_FILTER_ENABLE
-int c1[5] = {5751, 895, 1010, 253, -187};//filter all 
-int c2[5] = {4294, -6695, 3220, 1674, -855};//filter 1.2khz 
-int c3[5] = {4739, -2293, 1254, 573, -474};//filter 4khz
+#define IIR_FILTER_ENABLE   0
+#if(IIR_FILTER_ENABLE)
+int c1[5] = {5751, 895,   1010, 253,  -187};//filter all
+int c2[5] = {4294, -6695, 3220, 1674, -855};//filter 1.2khz
+int c3[5] = {4739, -2293, 1254, 573,  -474};//filter 4khz
+
 int filter_1[10];
 int filter_2[10];
 int filter_3[10];
@@ -356,64 +358,145 @@ u8  filter1_shift;
 u8  filter2_shift;
 u8  filter3_shift;
 
+#if 0
 void voice_iir (signed short * ps, signed short *pd, int* coef, int nsample,u8 shift)
 {
-      int i = 0;
-      int s = 0;
-      for (i=0; i<nsample; i++)
-      {
-            s = (*ps * coef[0])>>shift;                  //input 16-bit
-            s += coef[5] * coef[1];
-            s += coef[6] * coef[2];       //coef 0,1,2: 12-bit
-            s += coef[7] * coef[3];
-            s += coef[8] * coef[4];      //coef 4 & 5: 10-bit; coef 7 & 8: 18-bit
-            s = s >> 10;                        //18-bit
-            if (s >= (1<<18))
-                  s = (1<<18) - 1;
-            else if (s < -(1<<18))
-                  s = - (1<<18);
-            coef[6] = coef[5];                  //16-bit
-            coef[5] = *ps++;              //16-bit
-            coef[8] = coef[7];                  //18-bit
-            coef[7] = s;
-            *pd++ = s >> 2;
-      }
+	  int i = 0;
+	  int s = 0;
+	  for (i=0; i<nsample; i++)
+	  {
+			s = (*ps * coef[0])>>shift;                  //input 16-bit
+			s += coef[5] * coef[1];
+			s += coef[6] * coef[2];       //coef 0,1,2: 12-bit
+			s += coef[7] * coef[3];
+			s += coef[8] * coef[4];      //coef 4 & 5: 10-bit; coef 7 & 8: 18-bit
+			s = s >> 10;                        //18-bit
+			if (s >= (1<<18))
+				  s = (1<<18) - 1;
+			else if (s < -(1<<18))
+				  s = - (1<<18);
+			coef[6] = coef[5];                  //16-bit
+			coef[5] = *ps++;              //16-bit
+			coef[8] = coef[7];                  //18-bit
+			coef[7] = s;
+			*pd++ = s >> 2;
+	  }
 }
-#endif 
-void	proc_mic_encoder (void)
+#else
+//_attribute_ram_code_
+static inline void voice_iir (signed short *ps, signed short *pd, int* coef, int nsample, u8 shift)
+{
+	int i = 0;
+	long int s = 0;
+	for (i=0; i<nsample; i++)
+	{
+		 //s = (*ps * coef[0])>>shift;
+		s = (*ps * coef[0])>>0;          		//input 16-bit
+		s += coef[5] * coef[1];
+		s += coef[6] * coef[2];       		//coef 0,1,2: 12-bit
+		s += coef[7] * coef[3];
+		s += coef[8] * coef[4];      		//coef 4 & 5: 10-bit; coef 7 & 8: 18-bit
+		//s = s >> 10;                        //18-bit
+		//s = s >> 12;                        //18-bit
+		s = ((s + (1 << 11)) >> 12);
+	#if 0
+		if (s >= (1<<18))
+			  s = (1<<18) - 1;
+		else if (s < -(1<<18))
+			  s = - (1<<18);
+	#endif
+		coef[6] = coef[5];                  //16-bit
+		coef[5] = *ps++;              		//16-bit
+		coef[8] = coef[7];                  //18-bit
+		coef[7] = s;
+		//*pd++ = s >> 3;
+		//*pd++ = s >> 1;
+		*pd++ = s >> shift;
+	}
+}
+#endif
+
+#endif/* End of IIR_FILTER_ENABLE */
+
+//Hardware filter for redhawk
+void audio_biquad_filter(int*coeff0, int*coeff1, u8 shift, u8 en)
+{
+	if(coeff0){
+	 reg_audio_biquad_filter0_b0 = coeff0[0];
+	 reg_audio_biquad_filter0_b1 = coeff0[1];
+	 reg_audio_biquad_filter0_b2 = coeff0[2];
+	 reg_audio_biquad_filter0_a1 = coeff0[3];
+	 reg_audio_biquad_filter0_a2 = coeff0[4];
+	}
+
+	if(coeff1){
+	 reg_audio_biquad_filter1_b0 = coeff0[0];
+	 reg_audio_biquad_filter1_b1 = coeff0[1];
+	 reg_audio_biquad_filter1_b2 = coeff0[2];
+	 reg_audio_biquad_filter1_a1 = coeff0[3];
+	 reg_audio_biquad_filter1_a2 = coeff0[4];
+	}
+
+	u8 temp = shift & 0x07;
+	temp |= (BIT(4)|BIT(5));//Disable filter0 and filter1
+
+	if(en & BIT(4)){
+		temp &= ~BIT(4);//Enable filter0
+	}
+
+	if(en & BIT(5)){
+		temp &= ~BIT(5);//Enable filter1
+	}
+
+	reg_audio_biquad_cfg = temp;
+}
+
+void proc_mic_encoder(void)
 {
 	static u16	buffer_mic_rptr;
 	u16 mic_wptr = reg_audio_wr_ptr>>1;
-	//u16 l = ((mic_wptr<<1) >= buffer_mic_rptr) ? ((mic_wptr<<1) - buffer_mic_rptr) : 0xffff;
+
 	u16 l = (mic_wptr >= buffer_mic_rptr) ? (mic_wptr - buffer_mic_rptr) : 0xffff;
 
-	if (l >= (TL_MIC_BUFFER_SIZE>>2)) {
+	if(l >= (TL_MIC_BUFFER_SIZE>>2)) {
 		log_task_begin (TR_T_adpcm);
 
 		s16 *ps = buffer_mic + buffer_mic_rptr;
-#if 	TL_NOISE_SUPRESSION_ENABLE
+
+	#if TL_NOISE_SUPRESSION_ENABLE
         // for FIR adc sample data, only half part data are effective
 		for (int i=0; i<TL_MIC_ADPCM_UNIT_SIZE*2; i++) {
 			ps[i] = noise_supression (ps[i]);
         }
-#endif
-#if 	IIR_FILTER_ENABLE
+	#endif
+
+	#if IIR_FILTER_ENABLE
 		extern u8 mic_start_flag;
 		if(mic_start_flag){
-			mic_start_flag =0;
+			mic_start_flag = 0;
 			memset(filter_1,0,sizeof(filter_1));
-			memset(filter_2,0,sizeof(filter_2));
-			memset(filter_3,0,sizeof(filter_3));
+			//memset(filter_2,0,sizeof(filter_2));
+			//memset(filter_3,0,sizeof(filter_3));
+
+			memcpy(filter_1,c1,sizeof(c1));
+			//memcpy(filter_2,c2,sizeof(c2));
+			//memcpy(filter_3,c3,sizeof(c3));
+
+			for(int i=0; i < 5; i++)
+			{
+				c2[i] >>= 2;
+				c3[i] >>= 2;
+			}
+
+			//audio_biquad_filter(c3,NULL,0,AUDIO_BIQUAD_FILTER0_EN);
+			audio_biquad_filter(c3,c2,0,AUDIO_BIQUAD_FILTER0_EN|AUDIO_BIQUAD_FILTER1_EN);
 		}
-		memcpy(filter_1,c1,sizeof(c1));
-		memcpy(filter_2,c2,sizeof(c2));
-		memcpy(filter_3,c3,sizeof(c3));
-		#if 1
-		voice_iir(ps,ps,filter_2,(TL_MIC_BUFFER_SIZE>>2),filter2_shift);
-		voice_iir(ps,ps,filter_3,(TL_MIC_BUFFER_SIZE>>2),filter3_shift);
+
+		//voice_iir(ps,ps,filter_2,(TL_MIC_BUFFER_SIZE>>2),filter2_shift);
+		//voice_iir(ps,ps,filter_3,(TL_MIC_BUFFER_SIZE>>2),filter3_shift);
 		voice_iir(ps,ps,filter_1,(TL_MIC_BUFFER_SIZE>>2),filter1_shift);
-		#endif
-#endif 
+	#endif
+
 		mic_to_adpcm_split (ps,	TL_MIC_ADPCM_UNIT_SIZE,
 						(s16 *)(buffer_mic_enc + (ADPCM_PACKET_LEN>>2) * (buffer_mic_pkt_wptr & (TL_MIC_PACKET_BUFFER_NUM - 1))), 1);
 
@@ -445,7 +528,7 @@ int	mic_encoder_data_ready (int *pd)
 	return 0;
 }
 
-int	*	mic_encoder_data_buffer ()
+int	*mic_encoder_data_buffer ()
 {
 	if (buffer_mic_pkt_rptr == buffer_mic_pkt_wptr) {
 			return 0;

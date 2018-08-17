@@ -14,7 +14,6 @@
 	#define BLE_DMIC_ENABLE			0  //0: Amic   1: Dmic
 	#define	ADPCM_PACKET_LEN		128
 	#define TL_MIC_ADPCM_UNIT_SIZE	248
-
 	#define	TL_MIC_32K_FIR_16K		0
 
 	#if TL_MIC_32K_FIR_16K
@@ -23,7 +22,7 @@
 		#define	TL_MIC_BUFFER_SIZE	992
 	#endif
 
-	#define GPIO_AMIC_BIAS			GPIO_PA6
+	#define GPIO_MIC_BIAS			((BLE_DMIC_ENABLE)? GPIO_PA2:GPIO_PA6)
 #endif
 
 /* LED -----------------------------------------------------------------------*/
@@ -140,7 +139,6 @@
 				VK_NONE,	 	  VK_1,	       VK_0,	    VK_8,	     VK_3,      \
 				VK_NONE,		  VK_4,	       VK_NONE,	    VK_9,	     VK_6, }
 
-
 	#define	KB_MAP_IR	{\
 				VK_NONE,	        IR_UP,	    IR_SEL,	    IR_DN,	    VK_NONE,    \
 				KEY_MODE_SWITCH,	IR_LEFT,	IR_MENU,	VK_NONE,	IR_RIGHT,	\
@@ -149,7 +147,6 @@
 				VK_NONE,            IR_VK_1,	IR_VK_0,	IR_VK_8,	IR_VK_3,	\
 				VK_NONE,	        IR_VK_4,	VK_NONE,	IR_VK_9,	IR_VK_6,  }
 #else//key map
-
 	#define	KB_MAP_NORMAL	{\
 				{VOICE,		      VK_UP,	   VK_ENTER,	VK_DOWN,	 VK_NONE},   \
 				{KEY_MODE_SWITCH, VK_LEFT,	   CR_MENU,	    CR_VOL_MUTE, VK_RIGHT},  \

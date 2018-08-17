@@ -5,8 +5,6 @@
 #include "bsp.h"
 #include "gpio.h"
 
-#define PM_PAD_FILTER_EN           (0)//Pad filter enable/disable
-
 #define SUSPEND_MODE	0
 #define DEEPSLEEP_MODE	1
 
@@ -97,7 +95,6 @@ typedef void (*pm_optimize_handler_t)(void);
 typedef int (*suspend_handler_t)(void);
 typedef int (*cpu_pm_handler_t)(int, int, unsigned int);
 
-extern suspend_handler_t func_before_suspend;
 extern cpu_pm_handler_t cpu_sleep_wakeup;
 
 /*-- User Interface ----------------------------------------------------------*/

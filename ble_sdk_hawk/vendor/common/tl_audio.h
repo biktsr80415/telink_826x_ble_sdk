@@ -69,6 +69,11 @@ static inline int noise_supression (s16 md) {
         return (md * md_gain + 128) >> 8;
 }
 
+enum{
+	AUDIO_BIQUAD_FILTER0_EN = BIT(4),
+	AUDIO_BIQUAD_FILTER1_EN = BIT(5),
+};
+
 void pcm_to_adpcm (signed short *ps, int len, signed short *pd);
 void mic_to_adpcm (signed short *ps, int len, signed short *pd);
 void adpcm_to_pcm (signed short *ps, signed short *pd, int len);
@@ -83,5 +88,9 @@ void 	proc_sdm_decoder (void);
 int  	sdm_decode_data (int *ps, int nbyte);
 void 	sdm_decode_rate (int step, int adj);
 int   	sdm_bytes_in_buffer ();
+
+
+
+void audio_biquad_filter(int*coeff0, int*coeff1, u8 shift, u8 en);
 
 #endif

@@ -68,7 +68,11 @@
 
 
 
-#define	L2CAP_RX_BUFF_LEN_MAX			  256
+#if(RAM_OPTIMZATION_FOR_UEI_EN)
+	#define	L2CAP_RX_BUFF_LEN_MAX			  88
+#else
+	#define	L2CAP_RX_BUFF_LEN_MAX			  256
+#endif
 #define	ATT_RX_MTU_SIZE_MAX		  		 (L2CAP_RX_BUFF_LEN_MAX - 14)
 
 #define L2CAP_RX_PDU_OFFSET				  12

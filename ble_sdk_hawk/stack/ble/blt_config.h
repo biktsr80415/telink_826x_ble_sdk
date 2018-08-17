@@ -262,7 +262,8 @@ typedef struct{
 }uart_data_t;
 
 
-
+//Use for UEI UTB2
+#define RAM_OPTIMZATION_FOR_UEI_EN    0
 
 
 ///////////////////////////////////////dbg channels///////////////////////////////////////////

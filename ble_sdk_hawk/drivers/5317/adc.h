@@ -29,7 +29,10 @@ static inline void adc_enable_clk_24m_to_sar_adc(unsigned int en)  //1: enable; 
 	}
 }
 
-
+static inline void set_ana_ldo_trim(Ana_Ldo_TrimTypeDef ldo)
+{
+	analog_write(anareg_02,  ((analog_read(anareg_02)&(~FLD_ANA_LDO_TRIM)) | (ldo<<5)));
+}
 
 
 
@@ -649,6 +652,15 @@ typedef enum{
 	RNS_MODE         = BIT(4),
 }ADCModeTypeDef;
 
+#define anareg_adc_pga_sel_vin			0xFD
+enum{                                              //ana_0xFC
+	FLD_PGA_SEL_VIN_LEFT_P		= BIT(0),
+};
+
+enum{
+	PGA_AIN_A7_B0 = 0,
+	PGA_AIN_B4_B5 = 1,
+};
 
 /**
  * Name     :adc_set_mode
@@ -1024,6 +1036,11 @@ void ADC_Cmd(eADC_ModuleTypeDef ADC_Module, unsigned char ADC_Enable);
 
 unsigned short ADC_GetConvertValue(void);
 
+
+/* Battery check */
+void ADC_BatteryCheckInit(eADC_ChannelTypeDef ADC_Channel);
+//void BobbleSort(unsigned short *pData, unsigned int len);
+void BattteryCheckProc(void);
 #endif
 
 #endif/* End of ADC_H */

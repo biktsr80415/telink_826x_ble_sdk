@@ -183,48 +183,47 @@ void LED_show_ota_result(int result)
 /*----------------------------------------------------------------------------*/
 #if (BLE_AUDIO_ENABLE)
 u32 key_voice_pressTick = 0;
-
+u8 mic_start_flag;//Use for Biquad of redhawk
 void ui_enable_mic(u8 en)
 {
 	ui_mic_enable = en;
 
-	//AMIC Bias output
-	gpio_set_output_en(GPIO_AMIC_BIAS, en);
-	gpio_write(GPIO_AMIC_BIAS, en);
+	device_led_setup(led_cfg[en? LED_AUDIO_ON : LED_AUDIO_OFF]);
 
-
-	//DMIC bias ouput
-	//gpio_set_output_en(GPIO_PA2,1);//DMIC
-	//gpio_write(GPIO_PA2,1);//DMIC
-
-	device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
+	#if(BLE_DMIC_ENABLE)
+		//DMIC Bias output
+		gpio_set_output_en(GPIO_MIC_BIAS, en? 1:0);
+		gpio_write(GPIO_MIC_BIAS, en? 0:1);//low level valid
+		//DMIC
+		gpio_set_input_en(GPIO_PA3, en? 1:0);
+		gpio_set_input_en(GPIO_PA4, en? 1:0);
+	#else
+		//AMIC Bias output
+		gpio_set_output_en(GPIO_MIC_BIAS, en? 1:0);
+		gpio_write(GPIO_MIC_BIAS, en? 1:0);//high level valid
+		//AMIC
+		gpio_set_input_en(GPIO_PA7, en? 1:0);
+		gpio_set_input_en(GPIO_PB0, en? 1:0);
+	#endif
 
 	if(en){  //Audio ON
 		lowBattDet_enable = 0;
 
-		gpio_set_input_en(GPIO_PA7,1);
-		gpio_set_input_en(GPIO_PB0,1);
-
-		//audio_dmic_init(AUDIO_16K, TL_MIC_BUFFER_SIZE);//AMIC
+	#if(BLE_DMIC_ENABLE)
+		audio_dmic_init(AUDIO_16K, TL_MIC_BUFFER_SIZE);
+	#else
 		audio_amic_init(AUDIO_16K);
-		adc_power_on_sar_adc(1);//ADC power ON
-
-		//AUDIO_AmicInit(AUDIO_Rate_32K, buffer_mic, TL_MIC_BUFFER_SIZE);
-		//ADC_PowerOn();
+	#endif
+		mic_start_flag = 1;
 	}else{  //Audio OFF
 		lowBattDet_enable = 1;
-
-		gpio_write(GPIO_AMIC_BIAS, 0);
-		gpio_set_output_en(GPIO_AMIC_BIAS,0);
-
-		gpio_set_input_en(GPIO_PA7,0);
-		gpio_set_input_en(GPIO_PB0,0);
 
 	#if(BATT_CHECK_ENABLE)
 		TL_BatteryCheckInit();
 	#endif
-		adc_power_on_sar_adc(0);//ADC power OFF
-		//ADC_PowerOff();
+
+		reg_dfifo_mode &= ~DFIFO_Mode_FIFO0_Input;//Close Audio DFIFO
+		adc_power_on_sar_adc(0);//Power Off ADC
 	}
 }
 
@@ -665,7 +664,7 @@ void user_init()
 	blc_app_loadCustomizedParameters();
 
 	/*-- BLE stack initialization --------------------------------------------*/
-	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
+	u8  tbl_mac[] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff)
 	{
@@ -682,19 +681,19 @@ void user_init()
 	blc_ll_initSlaveRole_module();//slave module: mandatory for BLE slave,
 
 	/*-- BLE Host initialization ---------------------------------------------*/
-	extern void my_att_init ();
+	extern void my_att_init();
 	//GATT initialization
-	my_att_init ();
+	my_att_init();
 	//L2CAP initialization
-	blc_l2cap_register_handler (blc_l2cap_packet_receive);
+	blc_l2cap_register_handler(blc_l2cap_packet_receive);
 
 	/*-- BLE SMP initialization ----------------------------------------------*/
 #if(BLE_REMOTE_SECURITY_ENABLE)
 	blc_smp_param_setBondingDeviceMaxNumber(4);  	//default is SMP_BONDING_DEVICE_MAX_NUM, can not bigger that this value
 													//and this func must call before bls_smp_enableParing
-	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
+	bls_smp_enableParing(SMP_PARING_CONN_TRRIGER );
 #else
-	bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
+	bls_smp_enableParing(SMP_PARING_DISABLE_TRRIGER );
 #endif
 
 	//HID_service_on_android7p0_init();  //hid device on android 7.0/7.1
@@ -743,11 +742,11 @@ void user_init()
 	}
 
 	bls_ll_setAdvEnable(1);  //adv enable
-	rf_set_power_level_index (RF_POWER_7P9dBm);//OK
+	rf_set_power_level_index(RF_POWER_7P9dBm);//OK
 
 	//ble event call back
-	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
-	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
+	bls_app_registerEventCallback(BLT_EV_FLAG_CONNECT, &task_connect);
+	bls_app_registerEventCallback(BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
 
 	/* Keyboard matrix initialization */
 	u32 pin[] = KB_DRIVE_PINS;
@@ -757,13 +756,13 @@ void user_init()
 		cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
 	}
 
-	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_keyboard);
+	bls_app_registerEventCallback(BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_keyboard);
 
 	/* Power Management initialization */
 #if(BLE_REMOTE_PM_ENABLE)
 	blc_ll_initPowerManagement_module();        //pm module:      	 optional
-	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
-	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &ble_remote_set_sleep_wakeup);
+	bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
+	bls_app_registerEventCallback(BLT_EV_FLAG_SUSPEND_ENTER, &ble_remote_set_sleep_wakeup);
 #else
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 #endif
@@ -781,13 +780,14 @@ void user_init()
 	IR_Init(IR_Pin_PA0);
 #endif
 
-	/* OTA Function Initialization  */
+	/* OTA Function Initialization */
 #if(BLE_REMOTE_OTA_ENABLE)
 	bls_ota_clearNewFwDataArea(); //must
 	bls_ota_registerStartCmdCb(entry_ota_mode);
 	bls_ota_registerResultIndicateCb(LED_show_ota_result);
 #endif
 
+	/* Audio Function Initialization */
 #if(BLE_AUDIO_ENABLE)
 	audio_config_mic_buf(buffer_mic, TL_MIC_BUFFER_SIZE);
 #endif

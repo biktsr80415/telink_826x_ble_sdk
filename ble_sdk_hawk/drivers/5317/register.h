@@ -757,7 +757,7 @@ enum{
 	FLD_RF_IRQ_RX            = BIT(0),
 	FLD_RF_IRQ_TX            = BIT(1),
 	FLD_RF_IRQ_RX_TIMEOUT    = BIT(2),
-	FLD_RF_IRQ_CRC           = BIT(4),
+	FLD_RF_IRQ_RX_CRC_2 	 = BIT(4),
 	FLD_RF_IRQ_CMD_DONE      = BIT(5),
 	FLD_RF_IRQ_FSM_TIMEOUT   = BIT(6),
 	FLD_RF_IRQ_RETRY_HIT     = BIT(7),
@@ -1414,9 +1414,13 @@ enum{
 #define reg_audio_input_select  REG_ADDR8(0xb11)
 enum{
 	FLD_AUDIO_DMIC_CLK_RISING_EDGE  = BIT(0),
-	FLD_AUDIO_DMIC_EN               = BIT(1),
+	FLD_AUDIO_DMIC_DISABLE          = BIT(1),
 	FLD_AUDIO_INPUT_SELECT          = BIT_RNG(2,3),
 	FLD_AUDIO_DEC_DISABLE           = BIT(4),//decimation filter input enable(0)/bypass(1)
+};
+enum{  //core_b11<0> <1>  audio dmic_n  rising/falling edge
+	AUDIO_DMIC_DATA_IN_FALLING_EDGE	= 0,
+	AUDIO_DMIC_DATA_IN_RISING_EDGE	= 1,
 };
 
 #define reg_audio_dec           REG_ADDR8(0xb12)//decimation filter configuration
@@ -1432,13 +1436,19 @@ static inline unsigned short get_mic_wr_ptr(void)
 	return (reg_audio_wr_ptr >> 1);
 }
 
+#define	reg_audio_dec_mode	REG_ADDR8(0xb35)
+enum{
+	FLD_AUD_LNR_VALID_SEL	= BIT(0),
+	FLD_AUD_CIC_MODE  		= BIT(3)
+};
+
 #define reg_audio_alc_hpf_lpf_en    REG_ADDR8(0xb40)
 enum{
-	FLD_AUDIO_HPF_ADJUST         = BIT_RNG(0,3),
-	FLD_AUDIO_HPF_DISABLE        = BIT(4),
-	FLD_AUDIO_ALC_DISABLE        = BIT(5),
-	FLD_AUDIO_LPF_DISABLE        = BIT(6),
-	FLD_AUDIO_DOWN_SAMPLE_ENABLE = BIT(7),
+	FLD_AUD_IN_HPF_SFT         	= BIT_RNG(0,3),
+	FLD_AUD_IN_HPF_BYPASS       = BIT(4),
+	FLD_AUD_IN_ALC_BYPASS       = BIT(5),
+	FLD_AUD_IN_LPF_BYPASS       = BIT(6),
+	FLD_DOUBLE_DOWN_SAMPLING_ON = BIT(7),
 };
 
 #define reg_audio_alc_vol_l         REG_ADDR8(0xb41)
@@ -1469,7 +1479,22 @@ enum{
 #define reg_audio_alc_dec_noise_speed  REG_ADDR8(0xb53)
 #define reg_audio_alc_dec_noise_max    REG_ADDR8(0xb54)
 
-#define reg_audio_biquad_cfg           REG_ADDR8(0xb74)
+//Biquad filter0
+#define reg_audio_biquad_filter0_b0   REG_ADDR16(0xb60)
+#define reg_audio_biquad_filter0_b1   REG_ADDR16(0xb62)
+#define reg_audio_biquad_filter0_b2   REG_ADDR16(0xb64)
+#define reg_audio_biquad_filter0_a1   REG_ADDR16(0xb66)
+#define reg_audio_biquad_filter0_a2   REG_ADDR16(0xb68)
+
+//Biquad filter1
+#define reg_audio_biquad_filter1_b0   REG_ADDR16(0xb6a)
+#define reg_audio_biquad_filter1_b1   REG_ADDR16(0xb6c)
+#define reg_audio_biquad_filter1_b2   REG_ADDR16(0xb6e)
+#define reg_audio_biquad_filter1_a1   REG_ADDR16(0xb70)
+#define reg_audio_biquad_filter1_a2   REG_ADDR16(0xb72)
+
+//Biquad configuration
+#define reg_audio_biquad_cfg          REG_ADDR8(0xb74)
 enum{
 	FLD_AUDIO_BIQUAD_SHIFT           = BIT_RNG(0,2),
 	FLD_AUDIO_BIQUAD_FILTER0_DISABLE = BIT(4),
@@ -1507,5 +1532,18 @@ enum{
 	FLD_CLK_24M_TO_SAR_EN 		  = BIT(7),
 };
 
-
+#define anareg_02					0x02
+enum{
+	FLD_ANA_LDO_TRIM 		  = BIT_RNG(5,7),
+};
+typedef enum {
+	LDO_OUT_VOLT_TRIM_1P6,
+	LDO_OUT_VOLT_TRIM_1P65,
+    LDO_OUT_VOLT_TRIM_1P7,
+    LDO_OUT_VOLT_TRIM_1P75,
+    LDO_OUT_VOLT_TRIM_1P8,
+    LDO_OUT_VOLT_TRIM_1P85,
+    LDO_OUT_VOLT_TRIM_1P9,
+    LDO_OUT_VOLT_TRIM_1P95,
+}Ana_Ldo_TrimTypeDef;
 

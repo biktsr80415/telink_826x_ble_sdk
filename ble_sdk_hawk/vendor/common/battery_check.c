@@ -44,7 +44,7 @@ void TL_BatteryCheckInit(void)
 
 	//set channel mode and channel
 	adc_set_input_mode(ADC_MISC_CHN, DIFFERENTIAL_MODE);
-	adc_set_ain_channel_differential_mode(ADC_MISC_CHN, B3P, GND);
+	adc_set_ain_channel_differential_mode(ADC_MISC_CHN, ADC_CHANNEL_P, GND);
 
 	//set resolution for MISC
 	adc_set_resolution(ADC_MISC_CHN, RES14);
@@ -61,6 +61,10 @@ void TL_BatteryCheckInit(void)
 	//set total length for sampling state machine and channel
 	adc_set_max_state_cnt(0x02);
 	adc_set_chn_enable(ADC_MISC_CHN);
+
+	adc_config_misc_channel_buf((s16*)adcValue, sizeof(adcValue));
+	reg_dfifo_mode &= ~DFIFO_Mode_FIFO2_Input;
+	adc_power_on_sar_adc(0);
 }
 
 /**
@@ -90,7 +94,6 @@ void BubbleSort(unsigned short *pData, unsigned int len)
  * @Param:  None.
  * @Return: None.
  */
-#define ADC_SAMPLE_NUM     8
 u16 adcValue[ADC_SAMPLE_NUM];
 u32 batteryCheckStartTick = 0;
 //u16 batteryVol[SAMPLE_NUM];
@@ -98,7 +101,7 @@ u32 batteryCheckStartTick = 0;
 void TL_BattteryCheckProc(void)
 {
 	/* Battery check frequency is 1 per 100ms. */
-	if(!clock_time_exceed(batteryCheckStartTick, 50*1000))
+	if(!clock_time_exceed(batteryCheckStartTick, 100*1000))
 		return;
 
 	batteryCheckStartTick = clock_time();
@@ -106,7 +109,9 @@ void TL_BattteryCheckProc(void)
 	for(volatile int i=0; i<ADC_SAMPLE_NUM; i++){
 		adcValue[i] = 0;
 	}
-	adc_config_misc_channel_buf((s16*)adcValue, sizeof(adcValue));
+
+	//clear adcValue buffer
+	reg_dfifo_mode |= DFIFO_Mode_FIFO2_Input;
 	adc_power_on_sar_adc(1);
 
 	/* Get ADC value. */
@@ -116,7 +121,7 @@ void TL_BattteryCheckProc(void)
 	{
 		while(!adcValue[i]);
 
-		if(adcValue[i]&BIT(13)){
+		if(adcValue[i]&BIT(13)){//Negative voltage
 			adcTempBuf[i] = 0;
 		}else{
 			adcTempBuf[i] = adcValue[i] & 0x1fff;
