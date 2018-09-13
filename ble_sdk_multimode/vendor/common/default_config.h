@@ -23,7 +23,7 @@ extern "C" {
 #define STRING_PRODUCT		L"2.4G Wireless Audio"
 #endif
 #ifndef STRING_SERIAL
-#define STRING_SERIAL		L"TLSR8869"
+#define STRING_SERIAL		L"TLSR8258"
 #endif
 
 
@@ -42,6 +42,54 @@ extern "C" {
 #ifndef PM_DEEPSLEEP_RETENTION_ENABLE
 #define PM_DEEPSLEEP_RETENTION_ENABLE	0
 #endif
+
+
+
+
+
+
+
+#if(APPLICATION_DONGLE)
+	#ifndef MODULE_MOUSE_ENABLE
+	#define MODULE_MOUSE_ENABLE		0
+	#endif
+	#ifndef MODULE_KEYBOARD_ENABLE
+	#define MODULE_KEYBOARD_ENABLE	0
+	#endif
+	#ifndef MODULE_MIC_ENABLE
+	#define MODULE_MIC_ENABLE		0
+	#endif
+	#ifndef MODULE_SPEAKER_ENABLE
+	#define MODULE_SPEAKER_ENABLE	0			// device , not dongle
+	#endif
+	#ifndef MODULE_USB_ENABLE
+	#define MODULE_USB_ENABLE		1
+	#endif
+#else
+	#ifndef MODULE_MOUSE_ENABLE
+	#define MODULE_MOUSE_ENABLE		1
+	#endif
+	#ifndef MODULE_KEYBOARD_ENABLE
+	#define MODULE_KEYBOARD_ENABLE	1
+	#endif
+
+	#ifndef MODULE_MIC_ENABLE
+	#define MODULE_MIC_ENABLE		0
+	#endif
+	#ifndef MODULE_SPEAKER_ENABLE
+	#define MODULE_SPEAKER_ENABLE	0			// device , not dongle
+	#endif
+
+	#ifndef MODULE_USB_ENABLE
+	#define MODULE_USB_ENABLE		0
+	#endif
+#endif
+
+
+
+
+
+
 
 
 ///////////////////  USB   /////////////////////////////////
