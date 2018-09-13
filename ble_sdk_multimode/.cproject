@@ -15,7 +15,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038" name="8258_ble_remote" parent="com.telink.tc32eclipse.configuration.app.debug" prebuildStep="">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038" name="8258_ble_remote" parent="com.telink.tc32eclipse.configuration.app.debug" postbuildStep="&quot;${workspace_loc:/${ProjName}}/tl_check_fw.sh&quot;   ${ConfigName}   ${ProjName}" prebuildStep="">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.debug.699855322" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.debug">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug.75979858" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug"/>
@@ -62,7 +62,7 @@
 								<option id="com.telink.tc32eclipse.objdump.option.output.1058079129" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8258_ble_remote.lst" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug.677951116" name="TC32 Create Flash image" superClass="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug">
-								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1557930273" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8258_ble_remote.bin" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1557930273" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.size.TC32Win.app.debug.1336912469" name="Print Size" superClass="com.telink.tc32eclipse.tool.size.TC32Win.app.debug"/>
 						</toolChain>
@@ -90,7 +90,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.1293776127" name="8258_BLE_SAMPLE" parent="com.telink.tc32eclipse.configuration.app.debug" prebuildStep="">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.1293776127" name="8258_BLE_SAMPLE" parent="com.telink.tc32eclipse.configuration.app.debug" postbuildStep="&quot;${workspace_loc:/${ProjName}}/tl_check_fw.sh&quot;   ${ConfigName}   ${ProjName}" prebuildStep="">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.1293776127." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.debug.1517056655" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.debug">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug.655596531" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug"/>
@@ -137,7 +137,7 @@
 								<option id="com.telink.tc32eclipse.objdump.option.output.1663935315" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8258_ble_sample.lst" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug.584073364" name="TC32 Create Flash image" superClass="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug">
-								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.2077320026" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8258_ble_sample.bin" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.2077320026" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.size.TC32Win.app.debug.2075153496" name="Print Size" superClass="com.telink.tc32eclipse.tool.size.TC32Win.app.debug"/>
 						</toolChain>
@@ -165,7 +165,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.984224210" name="8258_driver_test" parent="com.telink.tc32eclipse.configuration.app.debug" prebuildStep="">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.984224210" name="8258_driver_test" parent="com.telink.tc32eclipse.configuration.app.debug" postbuildStep="&quot;${workspace_loc:/${ProjName}}/tl_check_fw.sh&quot;   ${ConfigName}   ${ProjName}" prebuildStep="">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.984224210." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.debug.1085825834" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.debug">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug.397338095" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug"/>
@@ -212,7 +212,7 @@
 								<option id="com.telink.tc32eclipse.objdump.option.output.276789306" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8258_driver_test.lst" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug.231861211" name="TC32 Create Flash image" superClass="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug">
-								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1700698369" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8258_driver_test.bin" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1700698369" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.size.TC32Win.app.debug.2039377234" name="Print Size" superClass="com.telink.tc32eclipse.tool.size.TC32Win.app.debug"/>
 						</toolChain>
@@ -240,7 +240,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.955615570" name="8258_module" parent="com.telink.tc32eclipse.configuration.app.debug" prebuildStep="">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.955615570" name="8258_module" parent="com.telink.tc32eclipse.configuration.app.debug" postbuildStep="&quot;${workspace_loc:/${ProjName}}/tl_check_fw.sh&quot;   ${ConfigName}   ${ProjName}" prebuildStep="">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.955615570." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.debug.1953999438" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.debug">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug.1855000266" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug"/>
@@ -287,7 +287,7 @@
 								<option id="com.telink.tc32eclipse.objdump.option.output.909181185" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8258_module.lst" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug.1469326464" name="TC32 Create Flash image" superClass="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug">
-								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1015493969" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8258_module.bin" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.1015493969" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.size.TC32Win.app.debug.567771868" name="Print Size" superClass="com.telink.tc32eclipse.tool.size.TC32Win.app.debug"/>
 						</toolChain>
@@ -315,7 +315,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="from ble_lt_app" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.104746807" name="8258_ble_beacon" parent="com.telink.tc32eclipse.configuration.app.debug" prebuildStep="">
+				<configuration artifactName="${ProjName}" buildArtefactType="com.telink.tc32eclipse.buildArtefactType.app" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=com.telink.tc32eclipse.buildArtefactType.app" description="from ble_lt_app" id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.104746807" name="8258_ble_beacon" parent="com.telink.tc32eclipse.configuration.app.debug" postbuildStep="&quot;${workspace_loc:/${ProjName}}/tl_check_fw.sh&quot;   ${ConfigName}   ${ProjName}" prebuildStep="">
 					<folderInfo id="com.telink.tc32eclipse.configuration.app.debug.1970299845.351063629.799040038.104746807." name="/" resourcePath="">
 						<toolChain id="com.telink.tc32eclipse.toolchain.TC32Win.app.debug.1040914596" name="TC32-GCC Toolchain" superClass="com.telink.tc32eclipse.toolchain.TC32Win.app.debug">
 							<option id="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug.1038834738" name="Generate binary file for Flash memory" superClass="com.telink.tc32eclipse.toolchain.options.toolchain.objcopy.flash.app.debug"/>
@@ -362,7 +362,7 @@
 								<option id="com.telink.tc32eclipse.objdump.option.output.118490598" name="Output Filename" superClass="com.telink.tc32eclipse.objdump.option.output" value="8258_ble_remote.lst" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug.790355138" name="TC32 Create Flash image" superClass="com.telink.tc32eclipse.tool.objcopy.flash.TC32Win.app.debug">
-								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.423826597" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="8258_ble_beacon.bin" valueType="string"/>
+								<option id="com.telink.tc32eclipse.objcopy.flash.option.output.423826597" name="Output Filename" superClass="com.telink.tc32eclipse.objcopy.flash.option.output" value="" valueType="string"/>
 							</tool>
 							<tool id="com.telink.tc32eclipse.tool.size.TC32Win.app.debug.2060124976" name="Print Size" superClass="com.telink.tc32eclipse.tool.size.TC32Win.app.debug"/>
 						</toolChain>

@@ -4,10 +4,6 @@
 
 #include "register.h"
 
-#ifndef AMIC_PIN_IN_PC2_PC3_ENABLE
-#define AMIC_PIN_IN_PC2_PC3_ENABLE	0
-#endif
-
 
 
 typedef enum{

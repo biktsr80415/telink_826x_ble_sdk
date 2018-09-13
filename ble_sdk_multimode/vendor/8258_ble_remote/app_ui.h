@@ -18,6 +18,11 @@ void task_audio (void);
 
 void ui_enable_mic (int en);
 
+#if (BLE_REMOTE_OTA_ENABLE)
+	void app_enter_ota_mode(void);
+	void app_debug_ota_result(int result);
+#endif
+
 
 
 extern 	u8 		key_type;
@@ -29,7 +34,6 @@ extern	u8      ir_hw_initialed;
 extern	u8 		ota_is_working;
 extern	u8		ui_mic_enable;
 extern	u8 		key_voice_press;
-extern	int 	lowBattDet_enable;
 extern	int		lowBatt_alarmFlag;
 
 

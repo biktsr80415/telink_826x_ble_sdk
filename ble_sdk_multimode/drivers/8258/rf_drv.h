@@ -103,7 +103,7 @@ typedef enum {
 #endif
 
 #ifndef		RF_LONG_PACKET_EN
-#define		RF_LONG_PACKET_EN		0
+#define		RF_LONG_PACKET_EN	0
 #endif
 
 #if			RF_FAST_MODE_2M
@@ -115,8 +115,13 @@ typedef enum {
 		#define		RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x40)
 	#endif
 #elif		RF_FAST_MODE_1M
-#define		RF_PACKET_LENGTH_OK(p)		(p[0] == p[5]+13)
-#define		RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x01) == 0x0)
+#ifdef 		RF_LONG_PACKET_FULL_SUPPORT
+#define		RF_PACKET_LENGTH_OK(p)				(MAKE_U16(p[1], p[0]) == p[5]+13)
+#define		RF_PACKET_CRC_OK(p)					((p[MAKE_U16(p[1], p[0])+3] & 0x01) == 0x0)
+#else
+#define		RF_PACKET_LENGTH_OK(p)				(p[0] == p[5]+13)
+#define		RF_PACKET_CRC_OK(p)					((p[p[0]+3] & 0x01) == 0x0)
+#endif
 #else
 #define		RF_PACKET_LENGTH_OK(p)		(p[0] == p[12]+13)
 #define		RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x10)
@@ -155,16 +160,15 @@ unsigned char is_rf_packet_length_ok(unsigned char *p);
 #define    RF_NRF_SB_PACKET_CRC_OK(p)                  ((p[p[0]+3] & 0x01) == 0x00)
 #define    RF_NRF_SB_PACKET_CRC_GET(p)                 ((p[p[0]-8]<<8) + p[p[0]-7]) //Note: here assume that the MSByte of CRC is received first
 #define    RF_NRF_SB_PACKET_RSSI_GET(p)                (p[p[0]+2])
-static inline void rf_ble_tx_on ()
+
+static inline void rf_ble_tx_on(void)
 {
 	write_reg8  (0x800f02, RF_TRX_OFF | BIT(4));	// TX enable
-	write_reg32 (0x800f04, 0x38);
 }
 
-static inline void rf_ble_tx_done ()
+static inline void rf_ble_tx_done(void)
 {
 	write_reg8  (0x800f02, RF_TRX_OFF);	// TX enable
-	write_reg32 (0x800f04, 0x50);
 }
 
 void rf_update_tp_value (unsigned char tp0, unsigned char tp1);

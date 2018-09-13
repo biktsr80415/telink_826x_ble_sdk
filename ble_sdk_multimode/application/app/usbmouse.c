@@ -3,10 +3,11 @@
 #if(USB_MOUSE_ENABLE)
 
 #include "usbmouse.h"
-#include "../drivers/usb.h"
-#include "../drivers/usbhw.h"
-#include "../drivers/usbhw_i.h"
-#include "../../vendor/common/rf_frame.h"
+#include "usbkb.h"
+#include "../usbstd/usb.h"
+#include "../usbstd/usbhw.h"
+#include "../usbstd/usbhw_i.h"
+#include "../rf_frame.h"
 
 #ifndef	USB_MOUSE_REPORT_SMOOTH
 #define	USB_MOUSE_REPORT_SMOOTH	0
@@ -87,9 +88,22 @@ int usbmouse_hid_report(u8 report_id, u8 *data, int cnt){
 
     assert(cnt<8);
 
-	if(usbhw_is_ep_busy(USB_EDP_MOUSE))
-		return 0;
+	if(usbhw_is_ep_busy(USB_EDP_MOUSE)){
 
+		u8 *pData = (u8 *)&usb_fifo[usb_ff_wptr++ & (USB_FIFO_NUM - 1)];
+		pData[0] = DAT_TYPE_MOUSE;
+		pData[1] = report_id;
+		pData[2] = cnt;
+		memcpy(pData + 4, data, cnt);
+
+		int fifo_use = (usb_ff_wptr - usb_ff_rptr) & (USB_FIFO_NUM*2-1);
+		if (fifo_use > USB_FIFO_NUM) {
+			usb_ff_rptr++;
+			//fifo overflow, overlap older data
+		}
+
+		return 0;
+	}
 	reg_usb_ep_ptr(USB_EDP_MOUSE) = 0;
 
 	// please refer to usbmouse_i.h mouse_report_desc
@@ -106,7 +120,9 @@ int usbmouse_hid_report(u8 report_id, u8 *data, int cnt){
 			reg_usb_ep_dat(USB_EDP_MOUSE) = data[i];
 		}
 	}
-	reg_usb_ep_ctrl(USB_EDP_MOUSE) = FLD_EP_DAT_ACK;		// ACK
+//	reg_usb_ep_ctrl(USB_EDP_MOUSE) = FLD_EP_DAT_ACK;		// ACK
+	reg_usb_ep_ctrl(USB_EDP_MOUSE) = FLD_EP_DAT_ACK | (edp_toggle[USB_EDP_MOUSE] ? FLD_USB_EP_DAT1 : FLD_USB_EP_DAT0);  // ACK
+	edp_toggle[USB_EDP_MOUSE] ^= 1;
 
 	return 1;
 }

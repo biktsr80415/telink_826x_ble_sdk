@@ -173,13 +173,57 @@ void gpio_set_data_strength(GPIO_PinTypeDef pin, unsigned int value)
 }
 
 
+void gpio_analog_resistance_init(void)
+{
+	analog_write (0x0e,  PULL_WAKEUP_SRC_PA0 |
+						(PULL_WAKEUP_SRC_PA1<<2) |
+						(PULL_WAKEUP_SRC_PA2<<4) |
+						(PULL_WAKEUP_SRC_PA3<<6));
 
+	analog_write (0x0f,  PULL_WAKEUP_SRC_PA4 |
+						(PULL_WAKEUP_SRC_PA5<<2) |
+						(PULL_WAKEUP_SRC_PA6<<4) |
+						(PULL_WAKEUP_SRC_PA7<<6));
+
+
+	analog_write (0x10,  PULL_WAKEUP_SRC_PB0 |
+						(PULL_WAKEUP_SRC_PB1<<2) |
+						(PULL_WAKEUP_SRC_PB2<<4) |
+						(PULL_WAKEUP_SRC_PB3<<6));
+
+	analog_write (0x11,  PULL_WAKEUP_SRC_PB4 |
+						(PULL_WAKEUP_SRC_PB5<<2) |
+						(PULL_WAKEUP_SRC_PB6<<4) |
+						(PULL_WAKEUP_SRC_PB7<<6));
+
+
+	analog_write (0x12,  PULL_WAKEUP_SRC_PC0 |
+						(PULL_WAKEUP_SRC_PC1<<2) |
+						(PULL_WAKEUP_SRC_PC2<<4) |
+						(PULL_WAKEUP_SRC_PC3<<6));
+
+	analog_write (0x13,  PULL_WAKEUP_SRC_PC4 |
+						(PULL_WAKEUP_SRC_PC5<<2) |
+						(PULL_WAKEUP_SRC_PC6<<4) |
+						(PULL_WAKEUP_SRC_PC7<<6));
+
+
+	analog_write (0x14,  PULL_WAKEUP_SRC_PD0 |
+						(PULL_WAKEUP_SRC_PD1<<2) |
+						(PULL_WAKEUP_SRC_PD2<<4) |
+						(PULL_WAKEUP_SRC_PD3<<6));
+
+	analog_write (0x15,  PULL_WAKEUP_SRC_PD4 |
+						(PULL_WAKEUP_SRC_PD5<<2) |
+						(PULL_WAKEUP_SRC_PD6<<4) |
+						(PULL_WAKEUP_SRC_PD7<<6));
+}
 
 
 #if (BLC_PM_DEEP_RETENTION_MODE_EN)
 _attribute_ram_code_
 #endif
-void gpio_init(void)
+void gpio_init(int anaRes_init_en)
 {
 
 	reg_gpio_pa_setting1 =
@@ -271,7 +315,11 @@ void gpio_init(void)
 
 
 
-
+#if 1
+	if(anaRes_init_en){
+		gpio_analog_resistance_init();
+	}
+#else
 	analog_write (0x0e,  PULL_WAKEUP_SRC_PA0 |
 						(PULL_WAKEUP_SRC_PA1<<2) |
 						(PULL_WAKEUP_SRC_PA2<<4) |
@@ -314,6 +362,7 @@ void gpio_init(void)
 						(PULL_WAKEUP_SRC_PD5<<2) |
 						(PULL_WAKEUP_SRC_PD6<<4) |
 						(PULL_WAKEUP_SRC_PD7<<6));
+#endif
 
 }
 
@@ -349,17 +398,8 @@ void gpio_init(void)
  *
  *
  *********************************************************************************/
-void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
+void gpio_config_special_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 {
-	unsigned char	bit = pin & 0xff;
-	if(func == AS_GPIO){
-		BM_SET(reg_gpio_gpio_func(pin), bit);
-		return;
-	}else{
-		BM_CLR(reg_gpio_gpio_func(pin), bit);
-	}
-
-
 	//config gpio special func
 	unsigned char val = 0;
 	unsigned char mask = 0xff;
@@ -967,6 +1007,24 @@ void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
 	unsigned short reg = 0x5a8 + ((pin>>8)<<1) + ((pin&0x0f0) ? 1 : 0 );
 	write_reg8(reg, ( read_reg8(reg) & mask) | val);
 
+}
+
+
+
+void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func)
+{
+	unsigned char	bit = pin & 0xff;
+	if(func == AS_GPIO){
+		BM_SET(reg_gpio_gpio_func(pin), bit);
+		return;
+	}else{
+		BM_CLR(reg_gpio_gpio_func(pin), bit);
+	}
+
+
+	if(func > AS_GPIO){
+		gpio_config_special_func(pin, func);
+	}
 }
 
 

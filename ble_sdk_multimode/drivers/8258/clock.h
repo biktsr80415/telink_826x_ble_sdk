@@ -82,7 +82,23 @@ typedef enum{
 }SYS_CLK_TYPEDEF;
 
 //void clock_init(SYS_CLK_TYPEDEF SYS_CLK);
-#define clock_init(sys_clk) 	   ( reg_clk_sel = (sys_clk) )
+
+static inline void clock_init(SYS_CLK_TYPEDEF SYS_CLK)
+{
+	reg_clk_sel = (unsigned char)SYS_CLK;
+
+#if (MODULE_WATCHDOG_ENABLE)
+	reg_tmr_ctrl = MASK_VAL(
+		FLD_TMR_WD_CAPT, (MODULE_WATCHDOG_ENABLE ? (WATCHDOG_INIT_TIMEOUT * CLOCK_SYS_CLOCK_1MS >> WATCHDOG_TIMEOUT_COEFF):0)
+		, FLD_TMR_WD_EN, (MODULE_WATCHDOG_ENABLE?1:0));
+#endif
+}
+
+
+static inline void clock_set(SYS_CLK_TYPEDEF SYS_CLK)
+{
+	reg_clk_sel = (unsigned char)SYS_CLK;
+}
 
 _attribute_ram_code_ void sleep_us (unsigned long microsec);		//  use register counter to delay
 

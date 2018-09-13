@@ -31,8 +31,6 @@ static inline void usb_dp_pullup_en (int en)
 #define DEEP_ANA_REG0    0x3a
 #define DEEP_ANA_REG1    0x3b
 #define DEEP_ANA_REG2    0x3c
-#define DEEP_ANA_REG3    0x3d
-#define DEEP_ANA_REG4  	 0x3e
 
 
 //these analog register below may have some problem when user enter deepsleep but ERR wakeup
@@ -135,6 +133,11 @@ static inline int pm_is_deepPadWakeup(void)
 	return pmParam.is_pad_wakeup;
 }
 
+extern unsigned int flash_rdid;
+static inline unsigned int pm_get_flash_rdid(void)
+{
+	return flash_rdid;
+}
 
 //only for debug below, will remove them later
 void shutdown_gpio(void);  //for debug

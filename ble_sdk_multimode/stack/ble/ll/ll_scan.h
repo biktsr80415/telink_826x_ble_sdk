@@ -35,7 +35,7 @@ typedef struct {
 	u8		scanDevice_num;
 	u8		scanRspDevice_num;
 	u8		scan_extension_mask;
-	s8		T_SCAN_REQ_INTVL;
+//	s8		T_SCAN_REQ_INTVL;
 
 
 

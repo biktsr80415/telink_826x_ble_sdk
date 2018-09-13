@@ -8,19 +8,34 @@
 #ifndef BLE_LL_OTA_H_
 #define BLE_LL_OTA_H_
 
-#ifndef	BLE_OTA_ENABLE
-#define BLE_OTA_ENABLE		0
+
+#ifndef BLE_OTA_FW_CHECK_EN
+#define BLE_OTA_FW_CHECK_EN					1
 #endif
 
-
+#define FW_MAX_SIZE							0x40000			//256K
 
 #define CMD_OTA_FW_VERSION					0xff00
 #define CMD_OTA_START						0xff01
 #define CMD_OTA_END							0xff02
 
 
+#define FLAG_FW_CHECK						0x5D
+#define FW_CHECK_AGTHM2						0x02
+
+
+
 typedef struct{
 	u8  ota_start_flag;
+#if (BLE_OTA_FW_CHECK_EN)
+	u8 	fw_check_en;
+	u8  fw_check_match;
+	u8  rsvd;
+
+	u32 fw_crc_init;
+
+	u16 fw_crc_last_index;
+#endif
 }ota_service_t;
 
 extern ota_service_t blcOta;
@@ -32,7 +47,6 @@ extern u32 blt_ota_timeout_us;
 
 extern u32	ota_program_offset;
 extern int 	ota_firmware_size_k;
-extern u32	bls_ota_bootFlagAddr;
 
 
 typedef void (*ota_startCb_t)(void);
@@ -50,6 +64,7 @@ enum{
 	OTA_WRITE_FLASH_ERR,  //write OTA data to flash ERR
  	OTA_DATA_UNCOMPLETE,  //lost last one or more OTA PDU
  	OTA_TIMEOUT, 		  //
+ 	OTA_FW_CHECK_ERR,
 };
 
 void bls_ota_procTimeout(void);
@@ -66,12 +81,10 @@ extern int otaRead(void * p);
 
 extern void start_reboot(void);
 
-//firmware_size_k  must be 4k aligned, ota_offset will be ignored in 8267/8269, valid in 8261/8266
-void bls_ota_setFirmwareSizeAndOffset(int firmware_size_k, u32 ota_offset);
+//firmware_size_k  must be 4k aligned
+void bls_ota_set_fwSize_and_fwBootAddr(int firmware_size_k, int boot_addr);
 
 
-//only valid for 8261/8266
-void bls_ota_setBootFlagAddr(u32 bootFlag_addr);
 
 void bls_ota_clearNewFwDataArea(void);
 

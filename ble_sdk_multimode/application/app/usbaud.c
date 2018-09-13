@@ -1,8 +1,12 @@
-#include <application/app/usbaud.h>
-#include <application/usbstd/AudioClassCommon.h>
 #include "../../common/config/user_config.h"
 
 #include "drivers.h"
+
+#include "usbaud.h"
+#include "../usbstd/usbhw.h"
+#include "../usbstd/usbhw_i.h"
+#include "../usbstd/usb.h"
+#include "../usbstd/audioClassCommon.h"
 
 /*************************************************
  * g_audio_hid_chg:

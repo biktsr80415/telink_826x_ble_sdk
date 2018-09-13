@@ -17,17 +17,13 @@
 
 
 /////////////////// Flash  Address Config ////////////////////////////
-	#ifndef		CFG_ADR_MAC
-	#define		CFG_ADR_MAC						0x76000
-	#endif
+#ifndef		CFG_ADR_MAC
+#define		CFG_ADR_MAC						0x76000
+#endif
 
-	#ifndef		CUST_CAP_INFO_ADDR
-	#define		CUST_CAP_INFO_ADDR				0x77000
-	#endif
-
-	#ifndef		CUST_TP_INFO_ADDR
-	#define		CUST_TP_INFO_ADDR				0x77040
-	#endif
+#ifndef		CUST_CAP_INFO_ADDR
+#define		CUST_CAP_INFO_ADDR				0x77000
+#endif
 
 
 
@@ -50,10 +46,15 @@ typedef struct{
 misc_para_t blt_miscParam;
 
 
-
+/*
+ * only 1 can be set
+ */
 static inline void blc_app_setExternalCrystalCapEnable(u8  en)
 {
 	blt_miscParam.ext_cap_en = en;
+
+	WriteAnalogReg(0x8a,ReadAnalogReg(0x8a)|0x80);//close internal cap
+
 }
 
 
@@ -65,15 +66,8 @@ static inline void blc_app_loadCustomizedParameters(void)
 		 //customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
 		 u8 cap_frqoft = *(unsigned char*) CUST_CAP_INFO_ADDR;
 		 if( cap_frqoft != 0xff ){
-			 analog_write(0x81, cap_frqoft );
+			 analog_write(0x8A, cap_frqoft );
 		 }
-	 }
-
-
-	 // customize TP0/TP1
-	 u16 tpLH = *(unsigned short*) CUST_TP_INFO_ADDR;
-	 if( tpLH != 0xffff ){
-		 rf_update_tp_value(tpLH&0xff, tpLH>>8);
 	 }
 }
 
@@ -168,8 +162,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 #ifndef BLS_PROC_LONG_SUSPEND_ENABLE
 #define BLS_PROC_LONG_SUSPEND_ENABLE					0
 #endif
-
-
 
 
 
@@ -271,6 +263,10 @@ static inline void blc_app_loadCustomizedParameters(void)
 #define DBG_CHN7_LOW
 #endif
 
+
+#if (LL_MASTER_SINGLE_CONNECTION || LL_MASTER_MULTI_CONNECTION)
+	#define BLC_REGISTER_DBG_GPIO_IN_STACK	0
+#endif
 
 #ifndef	BLC_REGISTER_DBG_GPIO_IN_STACK
 #define BLC_REGISTER_DBG_GPIO_IN_STACK		1

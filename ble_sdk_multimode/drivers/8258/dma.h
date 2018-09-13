@@ -9,6 +9,11 @@
 #define DMA_H_
 
 
+#define DMA_RFRX_LEN_HW_INFO				0
+#define DMA_RFRX_OFFSET_HEADER				4
+#define DMA_RFRX_OFFSET_RFLEN				5
+#define DMA_RFRX_OFFSET_DATA				6
+
 
 
 /**

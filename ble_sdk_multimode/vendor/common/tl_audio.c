@@ -187,7 +187,7 @@ void mic_to_adpcm_split (signed short *ps, int len, signed short *pds, int start
 	//byte5- byte128: 124 byte(62 sample) adpcm data
 	for (i=0; i<len; i++) {
 
-		s16 di = ps[AMIC_PIN_IN_PC2_PC3_ENABLE ? (i*2 + 1) : i];
+		s16 di = ps[i];
 		int step = steptbl[predict_idx];
 		int diff = di - predict;
 

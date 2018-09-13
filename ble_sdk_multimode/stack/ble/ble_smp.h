@@ -290,10 +290,11 @@ typedef struct {
 
 
 typedef void (*smp_check_handler_t)(u32);
-typedef void (*smp_init_handler_t)(u8 *p);
+typedef int (*smp_init_handler_t)(u8 *p);
 typedef u8 * (*smp_info_handler_t)(void);
 typedef void (*smp_bond_clean_handler_t)(void);
 typedef int (*smp_enc_done_cb_t)(void);
+typedef void (*smp_trigger_cb_t)(u16 conn_handle);
 
 
 extern smp_check_handler_t		func_smp_check; //HID on android 7.0

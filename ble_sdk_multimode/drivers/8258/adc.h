@@ -15,21 +15,9 @@ static inline void	adc_reset_adc_module(void)
 	reg_rst1 = 0;
 }
 
-//on _off = 1 : power on   pll_bandgap
-//on _off = 0 : power off  pll_bandgap
-static inline void adc_power_on_pll_bandgap(unsigned int on_off)
-{
-	if(on_off){
-		analog_write(anareg_06, analog_read(anareg_82) & ~FLD_PLL_BG_POWER_DOWN);
-	}
-	else{
-		analog_write(anareg_06, analog_read(anareg_82) | FLD_PLL_BG_POWER_DOWN);
-	}
-}
 
 
-
-
+//ana_82 set 0x64(FLD_CLK_24M_TO_SAR_EN is on) in cpu_wakeup_init(), so we do not set it enable in application
 static inline void adc_enable_clk_24m_to_sar_adc(unsigned int en)  //1: enable;  0: disable
 {
 	if(en){
@@ -66,7 +54,7 @@ afe_0xF9
 					0x2: VBAT/3
 					0x3: VBAT/2
  *************************************************************************************/
-#define anareg_adc_vref			0xE7
+#define anareg_adc_vref			0xE7            //poweron_dft: 0x0b
 enum{
 	FLD_ADC_VREF_CHN_L = 		BIT_RNG(0,1),
 	FLD_ADC_VREF_CHN_R = 		BIT_RNG(2,3),
@@ -82,7 +70,7 @@ typedef enum{
 }ADC_RefVolTypeDef;
 
 
-#define anareg_adc_vref_vbat_div		0xF9
+#define anareg_adc_vref_vbat_div		0xF9   //poweron_dft: 0x00
 enum{
 	FLD_ADC_VREF_VBAT_DIV = 		BIT_RNG(2,3),
 };
@@ -94,6 +82,11 @@ typedef enum{
 	ADC_VBAT_DIVIDER_1F2
 }ADC_VbatDivTypeDef;
 
+
+static inline void adc_set_vref(ADC_RefVolTypeDef vRef_L, ADC_RefVolTypeDef vRef_R, ADC_RefVolTypeDef vRef_M)
+{
+	analog_write(anareg_adc_vref, vRef_L | vRef_R<<2 | vRef_M<<4);
+}
 
 static inline void adc_set_vref_chn_left(ADC_RefVolTypeDef v_ref)
 {
@@ -164,9 +157,9 @@ afe_0xEA
 		0xe: rsvd
 		0xf: Vbat (Battery voltage)
  *************************************************************************************/
-#define anareg_adc_ain_chn_misc			0xE8
-#define anareg_adc_ain_chn_left			0xE9
-#define anareg_adc_ain_chn_right		0xEA
+#define anareg_adc_ain_chn_misc			0xE8	//poweron_dft: 0x02
+#define anareg_adc_ain_chn_left			0xE9	//poweron_dft: 0x00
+#define anareg_adc_ain_chn_right		0xEA	//poweron_dft: 0x01
 
 enum{
 	FLD_ADC_AIN_NEGATIVE = 		BIT_RNG(0,3),
@@ -218,35 +211,22 @@ typedef enum {
 }ADC_InputPchTypeDef;
 
 
-static inline void adc_set_ain_negative_chn_misc(ADC_InputNchTypeDef v_ain)
+
+static inline void adc_set_ain_chn_misc(ADC_InputPchTypeDef p_ain, ADC_InputNchTypeDef n_ain)
 {
-	analog_write (anareg_adc_ain_chn_misc, (analog_read(anareg_adc_ain_chn_misc)&(~FLD_ADC_AIN_NEGATIVE)) | (v_ain) );
+	analog_write (anareg_adc_ain_chn_misc, n_ain | p_ain<<4 );
 }
 
-static inline void adc_set_ain_positive_chn_misc(ADC_InputPchTypeDef v_ain)
+static inline void adc_set_ain_chn_left(ADC_InputPchTypeDef p_ain, ADC_InputNchTypeDef n_ain)
 {
-	analog_write (anareg_adc_ain_chn_misc, (analog_read(anareg_adc_ain_chn_misc)&(~FLD_ADC_AIN_POSITIVE)) | (v_ain<<4) );
+	analog_write (anareg_adc_ain_chn_left, n_ain | p_ain<<4 );
 }
 
-static inline void adc_set_ain_negative_chn_left(ADC_InputNchTypeDef v_ain)
+static inline void adc_set_ain_chn_right(ADC_InputPchTypeDef p_ain, ADC_InputNchTypeDef n_ain)
 {
-	analog_write (anareg_adc_ain_chn_left, (analog_read(anareg_adc_ain_chn_left)&(~FLD_ADC_AIN_NEGATIVE)) | (v_ain) );
+	analog_write (anareg_adc_ain_chn_right, n_ain | p_ain<<4 );
 }
 
-static inline void adc_set_ain_positive_chn_left(ADC_InputPchTypeDef v_ain)
-{
-	analog_write (anareg_adc_ain_chn_left, (analog_read(anareg_adc_ain_chn_left)&(~FLD_ADC_AIN_POSITIVE)) | (v_ain<<4) );
-}
-
-static inline void adc_set_ain_negative_chn_right(ADC_InputNchTypeDef v_ain)
-{
-	analog_write (anareg_adc_ain_chn_right, (analog_read(anareg_adc_ain_chn_right)&(~FLD_ADC_AIN_NEGATIVE)) | (v_ain) );
-}
-
-static inline void adc_set_ain_positive_chn_right(ADC_InputPchTypeDef v_ain)
-{
-	analog_write (anareg_adc_ain_chn_right, (analog_read(anareg_adc_ain_chn_right)&(~FLD_ADC_AIN_POSITIVE)) | (v_ain<<4) );
-}
 
 /**************************************************************************************
 afe_0xEB
@@ -268,13 +248,13 @@ afe_0xEC
 	BIT<6>    adc_en_diffm,  Select single-end or differential input mode for Misc channel.
 	BIT<7>    Reserved
  *************************************************************************************/
-#define anareg_adc_res_l_r			0xEB
+#define anareg_adc_res_l_r			0xEB	//poweron_dft: 0x33
 enum{
 	FLD_ADC_RES_L = 		BIT_RNG(0,1),
 	FLD_ADC_RES_R = 		BIT_RNG(4,5),
 };
 
-#define anareg_adc_res_m			0xEC
+#define anareg_adc_res_m			0xEC	//poweron_dft: 0x03
 enum{
 	FLD_ADC_RES_M 		 = 	BIT_RNG(0,1),
 	FLD_ADC_EN_DIFF_CHN_L	 =  BIT(4),
@@ -362,13 +342,13 @@ afe_0xEE
 			......
 			0xf: 48 cycles
  *************************************************************************************/
-#define anareg_adc_tsmaple_l_r			0xED
+#define anareg_adc_tsmaple_l_r			0xED	//poweron_dft: 0x11
 enum{
 	FLD_ADC_TSAMPLE_CYCLE_CHN_L = 		BIT_RNG(0,3),
 	FLD_ADC_TSAMPLE_CYCLE_CHN_R = 		BIT_RNG(4,7),
 };
 
-#define anareg_adc_tsmaple_m			0xEE
+#define anareg_adc_tsmaple_m			0xEE	//poweron_dft: 0x01
 enum{
 	FLD_ADC_TSAMPLE_CYCLE_CHN_M = 		BIT_RNG(0,3),
 };
@@ -398,6 +378,11 @@ typedef enum{
  * @param[in]  adcST - enum variable of adc sample time.
  * @return     none
  */
+static inline void adc_set_tsample_cycle_chn_left_right(ADC_SampCycTypeDef adcST_L,  ADC_SampCycTypeDef adcST_R)
+{
+	analog_write(anareg_adc_tsmaple_l_r, adcST_L | adcST_R<<4 );
+}
+
 static inline void adc_set_tsample_cycle_chn_left(ADC_SampCycTypeDef adcST)
 {
 	analog_write(anareg_adc_tsmaple_l_r, (analog_read(anareg_adc_tsmaple_l_r)&(~FLD_ADC_TSAMPLE_CYCLE_CHN_L)) | (adcST) );
@@ -408,9 +393,10 @@ static inline void adc_set_tsample_cycle_chn_right(ADC_SampCycTypeDef adcST)
 	analog_write(anareg_adc_tsmaple_l_r, (analog_read(anareg_adc_tsmaple_l_r)&(~FLD_ADC_TSAMPLE_CYCLE_CHN_R)) | (adcST<<4) );
 }
 
+
 static inline void adc_set_tsample_cycle_chn_misc(ADC_SampCycTypeDef adcST)
 {
-	analog_write(anareg_adc_tsmaple_m, (analog_read(anareg_adc_tsmaple_m)&(~FLD_ADC_TSAMPLE_CYCLE_CHN_M)) | (adcST) );
+	analog_write(anareg_adc_tsmaple_m, adcST );
 }
 
 
@@ -432,9 +418,9 @@ afe_0xF1
 
 	Note: State length indicates number of 24M clock cycles occupied by the state.
  *************************************************************************************/
-#define    anareg_r_max_mc	        	0xEF
-#define    anareg_r_max_c       		0xF0
-#define    anareg_r_max_s			    0xF1
+#define    anareg_r_max_mc	        	0xEF	//poweron_dft: 0x0f
+#define    anareg_r_max_c       		0xF0	//poweron_dft: 0x60
+#define    anareg_r_max_s			    0xF1	//poweron_dft: 0x06
 
 enum{								 //ana_EF
 	FLD_R_MAX_MC0	= BIT_RNG(0,7),
@@ -451,21 +437,15 @@ enum{                                //ana_F1
 };
 
 
-static inline void adc_set_length_set_state(unsigned char r_max_s)
+//state length indicates number of 24M clock cycles occupied by the state
+//R_max_mc[9:0] serves to set length of "capture" state for RNS and Misc channel
+//R_max_c[9:0]  serves to set length of "capture" state for left and right channel
+//R_max_s[9:0]  serves to set length of "set" state for left, right and Misc channel
+static inline void adc_set_state_length(unsigned short R_max_mc, unsigned short R_max_c,unsigned char R_max_s)
 {
-	analog_write(anareg_r_max_s, (analog_read(anareg_r_max_s)&(~FLD_R_MAX_S)) | (r_max_s) );
-}
-
-static inline void adc_set_length_capture_state_for_chn_misc_rns(unsigned short r_max_mc)
-{
-	analog_write(anareg_r_max_mc,  (r_max_mc & 0x0ff));
-	analog_write(anareg_r_max_s,  ((analog_read(anareg_r_max_s)&(~FLD_R_MAX_MC1)) | (r_max_mc>>8)<<6 ));
-}
-
-static inline void adc_set_length_capture_state_for_chn_left_right(unsigned short r_max_c)
-{
-	analog_write(anareg_r_max_c,  r_max_c & 0xff);
-	analog_write(anareg_r_max_s,  (analog_read(anareg_r_max_s)&(~FLD_R_MAX_C1)) | (r_max_c>>8)<<4 );
+	WriteAnalogReg(anareg_r_max_mc, R_max_mc);
+	WriteAnalogReg(anareg_r_max_c, 	R_max_c);
+	WriteAnalogReg(anareg_r_max_s,  ((R_max_mc>>8)<<6) | ((R_max_c>>8)<<4)  | (R_max_s & FLD_R_MAX_S)   );
 }
 
 
@@ -478,7 +458,7 @@ afe_0xF2
 	BIT<3>   r_en_rns	  Enable RNS sampling.  1: enable;  0: disable
 	BIT<6:4> r_max_scnt   Set total length for sampling state machine (i.e. max state index)
  *************************************************************************************/
-#define anareg_adc_chn_en			0xF2
+#define anareg_adc_chn_en			0xF2	//poweron_dft: 0x27
 enum{
 	FLD_ADC_CHN_EN_L	= BIT(0),
 	FLD_ADC_CHN_EN_R	= BIT(1),
@@ -495,15 +475,6 @@ typedef enum{
 	ADC_RNS_CHN 	= BIT(3),
 }ADC_ChTypeDef;
 
-static inline void adc_set_chn_enable(ADC_ChTypeDef ad_ch)
-{
-	analog_write(anareg_adc_chn_en, (analog_read(anareg_adc_chn_en)&0xf0) | ad_ch );
-}
-
-static inline void adc_set_max_state_cnt(unsigned char s_cnt)
-{
-	analog_write(anareg_adc_chn_en, (analog_read(anareg_adc_chn_en)&(~FLD_ADC_MAX_SCNT)) | ((s_cnt&0x07)<<4) );
-}
 
 static inline void adc_set_chn_enable_and_max_state_cnt(ADC_ChTypeDef ad_ch, unsigned char s_cnt)
 {
@@ -519,7 +490,7 @@ afe_0xF4
       	  	  ADC clk frequency = 24M/(adc_clk_div + 1)
     BIT<7:3>  reserved
  *************************************************************************************/
-#define anareg_adc_clk_div				0xF4
+#define anareg_adc_clk_div				0xF4	//poweron_dft: 0x03
 enum{
 	FLD_ADC_CLK_DIV = BIT_RNG(0,2)
 };
@@ -544,10 +515,10 @@ afe_0xF8<7:0>   adc_dat[15:8]  	Read only
 								[6:0]:  Misc adc_dat[14:8]
 
  *************************************************************************************/
-#define    anareg_adc_rng_l        		0xF5
-#define    anareg_adc_rng_h        		0xF6
-#define    anareg_adc_misc_l        	0xF7
-#define    anareg_adc_misc_h        	0xF8
+#define    anareg_adc_rng_l        		0xF5	//poweron_dft: 0x10
+#define    anareg_adc_rng_h        		0xF6	//poweron_dft: 0x11
+#define    anareg_adc_misc_l        	0xF7	//poweron_dft: 0x00
+#define    anareg_adc_misc_h        	0xF8	//poweron_dft: 0x00
 
 enum{
 	FLD_ADC_MISC_DATA   = BIT_RNG(0,6),
@@ -571,7 +542,7 @@ afe_0xFA
 							0x3: 1/8
 
  *************************************************************************************/
-#define    anareg_ain_scale        		0xFA
+#define    anareg_ain_scale        		0xFA	//poweron_dft: 0x00
 enum{
 	FLD_ADC_ITRIM_PREAMP 	= BIT_RNG(0,1),
 	FLD_ADC_ITRIM_VREFBUF	= BIT_RNG(2,3),
@@ -641,14 +612,14 @@ afe_0xFC
 						1: Power down
 						0: Power up
  *************************************************************************************/
-enum{                                              //ana_0xFB
+enum{                                              //ana_0xFB	//poweron_dft: 0xf0
 	FLD_PGA_CAP_TRIM_EN_L		= BIT(0),
 	FLD_PGA_CAP_TRIM_EN_R		= BIT(1),
 	FLD_PGA_ITRIM_BOOST_L		= BIT_RNG(4,5),
 	FLD_PGA_ITRIM_BOOST_R		= BIT_RNG(6,7),
 };
 
-#define anareg_adc_pga_ctrl				0xFC
+#define anareg_adc_pga_ctrl				0xFC	//poweron_dft: 0xe0
 enum{                                              //ana_0xFC
 	FLD_PGA_ITRIM_GAIN_L		= BIT_RNG(0,1),
 	FLD_PGA_ITRIM_GAIN_R		= BIT_RNG(2,3),
@@ -720,6 +691,13 @@ static inline void adc_set_right_boost_bias(Gain_BiasTypeDef bias)
 	analog_write(0xFB, (analog_read(0xFB)&(~FLD_PGA_ITRIM_BOOST_R)) | (bias<<6) |  FLD_PGA_CAP_TRIM_EN_R);
 }
 
+
+
+static inline void adc_set_left_right_gain_bias(Gain_BiasTypeDef bias_L, Gain_BiasTypeDef bias_R)
+{
+	analog_write(0xFC, (analog_read(0xFC) & 0xF0) | (bias_L | bias_R<<2) );
+}
+
 static inline void adc_set_left_gain_bias(Gain_BiasTypeDef bias)
 {
 	analog_write(0xFC, (analog_read(0xFC)&(~FLD_PGA_ITRIM_GAIN_L)) | (bias) );
@@ -732,6 +710,9 @@ static inline void adc_set_right_gain_bias(Gain_BiasTypeDef bias)
 
 
 
+//ana_0xFD	//poweron_dft: 0x05
+//ana_0xFE	//poweron_dft: 0xe5
+//ana_0xFF	//poweron_dft: 0x00
 
 
 
@@ -763,7 +744,6 @@ typedef enum {
 
 
 
-void adc_set_state_length(unsigned short R_max_mc, unsigned short R_max_c,unsigned char R_max_s);
 
 void adc_set_ref_voltage(ADC_ChTypeDef ch_n, ADC_RefVolTypeDef v_ref);
 
@@ -780,7 +760,28 @@ void adc_set_ain_pre_scaler(ADC_PreScalingTypeDef v_scl);
 
 
 
-unsigned short ADC_SampleValueGet(void);
+
+/**
+ * Name     :RNG_Set
+ * Function :Set the source and mode of the random number generator
+ * Input    :RNG_SrcTypeDef src
+ *          :RNG_UpdataTypeDef update_type
+ * return   :void
+ */
+static inline void RNG_Set(RNG_SrcTypeDef src,RNG_UpdataTypeDef update_type)
+{
+	WriteAnalogReg(0xfe, src | update_type);			//Set
+}
 
 
-
+/**
+ * Name     :RNG_read
+ * Function :Read the value of the random number generator
+ * Input    :None
+ * return   :unsigned short RngValue
+ *          :random number
+ */
+static inline unsigned short RNG_Read(void)
+{
+	return ( ReadAnalogReg(0xf6)<<8 |  ReadAnalogReg(0xf5) );
+}

@@ -1,9 +1,25 @@
 
 #pragma once
 
-#include "register.h"
 
-static inline unsigned short rand(void){
-	return (unsigned short)((clock_time() & 0xffff) ^ reg_rnd_number);
-}
+
+
+
+void random_generator_pre_init(void);
+void random_generator_init(void);
+
+unsigned int rand(void);
+
+/*********************************************************************
+ * @fn          generateRandomNum
+ *
+ * @brief       generate random number
+ *
+ * @param       len - len
+ *
+ * @param       data -  buffer
+ *
+ * @return      None
+ */
+void generateRandomNum(int len, unsigned char *data);
 

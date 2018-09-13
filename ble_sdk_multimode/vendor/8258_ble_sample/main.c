@@ -32,7 +32,7 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 
 	rf_drv_init(RF_MODE_BLE_1M);
 
-	gpio_init();
+	gpio_init(1);
 
 #if (CLOCK_SYS_CLOCK_HZ == 16000000)
 	clock_init(SYS_CLK_16M_Crystal);

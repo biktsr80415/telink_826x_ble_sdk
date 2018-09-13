@@ -54,3 +54,5 @@ int aes_ll_ccm_decryption(u8 *pkt, int master, ble_crypt_para_t *pd);		//OK retu
 u8 aes_att_encryption_packet(u8 *key, u8 *iv, u8 *mic, u8 mic_len, u8 *ps, u8 len);
 u8 aes_att_decryption_packet(u8 *key, u8 *iv, u8 *mic, u8 mic_len, u8 *ps, u8 len);
 
+void aes_ll_c1(u8 * key, u8 * r, u8 *p1, u8 *p2, u8 * result);
+void aes_ll_s1(u8 * key, u8 * r1, u8 * r2, u8 * result);

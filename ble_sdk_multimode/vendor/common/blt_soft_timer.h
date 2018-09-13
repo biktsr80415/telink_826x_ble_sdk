@@ -10,7 +10,9 @@
 
 
 //user define
-#define		BLT_SOFTWARE_TIMER_ENABLE				0   //enable or disable
+#ifndef BLT_SOFTWARE_TIMER_ENABLE
+#define BLT_SOFTWARE_TIMER_ENABLE					0   //enable or disable
+#endif
 
 
 #define 	MAX_TIMER_NUM							4   //timer max number

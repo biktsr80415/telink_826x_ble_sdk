@@ -610,7 +610,7 @@ enum{
 	FLD_RF_TX_INTR =			BIT(7),
 };
 
-
+#define reg_rf_timestamp		REG_ADDR32(0x450)
 
 #define reg_rf_ll_ctrl_0		REG_ADDR8(0xf02)
 #define reg_rf_ll_ctrl_1		REG_ADDR8(0xf03)
@@ -680,7 +680,7 @@ enum{
 	FLD_RX_RND_FREE_MODE =		BIT(3),
 	FLD_RX_RND_CLK_DIV =		BIT_RNG(4,7),
 };
-#define reg_rnd_number			REG_ADDR16(0x448)
+
 
 #define reg_bb_max_tick			REG_ADDR16(0x44c)
 #define reg_rf_rtt				REG_ADDR32(0x454)

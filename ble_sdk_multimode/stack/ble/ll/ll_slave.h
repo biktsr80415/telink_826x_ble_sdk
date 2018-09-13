@@ -16,7 +16,7 @@ typedef struct {
 	u8 		ll_remoteFeature; //not only one for BLE master, use connHandle to identify
 	u8		remoteFeatureReq;
 
-	u8 		rsvd2;
+	u8 		long_suspend;
 	u8		interval_level;
 	u16		connHandle;
 
@@ -117,5 +117,6 @@ ble_sts_t  	bls_hci_reset(void);
 ble_sts_t	bls_hci_receiveHostACLData(u16 connHandle, u8 PB_Flag, u8 BC_Flag, u8 *pData );
 ble_sts_t 	bls_hci_le_getRemoteSupportedFeatures(u16 connHandle);
 
+void		blt_push_fifo_hold (u8 *p);
 
 #endif /* LL_SLAVE_H_ */

@@ -41,7 +41,7 @@ u8 addrExtCmp(const u8 * pAddr1, const u8 * pAddr2)
 }
 
 
-#if 0 // not used
+
 void freeTimerEvent(void **arg)
 {
     if ( *arg != NULL ) {
@@ -55,7 +55,6 @@ void freeTimerEvent(void **arg)
         *arg = NULL;
     }
 }
-#endif
 
 void freeTimerTask(void **arg)
 {
@@ -66,41 +65,6 @@ void freeTimerTask(void **arg)
 }
 
 
-/*********************************************************************
- * @fn          generateRandomNum
- *
- * @brief       generate random number
- *
- * @param       len - len
- *
- * @param       data -  buffer
- *
- * @return      None
- */
-void generateRandomNum(u8 len, u8 *data)
-{
-	u8 i;
-	u16 randNums = 0;
-    /* if len is odd */
-	for (i=0; i<len-1; i+=2 ) {
-#ifdef WIN32
-		*(u16*)(data+i) = my_random();
-#else
-		randNums = rand();
-		data[i] = randNums & 0xff;
-		data[i+1] = randNums >> 8 &0xff;
-
-#endif
-	}
-
-    if ( i != len ) {
-#ifdef WIN32
-        data[len-1] = my_random();
-#else
-        data[len-1] = rand();
-#endif
-    }
-}
 
 // general swap/endianess utils
 
@@ -163,59 +127,116 @@ void store_16(u8 *buffer, u16 pos, u16 value){
 }
 
 
-
-void my_fifo_init (my_fifo_t *f, u8 s, u8 n, u8 *p)
-{
-	f->size = s;
-	f->num = n;
-	f->wptr = 0;
-	f->rptr = 0;
-	f->p = p;
-}
-
-u8* my_fifo_wptr (my_fifo_t *f)
-{
-	if (((f->wptr - f->rptr) & 255) < f->num)
+#ifdef RF_LONG_PACKET_FULL_SUPPORT
+	void my_fifo_init (my_fifo_t *f, u16 s, u8 n, u8 *p)
 	{
-		return f->p + (f->wptr & (f->num-1)) * f->size;
-	}
-	return 0;
-}
-
-void my_fifo_next (my_fifo_t *f)
-{
-	f->wptr++;
-}
-
-int my_fifo_push (my_fifo_t *f, u8 *p, u8 n)
-{
-	if (((f->wptr - f->rptr) & 255) >= f->num)
-	{
-		return -1;
+		f->size = s;
+		f->num = n;
+		f->wptr = 0;
+		f->rptr = 0;
+		f->p = p;
 	}
 
-	if (n >= f->size)
+	u8* my_fifo_wptr (my_fifo_t *f)
 	{
-		return -1;
+		if (((f->wptr - f->rptr) & 255) < f->num)
+		{
+			return f->p + (f->wptr & (f->num-1)) * f->size;
+		}
+		return 0;
 	}
-	u8 *pd = f->p + (f->wptr++ & (f->num-1)) * f->size;
-	*pd++ = n;
-	*pd++ = n >> 8;
-	memcpy (pd, p, n);
-	return 0;
-}
 
-void my_fifo_pop (my_fifo_t *f)
-{
-	f->rptr++;
-}
-
-u8 * my_fifo_get (my_fifo_t *f)
-{
-	if (f->rptr != f->wptr)
+	void my_fifo_next (my_fifo_t *f)
 	{
-		u8 *p = f->p + (f->rptr & (f->num-1)) * f->size;
-		return p;
+		f->wptr++;
 	}
-	return 0;
-}
+
+	int my_fifo_push (my_fifo_t *f, u8 *p, u16 n)
+	{
+		if (((f->wptr - f->rptr) & 255) >= f->num)
+		{
+			return -1;
+		}
+
+		if (n >= f->size)
+		{
+			return -1;
+		}
+		u8 *pd = f->p + (f->wptr++ & (f->num-1)) * f->size;
+		*pd++ = n;
+		*pd++ = n >> 8;
+		memcpy (pd, p, n);
+		return 0;
+	}
+
+	void my_fifo_pop (my_fifo_t *f)
+	{
+		f->rptr++;
+	}
+
+	u8 * my_fifo_get (my_fifo_t *f)
+	{
+		if (f->rptr != f->wptr)
+		{
+			u8 *p = f->p + (f->rptr & (f->num-1)) * f->size;
+			return p;
+		}
+		return 0;
+	}
+#else
+	void my_fifo_init (my_fifo_t *f, u8 s, u8 n, u8 *p)
+	{
+		f->size = s;
+		f->num = n;
+		f->wptr = 0;
+		f->rptr = 0;
+		f->p = p;
+	}
+
+	u8* my_fifo_wptr (my_fifo_t *f)
+	{
+		if (((f->wptr - f->rptr) & 255) < f->num)
+		{
+			return f->p + (f->wptr & (f->num-1)) * f->size;
+		}
+		return 0;
+	}
+
+	void my_fifo_next (my_fifo_t *f)
+	{
+		f->wptr++;
+	}
+
+	int my_fifo_push (my_fifo_t *f, u8 *p, u8 n)
+	{
+		if (((f->wptr - f->rptr) & 255) >= f->num)
+		{
+			return -1;
+		}
+
+		if (n >= f->size)
+		{
+			return -1;
+		}
+		u8 *pd = f->p + (f->wptr++ & (f->num-1)) * f->size;
+		*pd++ = n;
+		*pd++ = n >> 8;
+		memcpy (pd, p, n);
+		return 0;
+	}
+
+	void my_fifo_pop (my_fifo_t *f)
+	{
+		f->rptr++;
+	}
+
+	u8 * my_fifo_get (my_fifo_t *f)
+	{
+		if (f->rptr != f->wptr)
+		{
+			u8 *p = f->p + (f->rptr & (f->num-1)) * f->size;
+			return p;
+		}
+		return 0;
+	}
+#endif

@@ -278,3 +278,16 @@ _attribute_ram_code_ unsigned int flash_get_jedec_id(){
 }
 #endif
 #endif
+
+
+_attribute_ram_code_ unsigned int flash_get_jedec_id(void)
+{
+	unsigned char r = irq_disable();
+	flash_send_cmd(FLASH_GET_JEDEC_ID);
+	unsigned char manufacturer = mspi_read();
+	unsigned char mem_type = mspi_read();
+	unsigned char cap_id = mspi_read();
+	mspi_high();
+	irq_restore(r);
+	return (unsigned int)((manufacturer << 24 | mem_type << 16 | cap_id));
+}

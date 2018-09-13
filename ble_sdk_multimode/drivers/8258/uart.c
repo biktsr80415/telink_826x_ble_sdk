@@ -437,9 +437,11 @@ void uart_gpio_set(UART_TxPinDef tx_pin,UART_RxPinDef rx_pin)
 	gpio_setup_up_down_resistor(rx_pin, PM_PIN_PULLUP_10K);  //must  for stability and prevent from current leakage
 
 
-	gpio_set_func(tx_pin,AS_UART); // set tx pin
-	gpio_set_func(rx_pin,AS_UART); // set rx pin
+	gpio_config_special_func(tx_pin, AS_UART);
+	gpio_config_special_func(rx_pin, AS_UART);
 
+	gpio_set_func(tx_pin, NOT_AS_GPIO); // set tx pin
+	gpio_set_func(rx_pin, NOT_AS_GPIO); // set rx pin
 
 	gpio_set_input_en(tx_pin, 1);  //experiment shows that tx_pin should open input en(confirmed by qiuwei)
 	gpio_set_input_en(rx_pin, 1);  //

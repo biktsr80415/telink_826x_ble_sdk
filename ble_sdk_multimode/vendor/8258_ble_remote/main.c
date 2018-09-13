@@ -36,9 +36,11 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 
 	cpu_wakeup_init();
 
+	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup();  //MCU deep retention wakeUp
+
 	rf_drv_init(RF_MODE_BLE_1M);
 
-	gpio_init();
+	gpio_init( !deepRetWakeUp );  //analog resistance will keep available in deepSleep mode, so no need initialize again
 
 #if (CLOCK_SYS_CLOCK_HZ == 16000000)
 	clock_init(SYS_CLK_16M_Crystal);
@@ -48,13 +50,11 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 
 	//deep_wakeup_proc();
 
-#if	(PM_DEEPSLEEP_RETENTION_ENABLE)
-	if( pm_is_MCU_deepRetentionWakeup() ){
+
+	if( deepRetWakeUp ){
 		user_init_deepRetn ();
 	}
-	else
-#endif
-	{
+	else{
 		user_init_normal ();
 	}
 

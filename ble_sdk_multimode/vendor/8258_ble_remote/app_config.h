@@ -11,17 +11,30 @@ extern "C" {
 /////////////////// FEATURE SELECT /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE				1
 #define PM_DEEPSLEEP_RETENTION_ENABLE		1
-
 #define BLE_REMOTE_SECURITY_ENABLE      	1
-#define BLE_REMOTE_OTA_ENABLE				0
+#define BLE_REMOTE_OTA_ENABLE				1
 #define REMOTE_IR_ENABLE					0
-#define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
+#define BATT_CHECK_ENABLE       			1   //must enable
 #define BLE_AUDIO_ENABLE					1
-
-//led
 #define BLT_APP_LED_ENABLE					1
-#define	GPIO_LED							GPIO_PC6
-#define PC6_FUNC							AS_GPIO
+
+
+#if (BATT_CHECK_ENABLE)
+//telink device: you must choose one gpio with adc function to output high level(voltage will equal to vbat), then use adc to measure high level voltage
+	//use PB7 output high level, then adc measure this high level voltage
+	#define GPIO_VBAT_DETECT				GPIO_PB7
+	#define PB7_FUNC						AS_GPIO
+	#define PB7_INPUT_ENABLE				0
+	#define ADC_INPUT_PCHN					B7P    //corresponding  ADC_InputPchTypeDef in adc.h
+#endif
+
+//////////////////// LED CONFIG ///////////////////////////
+#if (BLT_APP_LED_ENABLE)
+	#define LED_ON_LEVAL 						1 			//gpio output high voltage to turn on led
+	#define	GPIO_LED							GPIO_PC6
+	#define PC6_FUNC							AS_GPIO
+#endif
+
 
 
 ////////////////////////// AUDIO CONFIG /////////////////////////////
@@ -30,13 +43,7 @@ extern "C" {
 	#define	ADPCM_PACKET_LEN				128
 	#define TL_MIC_ADPCM_UNIT_SIZE			248
 
-	#define AMIC_PIN_IN_PC2_PC3_ENABLE		0
-
-	#if AMIC_PIN_IN_PC2_PC3_ENABLE
-		#define	TL_MIC_BUFFER_SIZE				1984
-	#else
-		#define	TL_MIC_BUFFER_SIZE				992
-	#endif
+	#define	TL_MIC_BUFFER_SIZE				992
 
 	#define GPIO_AMIC_BIAS					GPIO_PC4
 
@@ -378,43 +385,22 @@ typedef enum
 #if(DEBUG_GPIO_ENABLE)
 	//define debug GPIO here according to your hardware
 
-#if 1
 	#define GPIO_CHN0							GPIO_PB4
 	#define GPIO_CHN1							GPIO_PB5
 	#define GPIO_CHN2							GPIO_PB6
-	#define GPIO_CHN3							GPIO_PB7
+	#define GPIO_CHN3							GPIO_PC3
 	#define GPIO_CHN4							GPIO_PB0
 	#define GPIO_CHN5							GPIO_PB1
-	#define GPIO_CHN6							GPIO_PC2
-	#define GPIO_CHN7							GPIO_PC3
+
 
 	#define PB4_OUTPUT_ENABLE					1
 	#define PB5_OUTPUT_ENABLE					1
 	#define PB6_OUTPUT_ENABLE					1
-	#define PB7_OUTPUT_ENABLE					1
+	#define PC3_OUTPUT_ENABLE					1
 	#define PB0_OUTPUT_ENABLE					1
 	#define PB1_OUTPUT_ENABLE					1
-	#define PC2_OUTPUT_ENABLE					1
-	#define PC3_OUTPUT_ENABLE					1
-#else
-	#define GPIO_CHN0							GPIO_PD0
-	#define GPIO_CHN1							GPIO_PD1
-	#define GPIO_CHN2							GPIO_PD2
-	#define GPIO_CHN3							GPIO_PD3
-	#define GPIO_CHN4							GPIO_PD4
-	#define GPIO_CHN5							GPIO_PD5
-	#define GPIO_CHN6							GPIO_PD6
-	#define GPIO_CHN7							GPIO_PD7
 
-	#define PD0_OUTPUT_ENABLE					1
-	#define PD1_OUTPUT_ENABLE					1
-	#define PD2_OUTPUT_ENABLE					1
-	#define PD3_OUTPUT_ENABLE					1
-	#define PD4_OUTPUT_ENABLE					1
-	#define PD5_OUTPUT_ENABLE					1
-	#define PD6_OUTPUT_ENABLE					1
-	#define PD7_OUTPUT_ENABLE					1
-#endif
+
 
 
 	#define DBG_CHN0_LOW		gpio_write(GPIO_CHN0, 0)
@@ -435,12 +421,6 @@ typedef enum
 	#define DBG_CHN5_LOW		gpio_write(GPIO_CHN5, 0)
 	#define DBG_CHN5_HIGH		gpio_write(GPIO_CHN5, 1)
 	#define DBG_CHN5_TOGGLE		gpio_toggle(GPIO_CHN5)
-	#define DBG_CHN6_LOW		gpio_write(GPIO_CHN6, 0)
-	#define DBG_CHN6_HIGH		gpio_write(GPIO_CHN6, 1)
-	#define DBG_CHN6_TOGGLE		gpio_toggle(GPIO_CHN6)
-	#define DBG_CHN7_LOW		gpio_write(GPIO_CHN7, 0)
-	#define DBG_CHN7_HIGH		gpio_write(GPIO_CHN7, 1)
-	#define DBG_CHN7_TOGGLE		gpio_toggle(GPIO_CHN7)
 #else
 	#define DBG_CHN0_LOW
 	#define DBG_CHN0_HIGH

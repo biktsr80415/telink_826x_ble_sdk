@@ -71,7 +71,7 @@ void led_proc(void)
 {
 #if (BLT_APP_LED_ENABLE)
 	if(device_led.isOn){
-		if(clock_time_exceed(device_led.startTick,(device_led.onTime_ms-5)*1000)){
+		if(clock_time_exceed(device_led.startTick,device_led.onTime_ms*1000)){
 			device_led_on_off(0);
 			if(device_led.offTime_ms){ //offTime not zero
 				device_led.startTick += device_led.onTime_ms*CLOCK_16M_SYS_TIMER_CLK_1MS;
@@ -82,7 +82,7 @@ void led_proc(void)
 		}
 	}
 	else{
-		if(clock_time_exceed(device_led.startTick,(device_led.offTime_ms-5)*1000)){
+		if(clock_time_exceed(device_led.startTick,device_led.offTime_ms*1000)){
 			if(--device_led.repeatCount){
 				device_led_on_off(1);
 				device_led.startTick += device_led.offTime_ms*CLOCK_16M_SYS_TIMER_CLK_1MS;

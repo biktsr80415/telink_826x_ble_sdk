@@ -46,7 +46,7 @@ void blt_set_bluetooth_version (u8 v);
 /////////////////////////////////////////////////////////////////////////////
 #define		CLOCK_SYS_CLOCK_1250US			(1250 * sys_tick_per_us)
 #define		CLOCK_SYS_CLOCK_10MS			(10000 * sys_tick_per_us)
-#define		FLG_RF_CONN_DONE	(FLD_RF_IRQ_CMD_DONE | FLD_RF_IRQ_FSM_TIMEOUT | FLD_RF_IRQ_FIRST_TIMEOUT | FLD_RF_IRQ_RX_TIMEOUT)
+#define		FLG_RF_CONN_DONE	(FLD_RF_IRQ_CMD_DONE | FLD_RF_IRQ_FSM_TIMEOUT | FLD_RF_IRQ_FIRST_TIMEOUT | FLD_RF_IRQ_RX_TIMEOUT | FLD_RF_IRQ_RX_CRC_2)
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -195,7 +195,7 @@ typedef struct {
 	u8		connMaxTxRxOctets_req;
 }ll_data_extension_t;
 
-ll_data_extension_t  bltData;
+extern ll_data_extension_t  bltData;
 
 
 
@@ -311,13 +311,15 @@ ble_sts_t  		blc_hci_ltkRequestReply (u16 connHandle,  u8*ltk);
 
 void 			blc_ll_setEncryptionBusy(u8 enc_busy);
 bool 			blc_ll_isEncryptionBusy(void);
-void 			blc_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
+void 			blc_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t evtCbFunc);
 
 void 			blc_ll_setIdleState(void);
 ble_sts_t 		blc_hci_le_getLocalSupportedFeatures(u8 *features);
 
 ble_sts_t 		blc_hci_le_readBufferSize_cmd(u8 *pData);
 
+
+int 			blc_ll_encrypted_data(u8*key, u8*plaintextData, u8* encrypteTextData);
 
 //core4.2 data extension
 void 			blc_ll_initDataLengthExtension (void);
@@ -352,31 +354,93 @@ static inline void blc_ll_recordRSSI(u8 rssi)
 
 
 
-/************************************************************* RF DMA RX\TX data strcut ***************************************************************************************
-----RF RX DMA buffer struct----:
-byte0    byte3   byte4    byte5   byte6  byte7  byte8    byte11   byte12      byte13   byte14 byte(14+w-1) byte(14+w) byte(16+w) byte(17+w) byte(18+w) byte(19+w)    byte(20+w)
-*-------------*----------*------*------*------*----------------*----------*------------*------------------*--------------------*---------------------*------------------------*
-| DMA_len(4B) | Rssi(1B) |xx(1B)|yy(1B)|zz(1B)| Stamp_time(4B) | type(1B) | Rf_len(1B) |    payload(wB)   |      CRC(3B)       |   Fre_offset(2B)    |  jj(1B)     0x40(1B)   |
-|             | rssi-110 |                    |                |         Header        |     Payload      |                    | (Fre_offset/8+25)/2 |          if CRC OK:0x40|
-|             |                               |                |<--               PDU                  -->|                    |                     |                        |
-*-------------*-------------------------------*----------------*------------------------------------------*--------------------*---------------------*------------------------*
-|<------------------------------------------------------   DMA len  -------------------|------------------|------------------->|
-|                                                                                      |                  |                    |
-|<----------------------------------- 14 byte ---------------------------------------->|<---- Rf_len ---->|<------ 3 Byte ---->|
-note: byte12 ->  type(1B):llid(2bit) nesn(1bit) sn(1bit) md(1bit)
-we can see: DMA_len = w(Rf_len) + 17.
-		    CRC_OK  = DMA_buffer[w(Rf_len) + 20] == 0x40 ? True : False.
+/****************************** (ble1m,2m,500k,125k)RF RX/TX packet format ********************************************
+RF RX packet format:
+  b0          b3    b4         b5       b6   b(5+w) b(6+w) b(8+w) b(9+w) b(12+w)  b(13+w)    b(14+w)  b(15+w)                      b(16+w)
+*---------------*---------*-----------*------------*------------*---------------*-------------------*----------*--------------------------------------------------*
+|  DMA_len(4B)  | type(1B)| Rf_len(1B)| payload(wB)|   CRC(3B)  | time_stamp(4B)|  Fre_offset(2B)   | Rssi(1B) |           pkt status indicator(1B)               |
+| (b0,b1 valid) |        Header       |   Payload  |            |               |                   | rssi-110 |[0]:crc err;[1]:sfd err;[2]:ll err;[4]:pwr err;   |
+|               |<--           PDU              -->|            |               |                   |          |[4]:long range 125k;[6:5]:N/A;[7]:nordic NACK ind |
+*---------------*----------------------------------*------------*---------------*-------------------*----------*--------------------------------------------------*
+|<--- 4byte --->|<------ 2 byte ----->|<- Rf_len ->|<- 3 byte ->|<----------------------------------- 8 byte ---------------------------------------------------->|
+note:       b4       ->  type(1B): llid(2bit) nesn(1bit) sn(1bit) md(1bit).
+we can see: DMA_len     =   rx[0] = w(Rf_len)+13 = rx[5]+13.
+            CRC_OK      =   DMA_buffer[rx[0]+3] == 0x00 ? True : False.
 
-----RF TX DMA buffer struct----:
-byte0    byte3   byte4       byte5      byte6  byte(6+w-1)
-*-------------*----------*------------*------------------*
-| DMA_len(4B) | type(1B) | Rf_len(1B) |    payload(wB)   |
-|             |         Header        |     Payload      |
-|             |<--               PDU                  -->|
-*-------------*------------------------------------------*
-note: type(1B):llid(2bit) nesn(1bit) sn(1bit) md(1bit),实际向RF 硬件FIFO中压数据，type只表示llid,其他bit位为0！
-*******************************************************************************************************************************************************************************/
+******
+RF TX packet format:
+ b0          b3      b4         b5       b6   b(5+w)
+*---------------*----------*-----------*------------*
+|  DMA_len(4B)  | type(1B) | Rf_len(1B)| payload(wB)|
+| (b0,b1 valid) |         Header       |   Payload  |
+|               |<--               PDU           -->|
+*---------------*-----------------------------------*
+note:       b4      ->  type(1B): llid(2bit) nesn(1bit) sn(1bit) md(1bit).Here type only means that llid, other bit is automatically populated when sent by hardware
+we can see: DMA_len = rx[0]= w(Rf_len) + 2.
+**********************************************************************************************************************/
 
+
+
+/************************************** Link Layer pkt format *********************************************************
+Link Layer pak format(BLE4.2 spec):
+*-------------*-------------------*-------------------------------*-------------------*
+| preamble(1B)| Access Address(4B)|          PDU(2~257B)          |      CRC(3B)      |
+|             |                   |  Header(2B) | payload(0~255B) |                   |
+*-------------*-------------------*-------------------------------*-------------------*
+1.ADV Channel, payload:0~37bytes = 6bytes AdvAdd + [maximum 31bytes adv packet payload]
+2.Data Channel, payload:0~255bytes = 0~251bytes + 4bytes MIC(may include MIC feild)[The payload in ble4.2 can reach 251 bytes].
+  Protocol overhead: 10bytes(preamble\Access Address\Header\CRC) + L2CAP header 4bytes = 14bytes, all LL data contains 14 bytes of overhead,
+  For att, opCode is also needed, 1bytes + handle 2bytes = 3bytes, 251-4-3=[final 247-3bytes available to users].
+******
+Link Layer pak format(BLE4.0\4.1 spec):
+*-------------*-------------------*-------------------------------*-------------------*
+| preamble(1B)| Access Address(4B)|          PDU(2~39B)           |      CRC(3B)      |
+|             |                   |  Header(2B) | payload(0~37B)  |                   |
+*-------------*-------------------*-------------------------------*-------------------*
+1.ADV Channel, payload:0~37bytes = 6bytes AdvAdd + [maximum 31bytes adv packet payload]
+2.Data Channel, payload:0~31bytes = 0~27bytes + 4bytes MIC(may include MIC feild)[The payload in ble4.0/4.1 is 27 bytes].
+  Protocol overhead: 10bytes(preamble\Access Address\Header\CRC) + L2CAP header 4bytes = 14bytes,all LL data contains 14 bytes of overhead,
+  For att, opCode is also needed, 1bytes + handle 2bytes = 3bytes, 27-4-3=[final 23-3bytes available to users]，This is why the default mtu size is 23 in the ble4.0 protocol.
+**********************************************************************************************************************/
+
+
+/*********************************** Advertising channel PDU : Header *************************************************
+Header(2B):[Advertising channel PDU Header](BLE4.0\4.1 spec):
+*--------------*----------*------------*-------------*-------------*----------*
+|PDU Type(4bit)| RFU(2bit)| TxAdd(1bit)| RxAdd(1bit) |Length(6bits)| RFU(2bit)|
+*--------------*----------*------------*-------------*-------------*----------*
+public (TxAdd = 0) or random (TxAdd = 1).
+**********************************************************************************************************************/
+
+
+/******************************************* Data channel PDU : Header ************************************************
+Header(2B):[Data channel PDU Header](BLE4.2 spec):(BLE4.0\4.1 spec):
+*----------*-----------*---------*----------*----------*-------------*----------*
+|LLID(2bit)| NESN(1bit)| SN(1bit)| MD(1bit) | RFU(3bit)|Length(5bits)| RFU(3bit)|
+*----------*-----------*---------*----------*----------*-------------*----------*
+******
+Header(2B):[Data channel PDU Header](BLE4.2 spec):
+*----------*-----------*---------*----------*----------*------------------------*
+|LLID(2bit)| NESN(1bit)| SN(1bit)| MD(1bit) | RFU(3bit)|       Length(8bits)    |
+*----------*-----------*---------*----------*----------*------------------------*
+start    pkt:  llid 2 -> 0x02
+continue pkt:  llid 1 -> 0x01
+control  pkt:  llid 3 -> 0x03
+***********************************************************************************************************************/
+
+
+/*********************************** DATA channel PDU ******************************************************************
+*------------------------------------- ll data pkt -------------------------------------------*
+|             |llid nesn sn md |  pdu-len   | l2cap_len(2B)| chanId(2B)|  opCode(1B)|data(xB) |
+| DMA_len(4B) |   type(1B)     | rf_len(1B) |       L2CAP header       |       value          |
+|             |          data_headr         |                        payload                  |
+*-------------*-----------------------------*-------------------------------------------------*
+*--------------------------------- ll control pkt ----------------------------*
+| DMA_len(4B) |llid nesn sn md |  pdu-len   | LL Opcode(1B) |  CtrData(0~22B) |
+|             |   type(1B)     | rf_len(1B) |               |      value      |
+|             |          data_headr         |            payload              |
+*-------------*-----------------------------*---------------------------------*
+***********************************************************************************************************************/
 
 
 #define				STOP_RF_STATE_MACHINE	( REG_ADDR8(0xf00) = 0x80 )

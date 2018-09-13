@@ -3,9 +3,9 @@
 
 #include <application/app/usbmouse.h>
 
-#include "../drivers/usb.h"
-#include "../drivers/usbhw.h"
-#include "../drivers/usbhw_i.h"
+#include "../usbstd/usb.h"
+#include "../usbstd/usbhw.h"
+#include "../usbstd/usbhw_i.h"
 #include "../../vendor/common/default_config.h"
 /** HID class report descriptor. This is a special descriptor constructed with values from the
  *  USBIF HID class specification to describe the reports and capabilities of the HID device. This

@@ -7,8 +7,13 @@
 int my_printf(const char *fmt, ...);
 int my_sprintf(char* s, const char *fmt, ...);
 
-#define printf	my_printf
-#define sprintf	my_sprintf
+#ifndef printf
+#define printf	 //my_printf
+#endif
+
+#ifndef printf
+#define sprintf	 //my_sprintf
+#endif
 
 #endif
 #endif

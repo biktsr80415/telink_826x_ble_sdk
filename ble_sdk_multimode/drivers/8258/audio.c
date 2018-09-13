@@ -72,37 +72,31 @@ void audio_config_sdm_buf(signed short* pbuff, unsigned char size_buff)
 */
 void audio_amic_init(AudioRate_Typedef Audio_Rate)
 {
-#if (AMIC_PIN_IN_PC2_PC3_ENABLE)
 
-#else
 	/*******1.ADC setting for analog audio sample**************************/
 	adc_reset_adc_module();   //reset whole digital adc module
-	adc_power_on_sar_adc(1);   //power on sar adc
-	adc_enable_clk_24m_to_sar_adc(1);  //enable signal of 24M clock to sar adc
 
 
 	adc_set_sample_clk(5); //adc sample clk= 24M/(1+5)=4M
 
 	//adc state machine state cnt 2( "set" stage and "capture" state for left channel)
-	adc_set_max_state_cnt(0x02);
+	adc_set_chn_enable_and_max_state_cnt(ADC_LEFT_CHN, 2);
+
 
 	//set "capture state" length for misc channel: 240
-	//set "set state" length for misc channel: 10
+	//set "set state" length for left channel: 10
 	//adc state machine  period  = 24M/250 = 96K
-	adc_set_length_set_state(10);									//max_s
 	if((Audio_Rate == AUDIO_44K)||(Audio_Rate == AUDIO_22K))
 	{
-		adc_set_length_capture_state_for_chn_left_right(AMIC_ADC_SampleLength[1]);	//max_c	132K
+		adc_set_state_length(0, 172, 10);	//	132K
 	}
 	else
 	{
-		adc_set_length_capture_state_for_chn_left_right(AMIC_ADC_SampleLength[0]);	//max_c	96K
+		adc_set_state_length(0, 240, 10);	//	96K
 	}
-	adc_set_length_capture_state_for_chn_misc_rns(0x0f);						//max_mc
 
 
 
-	adc_set_chn_enable(ADC_LEFT_CHN);    								//left channel enable
 	adc_set_input_mode(ADC_LEFT_CHN, DIFFERENTIAL_MODE);  				//left channel differential mode
 	adc_set_ain_channel_differential_mode(ADC_LEFT_CHN, PGA0P, PGA0N);  //left channel positive and negative data in
 
@@ -131,7 +125,7 @@ void audio_amic_init(AudioRate_Typedef Audio_Rate)
 	analog_write (anareg_adc_pga_ctrl, MASK_VAL( FLD_PGA_ITRIM_GAIN_L, GAIN_STAGE_BIAS_PER150, \
 												  FLD_PGA_ITRIM_GAIN_R,GAIN_STAGE_BIAS_PER150, \
 												  FLD_ADC_MODE, 0, \
-												  FLD_SAR_ADC_POWER_DOWN, 0, \
+												  FLD_SAR_ADC_POWER_DOWN, 1, \
 												  FLD_POWER_DOWN_PGA_CHN_L, 0, \
 												  FLD_POWER_DOWN_PGA_CHN_R, 1) );
 
@@ -175,7 +169,12 @@ void audio_amic_init(AudioRate_Typedef Audio_Rate)
 //	reg_dfifo_dec_ratio = AMIC_CIC_Rate[Audio_Rate];
 	reg_dfifo_dec_ratio = 0x42;  // 96k/3 = 32k, down sampling to 16K by set core_b40<7>
 
-#endif
+
+
+
+
+	//note: this setting must be set after all other settings
+	adc_power_on_sar_adc(1);
 
 }
 

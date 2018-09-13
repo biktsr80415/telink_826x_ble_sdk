@@ -2,7 +2,6 @@
 #include "drivers.h"
 #include "stack/ble/ble.h"
 
-#include "../common/keyboard.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
 
@@ -232,6 +231,7 @@ _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 
 void user_init_normal(void)
 {
+	random_generator_init();  //this is must
 
 ////////////////// BLE stack initialization ////////////////////////////////////
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};

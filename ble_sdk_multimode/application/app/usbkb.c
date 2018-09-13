@@ -5,24 +5,21 @@
 
 
 
-u32 debug_kbdata_report;
-u32 debug_kbdata_report_normal;
-u32 debug_kbdata_report_normal_ok;
-u32 debug_kbdata_report_sys;
-u32 debug_kbdata_report_sys_ok;
-u32 debug_kbdata_report_media;
-u32 debug_kbdata_report_media_ok;
 
-
-
-#include <application/app/usbkb.h>
 #include "drivers.h"
-//#include "../drivers/usbhw.h"
-//#include "../drivers/usbhw_i.h"
-//#include "../drivers/usbkeycode.h"
-//#include "../os/ev.h"
-#include <application/app/usbmouse.h>
-#include "../../vendor/common/rf_frame.h"
+#include "usbkb.h"
+#include "usbmouse.h"
+#include "../usbstd/usb.h"
+#include "../usbstd/usbhw.h"
+#include "../usbstd/usbhw_i.h"
+#include "../usbstd/usbkeycode.h"
+
+#include "../rf_frame.h"
+
+
+u8 usb_fifo[USB_FIFO_NUM][USB_FIFO_SIZE];
+u8 usb_ff_rptr = 0;
+u8 usb_ff_wptr = 0;
 
 int usbkb_hid_report_normal(u8 ctrl_key, u8 *keycode);
 void usbkb_hid_report(kb_data_t *data);
@@ -33,7 +30,7 @@ static u8 vk_sys_map[VK_SYS_CNT] = {
 
 static vk_ext_t vk_media_map[VK_MEDIA_CNT] = {
     {VK_W_SRCH_V},
-    {VK_WEB_V},
+    {VK_HOME_V},
     {VK_W_BACK_V},
     {VK_W_FORWRD_V},
     {VK_W_STOP_V},
@@ -155,8 +152,21 @@ int usbkb_separate_key_types(u8 *keycode, u8 cnt, u8 *normal_key, u8 *ext_key){
 
 int usbkb_hid_report_normal(u8 ctrl_key, u8 *keycode){
 
-	if(usbhw_is_ep_busy(USB_EDP_KEYBOARD_IN))
+	if(usbhw_is_ep_busy(USB_EDP_KEYBOARD_IN)){
+
+		u8 *pData = (u8 *)&usb_fifo[usb_ff_wptr++ & (USB_FIFO_NUM - 1)];
+		pData[0] = DAT_TYPE_KB;
+		pData[1] = ctrl_key;
+		memcpy(pData + 2, keycode, 6);
+
+		int fifo_use = (usb_ff_wptr - usb_ff_rptr) & (USB_FIFO_NUM*2-1);
+		if (fifo_use > USB_FIFO_NUM) {
+			usb_ff_rptr++;
+			//fifo overflow, overlap older data
+		}
+
 		return 0;
+	}
 
 	reg_usb_ep_ptr(USB_EDP_KEYBOARD_IN) = 0;
 
@@ -198,13 +208,15 @@ int usbkb_hid_report_normal(u8 ctrl_key, u8 *keycode){
 	}
 
 #endif
-	reg_usb_ep_ctrl(USB_EDP_KEYBOARD_IN) = FLD_EP_DAT_ACK;		// ACK
+//	reg_usb_ep_ctrl(USB_EDP_KEYBOARD_IN) = FLD_EP_DAT_ACK;		// ACK
+	reg_usb_ep_ctrl(USB_EDP_KEYBOARD_IN) = FLD_EP_DAT_ACK | (edp_toggle[USB_EDP_KEYBOARD_IN] ? FLD_USB_EP_DAT1 : FLD_USB_EP_DAT0);  // ACK
+	edp_toggle[USB_EDP_KEYBOARD_IN] ^= 1;
+
 	return 1;
 }
 
 static inline void usbkb_report_normal_key(int ctrl_key, u8 *keycode, int cnt){
 	if(cnt > 0 || ctrl_key){
-		debug_kbdata_report_normal++;
 		if(usbkb_hid_report_normal(ctrl_key, keycode)){
 		    BM_SET(usbkb_not_released, KB_NORMAL_RELEASE_MASK);
 		}
@@ -241,6 +253,31 @@ static inline void usbkb_report_media_key(u8 ext_key){
 		usbkb_release_media_key();
 	}
 }
+
+
+void usbkb_report_consumer_key(u16 consumer_key)
+{
+	if(consumer_key){
+
+		u8 ext_keycode[MOUSE_REPORT_DATA_LEN] = {0};
+
+		foreach(i, VK_EXT_LEN){
+			ext_keycode[i] = consumer_key;
+			consumer_key >>=8;
+		}
+
+		if(usbmouse_hid_report(USB_HID_KB_MEDIA, ext_keycode, MEDIA_REPORT_DATA_LEN)){
+			BM_SET(usbkb_not_released, KB_MEDIA_RELEASE_MASK);
+		}
+	}else{
+		usbkb_release_media_key();
+	}
+
+
+    usbkb_data_report_time = clock_time();
+
+}
+
 
 int kb_is_data_same(kb_data_t *a, kb_data_t *b){
 	if(!a || !b){
@@ -294,7 +331,7 @@ void usbkb_hid_report(kb_data_t *data){
 		//  keycode分类处理
 	    normal_key_cnt = usbkb_separate_key_types(data->keycode, data->cnt, normal_keycode, &ext_key);
 	}
-	debug_kbdata_report++;
+
 	usbkb_report_normal_key(data->ctrl_key, normal_keycode, normal_key_cnt);
 	usbkb_report_sys_key(ext_key);
 	usbkb_report_media_key(ext_key);
@@ -306,5 +343,46 @@ void usbkb_hid_report(kb_data_t *data){
 void usbkb_init(){
 	//ev_on_poll(EV_POLL_KEYBOARD_RELEASE_CHECK, usbkb_release_check);
 }
+
+
+int usb_hid_report_fifo_proc(void)
+{
+	if(usb_ff_rptr == usb_ff_wptr){
+		return 0;
+	}
+
+	u8 *pData = (u8 *)&usb_fifo[usb_ff_rptr & (USB_FIFO_NUM - 1)];
+
+	if(pData[0] == DAT_TYPE_KB){
+		if(usbhw_is_ep_busy(USB_EDP_KEYBOARD_IN)){
+			return 0;
+		}
+		else{
+
+			usbkb_hid_report_normal(pData[1], pData + 2);
+
+			usb_ff_rptr ++;
+
+			return 1;
+		}
+	}
+	else if(pData[0] == DAT_TYPE_MOUSE){
+		if(usbhw_is_ep_busy(USB_EDP_MOUSE)){
+			return 0;
+		}
+		else{
+
+			usbmouse_hid_report(pData[1], pData + 4, pData[2]);
+
+			usb_ff_rptr ++;
+
+			return 1;
+		}
+	}
+
+
+	return 0;
+}
+
 
 #endif

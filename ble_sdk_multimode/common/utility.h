@@ -96,18 +96,6 @@
 
 
 
-/*********************************************************************
- * @fn          generateRandomNum
- *
- * @brief       generate random number
- *
- * @param       len - len
- *
- * @param       data -  buffer
- *
- * @return      None
- */
-void generateRandomNum(u8 len, u8 *data);
 
 void swapX(const u8 *src, u8 *dst, int len);
 
@@ -127,21 +115,37 @@ void flip_addr(u8 *dest, u8 *src);
 void store_16(u8 *buffer, u16 pos, u16 value);
 void freeTimerTask(void **arg);
 
+#ifdef RF_LONG_PACKET_FULL_SUPPORT
+	typedef	struct {
+		u16		size;
+		u8		num;
+		u8		wptr;
+		u8		rptr;
+		u8*		p;
+	}	my_fifo_t;
 
-typedef	struct {
-	u8		size;
-	u8		num;
-	u8		wptr;
-	u8		rptr;
-	u8*		p;
-}	my_fifo_t;
+	void my_fifo_init (my_fifo_t *f, u16 s, u8 n, u8 *p);
+	u8*  my_fifo_wptr (my_fifo_t *f);
+	void my_fifo_next (my_fifo_t *f);
+	int  my_fifo_push (my_fifo_t *f, u8 *p, u16 n);
+	void my_fifo_pop (my_fifo_t *f);
+	u8 * my_fifo_get (my_fifo_t *f);
+#else
+	typedef	struct {
+		u8		size;
+		u8		num;
+		u8		wptr;
+		u8		rptr;
+		u8*		p;
+	}	my_fifo_t;
 
-void my_fifo_init (my_fifo_t *f, u8 s, u8 n, u8 *p);
-u8* my_fifo_wptr (my_fifo_t *f);
-void my_fifo_next (my_fifo_t *f);
-int my_fifo_push (my_fifo_t *f, u8 *p, u8 n);
-void my_fifo_pop (my_fifo_t *f);
-u8 * my_fifo_get (my_fifo_t *f);
+	void my_fifo_init (my_fifo_t *f, u8 s, u8 n, u8 *p);
+	u8*  my_fifo_wptr (my_fifo_t *f);
+	void my_fifo_next (my_fifo_t *f);
+	int  my_fifo_push (my_fifo_t *f, u8 *p, u8 n);
+	void my_fifo_pop (my_fifo_t *f);
+	u8 * my_fifo_get (my_fifo_t *f);
+#endif
 
 #define		MYFIFO_INIT(name,size,n)		u8 name##_b[size * n]={0};my_fifo_t name = {size,n,0,0, name##_b}
 

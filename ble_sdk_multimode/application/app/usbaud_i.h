@@ -1,12 +1,14 @@
 
 #pragma once
 
-#include <application/app/usbaud.h>
-#include <application/usbstd/AudioClassCommon.h>
-#include "../config/user_config.h"
-#include "../mcu/register.h"
-#include "../drivers/usbhw.h"
-#include "../drivers/usbhw_i.h"
+
+#include "drivers.h"
+#include "usbaud.h"
+#include "../usbstd/AudioClassCommon.h"
+#include "../usbstd/usbhw.h"
+#include "../usbstd/usbhw_i.h"
+#include "../../common/config/user_config.h"
+
 
 #if 0
 static const USB_Descriptor_HIDReport_Datatype_t usbaud_report_desc[] = {

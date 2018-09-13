@@ -450,7 +450,7 @@ void 		bls_att_registerHandleValueConfirmCb (att_handleValueConfirm_callback_t c
 ble_sts_t   blc_att_setRxMtuSize(u16 mtu_size);
 void        blc_att_registerMtuSizeExchangeCb (att_mtuSizeExchange_callback_t cb);
 ble_sts_t	blc_att_requestMtuSizeExchange (u16 connHandle, u16 mtu_size);
-
+ble_sts_t	blc_att_responseMtuSizeExchange (u16 connHandle, u16 mtu_size);
 
 
 

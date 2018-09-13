@@ -67,9 +67,11 @@
 
 
 
-
-#define	L2CAP_RX_BUFF_LEN_MAX			  256
-#define	ATT_RX_MTU_SIZE_MAX		  		 (L2CAP_RX_BUFF_LEN_MAX - 14)
+//RF_LEN_MAX:255: MIC(4)+LL_MAX_LEN(251) => LL_MAX_LEN:l2cap_len(2)+cid(2)+ATT_MTU_MAX(247).
+//l2cap buffer max: dma(4)+header(2)+l2cap_len(2)+cid(2)+ATT_MTU_MAX(247).
+#define	L2CAP_RX_BUFF_LEN_MAX			  260//257 = 10+247,align 4, here we use 260
+//dma(4)+header(2)+l2cap_len(2)+cid(2)+Attribute_data[ATT_MTU]
+#define	ATT_RX_MTU_SIZE_MAX		  		  (L2CAP_RX_BUFF_LEN_MAX - 10)
 
 #define L2CAP_RX_PDU_OFFSET				  12
 
@@ -90,6 +92,8 @@ extern para_up_req_t	para_upReq;
 
 
 typedef int (*l2cap_handler_t) (u16 conn, u8 * p);
+
+typedef int (*l2cap_conn_update_rsp_callback_t) (u8 id, u16 result);
 
 extern l2cap_handler_t	blc_l2cap_handler;
 
@@ -115,8 +119,8 @@ void 		blc_l2cap_reg_att_sig_hander(void *p);//signaling pkt proc
 
 
 
-void 		blc_l2cap_SendConnParamUpdateResponse(u16 connHandle, int result);
-
+void  		blc_l2cap_SendConnParamUpdateResponse(u16 connHandle, u8 req_id, conn_para_up_rsp result);
+void 		blc_l2cap_registerConnUpdateRspCb(l2cap_conn_update_rsp_callback_t cb);
 
 
 //Master

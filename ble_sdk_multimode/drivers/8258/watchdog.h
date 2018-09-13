@@ -18,10 +18,8 @@ extern void wd_setintervalms(unsigned int period_ms);
  * @return    none
  */
 static inline void wd_start(void){
-#if(MODULE_WATCHDOG_ENABLE)		//  if watchdog not set,  start wd would cause problem
 	BM_SET(reg_tmr_ctrl, FLD_TMR2_EN);
 	BM_SET(reg_tmr_ctrl, FLD_TMR_WD_EN);
-#endif
 }
 /**
  * @brief     stop watchdog. ie disable watchdog
@@ -29,9 +27,7 @@ static inline void wd_start(void){
  * @return    none
  */
 static inline void wd_stop(void){
-#if(MODULE_WATCHDOG_ENABLE)
 	BM_CLR(reg_tmr_ctrl, FLD_TMR_WD_EN);
-#endif
 }
 
 static inline void wd_clear(void)

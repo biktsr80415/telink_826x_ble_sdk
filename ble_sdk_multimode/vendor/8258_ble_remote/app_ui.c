@@ -9,12 +9,14 @@
 #include "drivers.h"
 #include "stack/ble/ble.h"
 
-#include "../common/keyboard.h"
+#include "application/keyboard/keyboard.h"
+#include "application/usbstd/usbkeycode.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
 
 
 #include "rc_ir.h"
+#include "battery_check.h"
 
 
 
@@ -35,15 +37,13 @@ _attribute_data_retention_	int     ui_mtu_size_exchange_req = 0;
 
 _attribute_data_retention_	int 	ir_not_released;
 _attribute_data_retention_	u8 		user_key_mode;
-u8      ir_hw_initialed = 0;
+u8      ir_hw_initialed = 0;   //note: can not be retention variable
 
 
 
 _attribute_data_retention_	u8		ui_mic_enable = 0;
 _attribute_data_retention_	u8 		key_voice_press = 0;
 
-_attribute_data_retention_	int 	lowBattDet_enable = 0;
-_attribute_data_retention_	int		lowBatt_alarmFlag = 0;
 
 
 extern	u32 	latest_user_event_tick;
@@ -132,9 +132,13 @@ static u16 vk_consumer_map[16] = {
 		}
 		else{  //audio off
 			adc_power_on_sar_adc(0);   //power off sar adc
-//			adc_enable_clk_24m_to_sar_adc(0);  //disable signal of 24M clock to sar adc
 		}
+
+		#if (BATT_CHECK_ENABLE)
+			battery_set_detect_enable(!en);
+		#endif
 	}
+
 
 	void voice_press_proc(void)
 	{
@@ -230,29 +234,48 @@ static u16 vk_consumer_map[16] = {
 
 
 #if (BLE_REMOTE_OTA_ENABLE)
-	void entry_ota_mode(void)
+	void app_enter_ota_mode(void)
 	{
 		ota_is_working = 1;
-		device_led_setup(led_cfg[LED_SHINE_OTA]);
+		#if (BLT_APP_LED_ENABLE)
+			device_led_setup(led_cfg[LED_SHINE_OTA]);
+		#endif
 		bls_ota_setTimeout(15 * 1000 * 1000); //set OTA timeout  15 seconds
 	}
 
 
 
-	void LED_show_ota_result(int result)
+	void app_debug_ota_result(int result)
 	{
-		#if 0
-			irq_disable();
-			WATCHDOG_DISABLE;
 
+		#if(0 && BLT_APP_LED_ENABLE)
 			gpio_set_output_en(GPIO_LED, 1);
 
 			if(result == OTA_SUCCESS){  //OTA success
 				gpio_write(GPIO_LED, 1);
-				sleep_us(2000000);  //led on for 2 second
+				sleep_us(500000);
 				gpio_write(GPIO_LED, 0);
+				sleep_us(500000);
+				gpio_write(GPIO_LED, 1);
+				sleep_us(500000);
+				gpio_write(GPIO_LED, 0);
+				sleep_us(500000);
 			}
 			else{  //OTA fail
+
+				#if 0 //this is only for debug,  can not use this in application code
+					irq_disable();
+					WATCHDOG_DISABLE;
+
+					write_reg8(0x40000, 0x33);
+					while(1){
+						gpio_write(GPIO_LED, 1);
+						sleep_us(200000);
+						gpio_write(GPIO_LED, 0);
+						sleep_us(200000);
+					}
+					write_reg8(0x40000, 0x44);
+				#endif
 
 			}
 
@@ -546,16 +569,8 @@ void app_ui_init_normal(void)
 
 
 #if (BLT_APP_LED_ENABLE)
-	device_led_init(GPIO_LED, 1);  //LED initialization
+	device_led_init(GPIO_LED, LED_ON_LEVAL);  //LED initialization
 	device_led_setup(led_cfg[LED_POWER_ON]);
-#endif
-
-
-#if (BLE_REMOTE_OTA_ENABLE)
-	////////////////// OTA relative ////////////////////////
-	bls_ota_clearNewFwDataArea(); //must
-	bls_ota_registerStartCmdCb(entry_ota_mode);
-	bls_ota_registerResultIndicateCb(LED_show_ota_result);
 #endif
 
 

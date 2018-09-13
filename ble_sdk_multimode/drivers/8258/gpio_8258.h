@@ -59,20 +59,22 @@ typedef enum{
 
 
 typedef enum{
-	AS_GPIO 	=  0,
-	AS_MSPI 	=  1,
-	AS_SWIRE	=  2,
-	AS_UART		=  3,
-	AS_I2C		=  4,
-	AS_SPI		=  5,
-	AS_I2S		=  6,
-	AS_AMIC		=  7,
-	AS_DMIC		=  8,
-	AS_SDM		=  9,
-	AS_USB		= 10,
-	AS_ADC		= 11,
-	AS_CMP		= 12,
-	AS_ATS		= 13,
+	NOT_AS_GPIO =  0,   // !GPIO
+	AS_GPIO 	=  1,
+
+	AS_MSPI 	=  2,
+	AS_SWIRE	=  3,
+	AS_UART		=  4,
+	AS_I2C		=  5,
+	AS_SPI		=  6,
+	AS_I2S		=  7,
+	AS_AMIC		=  8,
+	AS_DMIC		=  9,
+	AS_SDM		=  10,
+	AS_USB		=  11,
+	AS_ADC		=  12,
+	AS_CMP		=  13,
+	AS_ATS		=  14,
 
 	AS_PWM0 	= 20,
 	AS_PWM1		= 21,
@@ -282,8 +284,9 @@ static inline void gpio_set_interrupt_risc1(GPIO_PinTypeDef pin, GPIO_PolTypeDef
 
 
 
-void gpio_init(void);
+void gpio_init(int anaRes_init_en);
 void gpio_set_wakeup(GPIO_PinTypeDef pin, GPIO_LevelTypeDef level, int en);
 void gpio_setup_up_down_resistor(GPIO_PinTypeDef gpio, GPIO_PullTypeDef up_down);
 void gpio_set_input_en(GPIO_PinTypeDef pin, unsigned int value);
 void gpio_set_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func);
+void gpio_config_special_func(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func);

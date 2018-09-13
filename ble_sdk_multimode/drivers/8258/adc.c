@@ -7,6 +7,7 @@
 
 void adc_set_ref_voltage(ADC_ChTypeDef ch_n, ADC_RefVolTypeDef v_ref)
 {
+#if 0
 	if(ch_n & ADC_LEFT_CHN)
 	{
 		adc_set_vref_chn_left(v_ref);
@@ -19,6 +20,9 @@ void adc_set_ref_voltage(ADC_ChTypeDef ch_n, ADC_RefVolTypeDef v_ref)
 	{
 		adc_set_vref_chn_misc(v_ref);
 	}
+#else
+	adc_set_vref(v_ref, v_ref, v_ref);
+#endif
 
 
 	if(v_ref == ADC_VREF_1P2V)
@@ -128,51 +132,20 @@ void adc_set_ain_channel_differential_mode(ADC_ChTypeDef ch_n, ADC_InputPchTypeD
 
 	if(ch_n & ADC_LEFT_CHN)
 	{
-		adc_set_ain_negative_chn_left(InNCH);
-		adc_set_ain_positive_chn_left(InPCH);
+		adc_set_ain_chn_left(InPCH, InNCH);
 		adc_set_input_mode_chn_left(DIFFERENTIAL_MODE);
 	}
 	if(ch_n & ADC_RIGHT_CHN)
 	{
-		adc_set_ain_negative_chn_right(InNCH);
-		adc_set_ain_positive_chn_right(InPCH);
+		adc_set_ain_chn_right(InPCH, InNCH);
 		adc_set_input_mode_chn_right(DIFFERENTIAL_MODE);
 	}
 	if(ch_n & ADC_MISC_CHN)
 	{
-		adc_set_ain_negative_chn_misc(InNCH);
-		adc_set_ain_positive_chn_misc(InPCH);
+		adc_set_ain_chn_misc(InPCH, InNCH);
 		adc_set_input_mode_chn_misc(DIFFERENTIAL_MODE);
 	}
 }
-
-//state length indicates number of 24M clock cycles occupied by the state
-//R_max_mc[9:0] serves to set length of "capture" state for RNS and Misc channel
-//R_max_c[9:0]  serves to set length of "capture" state for left and right channel
-//R_max_s[9:0]  serves to set length of "set" state for left, right and Misc channel
-void adc_set_state_length(unsigned short R_max_mc, unsigned short R_max_c,unsigned char R_max_s)
-{
-	unsigned char data[3]={0};
-	if(R_max_mc&0x3ff)    //r_max_mc[9:0]serves to set length of state for RNS and Misc channel.
-	{
-		data[0] = (unsigned char)R_max_mc;
-		data[2] = (unsigned char)(R_max_mc>>2)&0xc0;
-	}
-	if(R_max_c&0x3ff)     //r_max_c*9:0+ serves to set length of  state for left and right channel.
-	{
-		data[1] = (unsigned char)R_max_c;
-		data[2] |= (unsigned char)(R_max_c>>4)&0x30;
-	}
-	if(R_max_s)     //r_max_s serves to set length of  state for left, right and Misc channel.
-	{
-		data[2] |= (unsigned char)(R_max_s&0x0f);
-	}
-
-	WriteAnalogReg(anareg_r_max_mc, data[0]);			//
-	WriteAnalogReg(anareg_r_max_c, 	data[1]);			//
-	WriteAnalogReg(anareg_r_max_s,  data[2]);			//
-}
-
 
 
 
@@ -201,39 +174,4 @@ void adc_set_ain_pre_scaler(ADC_PreScalingTypeDef v_scl)
 	}
 
 
-}
-
-
-
-/**
- * Name     :RNG_Set
- * Function :Set the source and mode of the random number generator
- * Input    :RNG_SrcTypeDef stat
- *          :RNG_UpdataTypeDef stat1
- * return   :void
- */
-void RNG_Set(RNG_SrcTypeDef stat,RNG_UpdataTypeDef stat1){
-
-	unsigned datast = stat|stat1;
-
-	WriteAnalogReg(0x80+126,datast);			//Set
-
-}
-
-/**
- * Name     :RNG_read
- * Function :Read the value of the random number generator
- * Input    :None
- * return   :unsigned short RngValue
- *          :random number
- */
-unsigned short RNG_Read(void){
-
-	unsigned short tmp1,tmp2,RngValue;
-
-	tmp1 = ReadAnalogReg(0x80+118);  //read
-	tmp2 = ReadAnalogReg(0x80+117);
-	RngValue = (tmp1<<8) + tmp2;
-
-	return RngValue;
 }

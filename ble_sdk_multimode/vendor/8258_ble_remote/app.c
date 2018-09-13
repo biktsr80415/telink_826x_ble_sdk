@@ -2,11 +2,12 @@
 #include "drivers.h"
 #include "stack/ble/ble.h"
 
-#include "../common/keyboard.h"
+#include "application/keyboard/keyboard.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
 
 #include "app_ui.h"
+#include "battery_check.h"
 #include "rc_ir.h"
 
 
@@ -88,7 +89,7 @@ _attribute_data_retention_	u8	sendTerminate_before_enterDeep = 0;
 
 _attribute_data_retention_	u32	latest_user_event_tick;
 
-
+_attribute_data_retention_	u32	lowBattDet_tick   = 0;
 
 
 
@@ -183,6 +184,18 @@ void	task_conn_update_done (u8 e, u8 *p, int n)
 }
 
 
+int app_conn_param_update_response(u8 id, u16  result)
+{
+	if(result == CONN_PARAM_UPDATE_ACCEPT){
+
+	}
+	else if(result == CONN_PARAM_UPDATE_REJECT){
+
+	}
+
+	return 0;
+}
+
 
 void blt_pm_proc(void)
 {
@@ -274,6 +287,8 @@ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 
 void user_init_normal(void)
 {
+
+	random_generator_init();  //this is must
 
 ////////////////// BLE stack initialization ////////////////////////////////////
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
@@ -376,7 +391,7 @@ void user_init_normal(void)
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONN_PARA_REQ, &task_conn_update_req);
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONN_PARA_UPDATE, &task_conn_update_done);
 
-
+	blc_l2cap_registerConnUpdateRspCb(app_conn_param_update_response);
 
 	///////////////////// Power Management initialization///////////////////
 #if(BLE_REMOTE_PM_ENABLE)
@@ -385,7 +400,7 @@ void user_init_normal(void)
 	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
 		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
 		blc_pm_setDeepsleepRetentionThreshold(95, 95);
-		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(500);
+		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(400);
 	#else
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 	#endif
@@ -398,6 +413,19 @@ void user_init_normal(void)
 
 	app_ui_init_normal();
 
+#if (BATT_CHECK_ENABLE)  //battery check must do before OTA relative operation
+	if(analog_read(DEEP_ANA_REG2) ==  LOW_BATT_FLG){
+		app_battery_power_check(VBAT_ALRAM_THRES_MV + 200);  //2.2 V
+	}
+#endif
+
+
+#if (BLE_REMOTE_OTA_ENABLE)
+	////////////////// OTA relative ////////////////////////
+	bls_ota_clearNewFwDataArea(); //must
+	bls_ota_registerStartCmdCb(app_enter_ota_mode);
+	//bls_ota_registerResultIndicateCb(app_debug_ota_result);  //debug
+#endif
 
 
 	advertise_begin_tick = clock_time();
@@ -406,21 +434,23 @@ void user_init_normal(void)
 
 
 
-#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+
 _attribute_ram_code_ void user_init_deepRetn(void)
 {
-
+#if (PM_DEEPSLEEP_RETENTION_ENABLE)
 	blc_ll_initBasicMCU();   //mandatory
 	rf_set_power_level_index (MY_RF_POWER_INDEX);
 
 	blc_ll_recoverDeepRetention();
 
+	irq_enable();
+
 	DBG_CHN0_HIGH;    //debug
 
 	app_ui_init_deepRetn();
-
-}
 #endif
+}
+
 
 /////////////////////////////////////////////////////////////////////
 // main loop flow
@@ -447,11 +477,11 @@ void main_loop (void)
 	#endif
 
 	#if (BATT_CHECK_ENABLE)
-		if(lowBattDet_enable){
-			battery_power_check();
+		if(battery_get_detect_enable() && clock_time_exceed(lowBattDet_tick, 500000) ){
+			lowBattDet_tick = clock_time();
+			app_battery_power_check(VBAT_ALRAM_THRES_MV);  //2000 mV low battery
 		}
 	#endif
-
 
 
 	proc_keyboard (0,0, 0);
@@ -464,6 +494,8 @@ void main_loop (void)
 
 	blt_pm_proc();
 }
+
+
 
 
 #endif  //end of __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8261_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__

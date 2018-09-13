@@ -159,8 +159,7 @@ typedef enum
 	#define GPIO_CHN3							GPIO_PB7
 	#define GPIO_CHN4							GPIO_PB0
 	#define GPIO_CHN5							GPIO_PB1
-	#define GPIO_CHN6							GPIO_PC2
-	#define GPIO_CHN7							GPIO_PC3
+	#define GPIO_CHN6							GPIO_PC3
 
 	#define PB4_OUTPUT_ENABLE					1
 	#define PB5_OUTPUT_ENABLE					1
@@ -168,7 +167,6 @@ typedef enum
 	#define PB7_OUTPUT_ENABLE					1
 	#define PB0_OUTPUT_ENABLE					1
 	#define PB1_OUTPUT_ENABLE					1
-	#define PC2_OUTPUT_ENABLE					1
 	#define PC3_OUTPUT_ENABLE					1
 
 
@@ -193,9 +191,6 @@ typedef enum
 	#define DBG_CHN6_LOW		gpio_write(GPIO_CHN6, 0)
 	#define DBG_CHN6_HIGH		gpio_write(GPIO_CHN6, 1)
 	#define DBG_CHN6_TOGGLE		gpio_toggle(GPIO_CHN6)
-	#define DBG_CHN7_LOW		gpio_write(GPIO_CHN7, 0)
-	#define DBG_CHN7_HIGH		gpio_write(GPIO_CHN7, 1)
-	#define DBG_CHN7_TOGGLE		gpio_toggle(GPIO_CHN7)
 #else
 	#define DBG_CHN0_LOW
 	#define DBG_CHN0_HIGH
