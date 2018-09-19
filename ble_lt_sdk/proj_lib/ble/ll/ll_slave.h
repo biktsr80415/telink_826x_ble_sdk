@@ -34,6 +34,11 @@ typedef struct {
 
 	u32		conn_access_code_revert;
 	u32		conn_crc;
+
+#if FIX_CRC24_HW_CHECK_PROBLEM
+	u32		revert_conn_crc_init;
+#endif
+
 	u32		connExpectTime;
 	int		conn_interval_adjust;
 	u32		conn_timeout;

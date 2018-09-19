@@ -9,9 +9,12 @@
 #define BLE_LL_OTA_H_
 
 #ifndef	BLE_OTA_ENABLE
-#define BLE_OTA_ENABLE		0
+#define BLE_OTA_ENABLE						0
 #endif
 
+#ifndef BLE_OTA_FW_CHECK_EN
+#define BLE_OTA_FW_CHECK_EN					0
+#endif
 
 
 #define CMD_OTA_FW_VERSION					0xff00
@@ -19,8 +22,18 @@
 #define CMD_OTA_END							0xff02
 
 
+#define FLAG_FW_CHECK						0x5D
+#define FW_CHECK_AGTHM2						0x02
+
+
+
 typedef struct{
 	u8  ota_start_flag;
+#if (BLE_OTA_FW_CHECK_EN)
+	u8 	fw_check_en;
+	u16 fw_crc_last_index;
+	u32 fw_crc_init;
+#endif
 }ota_service_t;
 
 extern ota_service_t blcOta;
@@ -50,6 +63,7 @@ enum{
 	OTA_WRITE_FLASH_ERR,  //write OTA data to flash ERR
  	OTA_DATA_UNCOMPLETE,  //lost last one or more OTA PDU
  	OTA_TIMEOUT, 		  //
+ 	OTA_FW_CHECK_ERR,
 };
 
 void bls_ota_procTimeout(void);

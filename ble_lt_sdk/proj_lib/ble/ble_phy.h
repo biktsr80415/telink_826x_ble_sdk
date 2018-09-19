@@ -9,11 +9,21 @@
 #define BLE_PHY_H_
 
 
+#ifndef			PHYTEST_MODE_DISABLE
 #define			PHYTEST_MODE_DISABLE					0
-#define 		PHYTEST_MODE_THROUGH_2_WIRE_UART		1   //Direct Test Mode through a 2-wire UART interface
-#define 		PHYTEST_MODE_OVER_HCI_WITH_USB			2   //Direct Test Mode over HCI(UART hardware interface)
-#define 		PHYTEST_MODE_OVER_HCI_WITH_UART			3   //Direct Test Mode over HCI(USB  hardware interface)
+#endif
 
+#ifndef			PHYTEST_MODE_THROUGH_2_WIRE_UART
+#define 		PHYTEST_MODE_THROUGH_2_WIRE_UART		1   //Direct Test Mode through a 2-wire UART interface
+#endif
+
+#ifndef			PHYTEST_MODE_OVER_HCI_WITH_USB
+#define 		PHYTEST_MODE_OVER_HCI_WITH_USB			2   //Direct Test Mode over HCI(UART hardware interface)
+#endif
+
+#ifndef			PHYTEST_MODE_OVER_HCI_WITH_UART
+#define 		PHYTEST_MODE_OVER_HCI_WITH_UART			3   //Direct Test Mode over HCI(USB  hardware interface)
+#endif
 
 
 

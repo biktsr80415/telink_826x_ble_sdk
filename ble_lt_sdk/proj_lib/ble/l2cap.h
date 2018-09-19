@@ -115,7 +115,7 @@ void 		blc_l2cap_reg_att_sig_hander(void *p);//signaling pkt proc
 
 
 
-void 		blc_l2cap_SendConnParamUpdateResponse(u16 connHandle, int result);
+void 		blc_l2cap_SendConnParamUpdateResponse(u16 connHandle, int result, u8* req);
 
 
 

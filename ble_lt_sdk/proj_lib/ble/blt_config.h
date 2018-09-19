@@ -143,12 +143,15 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 
-#ifndef BLE_P256_PUBLIC_KEY_ENABLE
-#define BLE_P256_PUBLIC_KEY_ENABLE								0
+#ifndef SECURE_CONNECTION_ENABLE
+#define SECURE_CONNECTION_ENABLE								0
 #endif
 
 
 
+#ifndef SMP_BLE_CERT_TEST
+#define SMP_BLE_CERT_TEST								        0
+#endif
 
 
 
@@ -236,6 +239,22 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 #define	BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN		0
+
+
+
+//Notice:if LL_SLAVE_RX_FIFO_OVERFLOW_DETECT_AND_SOLVE_EN enable, must enable RESET_BASEBAND_ENABLE(in file:ll_slave.c)
+#define LL_SLAVE_RX_FIFO_OVERFLOW_DETECT_AND_SOLVE_EN   0
+
+
+
+/*
+ * 在BLE模式下收包时，CRC校验error指示位存在错判的可能，原因在于少判断了CRC校验结果
+ * 24-bit中的高8位。当低16-bit没有错且高8-bit有错时，出现误判，概率小于1/(2^16).
+ * if enable sfot crc24, must open the micro "RESET_BASEBAND_ENABLE" in ll_slave.c
+ */
+#define	FIX_CRC24_HW_CHECK_PROBLEM						1
+
+
 
 
 

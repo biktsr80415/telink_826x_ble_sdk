@@ -3,6 +3,12 @@
 
 #include "l2cap.h"
 
+#define XIAOMI_CERTIFY_ENABLE 		0
+#if XIAOMI_CERTIFY_ENABLE
+#define ATT_PERMISSIONS_READ_AUTHOR			 0x11
+#define ATT_PERMISSIONS_WRITE_AUTHOR		 0x22
+#define ATT_PERMISSIONS_RDWD_AUTHOR			 0x33
+#endif
 
 #define ATT_MTU_SIZE                        23  //L2CAP_MTU_SIZE //!< Minimum ATT MTU size
 #define ATT_MAX_ATTR_HANDLE                 0xFFFF
@@ -415,6 +421,19 @@ typedef int (*att_mtuSizeExchange_callback_t)(u16, u16);
 typedef int (*att_handleValueConfirm_callback_t)(void);
 typedef int (*att_readwrite_callback_t)(void* p);
 
+#if XIAOMI_CERTIFY_ENABLE
+typedef struct attribute
+{
+  u16  attNum;
+  u8   *p_perm;
+  u8   uuidLen;
+  u32  attrLen;    //4 bytes aligned
+  u8* uuid;
+  u8* pAttrValue;
+  att_readwrite_callback_t w;
+  att_readwrite_callback_t r;
+} attribute_t;
+#else
 typedef struct attribute
 {
   u16  attNum;
@@ -426,7 +445,7 @@ typedef struct attribute
   att_readwrite_callback_t w;
   att_readwrite_callback_t r;
 } attribute_t;
-
+#endif
 
 
 

@@ -89,16 +89,27 @@ _attribute_ram_code_ void sleep_us (u32 us)
 	}
 }
 
+u32 sys_tick_div	= 1;
 
 #ifdef	USE_SYS_TICK_PER_US
 u32		sys_tick_per_us = 16;
 void set_tick_per_us (u32 t)
 {
 	sys_tick_per_us = t;
+#if(__TL_LIB_5316__ || MCU_CORE_TYPE == MCU_CORE_5316)
+	sys_tick_div = t/16;	// div			16, 32, 48;    24 not supported.
+#else
+	sys_tick_div = 1;
+#endif
 }
 #else
+
 void set_tick_per_us (u32 t)
 {
-
+#if(__TL_LIB_5316__ || MCU_CORE_TYPE == MCU_CORE_5316)
+	sys_tick_div = t/16;	// div			16, 32, 48;    24 not supported.
+#else
+	sys_tick_div = 1;
+#endif
 }
 #endif
