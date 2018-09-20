@@ -85,8 +85,6 @@ int tn_mpi_mul_mpi_modn( tn_mpi *X, const tn_mpi *A, const tn_mpi *B );
 int tn_mpi_neg_modn( tn_mpi *X );
 
 //////////////////////////////////////////////////////////////////////////////////
-void swapN (unsigned char *p, int n) ;
-
 int tn_ecp_copy( tn_ecp_point *P, const tn_ecp_point *Q );
 int tn_ecp_double_jac( tn_ecp_point *R, const tn_ecp_point *P );
 int tn_ecp_add_mixed( tn_ecp_point *R, const tn_ecp_point *P, const tn_ecp_point *Q );

@@ -67,10 +67,10 @@ enum{
 		CLOCK_SYS_CLOCK_1US = (CLOCK_SYS_CLOCK_1S / 1000000),
 	};
 
-	#define 	sys_tick_per_us		CLOCK_SYS_CLOCK_1US
+	#define 	sys_tick_per_us		16
 
 #endif
-extern u32 sys_tick_div;
+
 void 	set_tick_per_us (u32 t);
 
 enum{

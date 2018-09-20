@@ -45,8 +45,7 @@ u8 aes_encrypt(u8 *key, u8 *data, u8 *result);
 
 u8 aes_ccm_encryption(u8 *key, u8 *iv, u8 *aStr, u8 *mic, u8 mStrLen, u8 *mStr, u8 *result);
 u8 aes_ccm_decryption(u8 *key, u8 *iv, u8 *aStr, u8 *mic, u8 mStrLen, u8 *mStr, u8 *result);
-void aes_ecb_encryption(u8 *key, u8 *plaintext, u8 *encrypted_data);
-void aes_ecb_decryption(u8 *key, u8 *encrypted_data, u8 *decrypted_data);
+u8 aes_ecb_encryption(u8 *key, u8 len, u8 *plaintext_flipped, u8 *result);
 void aes_ll_encryption(u8 *key, u8 *plaintext, u8 *result);
 void aes_ll_ccm_encryption_init (u8 *ltk, u8 *skdm, u8 *skds, u8 *ivm, u8 *ivs, ble_crypt_para_t *pd);
 void aes_ll_ccm_encryption(u8 *pkt, int master, ble_crypt_para_t *pd);
@@ -54,5 +53,3 @@ int aes_ll_ccm_decryption(u8 *pkt, int master, ble_crypt_para_t *pd);		//OK retu
 u8 aes_att_encryption_packet(u8 *key, u8 *iv, u8 *mic, u8 mic_len, u8 *ps, u8 len);
 u8 aes_att_decryption_packet(u8 *key, u8 *iv, u8 *mic, u8 mic_len, u8 *ps, u8 len);
 
-void aes_ll_c1(u8 * key, u8 * r, u8 *p1, u8 *p2, u8 * result);
-void aes_ll_s1(u8 * key, u8 * r1, u8 * r2, u8 * result);

@@ -21,19 +21,9 @@ extern void user_init();
 extern void main_loop (void);
 extern void deep_wakeup_proc(void);
 
-_attribute_ram_code_ void task_dbg(void)
-{
-#if 0
-	static u8 bVal = 0;
 
-	gpio_write(GPIO_PA1, bVal);
 
-	bVal++;
 
-	bVal%=2;
-#endif
-	return;
-}
 
 _attribute_ram_code_ void irq_handler(void)
 {
@@ -63,11 +53,6 @@ _attribute_ram_code_ void irq_handler(void)
 	#endif/* end of MCU_CORE_TYPE == MCU_CORE_5316 */
 #endif/* end of REMOTE_IR_ENABLE */
 
-	u32 src = reg_irq_src;
-	if(src & FLD_IRQ_TMR1_EN){
-		task_dbg();
-		reg_tmr_sta |= FLD_TMR_STA_TMR1;
-	}
 
 	irq_blt_sdk_handler ();
 
@@ -83,15 +68,11 @@ int main (void) {
 
     cpu_wakeup_init(CRYSTAL_TYPE);
 
-    set_tick_per_us (32000000/1000000);
+    set_tick_per_us (CLOCK_SYS_CLOCK_HZ/1000000);
 
 	//clock_init();
     //write_reg8(0x66, 0x43);  	/* Set system clock to PLL 16MHz. */
     //write_reg8(0x70,0x00);//must
-
-    /* Set system clock to 32MHz. */
-	write_reg8(0x66,0x60);
-	write_reg8(0x70, read_reg8(0x70)&0xfe);
 
     gpio_init();
 
@@ -102,9 +83,6 @@ int main (void) {
     user_init ();
 
     irq_enable();
-
-	cpu_enable_timer1_interrupt(100 * CLOCK_SYS_CLOCK_1MS);
-	register_timer_irq(&task_dbg);
 
     while (1) {
 #if (MODULE_WATCHDOG_ENABLE)

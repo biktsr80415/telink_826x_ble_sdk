@@ -61,10 +61,6 @@ typedef struct {
 	u8		peer_adr_type;
 	u8		peer_adr[6];
 
-#if FIX_CRC24_HW_CHECK_PROBLEM
-	u32		revert_conn_crc_init;
-#endif
-
 	u32		conn_access_code;
 	u8		conn_sn;
 	u8		conn_snnesn;
@@ -167,10 +163,6 @@ typedef struct {
 	u8		rsvd;
 	u8		peer_adr_type;
 	u8		peer_adr[6];
-
-#if FIX_CRC24_HW_CHECK_PROBLEM
-	u32		revert_conn_crc_init;
-#endif
 
 	u32		conn_access_code;
 	u8		conn_sn;

@@ -174,13 +174,9 @@ typedef struct {
 	u8		ll_recentAvgRSSI;
 	u8		ll_localFeature;
 	u8		tx_irq_proc_en;
+
+
 	u8		conn_rx_num;  //slave: rx number in a new interval
-
-#if LL_SLAVE_RX_FIFO_OVERFLOW_DETECT_AND_SOLVE_EN
-	u16		pkt_abandon;
-	u16     s_md_left_nums;//add by tuyf180619
-#endif
-
 } st_ll_conn_t;
 
 st_ll_conn_t  bltParam;
@@ -229,7 +225,8 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_SUSPEND_EXIT			15
 #define			BLT_EV_FLAG_READ_P256_KEY			16
 #define			BLT_EV_FLAG_GENERATE_DHKEY			17
-#define			BLT_EV_FLAG_SMP_PINCODE_PROCESS	    18
+#define			BLT_EV_FLAG_BEACON_DONE				18
+
 
 
 
@@ -290,19 +287,16 @@ u8 			blc_ll_getLatestAvgRSSI(void);
 u16   		blc_ll_setInitTxDataLength (u16 maxTxOct);   //core4.2 long data packet
 
 
-#if FIX_CRC24_HW_CHECK_PROBLEM
-	int 			blt_packet_crc24_opt2 (unsigned char *p, int n, int crc);
-	unsigned int 	reverse_32bit(volatile unsigned int x);
-#endif
+
+
+
 
 // application
 void		bls_app_registerEventCallback (u8 e, blt_event_callback_t p);
 
 
 
-#if LL_SLAVE_RX_FIFO_OVERFLOW_DETECT_AND_SOLVE_EN
-u8 			blc_set_slave_md_nums(u8 num);
-#endif
+
 
 
 
@@ -313,7 +307,7 @@ ble_sts_t  		blc_hci_ltkRequestReply (u16 connHandle,  u8*ltk);
 
 void 			blc_ll_setEncryptionBusy(u8 enc_busy);
 bool 			blc_ll_isEncryptionBusy(void);
-void 			blc_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t evtCbFunc);
+void 			blc_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
 
 void 			blc_ll_setIdleState(void);
 ble_sts_t 		blc_hci_le_getLocalSupportedFeatures(u8 *features);
@@ -337,15 +331,16 @@ int blm_send_acl_to_btusb (u16 conn, u8 *p);
 
 
 
+
 static inline u8  blc_ll_getTxFifoNumber (void)
 {
-	u8 r = irq_disable();
+	return  ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 )  +  ( (blt_txfifo.wptr - blt_txfifo.rptr) & 31 ) ;
+}
 
-	u8 fifo_num = ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 )  +  ( (blt_txfifo.wptr - blt_txfifo.rptr) & 31 ) ;
 
-	irq_restore(r);
-
-	return  fifo_num;
+static inline u8  blc_ll_getTxHardWareFifoNumber (void)
+{
+	return  ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 );
 }
 
 

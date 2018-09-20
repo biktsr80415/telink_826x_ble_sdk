@@ -9,7 +9,7 @@
 #define BLE_SMP_H_
 
 #include "ble_common.h"
-#include "blt_config.h"
+
 
 
 #define 		BOND_DEVICE_WHITELIST_MANAGEMANT_ENABLE		1
@@ -89,11 +89,10 @@ typedef union {
 
 typedef union{
 	struct {
-		u8 encKey : 1;
-		u8 idKey : 1;
-		u8 sign  : 1;
-		u8 linkKey : 1;
-		u8 rsvd : 4;
+		u32 encKey : 1;
+		u32 idKey : 1;
+		u32 sign  : 1;
+		u32 linkKey : 4;
 	};
 	u8 keyIni;
 }smp_keyDistribution_t;
@@ -254,7 +253,6 @@ typedef struct{
 	u8						own_ltk[16];   //used for generate ediv and random
 
 	u8						save_key_flag;
-	u8						enc_method;
 }smp_param_own_t;
 
 u8 cur_enc_keysize;
@@ -308,12 +306,10 @@ extern smp_enc_done_cb_t		func_smp_enc_done_cb;
 
 typedef enum {
 	JUST_WORKS,
-	PK_RESP_INPUT,  // Initiator displays PK, responder inputs PK
-	PK_INIT_INPUT,  // Responder displays PK, initiator inputs PK
-	PK_BOTH_INPUT,  // Only input on both, both input PK
-	OOB,             // OOB available on both sides
-	NUMERIC_COMPARISON,
-
+	PK_RESP_INPUT,  // Initiator displays PK, initiator inputs PK
+	PK_INIT_INPUT,  // Responder displays PK, responder inputs PK
+	OK_BOTH_INPUT,  // Only input on both, both input PK
+	OOB             // OOB available on both sides
 } stk_generationMethod_t;
 
 // IO Capability Values
@@ -326,32 +322,15 @@ typedef enum {
 	IO_CAPABILITY_UNKNOWN = 0xff
 } io_capability_t;
 
-/////////////////////////// smp method map table ///////////////////////////////////////
 // horizontal: initiator capabilities
 // vertial:    responder capabilities
-static const stk_generationMethod_t gen_method_legacy[5][5] = {
+static const stk_generationMethod_t stk_generation_method[5][5] = {
 	{ JUST_WORKS,      JUST_WORKS,       PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
 	{ JUST_WORKS,      JUST_WORKS,       PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
-	{ PK_RESP_INPUT,   PK_RESP_INPUT,    PK_BOTH_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
+	{ PK_RESP_INPUT,   PK_RESP_INPUT,    OK_BOTH_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
 	{ JUST_WORKS,      JUST_WORKS,       JUST_WORKS,      JUST_WORKS,    JUST_WORKS    },
 	{ PK_RESP_INPUT,   PK_RESP_INPUT,    PK_INIT_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
 };
-
-#if SECURE_CONNECTION_ENABLE
-/////////////////////////// smp method map table ///////////////////////////////////////
-static const stk_generationMethod_t gen_method_sc[5][5] = {
-	{ JUST_WORKS,      JUST_WORKS,       	PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
-	{ JUST_WORKS,      NUMERIC_COMPARISON,  PK_INIT_INPUT,   JUST_WORKS,    NUMERIC_COMPARISON },
-	{ PK_RESP_INPUT,   PK_RESP_INPUT,   	PK_BOTH_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
-	{ JUST_WORKS,      JUST_WORKS,       	JUST_WORKS,      JUST_WORKS,    JUST_WORKS    },
-	{ PK_RESP_INPUT,   NUMERIC_COMPARISON,  PK_INIT_INPUT,   JUST_WORKS,    NUMERIC_COMPARISON },
-};
-
-//used for enable numeric comparsion confirm value.
-#define NC_CONFIRM_YES					1 //YES(Pairing)
-#define NC_CONFIRM_NO					2 //NO (Cancel)
-
-#endif
 
 #define IO_CAPABLITY_DISPLAY_ONLY		0x00
 #define IO_CAPABLITY_DISPLAY_YESNO		0x01
@@ -454,13 +433,6 @@ void blc_smp_setMaxKeySize (u8 maxKeySize);
 int blc_smp_enableAuthMITM (int en, u32 pinCodeInput);
 
 /*************************************************
- * 	@brief 		used for set MITM protect input pinCode
- * 	@return  	0 - setting failure
- * 				others - pin code in ranged.(0 ~ 999,999)
- */
-int blc_smp_set_pinCode(u32 pinCodeInput);
-
-/*************************************************
  * 	@brief 		used for enable authentication bonding flag.
  */
 int blc_smp_enableBonding (int en);
@@ -470,41 +442,15 @@ int blc_smp_enableBonding (int en);
  * */
 void blc_smp_setIoCapability (u8 ioCapablility);
 
-
-#if (SECURE_CONNECTION_ENABLE)
-/*************************************************
- * 	used for enable sc flag
+/*
+ * API used for set distribute key enable.
  * */
-void blc_smp_enableScFlag (int en);
-/*************************************************
- * 	used for enable sc only
- * 	set sc only.if master do not support sc,
- * 	slave disconnect the link layer
- * */
-void set_smp_sc_only(u8 flg);
-
-/*************************************************
- * Numeric comparison confirm concerned
- */
-void blc_smp_setNCconfirmValue(u8 param);
-#endif
-
-/*************************************************
- *	@brief	used for pincode timeout processs concerned.
- */
-void blc_smp_set_pc_timeoutTick (u32 t, u32 timeout_duration);
-u32 blc_get_pc_start_tick(void);
-u32 blc_get_pc_timeout_duration();
+smp_keyDistribution_t blc_smp_setDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
 
 /*
  * API used for set distribute key enable.
  * */
-void blc_smp_setDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
-
-/*
- * API used for set distribute key enable.
- * */
-void  blc_smp_expectDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
+smp_keyDistribution_t blc_smp_expectDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
 
 
 
@@ -652,10 +598,7 @@ void 	tbl_bond_slave_unpair_proc(u8 adr_type, u8 *addr);
 void	blm_smp_encChangeEvt(u8 status, u16 connhandle, u8 enc_enable);
 
 
-#if (SMP_BLE_CERT_TEST)
-void 	blc_smp_setCertTimeoutTick (u32 t);
-void 	blc_smp_certTimeoutLoopEvt (u8 as_master);
-#endif
+
 
 
 #endif /* BLE_SMP_H_ */
