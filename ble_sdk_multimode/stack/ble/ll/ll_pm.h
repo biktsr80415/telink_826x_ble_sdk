@@ -76,7 +76,6 @@ void 		bls_pm_setWakeupSource(u16 source);
 u32 		bls_pm_getSystemWakeupTick(void);
 
 void 		bls_pm_setManualLatency(u16 latency); //manual set latency to save power
-void 		bls_pm_enableAdvMcuStall(u8 en);
 
 void 		bls_pm_setAppWakeupLowPower(u32 wakeup_tick, u8 enable);
 void 		bls_pm_registerAppWakeupLowPowerCb(pm_appWakeupLowPower_callback_t cb);

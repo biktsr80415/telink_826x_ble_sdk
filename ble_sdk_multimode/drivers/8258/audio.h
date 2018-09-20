@@ -132,7 +132,7 @@ void Audio_SetUSBOutput(AudioInput_Typedef Input_type,AudioRate_Typedef Audio_Ra
  *            actually audio data is dmic_speed/d_samp.
  * @param[in] dmic_speed - set the DMIC speed. such as 1 indicate 1M and 2 indicate 2M.
  * @param[in] d_samp - set the decimation. ie div_speed.
- * @param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
+ * @param[in]  fhs_source
  *
  * @return    none.
  */
@@ -166,7 +166,7 @@ unsigned char audio_tune_deci_shift(unsigned char deci_shift);
  *	@param[in]	audio_out_en - audio output enable or disable set, '1' enable audio output; '0' disable output
  *	@param[in]	sample_rate - audio sampling rate, such as 16K,32k etc.
  *	@param[in]	sdm_clk -	  SDM clock, default to be 8Mhz
- *	@param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
+ *	@param[in]  fhs_source
  *
  *	@return	none
  */

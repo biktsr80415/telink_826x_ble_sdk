@@ -148,9 +148,11 @@ _attribute_ram_code_ void	user_set_rf_power (u8 e, u8 *p, int n)
 
 void	task_connect (u8 e, u8 *p, int n)
 {
-	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);  //interval=10ms latency=99 timeout=4s
-	bls_l2cap_setMinimalUpdateReqSendingTime_after_connCreate(1000);
-
+	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);  // 1 S
+//	bls_l2cap_requestConnParamUpdate (8, 8, 149, 600);  // 1.5 S
+//	bls_l2cap_requestConnParamUpdate (8, 8, 199, 800);  // 2 S
+//	bls_l2cap_requestConnParamUpdate (8, 8, 249, 800);  // 2.5 S
+//	bls_l2cap_requestConnParamUpdate (8, 8, 299, 800);  // 3 S
 
 	latest_user_event_tick = clock_time();
 
@@ -343,7 +345,7 @@ void user_init_normal(void)
 	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
 		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
 		blc_pm_setDeepsleepRetentionThreshold(95, 95);
-		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(400);
+		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(250);
 		blc_pm_setDeepsleepRetentionType(DEEPSLEEP_MODE_RET_SRAM_LOW32K);
 	#else
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
@@ -361,18 +363,19 @@ void user_init_normal(void)
 
 
 
-#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+
 _attribute_ram_code_ void user_init_deepRetn(void)
 {
-
+#if (PM_DEEPSLEEP_RETENTION_ENABLE)
 	blc_ll_initBasicMCU();   //mandatory
 	rf_set_power_level_index (MY_RF_POWER_INDEX);
 
 	blc_ll_recoverDeepRetention();
 
 	DBG_CHN0_HIGH;    //debug
-}
 #endif
+}
+
 
 /////////////////////////////////////////////////////////////////////
 // main loop flow
@@ -393,13 +396,12 @@ void main_loop (void)
 	////////////////////////////////////// UI entry /////////////////////////////////
 
 
-	#if (BATT_CHECK_ENABLE)
-		if(lowBattDet_enable){
-			battery_power_check();
-		}
-	#endif
 
 
+
+
+
+	////////////////////////////////////// PM Process /////////////////////////////////
 	blt_pm_proc();
 }
 

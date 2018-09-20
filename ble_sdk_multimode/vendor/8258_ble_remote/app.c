@@ -205,11 +205,17 @@ void blt_pm_proc(void)
 	{
 		bls_pm_setSuspendMask (SUSPEND_DISABLE);
 	}
-#if(REMOTE_IR_ENABLE)
-	else if( ir_send_ctrl.is_sending){
-		bls_pm_setSuspendMask(SUSPEND_DISABLE);
-	}
-#endif
+	#if(REMOTE_IR_ENABLE)
+		else if( ir_send_ctrl.is_sending){
+			bls_pm_setSuspendMask(SUSPEND_DISABLE);
+		}
+	#endif
+	#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE)
+		else if( blc_phy_isPhyTestEnable() )
+		{
+			bls_pm_setSuspendMask(SUSPEND_DISABLE);  //phy test can not enter suspend
+		}
+	#endif
 	else
 	{
 		#if (PM_DEEPSLEEP_RETENTION_ENABLE)

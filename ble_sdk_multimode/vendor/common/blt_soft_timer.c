@@ -22,7 +22,7 @@ blt_soft_timer_t	blt_timer;
 int  blt_soft_timer_sort(void)
 {
 	if(blt_timer.currentNum < 1 || blt_timer.currentNum > MAX_TIMER_NUM){
-		write_reg32(0x8000, 0x11111120); while(1); //debug ERR
+		write_reg32(0x40000, 0x11111120); while(1); //debug ERR
 		return 0;
 	}
 	else{
@@ -61,7 +61,7 @@ int blt_soft_timer_add(blt_timer_callback_t func, u32 interval_us)
 	}
 	else{
 		blt_timer.timer[blt_timer.currentNum].cb = func;
-		blt_timer.timer[blt_timer.currentNum].interval = interval_us * CLOCK_SYS_CLOCK_1US;
+		blt_timer.timer[blt_timer.currentNum].interval = interval_us * CLOCK_16M_SYS_TIMER_CLK_1US;
 		blt_timer.timer[blt_timer.currentNum].t = now + blt_timer.timer[blt_timer.currentNum].interval;
 		blt_timer.currentNum ++;
 
@@ -75,7 +75,7 @@ int blt_soft_timer_add(blt_timer_callback_t func, u32 interval_us)
 int  blt_soft_timer_delete_by_index(u8 index)
 {
 	if(index >= blt_timer.currentNum){
-		write_reg32(0x8000, 0x11111121); while(1); //debug ERR
+		write_reg32(0x40000, 0x11111121); while(1); //debug ERR
 		return 0;
 	}
 
@@ -98,7 +98,7 @@ int 	blt_soft_timer_delete(blt_timer_callback_t func)
 
 			if(i == 0){  //删除的是最近的timer，需要更新时间
 
-				if( (u32)(blt_timer.timer[0].t - clock_time()) < 3000 *  CLOCK_SYS_CLOCK_1MS){
+				if( (u32)(blt_timer.timer[0].t - clock_time()) < 3000 *  CLOCK_16M_SYS_TIMER_CLK_1MS){
 					bls_pm_setAppWakeupLowPower(blt_timer.timer[0].t,  1);
 				}
 				else{
@@ -138,7 +138,7 @@ void  	blt_soft_timer_process(int type)
 		if(blt_is_timer_expired(blt_timer.timer[i].t ,now) ){ //timer trigger
 
 			if(blt_timer.timer[i].cb == NULL){
-				write_reg32(0x8000, 0x11111122); while(1); //debug ERR
+				write_reg32(0x40000, 0x11111122); while(1); //debug ERR
 			}
 			else{
 				result = blt_timer.timer[i].cb();
@@ -152,7 +152,7 @@ void  	blt_soft_timer_process(int type)
 				}
 				else{  //set new timer interval
 					change_flg = 1;
-					blt_timer.timer[i].interval = result * CLOCK_SYS_CLOCK_1US;
+					blt_timer.timer[i].interval = result * CLOCK_16M_SYS_TIMER_CLK_1US;
 					blt_timer.timer[i].t = now + blt_timer.timer[i].interval;
 				}
 			}
@@ -165,7 +165,7 @@ void  	blt_soft_timer_process(int type)
 			blt_soft_timer_sort();
 		}
 
-		if( (u32)(blt_timer.timer[0].t - now) < 3000 *  CLOCK_SYS_CLOCK_1MS){
+		if( (u32)(blt_timer.timer[0].t - now) < 3000 *  CLOCK_16M_SYS_TIMER_CLK_1MS){
 			bls_pm_setAppWakeupLowPower(blt_timer.timer[0].t,  1);
 		}
 		else{

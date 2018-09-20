@@ -5,9 +5,7 @@
 extern "C" {
 #endif
 
-#define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
-#define	__LOG_RT_ENABLE__		0
-//#define	__DEBUG_PRINT__			0
+
 //////////// product  Information  //////////////////////////////
 #define ID_VENDOR				0x248a			// for report
 #define ID_PRODUCT_BASE			0x880C
@@ -46,7 +44,7 @@ extern "C" {
 #define UI_AUDIO_ENABLE								1
 #define UI_BUTTON_ENABLE							1
 #define UI_LED_ENABLE								1
-#define UI_UPPER_COMPUTER_ENABLE					0  //work with upper computer
+#define UI_UPPER_COMPUTER_ENABLE					1  //work with upper computer
 
 
 
@@ -130,7 +128,6 @@ extern "C" {
 
 
 /////////////////// Clock  /////////////////////////////////
-#define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC
 #define CLOCK_SYS_CLOCK_HZ  	32000000
 
 enum{

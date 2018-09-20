@@ -115,6 +115,7 @@ typedef unsigned short (*tick_32k_get_t)(void);
 void pm_register_tick32kGet_callback(tick_32k_get_t cb);
 
 
+
 void cpu_wakeup_init(void);
 void cpu_set_gpio_wakeup (GPIO_PinTypeDef pin, GPIO_LevelTypeDef pol, int en);
 

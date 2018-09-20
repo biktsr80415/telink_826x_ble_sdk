@@ -23,6 +23,11 @@ _attribute_ram_code_ void irq_handler(void)
 
 	irq_blt_sdk_handler ();
 
+#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE)
+	extern void irq_phyTest_handler(void);
+	irq_phyTest_handler();
+#endif
+
 }
 
 

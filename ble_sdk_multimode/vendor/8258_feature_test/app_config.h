@@ -48,6 +48,7 @@ extern "C" {
 	#define BLE_PM_ENABLE								0
 #else
 	#define BLE_PM_ENABLE								1
+	#define PM_DEEPSLEEP_RETENTION_ENABLE				1
 #endif
 
 
@@ -67,15 +68,9 @@ extern "C" {
 /////////////////// DEBUG  /////////////////////////////////
 //GPIO simulate uart print
 #define UART_PRINT_DEBUG_ENABLE               		    1	//print info by a gpio
-//USB print info
-#define USB_PRINT_DEBUG_ENABLE						    0   //print info by usb
-#define PA5_FUNC			AS_USB
-#define PA6_FUNC	   		AS_USB
-#define PA5_INPUT_ENABLE	1	//USB
-#define PA6_INPUT_ENABLE	1	//USB
+
 
 /////////////////// Clock  /////////////////////////////////
-#define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC
 #define CLOCK_SYS_CLOCK_HZ  	16000000
 
 enum{
@@ -101,12 +96,8 @@ typedef struct{
 #define PRINT_BAUD_RATE             					1000000
 #define DEBUG_INFO_TX_PIN           					GPIO_PC5
 #define PULL_WAKEUP_SRC_PC5         					PM_PIN_PULLUP_1M
-#elif (USB_PRINT_DEBUG_ENABLE)
-#define PA5_FUNC										AS_USB
-#define PA6_FUNC	   									AS_USB
-#define PA5_INPUT_ENABLE								1	//USB
-#define PA6_INPUT_ENABLE								1	//USB
 #endif
+
 
 #include "application/print/u_printf.h"
 
@@ -216,7 +207,7 @@ typedef enum
 
 
 
-#define DEBUG_GPIO_ENABLE							1
+#define DEBUG_GPIO_ENABLE							0
 
 #if(DEBUG_GPIO_ENABLE)
 //define debug GPIO here according to your hardware

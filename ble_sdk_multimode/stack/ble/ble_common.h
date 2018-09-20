@@ -41,19 +41,6 @@
 #define LL_FEATURE_MASK_EXTENDED_SCANNER_FILTER_POLICIES     0x80   //core_4.2
 
 
-#if (BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE)
-
-	#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
-									   	   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
-									   	   LL_FEATURE_MASK_LE_PING							  |   \
-									   	   LL_FEATURE_MASK_LE_DATA_PACKET_EXTENSION	)
-#else
-
-	#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
-									   	   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
-									   	   LL_FEATURE_MASK_LE_PING					)
-#endif
-
 
 typedef enum {
 	SCAN_TYPE_PASSIVE = 0x00,

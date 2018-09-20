@@ -63,15 +63,14 @@ void audio_config_sdm_buf(signed short* pbuff, unsigned char size_buff)
 
 /****
 * brief: audio amic initial function. configure ADC corresponding parameters. set hpf,lpf and decimation ratio.
-* param[in] mode_flag -- '1' differ mode ; '0' signal end mode
-* param[in] misc_sys_tick -- system ticks of adc misc channel.
-* param[in] l_sys_tick -- system tick of adc left channel CLOCK_SYS_TYPE
-* param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
-*
+* param[in] audio_Rate
 * return none
 */
 void audio_amic_init(AudioRate_Typedef Audio_Rate)
 {
+	/******power off sar adc********/
+	adc_power_on_sar_adc(0);
+
 
 	/*******1.ADC setting for analog audio sample**************************/
 	adc_reset_adc_module();   //reset whole digital adc module
@@ -251,7 +250,7 @@ static void SendDataToUSB(AudioInput_Typedef Input_Type,AudioRate_Typedef Audio_
  *            actually audio data is dmic_speed/d_samp.
  * @param[in] dmic_speed - set the DMIC speed. such as 1 indicate 1M and 2 indicate 2M.
  * @param[in] d_samp - set the decimation. ie div_speed.
- * @param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
+ * @param[in] fhs_source -
  *
  * @return    none.
  */
@@ -305,7 +304,7 @@ unsigned char audio_tune_deci_shift(unsigned char deci_shift)
  *	@param[in]	audio_out_en - audio output enable or disable set, '1' enable audio output; '0' disable output
  *	@param[in]	sample_rate - audio sampling rate, such as 16K,32k etc.
  *	@param[in]	sdm_clk -	  SDM clock, default to be 8Mhz
- *	@param[in]  fhs_source - the parameter is CLOCK_SYS_TYPE. avoid CLOCK_SYS_TYPE to be modified to other word.such as SYS_TYPE etc.
+ *	@param[in]  fhs_source
  *
  *	@return	none
  */

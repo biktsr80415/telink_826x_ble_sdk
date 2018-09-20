@@ -58,7 +58,7 @@ void user_init()
 
 	//set USB ID
 	usb_log_init ();
-	REG_ADDR8(0x74) = 0x53;
+	REG_ADDR8(0x74) = 0x62;
 	REG_ADDR16(0x7e) = 0x08d0;
 	REG_ADDR8(0x74) = 0x00;
 
@@ -138,7 +138,7 @@ void user_init()
 
 	//set scan parameter and scan enable
 
-	blc_ll_setScanParameter(SCAN_TYPE_PASSIVE, SCAN_INTERVAL_100MS, SCAN_INTERVAL_100MS,
+	blc_ll_setScanParameter(SCAN_TYPE_PASSIVE, SCAN_INTERVAL_100MS, SCAN_INTERVAL_100MS,	\
 								  OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_ANY);
 	blc_ll_setScanEnable (BLC_SCAN_ENABLE, 0);
 

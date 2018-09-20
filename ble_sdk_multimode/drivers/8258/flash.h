@@ -113,3 +113,6 @@ _attribute_ram_code_ void flash_erase_chip(void);
 _attribute_ram_code_ unsigned int flash_get_jedec_id();
 
 #endif
+
+
+_attribute_ram_code_ unsigned int flash_get_jedec_id();

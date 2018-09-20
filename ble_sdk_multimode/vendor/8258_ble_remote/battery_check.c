@@ -14,8 +14,8 @@
 
 #if (BATT_CHECK_ENABLE)
 
-#define DBG_ADC_ON_RF_PKT			0
-#define DBG_ADC_SAMPLE_DAT			0
+#define DBG_ADC_ON_RF_PKT			1
+#define DBG_ADC_SAMPLE_DAT			1
 
 
 
@@ -82,6 +82,9 @@ int battery_get_detect_enable (void)
 
 _attribute_ram_code_ void adc_vbat_detect_init(void)
 {
+	/******power off sar adc********/
+	adc_power_on_sar_adc(0);
+
 
 	//telink advice: you must choose one gpio with adc function to output high level(voltage will equal to vbat), then use adc to measure high level voltage
 	gpio_set_output_en(GPIO_VBAT_DETECT, 1);

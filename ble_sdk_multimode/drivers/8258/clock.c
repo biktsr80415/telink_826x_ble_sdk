@@ -50,3 +50,13 @@ _attribute_ram_code_ void sleep_us (unsigned long us)
 }
 
 
+
+_attribute_ram_code_ void start_reboot(void)
+{
+	irq_disable ();
+	sleep_us(13000);   //delay 12ms to avoid soft start problem
+	REG_ADDR8(0x6f) = 0x20;  //reboot
+	while (1);
+}
+
+

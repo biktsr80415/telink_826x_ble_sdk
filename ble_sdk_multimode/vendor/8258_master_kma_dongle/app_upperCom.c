@@ -20,7 +20,7 @@
 
 #define reg_cmd 					0x40000
 #define reg_datalen 				0x40002
-#define reg_att_read 				0x40008     // ~ 0x800f 8 bytes
+#define reg_att_read 				0x40008     // ~ 0x4000f 8 bytes
 #define reg_cmd_result 				0x40008     // cmd exe result
 
 
@@ -51,10 +51,10 @@ void    report_to_KeySimTool(u8 len,u8 * keycode)
 
 		u8 mask = 0;
 
-		if(!(read_reg8(0x8004)&0xf0)){ //pc tool cleared 0x8004
+		if(!(read_reg8(0x40004)&0xf0)){ //pc tool cleared 0x40004
 			if(!len){  //release
-				write_reg8(0x8004,KEY_MASK_RELEASE);
-				write_reg8(0x8005,0);
+				write_reg8(0x40004,KEY_MASK_RELEASE);
+				write_reg8(0x40005,0);
 			}
 			else{//press or repeat
 				if(last_len==len && last_key==keycode[0]){//repeat
@@ -63,11 +63,11 @@ void    report_to_KeySimTool(u8 len,u8 * keycode)
 				else{ //press
 					mask = KEY_MASK_PRESS;
 				}
-				write_reg8(0x8004,mask | len);
-				write_reg8(0x8005,keycode[0]);
+				write_reg8(0x40004,mask | len);
+				write_reg8(0x40005,keycode[0]);
 			}
 		}
-		else{  //pc tool not clear t0x8004, drop the key
+		else{  //pc tool not clear t0x40004, drop the key
 			if(!len){  //release can not drop
 				release_key_pending = 1;
 				release_key_tick = clock_time();
@@ -78,8 +78,8 @@ void    report_to_KeySimTool(u8 len,u8 * keycode)
 		last_key = keycode[0];
 
 #else //old pc tool
-		write_reg8(0x8004,len);
-		write_reg8(0x8005,keycode[0]);
+		write_reg8(0x40004,len);
+		write_reg8(0x40005,keycode[0]);
 #endif
 }
 
@@ -149,7 +149,7 @@ void report_media_key_to_KeySimTool(u16 media_key)
 void app_upper_com_init(void)
 {
     //Sram 0x808000 ~ 0x80800f  16byte can be used for communication with upper computer
-    for(int i=0; i<6 ;i++)  write_reg8(0x8000+i, 0);
+    for(int i=0; i<6 ;i++)  write_reg8(0x40000+i, 0);
 }
 
 
@@ -162,9 +162,9 @@ void app_upper_com_proc(void)
 
 	//proc KeySimTool key release
 	if(release_key_pending){
-		if(!(read_reg8(0x8004)&0xf0)){ //KeySimTool cleared 0x8004
-			write_reg8(0x8004,KEY_MASK_RELEASE);
-			write_reg8(0x8005,0);
+		if(!(read_reg8(0x40004)&0xf0)){ //KeySimTool cleared 0x40004
+			write_reg8(0x40004,KEY_MASK_RELEASE);
+			write_reg8(0x40005,0);
 			release_key_pending = 0;
 		}
 

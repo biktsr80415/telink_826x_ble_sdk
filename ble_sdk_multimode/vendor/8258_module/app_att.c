@@ -99,8 +99,7 @@ int module_onReceiveData(rf_packet_att_write_t *p)
 	u8 len = p->l2capLen - 3;
 	if(len > 0)
 	{
-		u8	retPara[28] = {0};
-		spp_event_t *pEvt =  (spp_event_t *)&retPara;
+		spp_event_t *pEvt =  (spp_event_t *)p;
 		pEvt->token = 0xFF;
 		pEvt->paramLen = p->l2capLen + 2;   //l2cap_len + 2 byte (eventId)
 		pEvt->eventId = 0x07a0;  //data received event

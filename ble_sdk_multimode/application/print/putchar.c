@@ -75,7 +75,7 @@ int swire_putc(int c) {
 #if (UART_PRINT_DEBUG_ENABLE)
 
 #ifndef		BIT_INTERVAL
-#define		BIT_INTERVAL		(CLOCK_SYS_CLOCK_HZ/PRINT_BAUD_RATE)
+#define		BIT_INTERVAL		(16000000/PRINT_BAUD_RATE)
 #endif
 
 _attribute_ram_code_

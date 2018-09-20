@@ -79,7 +79,6 @@ void bls_ota_setTimeout(u32 timeout_us);
 extern int otaWrite(void * p);
 extern int otaRead(void * p);
 
-extern void start_reboot(void);
 
 //firmware_size_k  must be 4k aligned
 void bls_ota_set_fwSize_and_fwBootAddr(int firmware_size_k, int boot_addr);

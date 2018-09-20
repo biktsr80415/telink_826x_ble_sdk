@@ -91,7 +91,7 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 #ifndef BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE
-#define BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE			0
+#define BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE			1
 #endif
 
 
@@ -269,5 +269,5 @@ static inline void blc_app_loadCustomizedParameters(void)
 #endif
 
 #ifndef	BLC_REGISTER_DBG_GPIO_IN_STACK
-#define BLC_REGISTER_DBG_GPIO_IN_STACK		1
+#define BLC_REGISTER_DBG_GPIO_IN_STACK		0
 #endif

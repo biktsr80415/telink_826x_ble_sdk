@@ -2,14 +2,10 @@
 #define LL__H_
 
 
-
-//#include <stack/ble/att.h>
 #include <stack/ble/ble_common.h>
 #include <stack/ble/blt_config.h>
-#include <stack/ble/gap.h>
 #include <stack/ble/hci/hci_const.h>
 #include <stack/ble/hci/hci_event.h>
-#include <stack/ble/l2cap.h>
 #include <stack/ble/ll/ll_adv.h>
 #include <stack/ble/ll/ll_encrypt.h>
 #include <stack/ble/ll/ll_init.h>
@@ -18,21 +14,22 @@
 #include <stack/ble/ll/ll_scan.h>
 #include <stack/ble/ll/ll_slave.h>
 #include <stack/ble/ll/ll_whitelist.h>
-#include <stack/ble/uuid.h>
+
+
 #include "tl_common.h"
-
-
 #include "drivers.h"
 
-extern u8					blt_state;
-extern st_ll_scan_t  blts;
 
 #define         VENDOR_ID                       0x0211
 #define			BLUETOOTH_VER_4_0				6
 #define			BLUETOOTH_VER_4_1				7
 #define			BLUETOOTH_VER_4_2				8
 
+
+#ifndef 		BLUETOOTH_VER
 #define			BLUETOOTH_VER					BLUETOOTH_VER_4_2
+#endif
+
 
 #if (BLUETOOTH_VER == BLUETOOTH_VER_4_2)
 	#define			BLUETOOTH_VER_SUBVER			0x22BB
@@ -40,7 +37,6 @@ extern st_ll_scan_t  blts;
 	#define			BLUETOOTH_VER_SUBVER			0x4103
 #endif
 
-void blt_set_bluetooth_version (u8 v);
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -70,14 +66,14 @@ void blt_set_bluetooth_version (u8 v);
 
 #define 				LL_VERSION_IND              0x0C
 #define 				LL_REJECT_IND         		0x0D
-#define 				LL_SLAVE_FEATURE_REQ        0x0E
-#define 				LL_CONNECTION_PARAM_REQ		0x0F
-#define 				LL_CONNECTION_PARAM_RSP		0x10
-#define					LL_REJECT_IND_EXT			0x11
-#define 				LL_PING_REQ					0x12
-#define					LL_PING_RSP					0x13
-#define 				LL_LENGTH_REQ				0x14
-#define					LL_LENGTH_RSP				0x15
+#define 				LL_SLAVE_FEATURE_REQ        0x0E	//core_4.1
+#define 				LL_CONNECTION_PARAM_REQ		0x0F	//core_4.1
+#define 				LL_CONNECTION_PARAM_RSP		0x10	//core_4.1
+#define					LL_REJECT_IND_EXT			0x11	//core_4.1
+#define 				LL_PING_REQ					0x12    //core_4.1
+#define					LL_PING_RSP					0x13    //core_4.1
+#define 				LL_LENGTH_REQ				0x14    //core_4.2
+#define					LL_LENGTH_RSP				0x15    //core_4.2
 
 #define					LL_ENC_REQ					0x03
 #define					LL_ENC_RSP					0x04
@@ -86,6 +82,47 @@ void blt_set_bluetooth_version (u8 v);
 
 #define					LL_PAUSE_ENC_REQ			0x0A
 #define					LL_PAUSE_ENC_RSP			0x0B
+
+
+
+
+#if (BLUETOOTH_VER == BLUETOOTH_VER_4_0)
+	#define LL_FEATURE_MASK_DEFAULT		LL_FEATURE_MASK_LL_ENCRYPTION
+	#define LL_CMD_MAX					LL_REJECT_IND
+
+#elif (BLUETOOTH_VER == BLUETOOTH_VER_4_1)
+	#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
+									   	   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
+									   	   LL_FEATURE_MASK_LE_PING					)
+	#define LL_CMD_MAX					LL_PING_RSP
+
+#elif (BLUETOOTH_VER == BLUETOOTH_VER_4_2)
+
+	#if (BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE)
+		#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
+											   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
+											   LL_FEATURE_MASK_LE_PING							  |   \
+											   LL_FEATURE_MASK_LE_DATA_PACKET_EXTENSION	)
+	#else
+		#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
+											   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
+											   LL_FEATURE_MASK_LE_PING					)
+	#endif
+
+	#define LL_CMD_MAX					LL_LENGTH_RSP
+
+#else
+
+
+#endif
+
+
+
+
+
+
+
+
 
 #define					SLAVE_LL_ENC_OFF			0
 #define					SLAVE_LL_ENC_REQ			1
@@ -267,7 +304,8 @@ typedef int (*blt_LTK_req_callback_t)(u16 handle, u8* rand, u16 ediv);
 
 extern my_fifo_t		hci_tx_fifo;
 
-
+extern u8			 blt_state;
+extern st_ll_scan_t  blts;
 
 /******************************* User Interface  ************************************/
 void		irq_blt_sdk_handler ();;

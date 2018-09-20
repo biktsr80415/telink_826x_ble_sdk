@@ -8,18 +8,59 @@
 #include "vendor/common/tl_audio.h"
 #include "vendor/common/blt_soft_timer.h"
 
-#if (FEATURE_TEST_MODE)
+#if(FEATURE_TEST_MODE == TEST_BLE_PHY)
 	MYFIFO_INIT(hci_rx_fifo, 72, 2);
 	MYFIFO_INIT(hci_tx_fifo, 72, 8);
 #endif
 
+
+//#if (BLE_LONG_PACKET_ENABLE)
+//	MYFIFO_INIT(blt_rxfifo, 96, 8);
+//	MYFIFO_INIT(blt_txfifo, 240, 16);
+//#else
+//	MYFIFO_INIT(blt_rxfifo, 64, 8);
+//	MYFIFO_INIT(blt_txfifo, 40, 16);
+//#endif
+
+
+
 #if (BLE_LONG_PACKET_ENABLE)
-	MYFIFO_INIT(blt_rxfifo, 96, 8);
-	MYFIFO_INIT(blt_txfifo, 240, 16);
+	#define RX_FIFO_SIZE	96
+	#define RX_FIFO_NUM		8
+
+	#define TX_FIFO_SIZE	240
+	#define TX_FIFO_NUM		16
 #else
-	MYFIFO_INIT(blt_rxfifo, 64, 8);
-	MYFIFO_INIT(blt_txfifo, 40, 16);
+	#define RX_FIFO_SIZE	64
+	#define RX_FIFO_NUM		8
+
+	#define TX_FIFO_SIZE	40
+	#define TX_FIFO_NUM		16
 #endif
+
+
+
+
+
+_attribute_data_retention_  u8 		 	blt_rxfifo_b[RX_FIFO_SIZE * RX_FIFO_NUM] = {0};
+_attribute_data_retention_	my_fifo_t	blt_rxfifo = {
+												RX_FIFO_SIZE,
+												RX_FIFO_NUM,
+												0,
+												0,
+												blt_rxfifo_b,};
+
+
+_attribute_data_retention_  u8 		 	blt_txfifo_b[TX_FIFO_SIZE * TX_FIFO_NUM] = {0};
+_attribute_data_retention_	my_fifo_t	blt_txfifo = {
+												TX_FIFO_SIZE,
+												TX_FIFO_NUM,
+												0,
+												0,
+												blt_txfifo_b,};
+
+
+
 
 
 
@@ -82,6 +123,12 @@ void  func_suspend_exit (u8 e, u8 *p, int n)
 
 }
 
+#define		MY_RF_POWER_INDEX					RF_POWER_P3p01dBm
+
+_attribute_ram_code_ void	user_set_rf_power (u8 e, u8 *p, int n)
+{
+	rf_set_power_level_index (MY_RF_POWER_INDEX);
+}
 
 
 #if (FEATURE_TEST_MODE == TEST_USER_BLT_SOFT_TIMER)
@@ -252,19 +299,11 @@ int app_event_callback (u32 h, u8 *p, int n)
 
 
 
-void user_init()
+void user_init_normal(void)
 {
 	random_generator_init();  //this is must
 
 	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value
-
-#if (USB_PRINT_DEBUG_ENABLE)
-	REG_ADDR8(0x74)  = 0x53;
-	REG_ADDR16(0x7e) = 0x08d1;
-	REG_ADDR8(0x74)  = 0x00;
-	usb_log_init ();
-	usb_dp_pullup_en (1);  //open USB enum
-#endif
 
 
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
@@ -549,33 +588,32 @@ void user_init()
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
-	//1S 1 channel   30uA
-	//u8 status = bls_ll_setAdvParam( ADV_INTERVAL_1S, ADV_INTERVAL_1S, \
+	//1S 1 channel   11 uA
+//	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_1S, ADV_INTERVAL_1S, \
 									ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_ALLOW_SCAN_WL_ALLOW_CONN_WL);  //no scan, no connect
 
-	//1S 3 channel   54uA
-	//u8 status = bls_ll_setAdvParam( ADV_INTERVAL_1S, ADV_INTERVAL_1S, \
+	//1S 3 channel   17 uA
+//	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_1S, ADV_INTERVAL_1S, \
 									ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_ALLOW_SCAN_WL_ALLOW_CONN_WL);  //no scan, no connect
 
-	//400mS 3 channel   122uA
-	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_400MS, ADV_INTERVAL_400MS, \
+	//500mS 3 channel   34 uA
+	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_500MS, ADV_INTERVAL_500MS, \
 									ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_ALLOW_SCAN_WL_ALLOW_CONN_WL);  //no scan, no connect
 
 
 	if(status != BLE_SUCCESS){  //adv setting err
-		write_reg8(0x8000, 0x11);  //debug
+		write_reg8(0x40000, 0x11);  //debug
 		while(1);
 	}
 
 	bls_ll_setAdvEnable(1);  //adv enable
 
-	bls_pm_enableAdvMcuStall(1);
-	rf_set_power_level_index (RF_POWER_0dBm);
 
-
+	user_set_rf_power(0, 0, 0);
+	bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_EXIT, &user_set_rf_power);
 
 
 #elif ( FEATURE_TEST_MODE == TEST_SMP_PASSKEY_ENTRY  )
@@ -777,12 +815,18 @@ void user_init()
 	#endif
 #endif
 
-#if (BLE_PM_ENABLE)
-	blc_ll_initPowerManagement_module();
-	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 
-	#if (FEATURE_TEST_MODE == TEST_ADVERTISING_SCANNING_IN_CONN_SLAVE_ROLE)
-		bls_pm_setSuspendMask (SUSPEND_ADV);
+
+
+
+
+#if(BLE_PM_ENABLE)
+	blc_ll_initPowerManagement_module();
+
+	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
+		blc_pm_setDeepsleepRetentionThreshold(95, 95);
+		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(200);
 	#else
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 	#endif
@@ -793,13 +837,30 @@ void user_init()
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);
 #endif
 
+
 }
+
+
+_attribute_ram_code_ void user_init_deepRetn(void)
+{
+#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+	blc_ll_initBasicMCU();   //mandatory
+	rf_set_power_level_index (MY_RF_POWER_INDEX);
+
+	blc_ll_recoverDeepRetention();
+
+	irq_enable();
+
+	DBG_CHN0_HIGH;    //debug
+#endif
+}
+
 
 u32 tick_loop=0;
 /*----------------------------------------------------------------------------*/
 /*-------- Main Loop                                                ----------*/
 /*----------------------------------------------------------------------------*/
-void main_loop (void)
+_attribute_ram_code_ void main_loop (void)
 {
 	tick_loop++;
 

@@ -71,12 +71,14 @@ int host_ota_update_pending;
 
 void ota_set_result(int success)
 {
+#if (UI_LED_ENABLE)
 	if(master_ota_cmd == 1){
 		led_indicate_gpio = GPIO_LED_BLUE;
 	}
 	else{
 		led_indicate_gpio = GPIO_LED_GREEN;
 	}
+#endif
 
 	if(success){
 		led_indicate_begin_tick = clock_time() | 1;
@@ -85,8 +87,9 @@ void ota_set_result(int success)
 		led_indicate_begin_tick = 0;
 	}
 
+#if (UI_LED_ENABLE)
 	gpio_write(led_indicate_gpio,!LED_ON_LEVAL);  //ota fail
-
+#endif
 
 	host_ota_update_pending = 0;
 
@@ -147,6 +150,7 @@ void host_find_slave_ota_attHandle(u8 *p)
 
 
 u32 otaStart_cmd_tick;
+u32 ota_lastData_tick;
 
 void proc_ota (void)
 {
@@ -176,6 +180,7 @@ void proc_ota (void)
 	//enter OTA mode,  2 led shine for 3 times
     if(master_ota_test_mode == 1)
     {
+#if (UI_LED_ENABLE)
     	if(led_step==0 && clock_time_exceed(ota_mode_begin_tick, OTA_INTERVAL_US)){
     		gpio_write(GPIO_LED_BLUE, LED_ON_LEVAL);
     		gpio_write(GPIO_LED_GREEN, LED_ON_LEVAL);
@@ -209,12 +214,16 @@ void proc_ota (void)
 
     		master_ota_test_mode = 2;
     	}
+#else
+    	master_ota_test_mode = 2;
+#endif
     }
 
 
 
     //led indicate ota
     if(led_indicate_begin_tick){
+#if (UI_LED_ENABLE)
     	if(led_step==0 && clock_time_exceed(led_indicate_begin_tick, LED_INTERVAL_US)){
     		gpio_write(led_indicate_gpio,LED_ON_LEVAL);
     		led_step = 1;
@@ -240,6 +249,9 @@ void proc_ota (void)
     		led_indicate_begin_tick = 0;
     		led_step = 0;
     	}
+#else
+    	led_indicate_begin_tick = 0;
+#endif
     }
 
 
@@ -261,11 +273,15 @@ void proc_ota (void)
 		if(master_ota_cmd){  //UI: pc tool trig OTA mode
 
 			if(master_ota_cmd == 1){
-			    gpio_write(GPIO_LED_BLUE,LED_ON_LEVAL);  //ota begin
+				#if (UI_LED_ENABLE)
+					gpio_write(GPIO_LED_BLUE,LED_ON_LEVAL);  //ota begin
+				#endif
 			    flash_adr_ota_master = 0x20000;
 			}
 			else {
-			    gpio_write(GPIO_LED_GREEN,LED_ON_LEVAL);  //ota begin
+				#if (UI_LED_ENABLE)
+					gpio_write(GPIO_LED_GREEN,LED_ON_LEVAL);  //ota begin
+				#endif
 			    flash_adr_ota_master = 0x40000;
 			}
 
@@ -318,7 +334,7 @@ void proc_ota (void)
 			host_ota_start = 6;
 		}
 	}
-	else if (host_ota_start == 6)
+	else if (host_ota_start == 6)  //send ota data form addr 0 ~ n_firmware
 	{
 		if( !blm_ll_isRfStateMachineBusy() && blm_ll_getTxFifoNumber(BLM_CONN_HANDLE) < 5 )
 		{
@@ -336,35 +352,51 @@ void proc_ota (void)
 
 					att_req_write_cmd (dat, slave_ota_handle, (u8 *)p, 20);
 
-				}
-				else{  //OTA data finish, send OTA end, do not need CRC
-					p->adr_index = CMD_OTA_END;
 
-					adr_index_max_l = (ota_adr-16)>>4;
-					adr_index_max_h = (ota_adr-16)>>12;
-					p->data[0] = adr_index_max_l;    //adr_index_max for slave to check if any packet miss
-					p->data[1] = adr_index_max_h;
-					p->data[2] = ~adr_index_max_l;  //adr_index_max check
-					p->data[3] = ~adr_index_max_h;
-
-					memset(p->data + 4, 0, 12);
-
-					att_req_write_cmd (dat, slave_ota_handle, (u8 *)p, 6);
-				}
-
-
-
-				if( blm_push_fifo (BLM_CONN_HANDLE, dat) ){
-
-					ota_adr += 16;
-					if (nlen == 0)  //all data push fifo OK
-					{
-						host_ota_start = 7;
+					if( blm_push_fifo (BLM_CONN_HANDLE, dat) ){  //current data push TX fifo OK
+						ota_adr += 16;  //next data index
 					}
+
 				}
+				else{
+					host_ota_start = 7;  //all ota data OK, to next step
+				}
+
 		}
 	}
 	else if(host_ota_start == 7)
+	{
+		if( clock_time_exceed(ota_lastData_tick, 1) ){  //50ms after last valid data, master send OTA_end cmd
+			host_ota_start = 8;
+		}
+	}
+	else if(host_ota_start == 8)   //send OTA end cmd, no need 2 byte CRC
+	{
+		if( !blm_ll_isRfStateMachineBusy() && blm_ll_getTxFifoNumber(BLM_CONN_HANDLE) < 5 )
+		{
+			u8 ota_buffer[20];
+			rf_packet_att_ota_data_t *p = (rf_packet_att_ota_data_t *)ota_buffer;
+			p->adr_index = CMD_OTA_END;
+
+			adr_index_max_l = (ota_adr-16)>>4;
+			adr_index_max_h = (ota_adr-16)>>12;
+			p->data[0] = adr_index_max_l;    //adr_index_max for slave to check if any packet miss
+			p->data[1] = adr_index_max_h;
+			p->data[2] = ~adr_index_max_l;  //adr_index_max check
+			p->data[3] = ~adr_index_max_h;
+
+			memset(p->data + 4, 0, 12);
+
+			att_req_write_cmd (dat, slave_ota_handle, (u8 *)p, 6);
+
+
+			if( blm_push_fifo (BLM_CONN_HANDLE, dat) ){
+					host_ota_start = 9;
+			}
+		}
+
+	}
+	else if(host_ota_start == 9)
 	{
 		if( blm_ll_getTxFifoNumber(BLM_CONN_HANDLE) == 0 ){ //all data acked,OTA OK
 			ota_set_result(1);

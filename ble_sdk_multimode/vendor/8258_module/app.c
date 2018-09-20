@@ -154,6 +154,7 @@ void entry_ota_mode(void)
 	bls_ota_setTimeout(15 * 1000 * 1000); //set OTA timeout  15 seconds
 
 	#if(BLT_APP_LED_ENABLE)
+		gpio_set_output_en(GPIO_LED, 1);  //output enable
 		gpio_write(GPIO_LED, 1);  //LED on for indicate OTA mode
 	#endif
 }
@@ -161,7 +162,7 @@ void entry_ota_mode(void)
 void show_ota_result(int result)
 {
 
-	#if(0 && BLT_APP_LED_ENABLE)
+	#if(1 && BLT_APP_LED_ENABLE)
 		gpio_set_output_en(GPIO_LED, 1);
 
 		if(result == OTA_SUCCESS){  //OTA success
@@ -392,7 +393,7 @@ void user_init_normal(void)
 	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
 		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
 		blc_pm_setDeepsleepRetentionThreshold(95, 95);
-		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(500);
+		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(400);
 	#else
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 	#endif

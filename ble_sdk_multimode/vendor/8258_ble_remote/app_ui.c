@@ -8,6 +8,7 @@
 #include "tl_common.h"
 #include "drivers.h"
 #include "stack/ble/ble.h"
+#include "app_config.h"
 
 #include "application/keyboard/keyboard.h"
 #include "application/usbstd/usbkeycode.h"
@@ -248,10 +249,11 @@ static u16 vk_consumer_map[16] = {
 	void app_debug_ota_result(int result)
 	{
 
-		#if(0 && BLT_APP_LED_ENABLE)
+		#if(0 && BLT_APP_LED_ENABLE)  //this is only for debug
+
 			gpio_set_output_en(GPIO_LED, 1);
 
-			if(result == OTA_SUCCESS){  //OTA success
+			if(result == OTA_SUCCESS){  //led for debug: OTA success
 				gpio_write(GPIO_LED, 1);
 				sleep_us(500000);
 				gpio_write(GPIO_LED, 0);
@@ -267,6 +269,7 @@ static u16 vk_consumer_map[16] = {
 					irq_disable();
 					WATCHDOG_DISABLE;
 
+					write_reg8(0x40001, result);  //OTA fail reason
 					write_reg8(0x40000, 0x33);
 					while(1){
 						gpio_write(GPIO_LED, 1);
@@ -365,14 +368,25 @@ void key_change_proc(void)
 
 
 	u8 key0 = kb_event.keycode[0];
-//	u8 key1 = kb_event.keycode[1];
+	u8 key1 = kb_event.keycode[1];
 	u8 key_value;
 	u8 key_buf[8] = {0,0,0,0,0,0,0,0};
 
 	key_not_released = 1;
 	if (kb_event.cnt == 2)   //two key press, do  not process
 	{
+#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE)  //"enter + back" trigger PhyTest
+		//notice that if IR enable, trigger keys must be defined in key map
+		if ( (key0 == VK_ENTER && key1 == VK_0) || (key0 == VK_0 && key1 == VK_ENTER))
+		{
+			extern void app_phytest_init(void);
+			extern void app_trigger_phytest_mode(void);
+			app_phytest_init();
+			app_trigger_phytest_mode();
 
+			device_led_setup(led_cfg[LED_SHINE_FAST]);
+		}
+#endif
 	}
 	else if(kb_event.cnt == 1)
 	{

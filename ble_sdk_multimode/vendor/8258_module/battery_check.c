@@ -38,6 +38,17 @@ _attribute_data_retention_	volatile signed int adc_dat_buf[ADC_SAMPLE_NUM];  //s
 
 
 
+
+int app_suspend_enter_low_battery (void)
+{
+	if (gpio_read(GPIO_WAKEUP_MODULE))
+	{
+		return 0;
+	}
+	return 1;
+}
+
+
 void battery_set_detect_enable (int en)
 {
 	lowBattDet_enable = en;
@@ -233,7 +244,7 @@ _attribute_ram_code_ int app_battery_power_check(u16 alram_vol_mv)
 
 	if(batt_vol_mv < alram_vol_mv){
 
-		#if (0 && BLT_APP_LED_ENABLE)  //led indicate
+		#if (1 && BLT_APP_LED_ENABLE)  //led indicate
 			gpio_set_output_en(GPIO_LED, 1);  //output enable
 			for(int k=0;k<3;k++){
 				gpio_write(GPIO_LED, LED_ON_LEVAL);
@@ -243,8 +254,14 @@ _attribute_ram_code_ int app_battery_power_check(u16 alram_vol_mv)
 			}
 		#endif
 
+
+		GPIO_WAKEUP_MODULE_LOW;
+		bls_pm_registerFuncBeforeSuspend( &app_suspend_enter_low_battery );
+//		bls_pm_registerFuncBeforeSuspend( NULL );
+
 		analog_write(DEEP_ANA_REG2, LOW_BATT_FLG);  //mark
 		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
+//		cpu_sleep_wakeup(DEEPSLEEP_MODE, 0, 0);  //deepsleep
 	}
 }
 

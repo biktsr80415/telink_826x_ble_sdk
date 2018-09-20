@@ -26,3 +26,4 @@
 #include "drivers/8258/dfifo.h"
 #include "drivers/8258/dma.h"
 #include "drivers/8258/emi.h"
+#include "drivers/8258/rf_pa.h"
