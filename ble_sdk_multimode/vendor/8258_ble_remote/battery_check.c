@@ -14,8 +14,8 @@
 
 #if (BATT_CHECK_ENABLE)
 
-#define DBG_ADC_ON_RF_PKT			1
-#define DBG_ADC_SAMPLE_DAT			1
+#define DBG_ADC_ON_RF_PKT			0
+#define DBG_ADC_SAMPLE_DAT			0
 
 
 
