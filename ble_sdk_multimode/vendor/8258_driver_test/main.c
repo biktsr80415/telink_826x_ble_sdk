@@ -51,15 +51,21 @@ int main (void) {
 
 	cpu_wakeup_init();
 
-	#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-		clock_init(SYS_CLK_16M_Crystal);
-	#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-		clock_init(SYS_CLK_24M_Crystal);
-	#endif
+	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup();  //MCU deep retention wakeUp
 
 	rf_drv_init(RF_MODE_BLE_1M);
 
-	gpio_init();
+	gpio_init(!deepRetWakeUp);
+
+#if (CLOCK_SYS_CLOCK_HZ == 16000000)
+	clock_init(SYS_CLK_16M_Crystal);
+#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
+	clock_init(SYS_CLK_24M_Crystal);
+#endif
+
+	if(!deepRetWakeUp){
+		random_generator_init();
+	}
 
 	user_init();
 

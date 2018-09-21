@@ -3,7 +3,7 @@
 
 #include "analog.h"
 #include "clock.h"
-
+#include "dfifo.h"
 
 void adc_set_ref_voltage(ADC_ChTypeDef ch_n, ADC_RefVolTypeDef v_ref)
 {
@@ -174,4 +174,155 @@ void adc_set_ain_pre_scaler(ADC_PreScalingTypeDef v_scl)
 	}
 
 
+}
+
+
+
+
+#define DBG_ADC_SAMPLE_DAT			0
+
+#define ADC_SAMPLE_NUM				4    //4, 8
+
+
+
+_attribute_data_retention_  unsigned short     adc_vol_mv;
+
+
+#if (DBG_ADC_SAMPLE_DAT)
+	_attribute_data_retention_	unsigned short	adc_dat_min = 0xffff;
+	_attribute_data_retention_	unsigned short	adc_dat_max = 0
+
+	_attribute_data_retention_	volatile int * adc_dat_buf;
+	_attribute_data_retention_	volatile signed int adc_dat_raw[ADC_SAMPLE_NUM*128];
+
+	_attribute_data_retention_	unsigned char	adc_index = 0;
+
+	_attribute_data_retention_	unsigned short adc_sample[ADC_SAMPLE_NUM] = {0};
+
+	_attribute_data_retention_	unsigned int adc_result;
+#else
+
+	_attribute_data_retention_	volatile signed int adc_dat_buf[ADC_SAMPLE_NUM];  //size must 16 byte aligned(16/32/64...)
+
+#endif
+
+
+/**********************************************************************************
+ * adc_sample_and_get_result
+ *
+ * return:   mV unit
+ * defalut for config:  differential mode, 1.2 Vref, 14 bit resolution, 1/4 scaler
+ *
+ *********************************************************************************/
+unsigned int adc_sample_and_get_result(void)
+{
+	unsigned short temp;
+	int i,j;
+
+
+	adc_reset_adc_module();
+	unsigned int t0 = clock_time();
+
+
+#if (DBG_ADC_SAMPLE_DAT)
+	adc_dat_buf = (int *)&adc_dat_raw[ADC_SAMPLE_NUM*adc_index];
+#else
+	unsigned short adc_sample[ADC_SAMPLE_NUM] = {0};
+	unsigned int adc_result;
+#endif
+
+
+
+	for(i=0;i<ADC_SAMPLE_NUM;i++){   	//dfifo data clear
+		adc_dat_buf[i] = 0;
+	}
+	while(!clock_time_exceed(t0, 25));  //wait at least 2 sample cycle(f = 96K, T = 10.4us)
+
+	//dfifo setting will lose in suspend/deep, so we need config it every time
+	adc_config_misc_channel_buf((signed short *)adc_dat_buf, ADC_SAMPLE_NUM<<2);  //size: ADC_SAMPLE_NUM*4
+	dfifo_enable_dfifo2();
+
+
+
+
+
+//////////////// get adc sample data and sort these data ////////////////
+	for(i=0;i<ADC_SAMPLE_NUM;i++){
+		unsigned int tick_now = clock_time();
+		//while(!adc_dat_buf[i]);  //wait for new adc sample data
+		while(!adc_dat_buf[i] && (unsigned int)(clock_time() - tick_now) < 100*CLOCK_16M_SYS_TIMER_CLK_1US);
+
+		if(adc_dat_buf[i] & BIT(13)){  //14 bit resolution, BIT(13) is sign bit, 1 means negative voltage in differential_mode
+			adc_sample[i] = 0;
+		}
+		else{
+			adc_sample[i] = ((unsigned short)adc_dat_buf[i] & 0x1FFF);  //BIT(12..0) is valid adc result
+		}
+
+
+
+#if (DBG_ADC_SAMPLE_DAT) //debug
+		if(adc_sample[i] < adc_dat_min){
+			adc_dat_min = adc_sample[i];
+		}
+		if(adc_sample[i] > adc_dat_max){
+			adc_dat_max = adc_sample[i];
+		}
+#endif
+
+
+		//insert sort
+		if(i){
+			if(adc_sample[i] < adc_sample[i-1]){
+				temp = adc_sample[i];
+				adc_sample[i] = adc_sample[i-1];
+				for(j=i-1;j>=0 && adc_sample[j] > temp;j--){
+					adc_sample[j+1] = adc_sample[j];
+				}
+				adc_sample[j+1] = temp;
+			}
+		}
+	}
+//////////////////////////////////////////////////////////////////////////////
+
+
+	dfifo_disable_dfifo2();   //misc channel data dfifo disable
+
+
+
+
+
+///// get average value from raw data(abandon some small and big data ), then filter with history data //////
+#if (ADC_SAMPLE_NUM == 4)  	//use middle 2 data (index: 1,2)
+	unsigned int adc_average = (adc_sample[1] + adc_sample[2])/2;
+#elif(ADC_SAMPLE_NUM == 8) 	//use middle 4 data (index: 2,3,4,5)
+	unsigned int adc_average = (adc_sample[2] + adc_sample[3] + adc_sample[4] + adc_sample[5])/4;
+#endif
+
+
+
+
+	adc_result = adc_average;
+
+
+//////////////// adc sample data convert to voltage(mv) ////////////////
+
+	//                         (1180mV Vref, 1/4 scaler)   (BIT<12~0> valid data)
+	//			 =  adc_result   *   1180     * 4        /        0x2000
+	//           =  adc_result * 4720 >>13
+	//           =  adc_result * 295 >>9
+	adc_vol_mv  = (adc_result * 295)>>9;
+
+
+
+#if (DBG_ADC_SAMPLE_DAT) //debug
+	adc_index ++;
+	if(adc_index >=128){
+		adc_index = 0;
+	}
+#endif
+
+
+
+	return adc_vol_mv;
 }
