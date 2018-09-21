@@ -121,7 +121,12 @@ void app_power_management ()
 
 	if (!app_module_busy() && !tick_wakeup)
 	{
-		bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
+		#if (PM_DEEPSLEEP_RETENTION_ENABLE)
+			bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
+		#else
+			bls_pm_setSuspendMask(SUSPEND_ADV | SUSPEND_CONN);
+		#endif
+
 		bls_pm_setWakeupSource(PM_WAKEUP_PAD);  // GPIO_WAKEUP_MODULE needs to be wakened
 	}
 
@@ -248,11 +253,12 @@ void user_init_normal(void)
 
 #if (BLE_MODULE_PM_ENABLE)
 	blc_ll_initPowerManagement_module();        //pm module:      	 optional
+
 	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 
+
 	//mcu can wake up module from suspend or deepsleep by pulling up GPIO_WAKEUP_MODULE
-//	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
-	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
+	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, Level_High, 1);  // pad high wakeup deepsleep
 
 	GPIO_WAKEUP_MODULE_LOW;
 
