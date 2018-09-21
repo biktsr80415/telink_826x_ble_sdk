@@ -317,7 +317,7 @@ void user_init_normal(void)
 		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
 	}
 
-	rf_set_power_level_index (RF_POWER_P10p01dBm);
+	rf_set_power_level_index (RF_POWER_P3p01dBm);
 
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU();   //mandatory

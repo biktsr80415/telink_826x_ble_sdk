@@ -24,6 +24,9 @@ extern void app_led_init(void);
 
 extern void test_low_power(void);
 
+extern void app_emi_init(void);
+extern void app_rf_emi_test_start(void);
+
 void user_init()
 {
 
@@ -60,6 +63,10 @@ void user_init()
 
 	test_low_power();
 
+#elif (DRIVER_TEST_MODE == TEST_RF_EMI)
+
+	app_emi_init();
+
 #else
 
 
@@ -88,6 +95,11 @@ void main_loop (void)
 
 #elif (DRIVER_TEST_MODE == TEST_ADC)
 	app_adc_test_start();
+
+#elif (DRIVER_TEST_MODE == TEST_RF_EMI)
+
+	app_rf_emi_test_start();
+
 #else
 
 #endif

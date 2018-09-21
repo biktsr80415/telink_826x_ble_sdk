@@ -12,43 +12,113 @@
 #define STATE2		0xabcd
 #define STATE3		0xef01
 
-
-
 static unsigned char  emi_rx_packet[64] __attribute__ ((aligned (4)));
-static unsigned char  emi_zigbee_tx_packet[48]  __attribute__ ((aligned (4))) = {19,0,0,0,20,0,0};
 static unsigned char  emi_ble_tx_packet [48]  __attribute__ ((aligned (4))) = {39, 0, 0, 0,0, 37};
 static unsigned int   emi_rx_cnt=0,emi_rssibuf=0;
 static signed  char   rssi=0;
 static unsigned int   state0,state1;
 
+static void rf_single_tone_setting(void)
+{
+	// zigbee mode for rectify frequency offset
+	write_reg8(0x1220, 0x04);
+	write_reg8(0x1221, 0x2b);
+	write_reg8(0x1222, 0x43);
+	write_reg8(0x1223, 0x86);
+	write_reg8(0x122a, 0x90);
+}
 
+static void rf_set_channel_singletone (signed char chn)//general
+{
+	unsigned short rf_chn =0;
+	unsigned char ctrim;
+	unsigned short chnl_freq;
 
+	rf_chn = chn+2400;
+	if (rf_chn >= 2550)
+	    ctrim = 0;
+	else if (rf_chn >= 2520)
+	    ctrim = 1;
+	else if (rf_chn >= 2495)
+	    ctrim = 2;
+	else if (rf_chn >= 2465)
+	    ctrim = 3;
+	else if (rf_chn >= 2435)
+		ctrim = 4;
+	else if (rf_chn >= 2405)
+	    ctrim = 5;
+	else if (rf_chn >= 2380)
+	    ctrim = 6;
+	else
+	    ctrim = 7;
+
+	chnl_freq = rf_chn * 2 +1;
+	write_reg8(0x1244, ((chnl_freq & 0x7f)<<1) | 1  );   //CHNL_FREQ_DIRECT   CHNL_FREQ_L
+	write_reg8(0x1245,  ((read_reg8(0x1245) & 0xc0)) | ((chnl_freq>>7)&0x3f) );  //CHNL_FREQ_H
+	write_reg8(0x1229,  (read_reg8(0x1229) & 0xC3) | (ctrim<<2) );  //FE_CTRIM
+}
+
+static void rf_set_power_level_index_singletone (RF_PowerTypeDef level)
+{
+	unsigned char value;
+
+	if(level & BIT(7)){    //VANT
+		REG_ADDR8(0x1225) |= BIT(6);
+	}
+	else{  //VBAT
+		REG_ADDR8(0x1225) &= ~BIT(6);
+	}
+
+	write_reg8 (0xf02, 0x55);  //tx_en
+	value = (unsigned char)(level & 0x3F);
+
+	write_reg8(0x1378, read_reg8(0x1378)|(1<<6));//<6>set 1
+	write_reg8(0x137c, ((read_reg8(0x137c)&0x81) | ((value<<1)&0x7e)));//set value to <6:1>
+}
+
+static void rf_drv_init_dis_PN(RF_ModeTypeDef mode)
+{
+	rf_drv_init(mode);
+	write_reg8(0x401,0);
+
+	if(mode==RF_MODE_BLE_1M)
+	{
+		write_reg8(0x404,0xd5);
+	}
+	else if(mode==RF_MODE_BLE_2M)
+	{
+		write_reg8(0x404,0xc5);
+	}
+}
 
 void rf_emi_single_tone(RF_PowerTypeDef power_level,signed char rf_chn)
 {
-	rf_set_channel(rf_chn,0);//set freq
-	write_reg8(0x1225, (read_reg8(0x1225) & 0xbf));
-	write_reg8 (0xf02, 0x55);  //tx_en
-	WaitMs(50);
-	write_reg8(0x1378, (read_reg8(0x1378) & 0xbf)|0x40);
-	write_reg8(0x137c, (read_reg8(0x137c) & 0x81)|(power_level<<1));//TX_PA_PWR
+	rf_single_tone_setting();
+
+	rf_set_channel_singletone(rf_chn);//set freq
+	write_reg8 (0xf02, 0x45);  //tx_en
+	rf_set_power_level_index_singletone(power_level);
 }
 
 void rf_emi_stop(void)
 {
 	write_reg8(0x1378, 0);
 	write_reg8(0x137c, 0);//TX_PA_PWR
+
 	rf_set_power_level_index (0);
 	rf_set_tx_rx_off();
 }
 
 void rf_emi_rx(RF_ModeTypeDef mode,signed char rf_chn)
 {
+	write_reg32 (0x800408, 0x29417671);	//accesscode: 1001-0100 1000-0010 0110-1110 1000-1110   29 41 76 71
+	write_reg8 (0x800405, read_reg8(0x405)|0x80); //trig accesscode
 
 	rf_rx_buffer_set(emi_rx_packet,64,0);
-	rf_drv_init(mode);
+	rf_drv_init_dis_PN(mode);
 	rf_set_channel(rf_chn,0);//set freq
 	rf_set_rxmode();
+	WaitUs(150);
 	rssi = 0;
 	emi_rssibuf = 0;
 	emi_rx_cnt = 0;
@@ -61,14 +131,17 @@ void rf_emi_rx_loop(void)
 		if((read_reg8(0x44f)&0x0f)==0)
 		{
 			emi_rssibuf +=  (read_reg8(0x449));
+
 			if(emi_rx_cnt)
+			{
 				if(emi_rssibuf!=0)
-				emi_rssibuf>>=1;
+					emi_rssibuf>>=1;
+			}
 			rssi = emi_rssibuf-110;
 			emi_rx_cnt++;
 		}
-		write_reg8(0x800f20, 1);
-		write_reg8 (0x800f00, 0x80);
+		write_reg8(0xf20, 1);
+		write_reg8 (0xf00, 0x80);
 	}
 }
 
@@ -109,7 +182,7 @@ static void rf_continue_mode_setup(void)
 	state1 = STATE1;
 }
 
-void rf_continue_mode_run(void)
+void rf_continue_mode_loop(void)
 {
 
 	while(read_reg8(0x80041c) & 0x1){
@@ -121,7 +194,6 @@ void rf_continue_mode_run(void)
 		write_reg32(0x80041c, 0x55555555);
 	}else if(read_reg8(0x800408)==3){
 		write_reg32(0x80041c, read_reg32(0x800409));
-
 	}else{
 		write_reg32(0x80041c, (state0<<16)+state1);
 		state0 = pnGen(state0);
@@ -132,10 +204,11 @@ void rf_continue_mode_run(void)
 
 void rf_emi_tx_continue_setup(RF_ModeTypeDef rf_mode,RF_PowerTypeDef power_level,signed char rf_chn,unsigned char pkt_type)
 {
-	rf_drv_init(rf_mode);//RF_MODE_BLE_1M
+	rf_drv_init_dis_PN(rf_mode);//RF_MODE_BLE_1M
+
 	rf_set_channel(rf_chn,0);
-	write_reg8(0xf02, 0x55);  //tx_en
-	rf_set_power_level_index (power_level);
+	write_reg8(0xf02, 0x45);  //tx manual off
+	rf_set_power_level_index_singletone (power_level);
 	rf_continue_mode_setup();
 	write_reg8(0x408, pkt_type);//0:pbrs9 	1:0xf0	 2:0x55
 }
@@ -161,38 +234,36 @@ static void rf_phy_test_prbs9 (unsigned char *p, int n)
 	}
 }
 
-void rf_emi_tx_brust_setup(RF_ModeTypeDef rf_mode,RF_PowerTypeDef power_level,signed char rf_chn,unsigned char pkt_type)
+void rf_emi_tx_brust_setup(RF_ModeTypeDef rf_mode,unsigned char power_level,signed char rf_chn,unsigned char pkt_type)
 {
-//#if 0
 	unsigned char i;
 	unsigned char tx_data=0;
 
 	write_reg32(0x408,0x29417671 );//access code  0xf8118ac9
-	write_reg8(0x80013c,0x10); // print buffer size set
+	write_reg8 (0x800405, read_reg8(0x405)|0x80);
+
 	rf_set_channel(rf_chn,0);
-	rf_drv_init(rf_mode);
+	rf_drv_init_dis_PN(rf_mode);
 
 	rf_set_power_level_index (power_level);
-	if(pkt_type==1)  tx_data = 0x0f;
-	else if(pkt_type==2)  tx_data = 0x55;
+	if(pkt_type==1)
+	{
+		tx_data = 0x0f;
+	}
+	else if(pkt_type==2)
+	{
+		tx_data = 0x55;
+	}
 
 
 	switch(rf_mode)
 	{
-		case RF_MODE_BLE_1M_NO_PN:
+		case RF_MODE_BLE_1M:
 		case RF_MODE_BLE_2M:
 			emi_ble_tx_packet[4] = pkt_type;//type
 			for( i=0;i<37;i++)
 			{
 				emi_ble_tx_packet[6+i]=tx_data;
-			}
-			break;
-
-		case RF_MODE_ZIGBEE_250K:
-			emi_zigbee_tx_packet[5] = pkt_type;//type
-			for( i=0;i<37;i++)
-			{
-				emi_zigbee_tx_packet[5+i]=tx_data;
 			}
 			break;
 
@@ -203,20 +274,20 @@ void rf_emi_tx_brust_setup(RF_ModeTypeDef rf_mode,RF_PowerTypeDef power_level,si
 
 void rf_emi_tx_brust_loop(RF_ModeTypeDef rf_mode,unsigned char pkt_type)
 {
+	static unsigned int tick;
+
 	write_reg8(0xf00, 0x80); // stop SM
 
-	if((rf_mode==RF_MODE_BLE_1M_NO_PN)||(rf_mode==RF_MODE_BLE_2M))//ble
+	tick = clock_time();
+	if((rf_mode==RF_MODE_BLE_1M)||(rf_mode==RF_MODE_BLE_2M))//ble
 	{
-		rf_start_stx ((void *)emi_ble_tx_packet, read_reg32(0x740) + 10);
-		WaitUs(625);//
-		if(pkt_type==0)
-			rf_phy_test_prbs9(&emi_ble_tx_packet[6],37);
-	}
-	else if(rf_mode==RF_MODE_ZIGBEE_250K)//zigbee
-	{
-		rf_start_stx ((void *)emi_zigbee_tx_packet, read_reg32(0x740) + 10);
-		WaitUs(625*2);//
-		if(pkt_type==0)
-			rf_phy_test_prbs9(&emi_zigbee_tx_packet[5],37);
+		if(clock_time_exceed(tick, 625))
+		{
+			tick = clock_time();
+			rf_start_stx ((void *)emi_ble_tx_packet, read_reg32(0x740) + 10);
+
+			if(pkt_type==0)
+				rf_phy_test_prbs9(&emi_ble_tx_packet[6],37);
+		}
 	}
 }

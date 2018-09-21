@@ -8,7 +8,7 @@
 #ifndef EMI_H_
 #define EMI_H_
 
-#include "driver_8258.h"
+#include "rf_drv.h"
 
 //singletone mode
 void rf_emi_single_tone(RF_PowerTypeDef power_level,signed char rf_chn);
