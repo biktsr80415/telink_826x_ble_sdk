@@ -36,10 +36,11 @@ extern "C" {
 #define TEST_LOW_POWER									70
 
 
+#define TEST_RF_EMI										80
+
+
 
 #define DRIVER_TEST_MODE								TEST_LOW_POWER
-
-
 
 
 

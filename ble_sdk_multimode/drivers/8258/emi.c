@@ -5,6 +5,7 @@
  *      Author: Administrator
  */
 #include "emi.h"
+#include "clock.h"
 
 
 #define STATE0		0x1234
@@ -79,10 +80,18 @@ static void rf_set_power_level_index_singletone (RF_PowerTypeDef level)
 static void rf_drv_init_dis_PN(RF_ModeTypeDef mode)
 {
 	rf_drv_init(mode);
+	write_reg8(0x400,0x1f);
 	write_reg8(0x401,0);
 
 	if(mode==RF_MODE_BLE_1M)
 	{
+		write_reg8(0x1220,0X16);
+		write_reg8(0x1221,0X0a);
+		write_reg8(0x1222,0X20);
+		write_reg8(0x1223,0X23);
+		write_reg8(0x124e,0X09);
+		write_reg8(0x124f,0X0f);
+
 		write_reg8(0x404,0xd5);
 	}
 	else if(mode==RF_MODE_BLE_2M)
@@ -240,7 +249,7 @@ void rf_emi_tx_brust_setup(RF_ModeTypeDef rf_mode,unsigned char power_level,sign
 	unsigned char tx_data=0;
 
 	write_reg32(0x408,0x29417671 );//access code  0xf8118ac9
-	write_reg8 (0x800405, read_reg8(0x405)|0x80);
+	write_reg8 (0x405, read_reg8(0x405)|0x80);
 
 	rf_set_channel(rf_chn,0);
 	rf_drv_init_dis_PN(rf_mode);
@@ -274,20 +283,13 @@ void rf_emi_tx_brust_setup(RF_ModeTypeDef rf_mode,unsigned char power_level,sign
 
 void rf_emi_tx_brust_loop(RF_ModeTypeDef rf_mode,unsigned char pkt_type)
 {
-	static unsigned int tick;
-
 	write_reg8(0xf00, 0x80); // stop SM
 
-	tick = clock_time();
 	if((rf_mode==RF_MODE_BLE_1M)||(rf_mode==RF_MODE_BLE_2M))//ble
 	{
-		if(clock_time_exceed(tick, 625))
-		{
-			tick = clock_time();
-			rf_start_stx ((void *)emi_ble_tx_packet, read_reg32(0x740) + 10);
-
-			if(pkt_type==0)
-				rf_phy_test_prbs9(&emi_ble_tx_packet[6],37);
-		}
+		rf_start_stx ((void *)emi_ble_tx_packet, read_reg32(0x740) + 10);
+		sleep_us(625);
+		if(pkt_type==0)
+			rf_phy_test_prbs9(&emi_ble_tx_packet[6],37);
 	}
 }
