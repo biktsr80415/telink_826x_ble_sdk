@@ -169,13 +169,15 @@ static u16 vk_consumer_map[16] = {
 		proc_mic_encoder ();
 
 		//////////////////////////////////////////////////////////////////
-		if (blc_ll_getTxFifoNumber() < 10)
+		if (blc_ll_getTxFifoNumber() < 9)
 		{
 			int *p = mic_encoder_data_buffer ();
 			if (p)					//around 3.2 ms @16MHz clock
 			{
 				log_event (TR_T_audioData);
-				bls_att_pushNotifyData (AUDIO_MIC_INPUT_DP_H, (u8*)p, ADPCM_PACKET_LEN);
+				if( BLE_SUCCESS == bls_att_pushNotifyData (AUDIO_MIC_INPUT_DP_H, (u8*)p, ADPCM_PACKET_LEN) ){
+					mic_encoder_data_read_ok();
+				}
 			}
 		}
 	}

@@ -149,7 +149,10 @@ _attribute_ram_code_ void abuf_dec_usb ()
 		}
 		else
 		{
-
+			for (int i=0; i<USB_ISO_IN_SIZE * 2; i++)
+			{
+				reg_usb_ep7_dat = 0;
+			}
 		}
 	}
 	else

@@ -81,8 +81,8 @@ void adpcm_to_sdm (signed short *ps, int len);
 void silence_to_sdm (void);
 
 void	proc_mic_encoder (void);
-int		mic_encoder_data_ready (int *pd);
 int	*	mic_encoder_data_buffer ();
+void 	mic_encoder_data_read_ok (void);
 
 void 	proc_sdm_decoder (void);
 int  	sdm_decode_data (int *ps, int nbyte);

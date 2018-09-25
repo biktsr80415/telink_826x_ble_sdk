@@ -52,8 +52,6 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 	clock_init(SYS_CLK_24M_Crystal);
 #endif
 
-	//deep_wakeup_proc();
-
 
 	if( deepRetWakeUp ){
 		user_init_deepRetn ();

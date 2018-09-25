@@ -66,6 +66,7 @@ static inline void blc_app_loadCustomizedParameters(void)
 		 //customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
 		 u8 cap_frqoft = *(unsigned char*) CUST_CAP_INFO_ADDR;
 		 if( cap_frqoft != 0xff ){
+//			 analog_write(0x8A, ( analog_read(0x8A) & (~FLD_XO_CDAC_ANA) ) | (cap_frqoft & FLD_XO_CDAC_ANA) );
 			 analog_write(0x8A, cap_frqoft );
 		 }
 	 }

@@ -285,6 +285,7 @@ void app_power_management ()
 
 void user_init_normal(void)
 {
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value
 
 	random_generator_init();  //this is must
 ////////////////// BLE stack initialization ////////////////////////////////////
@@ -430,6 +431,7 @@ void user_init_normal(void)
 #if (PM_DEEPSLEEP_RETENTION_ENABLE)
 _attribute_ram_code_ void user_init_deepRetn(void)
 {
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value
 
 	blc_ll_initBasicMCU();   //mandatory
 	rf_set_power_level_index (MY_RF_POWER_INDEX);

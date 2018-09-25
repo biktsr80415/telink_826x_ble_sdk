@@ -192,7 +192,7 @@ _attribute_data_retention_  unsigned short     adc_vol_mv;
 	_attribute_data_retention_	unsigned short	adc_dat_min = 0xffff;
 	_attribute_data_retention_	unsigned short	adc_dat_max = 0
 
-	_attribute_data_retention_	volatile int * adc_dat_buf;
+	_attribute_data_retention_	volatile int * adc_data_buf;
 	_attribute_data_retention_	volatile signed int adc_dat_raw[ADC_SAMPLE_NUM*128];
 
 	_attribute_data_retention_	unsigned char	adc_index = 0;
@@ -202,7 +202,7 @@ _attribute_data_retention_  unsigned short     adc_vol_mv;
 	_attribute_data_retention_	unsigned int adc_result;
 #else
 
-	_attribute_data_retention_	volatile signed int adc_dat_buf[ADC_SAMPLE_NUM];  //size must 16 byte aligned(16/32/64...)
+	_attribute_data_retention_	volatile signed int adc_data_buf[ADC_SAMPLE_NUM];  //size must 16 byte aligned(16/32/64...)
 
 #endif
 
@@ -225,7 +225,7 @@ unsigned int adc_sample_and_get_result(void)
 
 
 #if (DBG_ADC_SAMPLE_DAT)
-	adc_dat_buf = (int *)&adc_dat_raw[ADC_SAMPLE_NUM*adc_index];
+	adc_data_buf = (int *)&adc_dat_raw[ADC_SAMPLE_NUM*adc_index];
 #else
 	unsigned short adc_sample[ADC_SAMPLE_NUM] = {0};
 	unsigned int adc_result;
@@ -234,12 +234,12 @@ unsigned int adc_sample_and_get_result(void)
 
 
 	for(i=0;i<ADC_SAMPLE_NUM;i++){   	//dfifo data clear
-		adc_dat_buf[i] = 0;
+		adc_data_buf[i] = 0;
 	}
 	while(!clock_time_exceed(t0, 25));  //wait at least 2 sample cycle(f = 96K, T = 10.4us)
 
 	//dfifo setting will lose in suspend/deep, so we need config it every time
-	adc_config_misc_channel_buf((signed short *)adc_dat_buf, ADC_SAMPLE_NUM<<2);  //size: ADC_SAMPLE_NUM*4
+	adc_config_misc_channel_buf((signed short *)adc_data_buf, ADC_SAMPLE_NUM<<2);  //size: ADC_SAMPLE_NUM*4
 	dfifo_enable_dfifo2();
 
 
@@ -249,14 +249,14 @@ unsigned int adc_sample_and_get_result(void)
 //////////////// get adc sample data and sort these data ////////////////
 	for(i=0;i<ADC_SAMPLE_NUM;i++){
 		unsigned int tick_now = clock_time();
-		//while(!adc_dat_buf[i]);  //wait for new adc sample data
-		while(!adc_dat_buf[i] && (unsigned int)(clock_time() - tick_now) < 100*CLOCK_16M_SYS_TIMER_CLK_1US);
+		//while(!adc_data_buf[i]);  //wait for new adc sample data
+		while(!adc_data_buf[i] && (unsigned int)(clock_time() - tick_now) < 100*CLOCK_16M_SYS_TIMER_CLK_1US);
 
-		if(adc_dat_buf[i] & BIT(13)){  //14 bit resolution, BIT(13) is sign bit, 1 means negative voltage in differential_mode
+		if(adc_data_buf[i] & BIT(13)){  //14 bit resolution, BIT(13) is sign bit, 1 means negative voltage in differential_mode
 			adc_sample[i] = 0;
 		}
 		else{
-			adc_sample[i] = ((unsigned short)adc_dat_buf[i] & 0x1FFF);  //BIT(12..0) is valid adc result
+			adc_sample[i] = ((unsigned short)adc_data_buf[i] & 0x1FFF);  //BIT(12..0) is valid adc result
 		}
 
 

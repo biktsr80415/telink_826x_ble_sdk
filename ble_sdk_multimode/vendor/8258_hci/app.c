@@ -179,6 +179,8 @@ int tx_to_uart_cb (void)
 
 void user_init_normal(void)
 {
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value
+
 	random_generator_init();  //this is must
 
 ////////////////// BLE stack initialization ////////////////////////////////////

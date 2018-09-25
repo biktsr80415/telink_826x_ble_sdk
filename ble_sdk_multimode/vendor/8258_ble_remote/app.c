@@ -293,6 +293,7 @@ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 
 void user_init_normal(void)
 {
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value
 
 	random_generator_init();  //this is must
 
@@ -444,6 +445,8 @@ void user_init_normal(void)
 _attribute_ram_code_ void user_init_deepRetn(void)
 {
 #if (PM_DEEPSLEEP_RETENTION_ENABLE)
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value
+
 	blc_ll_initBasicMCU();   //mandatory
 	rf_set_power_level_index (MY_RF_POWER_INDEX);
 

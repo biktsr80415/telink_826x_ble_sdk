@@ -418,22 +418,6 @@ void	proc_mic_encoder (void)
 	}
 }
 
-int		mic_encoder_data_ready (int *pd)
-{
-//	if ((buffer_mic_pkt_rptr & 0x7f) == (buffer_mic_pkt_wptr >> 1)) {
-//		return 0;
-//	}
-//
-//	int *ps = buffer_mic_enc + (ADPCM_PACKET_LEN>>2) *
-//			(buffer_mic_pkt_rptr & (TL_MIC_PACKET_BUFFER_NUM - 1));
-//	for (int i=0; i<(ADPCM_PACKET_LEN>>2); i++) {
-//		*pd++ = *ps++;
-//	}
-//	buffer_mic_pkt_rptr++;
-//	return ADPCM_PACKET_LEN;
-	return 0;
-}
-
 int	*	mic_encoder_data_buffer ()
 {
 	if (buffer_mic_pkt_rptr == buffer_mic_pkt_wptr) {
@@ -443,10 +427,15 @@ int	*	mic_encoder_data_buffer ()
 	int *ps = buffer_mic_enc + (ADPCM_PACKET_LEN>>2) *
 			(buffer_mic_pkt_rptr & (TL_MIC_PACKET_BUFFER_NUM - 1));
 
-	buffer_mic_pkt_rptr++;
 
 	return ps;
 }
+
+void mic_encoder_data_read_ok (void)
+{
+	buffer_mic_pkt_rptr++;
+}
+
 
 #if 0
 void	proc_mic_encoder (void)
@@ -480,20 +469,6 @@ void	proc_mic_encoder (void)
 	}
 }
 
-int		mic_encoder_data_ready (int *pd)
-{
-	if ((buffer_mic_pkt_rptr & 0x7f) == (buffer_mic_pkt_wptr >> 1)) {
-		return 0;
-	}
-
-	int *ps = buffer_mic_enc + (ADPCM_PACKET_LEN>>2) *
-			(buffer_mic_pkt_rptr & (TL_MIC_PACKET_BUFFER_NUM - 1));
-	for (int i=0; i<(ADPCM_PACKET_LEN>>2); i++) {
-		*pd++ = *ps++;
-	}
-	buffer_mic_pkt_rptr++;
-	return ADPCM_PACKET_LEN;
-}
 
 int	*	mic_encoder_data_buffer ()
 {

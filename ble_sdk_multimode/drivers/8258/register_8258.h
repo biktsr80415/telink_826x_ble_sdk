@@ -1442,6 +1442,12 @@ enum{
 };
 
 
+#define anareg_8A					0x8A
+enum{
+	FLD_XO_CDAC_ANA	  	= BIT_RNG(0,5),
+	FLD_XO_MODE_ANA 	= BIT(6),
+	FLD_XO_CAP_OFF_ANA  = BIT(7),
+};
 
 
 

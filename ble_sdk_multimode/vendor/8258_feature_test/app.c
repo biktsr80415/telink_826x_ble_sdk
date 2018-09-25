@@ -301,9 +301,9 @@ int app_event_callback (u32 h, u8 *p, int n)
 
 void user_init_normal(void)
 {
-	random_generator_init();  //this is must
-
 	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value
+
+	random_generator_init();  //this is must
 
 
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
@@ -588,17 +588,17 @@ void user_init_normal(void)
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
-	//1S 1 channel   11 uA
+	//1S 1 channel   9~10 uA
 //	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_1S, ADV_INTERVAL_1S, \
 									ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_ALLOW_SCAN_WL_ALLOW_CONN_WL);  //no scan, no connect
 
-	//1S 3 channel   17 uA
+	//1S 3 channel   15~16 uA
 //	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_1S, ADV_INTERVAL_1S, \
 									ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_ALLOW_SCAN_WL_ALLOW_CONN_WL);  //no scan, no connect
 
-	//500mS 3 channel   34 uA
+	//500mS 3 channel   32 uA
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_500MS, ADV_INTERVAL_500MS, \
 									ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
 									 0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_ALLOW_SCAN_WL_ALLOW_CONN_WL);  //no scan, no connect
@@ -844,6 +844,8 @@ void user_init_normal(void)
 _attribute_ram_code_ void user_init_deepRetn(void)
 {
 #if (PM_DEEPSLEEP_RETENTION_ENABLE)
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value
+
 	blc_ll_initBasicMCU();   //mandatory
 	rf_set_power_level_index (MY_RF_POWER_INDEX);
 
