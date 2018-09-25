@@ -17,24 +17,20 @@ extern "C" {
 
 /////////////////// MODULE /////////////////////////////////
 #define BLE_MODULE_PM_ENABLE				0
-#define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
 
 /////////////////// DEBUG  /////////////////////////////////
 //826x module's pin simulate as a uart tx, Just for debugging
 #define PRINT_DEBUG_INFO               		0	//open/close myprintf
 
 
-//////////////// SMP SETTING  //////////////////////////////
-#define BLE_SECURITY_ENABLE 			   	0
 
 
 
 
 /////////////////// led pin /////////////////////////////////
-#define RED_LED                             GPIO_PD5
-#define WHITE_LED     						GPIO_PD6
-#define GREEN_LED    		    			GPIO_PD7
-#define BLUE_LED                			GPIO_PB4
+#define LED_ON_LEVAL 						1 			//gpio output high voltage to turn on led
+#define	GPIO_LED							GPIO_PC6
+#define PC6_FUNC							AS_GPIO
 
 #define ON            						1
 #define OFF           						0
@@ -43,19 +39,19 @@ extern "C" {
 
 
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
-#define GPIO_WAKEUP_MODULE					GPIO_PC2   //mcu wakeup module
-#define	PC2_FUNC							AS_GPIO
-#define PC2_INPUT_ENABLE					1
-#define	PC2_OUTPUT_ENABLE					0
-#define	PC2_DATA_OUT						0
+#define GPIO_WAKEUP_MODULE					GPIO_PC3   //mcu wakeup module
+#define	PC3_FUNC							AS_GPIO
+#define PC3_INPUT_ENABLE					1
+#define	PC3_OUTPUT_ENABLE					0
+#define	PC3_DATA_OUT						0
 #define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_WAKEUP_MODULE, PM_PIN_PULLUP_10K);
 #define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_WAKEUP_MODULE, PM_PIN_PULLDOWN_100K);
 
-#define GPIO_WAKEUP_MCU						GPIO_PC3   //module wakeup mcu
-#define	PC3_FUNC							AS_GPIO
-#define PC3_INPUT_ENABLE					1
-#define	PC3_OUTPUT_ENABLE					1
-#define	PC3_DATA_OUT						0
+#define GPIO_WAKEUP_MCU						GPIO_PD0   //module wakeup mcu
+#define	PD0_FUNC							AS_GPIO
+#define PD0_INPUT_ENABLE					1
+#define	PD0_OUTPUT_ENABLE					1
+#define	PD0_DATA_OUT						0
 #define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_WAKEUP_MCU, 1); gpio_write(GPIO_WAKEUP_MCU, 1);}while(0)
 #define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_WAKEUP_MCU, 1); gpio_write(GPIO_WAKEUP_MCU, 0);}while(0)
 #define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_WAKEUP_MCU, 0); gpio_write(GPIO_WAKEUP_MCU, 0);}while(0)
@@ -95,7 +91,7 @@ typedef struct{
 
 
 
-#define DEBUG_GPIO_ENABLE							1
+#define DEBUG_GPIO_ENABLE							0
 
 #if(DEBUG_GPIO_ENABLE)
 	//define debug GPIO here according to your hardware

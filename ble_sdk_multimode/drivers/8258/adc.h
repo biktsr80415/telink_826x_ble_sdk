@@ -759,7 +759,7 @@ void adc_set_ain_channel_differential_mode(ADC_ChTypeDef ch_n, ADC_InputPchTypeD
 void adc_set_ain_pre_scaler(ADC_PreScalingTypeDef v_scl);
 
 
-
+unsigned int adc_sample_and_get_result(void);
 
 /**
  * Name     :RNG_Set
