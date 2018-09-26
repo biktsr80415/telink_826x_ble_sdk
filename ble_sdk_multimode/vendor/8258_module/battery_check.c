@@ -137,7 +137,7 @@ _attribute_ram_code_ void adc_vbat_detect_init(void)
 }
 
 
-_attribute_ram_code_ int app_battery_power_check(u16 alram_vol_mv)
+_attribute_ram_code_ void app_battery_power_check(u16 alram_vol_mv)
 {
 	u16 temp;
 	int i,j;
@@ -262,6 +262,9 @@ _attribute_ram_code_ int app_battery_power_check(u16 alram_vol_mv)
 		analog_write(DEEP_ANA_REG2, LOW_BATT_FLG);  //mark
 		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
 //		cpu_sleep_wakeup(DEEPSLEEP_MODE, 0, 0);  //deepsleep
+	}
+	else{
+		analog_write(DEEP_ANA_REG2, 0); //clr mark
 	}
 }
 
