@@ -1,1 +1,2 @@
-Telink BLE SDK_VERSION = 0.5
+Telink BLE SDK_VERSION = 
+telink_kite_ble_sdk_Beta_v0.8
