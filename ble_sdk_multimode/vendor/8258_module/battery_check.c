@@ -263,9 +263,6 @@ _attribute_ram_code_ void app_battery_power_check(u16 alram_vol_mv)
 		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_PAD, 0);  //deepsleep
 //		cpu_sleep_wakeup(DEEPSLEEP_MODE, 0, 0);  //deepsleep
 	}
-	else{
-		analog_write(DEEP_ANA_REG2, 0); //clr mark
-	}
 }
 
 #endif

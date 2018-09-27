@@ -87,7 +87,7 @@ enum{
 
 
 /////////////////////HCI UART variables///////////////////////////////////////
-#define UART_DATA_LEN    					64   // data max 252
+#define UART_DATA_LEN    					68   // data max 252
 typedef struct{
     unsigned int len; // data max 252
     unsigned char data[UART_DATA_LEN];
