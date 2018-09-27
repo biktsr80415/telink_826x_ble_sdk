@@ -42,7 +42,7 @@ typedef struct{
 pwm_dma_data_t T_dmaData_buf;
 
 /*********************************************************************************
-    PWM0   :  PA2.  PC1.  PC2.	PD5
+    PWM0   :  PA2.  PC1. PD5
     PWM1   :  PA3.  PC3.
     PWM2   :  PA4.  PC4.
     PWM3   :  PB0.  PD2.
@@ -178,9 +178,7 @@ void app_pwm_test(void)
 #elif (TEST_PWM_SELECT == TEST_PWM_NORMAL_MODE_4)  //test rest PWM gpio
 
 	#if 1
-		//PC2 PWM0     1ms cycle  1/3 duty
 		//PB3 PWM0_N   1ms cycle  2/3 duty
-		gpio_set_func(GPIO_PC2, AS_PWM0);
 		gpio_set_func(GPIO_PB3, AS_PWM0_N);
 	#elif 0
 		//PD5 PWM0     1ms cycle  1/3 duty

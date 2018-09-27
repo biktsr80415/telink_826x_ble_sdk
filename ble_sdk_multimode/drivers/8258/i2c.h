@@ -7,14 +7,12 @@
 
 // SDA   SCL
 //  C0    C1
-//  C2    C3
 //  A3    A4
 //  B6    D7
 typedef enum {
 	I2C_GPIO_GROUP_A3A4,
 	I2C_GPIO_GROUP_B6D7,
 	I2C_GPIO_GROUP_C0C1,
-	I2C_GPIO_GROUP_C2C3,
 }I2C_GPIO_GroupTypeDef;
 
 

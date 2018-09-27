@@ -340,10 +340,6 @@ void i2c_gpio_set(I2C_GPIO_GroupTypeDef i2c_pin_group)
 		sda = GPIO_PC0;
 		scl = GPIO_PC1;
 	}
-	else if(i2c_pin_group == I2C_GPIO_GROUP_C2C3){
-		sda = GPIO_PC2;
-		scl = GPIO_PC3;
-	}
 	else{ //ERR
 		sda = 0;
 		scl = 0;
