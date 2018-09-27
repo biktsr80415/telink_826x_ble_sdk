@@ -18,9 +18,6 @@ extern "C" {
 #define BATT_CHECK_ENABLE       			1   //enable or disable battery voltage detection
 #define BLT_APP_LED_ENABLE					1
 
-/////////////////// DEBUG  /////////////////////////////////
-//826x module's pin simulate as a uart tx, Just for debugging
-#define PRINT_DEBUG_INFO               		0	//open/close myprintf
 
 
 //////////////// SMP SETTING  //////////////////////////////
@@ -38,9 +35,9 @@ extern "C" {
 
 //////////////////// LED CONFIG ///////////////////////////
 #if (BLT_APP_LED_ENABLE)
-	#define LED_ON_LEVAL 						1 			//gpio output high voltage to turn on led
-	#define	GPIO_LED							GPIO_PC6
-	#define PC6_FUNC							AS_GPIO
+	#define LED_ON_LEVAL 					1 			//gpio output high voltage to turn on led
+	#define	GPIO_LED						GPIO_PC6
+	#define PC6_FUNC						AS_GPIO
 #endif
 
 
@@ -71,7 +68,7 @@ extern "C" {
 
 
 /////////////////// Clock  /////////////////////////////////
-#define CLOCK_SYS_CLOCK_HZ  	16000000
+#define CLOCK_SYS_CLOCK_HZ  				16000000
 
 enum{
 	CLOCK_SYS_CLOCK_1S = CLOCK_SYS_CLOCK_HZ,
@@ -82,17 +79,17 @@ enum{
 
 
 /////////////////// watchdog  //////////////////////////////
-#define MODULE_WATCHDOG_ENABLE		0
-#define WATCHDOG_INIT_TIMEOUT		500  //ms
+#define MODULE_WATCHDOG_ENABLE				0
+#define WATCHDOG_INIT_TIMEOUT				500  //ms
 
 
 
 
 
 /////////////////////HCI UART variables///////////////////////////////////////
-#define UART_DATA_LEN    64      // data max 252
+#define UART_DATA_LEN    					64   // data max 252
 typedef struct{
-    unsigned int len;        // data max 252
+    unsigned int len; // data max 252
     unsigned char data[UART_DATA_LEN];
 }uart_data_t;
 
@@ -100,7 +97,7 @@ typedef struct{
 
 
 
-#define DEBUG_GPIO_ENABLE							0
+#define DEBUG_GPIO_ENABLE						0
 
 #if(DEBUG_GPIO_ENABLE)
 //define debug GPIO here according to your hardware
