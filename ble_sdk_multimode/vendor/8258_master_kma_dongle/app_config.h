@@ -44,7 +44,7 @@ extern "C" {
 #define UI_AUDIO_ENABLE								1
 #define UI_BUTTON_ENABLE							1
 #define UI_LED_ENABLE								1
-#define UI_UPPER_COMPUTER_ENABLE					1  //work with upper computer
+#define UI_UPPER_COMPUTER_ENABLE					0  //work with upper computer
 
 
 
@@ -128,7 +128,7 @@ extern "C" {
 
 
 /////////////////// Clock  /////////////////////////////////
-#define CLOCK_SYS_CLOCK_HZ  	32000000
+#define CLOCK_SYS_CLOCK_HZ  	24000000
 
 enum{
 	CLOCK_SYS_CLOCK_1S = CLOCK_SYS_CLOCK_HZ,

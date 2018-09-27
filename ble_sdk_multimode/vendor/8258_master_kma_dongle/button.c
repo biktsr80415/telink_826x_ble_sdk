@@ -90,14 +90,14 @@
 
 	void proc_button (void)
 	{
-		static u32 button_det_tick;
-		if(clock_time_exceed(button_det_tick, 5000))
-		{
-			button_det_tick = clock_time();
-		}
-		else{
-			return;
-		}
+//		static u32 button_det_tick;
+//		if(clock_time_exceed(button_det_tick, 5000))
+//		{
+//			button_det_tick = clock_time();
+//		}
+//		else{
+//			return;
+//		}
 
 
 		static u32 button_history = 0;

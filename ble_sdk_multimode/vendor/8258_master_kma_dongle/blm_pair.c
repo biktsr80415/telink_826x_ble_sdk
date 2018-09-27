@@ -266,6 +266,7 @@ int dongle_unpair_enable = 0;
 
 
 
+_attribute_ram_code_
 void host_pair_unpair_proc(void)
 {
 

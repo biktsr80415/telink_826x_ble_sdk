@@ -58,6 +58,10 @@ u8 g_rate = 0; //default 0 for all report
 #if (USB_SPEAKER_ENABLE || USB_MIC_ENABLE)
 u8 usb_alt_intf[USB_INTF_MAX];
 #endif
+
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_send_response(void) {
 	u16 n;
 #ifdef WIN32
@@ -77,6 +81,10 @@ void usb_send_response(void) {
 	}
 }
 
+
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_prepare_desc_data(void) {
 	u8 value_l = (control_request.wValue) & 0xff;
 	u8 value_h = (control_request.wValue >> 8) & 0xff;
@@ -159,6 +167,11 @@ void usb_prepare_desc_data(void) {
 }
 
 //standard interface request handle
+
+
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_handle_std_intf_req() {
 	u8 value_h = (control_request.wValue >> 8) & 0xff;
 #if(USB_MIC_ENABLE || USB_SPEAKER_ENABLE || USB_MOUSE_ENABLE || USB_KEYBOARD_ENABLE || USB_SOMATIC_ENABLE)
@@ -268,6 +281,10 @@ void usb_handle_std_intf_req() {
 
 u32			custom_read_dat;
 u32			custom_reg_cmd;
+
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_handle_out_class_intf_req(int data_request) {
 	u8 property = control_request.bRequest;
 	u8 value_l = (control_request.wValue) & 0xff;
@@ -398,6 +415,10 @@ void usb_handle_out_class_intf_req(int data_request) {
 #endif
 }
 
+
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_handle_in_class_intf_req() {
 	u8 property = control_request.bRequest;
 #if (USB_MIC_ENABLE || USB_SPEAKER_ENABLE)
@@ -479,6 +500,9 @@ void usb_handle_in_class_intf_req() {
 
 }
 
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_handle_in_class_endp_req() {
 	u8 property = control_request.bRequest;
 	u8 ep_ctrl = control_request.wValue >> 8;
@@ -510,7 +534,9 @@ void usb_handle_out_class_endp_req(int data_request) {
 #endif
 }
 
-
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_handle_set_intf() {
 #if (USB_SPEAKER_ENABLE || USB_MIC_ENABLE)
 	u8 value_l = (control_request.wValue) & 0xff;
@@ -552,6 +578,9 @@ void usb_handle_get_intf() {
 }
 #endif
 
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_handle_request(u8 data_request) {
 	u8 bmRequestType = control_request.bmRequestType;
 	u8 bRequest = control_request.bRequest;
@@ -638,6 +667,9 @@ void usb_handle_request(u8 data_request) {
 	return;
 }
 
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_handle_ctl_ep_setup() {
 	usbhw_reset_ctrl_ep_ptr();
 	control_request.bmRequestType = usbhw_read_ctrl_ep_data();
@@ -653,6 +685,9 @@ void usb_handle_ctl_ep_setup() {
 		usbhw_write_ctrl_ep_ctrl(FLD_EP_DAT_ACK);
 }
 
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_handle_ctl_ep_data(void) {
 	usbhw_reset_ctrl_ep_ptr();
 	g_stall = 0;
@@ -662,6 +697,8 @@ void usb_handle_ctl_ep_data(void) {
 	else
 		usbhw_write_ctrl_ep_ctrl(FLD_EP_DAT_ACK);
 }
+
+
 
 void usb_handle_ctl_ep_status() {
 	if (g_stall)
@@ -689,6 +726,10 @@ void usb_resume_host(void)
 }
 #endif
 u8 edp_toggle[8];
+
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void usb_handle_irq(void) {
 	u32 irq = usbhw_get_ctrl_ep_irq();
 	if (irq & FLD_CTRL_EP_IRQ_SETUP) {
@@ -744,7 +785,7 @@ void usb_handle_irq(void) {
 	#if(USB_KEYBOARD_ENABLE)
 		extern void usbkb_report_frame(void);
 		extern void usbkb_release_check(void);
-		usbkb_report_frame();
+		//usbkb_report_frame();
 		//usbkb_release_check();
 	#endif
 #endif

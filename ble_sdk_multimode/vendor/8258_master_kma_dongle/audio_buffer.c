@@ -40,6 +40,9 @@ void abuf_mic_add (u32 *p)
 }
 
 
+#if (CLOCK_SYS_CLOCK_HZ == 24000000)
+_attribute_ram_code_
+#endif
 void abuf_mic_dec ()
 {
 	static int start = 1;

@@ -489,6 +489,8 @@ int app_event_callback (u32 h, u8 *p, int n)
 
 
 
+
+_attribute_ram_code_
 void host_update_conn_proc(void)
 {
 	//at least 50ms later and make sure smp/sdp is finished

@@ -163,7 +163,7 @@ extern void proc_audio (void);
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
-int main_idle_loop (void)
+_attribute_ram_code_ int main_idle_loop (void)
 {
 	static u32 tick_loop;
 	tick_loop ++;
@@ -189,7 +189,10 @@ int main_idle_loop (void)
 	if(!button_detect_en && clock_time_exceed(0, 1000000)){// proc button 1 second later after power on
 		button_detect_en = 1;
 	}
-	if(button_detect_en){
+	static u32 button_detect_tick = 0;
+	if(button_detect_en && clock_time_exceed(button_detect_tick, 5000))
+	{
+		button_detect_tick = clock_time();
 		proc_button();  //button triggers pair & unpair  and OTA
 	}
 #endif
@@ -240,7 +243,7 @@ int main_idle_loop (void)
 
 
 
-void main_loop (void)
+_attribute_ram_code_ void main_loop (void)
 {
 
 	main_idle_loop ();

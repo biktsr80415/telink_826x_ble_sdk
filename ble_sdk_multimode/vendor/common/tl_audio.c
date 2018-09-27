@@ -245,6 +245,10 @@ void mic_to_adpcm_split (signed short *ps, int len, signed short *pds, int start
     signed short *pd -> pointer to the pcm destination buffer
     int len          -> decorded size
 */
+
+#if (UI_AUDIO_ENABLE && CLOCK_SYS_CLOCK_HZ == 24000000)  //only for ble master 24m system clock
+_attribute_ram_code_
+#endif
 void adpcm_to_pcm (signed short *ps, signed short *pd, int len){
 	int i;
 

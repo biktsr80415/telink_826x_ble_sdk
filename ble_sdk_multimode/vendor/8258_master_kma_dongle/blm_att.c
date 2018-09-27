@@ -391,7 +391,7 @@ void	att_mic (u16 conn, rf_packet_att_t *p)
 #endif
 
 
-void proc_audio (void)
+_attribute_ram_code_ void proc_audio (void)
 {
 	if (att_mic_rcvd)
 	{

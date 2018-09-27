@@ -32,8 +32,8 @@ int main (void) {
 
 #if (CLOCK_SYS_CLOCK_HZ == 24000000)
 	clock_init(SYS_CLK_24M_Crystal);
-#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
-	clock_init(SYS_CLK_32M_Crystal);
+#else
+
 #endif
 
 	gpio_init(1);
