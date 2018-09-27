@@ -499,13 +499,7 @@ void main_loop (void)
 #if (BATT_CHECK_ENABLE)
 	if(battery_get_detect_enable() && clock_time_exceed(lowBattDet_tick, 500000) ){
 		lowBattDet_tick = clock_time();
-
-		if(analog_read(DEEP_ANA_REG2) ==  LOW_BATT_FLG){
-			app_battery_power_check(VBAT_ALRAM_THRES_MV + 200);  //2.2 V
-		}
-		else{
-			app_battery_power_check(VBAT_ALRAM_THRES_MV);  //2000 mV low battery
-		}
+		app_battery_power_check(VBAT_ALRAM_THRES_MV);  //2000 mV low battery
 	}
 #endif
 
