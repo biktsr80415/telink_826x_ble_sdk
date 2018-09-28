@@ -26,8 +26,7 @@ extern "C" {
 
 
 
-//other test
-#define TEST_USER_BLT_SOFT_TIMER						30
+
 #define TEST_WHITELIST									31
  //phy test
 #define TEST_BLE_PHY									32
@@ -36,10 +35,6 @@ extern "C" {
 
 #define FEATURE_TEST_MODE								TEST_ADVERTISING_SCANNING_IN_CONN_SLAVE_ROLE
 
-
-#if (FEATURE_TEST_MODE == TEST_USER_BLT_SOFT_TIMER)
-	#define BLT_SOFTWARE_TIMER_ENABLE					1
-#endif
 
 
 #if (   FEATURE_TEST_MODE == TEST_SCANNING_ONLY || FEATURE_TEST_MODE == TEST_SCANNING_IN_ADV_AND_CONN_SLAVE_ROLE \
