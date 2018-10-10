@@ -14,7 +14,7 @@
 #include "application/usbstd/usbkeycode.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
-
+#include "../common/blt_soft_timer.h"
 
 #include "rc_ir.h"
 #include "battery_check.h"
@@ -561,6 +561,38 @@ extern u32	scan_pin_need;
 
 
 
+int gpio_test0(void)
+{
+	//gpio 0 toggle to see the effect
+	DBG_CHN4_TOGGLE;
+
+	return 0;
+}
+
+
+int gpio_test1(void)
+{
+	//gpio 1 toggle to see the effect
+	DBG_CHN5_TOGGLE;
+
+
+	return 0;
+
+}
+
+int gpio_test2(void)
+{
+	DBG_CHN6_TOGGLE;
+
+	return 0;
+}
+
+int gpio_test3(void)
+{
+	DBG_CHN7_TOGGLE;
+
+	return 0;
+}
 
 
 
@@ -595,8 +627,13 @@ void app_ui_init_normal(void)
 #endif
 
 
-#if (DEBUG_GPIO_ENABLE)
-//	app_register_debug_gpio(GPIO_CHN0, GPIO_CHN1, GPIO_CHN2, GPIO_CHN3, GPIO_CHN4);
+
+#if (BLT_TEST_SOFT_TIMER_ENABLE)
+	blt_soft_timer_init();
+	blt_soft_timer_add(&gpio_test0, 35000);
+	blt_soft_timer_add(&gpio_test1, 23000);
+	blt_soft_timer_add(&gpio_test2, 27000);
+	blt_soft_timer_add(&gpio_test3, 33000);
 #endif
 
 }

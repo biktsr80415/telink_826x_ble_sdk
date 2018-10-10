@@ -5,9 +5,11 @@
  *      Author: Administrator
  */
 
-#include <stack/ble/ll/ll.h>
+#include "stack/ble/ble.h"
 #include "tl_common.h"
 #include "../common/blt_soft_timer.h"
+
+
 
 
 #if (BLT_SOFTWARE_TIMER_ENABLE)
@@ -15,7 +17,7 @@
 
 
 
-blt_soft_timer_t	blt_timer;
+_attribute_data_retention_	blt_soft_timer_t	blt_timer;
 
 
 //按照定时时间将timer排序，便于process时 依次触发timer

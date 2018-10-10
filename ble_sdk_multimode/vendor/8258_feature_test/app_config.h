@@ -26,16 +26,19 @@ extern "C" {
 
 
 
-
+//other test
+#define TEST_USER_BLT_SOFT_TIMER						30
 #define TEST_WHITELIST									31
  //phy test
 #define TEST_BLE_PHY									32
 
 
 
-#define FEATURE_TEST_MODE								TEST_ADVERTISING_SCANNING_IN_CONN_SLAVE_ROLE
+#define FEATURE_TEST_MODE								TEST_USER_BLT_SOFT_TIMER
 
-
+#if (FEATURE_TEST_MODE == TEST_USER_BLT_SOFT_TIMER)
+	#define BLT_SOFTWARE_TIMER_ENABLE					1
+#endif
 
 #if (   FEATURE_TEST_MODE == TEST_SCANNING_ONLY || FEATURE_TEST_MODE == TEST_SCANNING_IN_ADV_AND_CONN_SLAVE_ROLE \
 	 || FEATURE_TEST_MODE == TEST_ADVERTISING_SCANNING_IN_SLAVE_ROLE || FEATURE_TEST_MODE==TEST_BLE_PHY \
@@ -205,32 +208,82 @@ typedef enum
 #define DEBUG_GPIO_ENABLE							0
 
 #if(DEBUG_GPIO_ENABLE)
-//define debug GPIO here according to your hardware
+
 
 	#define GPIO_CHN0							GPIO_PB4
 	#define GPIO_CHN1							GPIO_PB5
 	#define GPIO_CHN2							GPIO_PB6
     #define GPIO_CHN3							GPIO_PB7
-
-	#define PB4_OUTPUT_ENABLE					1
-	#define PB5_OUTPUT_ENABLE					1
-	#define PB6_OUTPUT_ENABLE					1
-    #define PB7_OUTPUT_ENABLE					1
+	#define GPIO_CHN4							GPIO_PB0
+	#define GPIO_CHN5							GPIO_PB1
+	#define GPIO_CHN6							GPIO_PC3
 
 
+	#if 0   //analog pull up&down resistance could keep in deep retention stage
+		#define PB4_OUTPUT_ENABLE					1
 
-	#define DBG_CHN0_LOW		gpio_write(GPIO_CHN0, 0)
-	#define DBG_CHN0_HIGH		gpio_write(GPIO_CHN0, 1)
-	#define DBG_CHN0_TOGGLE		gpio_toggle(GPIO_CHN0)
-	#define DBG_CHN1_LOW		gpio_write(GPIO_CHN1, 0)
-	#define DBG_CHN1_HIGH		gpio_write(GPIO_CHN1, 1)
-	#define DBG_CHN1_TOGGLE		gpio_toggle(GPIO_CHN1)
-	#define DBG_CHN2_LOW		gpio_write(GPIO_CHN2, 0)
-	#define DBG_CHN2_HIGH		gpio_write(GPIO_CHN2, 1)
-	#define DBG_CHN2_TOGGLE		gpio_toggle(GPIO_CHN2)
-	#define DBG_CHN3_LOW		gpio_write(GPIO_CHN3, 0)
-	#define DBG_CHN3_HIGH		gpio_write(GPIO_CHN3, 1)
-	#define DBG_CHN3_TOGGLE		gpio_toggle(GPIO_CHN3)
+		#define PULL_WAKEUP_SRC_PB5					PM_PIN_PULLDOWN_100K
+		#define PULL_WAKEUP_SRC_PB6					PM_PIN_PULLDOWN_100K
+		#define PULL_WAKEUP_SRC_PB7					PM_PIN_PULLDOWN_100K
+		#define PULL_WAKEUP_SRC_PB0					PM_PIN_PULLDOWN_100K
+		#define PULL_WAKEUP_SRC_PB1					PM_PIN_PULLDOWN_100K
+		#define PULL_WAKEUP_SRC_PC3					PM_PIN_PULLDOWN_100K
+
+
+		#define DBG_CHN0_LOW		gpio_write(GPIO_CHN0, 0)
+		#define DBG_CHN0_HIGH		gpio_write(GPIO_CHN0, 1)
+		#define DBG_CHN0_TOGGLE		gpio_toggle(GPIO_CHN0)
+
+		#define DBG_CHN1_LOW		GPIO_PB5_PULL_DOWN_100K
+		#define DBG_CHN1_HIGH		GPIO_PB5_PULL_UP_10K
+		#define DBG_CHN1_TOGGLE		GPIO_PB5_PULL_TOGGLE
+		#define DBG_CHN2_LOW		GPIO_PB6_PULL_DOWN_100K
+		#define DBG_CHN2_HIGH		GPIO_PB6_PULL_UP_10K
+		#define DBG_CHN2_TOGGLE		GPIO_PB6_PULL_TOGGLE
+		#define DBG_CHN3_LOW		GPIO_PB7_PULL_DOWN_100K
+		#define DBG_CHN3_HIGH		GPIO_PB7_PULL_UP_10K
+		#define DBG_CHN3_TOGGLE		GPIO_PB7_PULL_TOGGLE
+		#define DBG_CHN4_LOW		GPIO_PB0_PULL_DOWN_100K
+		#define DBG_CHN4_HIGH		GPIO_PB0_PULL_UP_10K
+		#define DBG_CHN4_TOGGLE		GPIO_PB0_PULL_TOGGLE
+		#define DBG_CHN5_LOW		GPIO_PB1_PULL_DOWN_100K
+		#define DBG_CHN5_HIGH		GPIO_PB1_PULL_UP_10K
+		#define DBG_CHN5_TOGGLE		GPIO_PB1_PULL_TOGGLE
+		#define DBG_CHN6_LOW		GPIO_PC3_PULL_DOWN_100K
+		#define DBG_CHN6_HIGH		GPIO_PC3_PULL_UP_10K
+		#define DBG_CHN6_TOGGLE		GPIO_PC3_PULL_TOGGLE
+	#else
+		#define PB4_OUTPUT_ENABLE					1
+		#define PB5_OUTPUT_ENABLE					1
+		#define PB6_OUTPUT_ENABLE					1
+		#define PB7_OUTPUT_ENABLE					1
+		#define PB0_OUTPUT_ENABLE					1
+		#define PB1_OUTPUT_ENABLE					1
+		#define PC3_OUTPUT_ENABLE					1
+
+
+		#define DBG_CHN0_LOW		gpio_write(GPIO_CHN0, 0)
+		#define DBG_CHN0_HIGH		gpio_write(GPIO_CHN0, 1)
+		#define DBG_CHN0_TOGGLE		gpio_toggle(GPIO_CHN0)
+		#define DBG_CHN1_LOW		gpio_write(GPIO_CHN1, 0)
+		#define DBG_CHN1_HIGH		gpio_write(GPIO_CHN1, 1)
+		#define DBG_CHN1_TOGGLE		gpio_toggle(GPIO_CHN1)
+		#define DBG_CHN2_LOW		gpio_write(GPIO_CHN2, 0)
+		#define DBG_CHN2_HIGH		gpio_write(GPIO_CHN2, 1)
+		#define DBG_CHN2_TOGGLE		gpio_toggle(GPIO_CHN2)
+		#define DBG_CHN3_LOW		gpio_write(GPIO_CHN3, 0)
+		#define DBG_CHN3_HIGH		gpio_write(GPIO_CHN3, 1)
+		#define DBG_CHN3_TOGGLE		gpio_toggle(GPIO_CHN3)
+		#define DBG_CHN4_LOW		gpio_write(GPIO_CHN4, 0)
+		#define DBG_CHN4_HIGH		gpio_write(GPIO_CHN4, 1)
+		#define DBG_CHN4_TOGGLE		gpio_toggle(GPIO_CHN4)
+		#define DBG_CHN5_LOW		gpio_write(GPIO_CHN5, 0)
+		#define DBG_CHN5_HIGH		gpio_write(GPIO_CHN5, 1)
+		#define DBG_CHN5_TOGGLE		gpio_toggle(GPIO_CHN5)
+		#define DBG_CHN6_LOW		gpio_write(GPIO_CHN6, 0)
+		#define DBG_CHN6_HIGH		gpio_write(GPIO_CHN6, 1)
+		#define DBG_CHN6_TOGGLE		gpio_toggle(GPIO_CHN6)
+	#endif
 #else
 	#define DBG_CHN0_LOW
 	#define DBG_CHN0_HIGH

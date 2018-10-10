@@ -1425,6 +1425,14 @@ enum{
 };
 
 
+#define anareg_PA03_pull			0x0E
+#define anareg_PA47_pull			0x0F
+#define anareg_PB03_pull			0x10
+#define anareg_PB47_pull			0x11
+#define anareg_PC03_pull			0x12
+#define anareg_PC47_pull			0x13
+#define anareg_PD03_pull			0x14
+#define anareg_PD47_pull			0x15
 
 /////////////////////////////////////////////////////////////////////////////////////
 //   analog register table 1.8 V

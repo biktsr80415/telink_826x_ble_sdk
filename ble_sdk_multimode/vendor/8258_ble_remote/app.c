@@ -5,6 +5,7 @@
 #include "application/keyboard/keyboard.h"
 #include "../common/tl_audio.h"
 #include "../common/blt_led.h"
+#include "../common/blt_soft_timer.h"
 
 #include "app_ui.h"
 #include "battery_check.h"
@@ -227,6 +228,9 @@ void blt_pm_proc(void)
 		int user_task_flg = ota_is_working || scan_pin_need || key_not_released || DEVICE_LED_BUSY;
 
 		if(user_task_flg){
+
+			bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
+
 			#if (LONG_PRESS_KEY_POWER_OPTIMIZE)
 				extern int key_matrix_same_as_last_cnt;
 				if(!ota_is_working && key_matrix_same_as_last_cnt > 5){  //key matrix stable can optize
@@ -406,7 +410,7 @@ void user_init_normal(void)
 
 	#if (PM_DEEPSLEEP_RETENTION_ENABLE)
 		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
-		blc_pm_setDeepsleepRetentionThreshold(95, 95);
+		blc_pm_setDeepsleepRetentionThreshold(50, 30);
 		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(400);
 	#else
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
@@ -472,7 +476,9 @@ void main_loop (void)
 {
 	tick_loop ++;
 
-
+#if (BLT_TEST_SOFT_TIMER_ENABLE)
+	blt_soft_timer_process(MAINLOOP_ENTRY);
+#endif
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	blt_sdk_main_loop();
 

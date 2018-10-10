@@ -5,6 +5,12 @@
 #include "gpio.h"
 
 
+#ifndef PM_TIM_RECOVER_MODE
+#define PM_TIM_RECOVER_MODE					1
+#endif
+
+
+
 static inline void usb_dp_pullup_en (int en)
 {
 	unsigned char dat = ReadAnalogReg(0x0b);
@@ -52,11 +58,9 @@ static inline void usb_dp_pullup_en (int en)
 typedef enum {
 	SUSPEND_MODE						= 0,
 	DEEPSLEEP_MODE						= 0x80,
-	DEEPSLEEP_MODE_RET_SRAM_LOW8K		= 0x61,
-	DEEPSLEEP_MODE_RET_SRAM_HIGH8K 		= 0x52,
 	DEEPSLEEP_MODE_RET_SRAM_LOW16K  	= 0x43,
-	DEEPSLEEP_MODE_RET_SRAM_HIGH16K  	= 0x34,
 	DEEPSLEEP_MODE_RET_SRAM_LOW32K  	= 0x07,
+
 
 	DEEPSLEEP_RETENTION_FLAG			= 0x7F,
 }SleepMode_TypeDef;
@@ -66,14 +70,10 @@ typedef enum {
 //set wakeup source
 typedef enum {
 	 PM_WAKEUP_PAD   = BIT(4),    		SUSPENDWAKEUP_SRC_PAD = BIT(4),    DEEPWAKEUP_SRC_PAD   = BIT(4),
-	 PM_WAKEUP_CORE  = BIT(5),
 	 PM_WAKEUP_TIMER = BIT(6),	  		SUSPENDWAKEUP_SRC_TIMER = BIT(6),  DEEPWAKEUP_SRC_TIMER = BIT(6),
-	 PM_WAKEUP_COMP  = BIT(7),	  		SUSPENDWAKEUP_SRC_COMP  = BIT(7),  DEEPWAKEUP_SRC_COMP  = BIT(7),
 
-
-	 PM_WAKEUP_CORE_GPIO   = BIT(5) | 0X0800,      SUSPENDWAKEUP_SRC_DIG_GPIO   = BIT(5) | 0X0800,
-	 PM_WAKEUP_CORE_USB    = BIT(5) | 0X0400,      SUSPENDWAKEUP_SRC_DIG_USB    = BIT(5) | 0X0400,
-	 PM_WAKEUP_CORE_QDEC   = BIT(5) | 0X1000,      SUSPENDWAKEUP_SRC_DIG_QDEC   = BIT(5) | 0X1000,
+	 PM_TIM_RECOVER_START =	BIT(14),
+	 PM_TIM_RECOVER_END   =	BIT(15),
 }SleepWakeupSrc_TypeDef;
 
 
@@ -87,6 +87,8 @@ enum {
 	 WAKEUP_STATUS_PAD    = BIT(3),
 
 	 STATUS_GPIO_ERR_NO_ENTER_PM  = BIT(7),
+
+	 STATUS_ENTER_SUSPEND  = BIT(30),
 };
 
 #define 	WAKEUP_STATUS_TIMER_CORE	( WAKEUP_STATUS_TIMER | WAKEUP_STATUS_CORE)
@@ -103,6 +105,15 @@ typedef struct{
 extern pm_para_t	pmParam;
 
 
+#if (PM_TIM_RECOVER_MODE)
+	typedef struct{
+		unsigned int   tick_sysClk;
+		unsigned int   tick_32k;
+		unsigned char  recover_flag;
+	}pm_tim_recover_t;
+
+	extern pm_tim_recover_t	pm_timRecover;
+#endif
 
 void cpu_stall_wakeup_by_timer0(unsigned int tick_stall);
 void cpu_stall_wakeup_by_timer1(unsigned int tick_stall);
@@ -111,8 +122,6 @@ void cpu_stall_wakeup_by_timer2(unsigned int tick_stall);
 typedef int (*suspend_handler_t)(void);
 void	bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
 
-typedef unsigned short (*tick_32k_get_t)(void);
-void pm_register_tick32kGet_callback(tick_32k_get_t cb);
 
 
 

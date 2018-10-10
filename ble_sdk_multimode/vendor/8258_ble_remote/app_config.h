@@ -17,6 +17,9 @@ extern "C" {
 #define BATT_CHECK_ENABLE       			1   //must enable
 #define BLE_AUDIO_ENABLE					1
 #define BLT_APP_LED_ENABLE					1
+#define BLT_TEST_SOFT_TIMER_ENABLE			0
+
+
 
 
 #if (BATT_CHECK_ENABLE)
@@ -35,6 +38,9 @@ extern "C" {
 	#define PC6_FUNC							AS_GPIO
 #endif
 
+#if (BLT_TEST_SOFT_TIMER_ENABLE)
+	#define BLT_SOFTWARE_TIMER_ENABLE		1
+#endif
 
 
 ////////////////////////// AUDIO CONFIG /////////////////////////////
