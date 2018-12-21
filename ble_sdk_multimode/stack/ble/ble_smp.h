@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     ble_smp.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 /*
  * ble_smp.h
  *
@@ -300,50 +321,53 @@ typedef void (*smp_trigger_cb_t)(u16 conn_handle);
 extern smp_check_handler_t		func_smp_check; //HID on android 7.0
 extern smp_init_handler_t		func_smp_init;
 extern smp_info_handler_t		func_smp_info;
-extern smp_bond_clean_handler_t  func_bond_check_clean;
+extern smp_bond_clean_handler_t func_bond_check_clean;
 extern smp_enc_done_cb_t		func_smp_enc_done_cb;
 
 
-
 typedef enum {
-	JUST_WORKS,
-	PK_RESP_INPUT,  // Initiator displays PK, initiator inputs PK
-	PK_INIT_INPUT,  // Responder displays PK, responder inputs PK
-	OK_BOTH_INPUT,  // Only input on both, both input PK
-	OOB             // OOB available on both sides
-} stk_generationMethod_t;
-
-// IO Capability Values
-typedef enum {
+	IO_CAPABILITY_UNKNOWN = 0xff,
 	IO_CAPABILITY_DISPLAY_ONLY = 0,
-	IO_CAPABILITY_DISPLAY_YES_NO,
-	IO_CAPABILITY_KEYBOARD_ONLY,
-	IO_CAPABILITY_NO_INPUT_NO_OUTPUT,
-	IO_CAPABILITY_KEYBOARD_DISPLAY, // not used by secure simple pairing
-	IO_CAPABILITY_UNKNOWN = 0xff
+	IO_CAPABILITY_DISPLAY_YES_NO = 1,
+	IO_CAPABILITY_KEYBOARD_ONLY = 2,
+	IO_CAPABILITY_NO_INPUT_NO_OUTPUT = 3,
+	IO_CAPABILITY_KEYBOARD_DISPLAY = 4,
 } io_capability_t;
 
-// horizontal: initiator capabilities
-// vertial:    responder capabilities
+
+typedef enum {
+	JustWorks = 0,
+	PK_Init_Dsply_Resp_Input = 1,
+	PK_Resp_Dsply_Init_Input = 2,
+	OK_BOTH_INPUT = 3,
+	OOB = 4,
+} stk_generationMethod_t;
+
+// H: Initiator Capabilities
+// V: Responder Capabilities
 static const stk_generationMethod_t stk_generation_method[5][5] = {
-	{ JUST_WORKS,      JUST_WORKS,       PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
-	{ JUST_WORKS,      JUST_WORKS,       PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
-	{ PK_RESP_INPUT,   PK_RESP_INPUT,    OK_BOTH_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
-	{ JUST_WORKS,      JUST_WORKS,       JUST_WORKS,      JUST_WORKS,    JUST_WORKS    },
-	{ PK_RESP_INPUT,   PK_RESP_INPUT,    PK_INIT_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
+	{ JustWorks,      			JustWorks,       		  PK_Resp_Dsply_Init_Input, JustWorks, PK_Resp_Dsply_Init_Input },
+	{ JustWorks,      			JustWorks,       		  PK_Resp_Dsply_Init_Input, JustWorks, PK_Resp_Dsply_Init_Input },
+	{ PK_Init_Dsply_Resp_Input, PK_Init_Dsply_Resp_Input, OK_BOTH_INPUT,   			JustWorks, PK_Init_Dsply_Resp_Input },
+	{ JustWorks,      			JustWorks,       		  JustWorks,      			JustWorks, JustWorks   			    },
+	{ PK_Init_Dsply_Resp_Input, PK_Init_Dsply_Resp_Input, PK_Resp_Dsply_Init_Input, JustWorks, PK_Init_Dsply_Resp_Input },
 };
 
-#define IO_CAPABLITY_DISPLAY_ONLY		0x00
-#define IO_CAPABLITY_DISPLAY_YESNO		0x01
-#define IO_CAPABLITY_KEYBOARD_ONLY		0x02
-#define IO_CAPABLITY_NO_IN_NO_OUT		0x03
-#define IO_CAPABLITY_KEYBOARD_DISPLAY	0x04
 
-#define PASSKEY_TYPE_ENTRY_STARTED		0x00
-#define PASSKEY_TYPE_DIGIT_ENTERED		0x01
-#define PASSKEY_TYPE_DIGIT_ERASED		0x02
-#define PASSKEY_TYPE_CLEARED			0x03
-#define PASSKEY_TYPE_ENTRY_COMPLETED	0x04
+
+
+
+#define IO_CAPABLITY_DISPLAY_ONLY					0x00
+#define IO_CAPABLITY_DISPLAY_YESNO					0x01
+#define IO_CAPABLITY_KEYBOARD_ONLY					0x02
+#define IO_CAPABLITY_NO_IN_NO_OUT					0x03
+#define IO_CAPABLITY_KEYBOARD_DISPLAY				0x04
+
+#define PASSKEY_TYPE_ENTRY_STARTED					0x00
+#define PASSKEY_TYPE_DIGIT_ENTERED					0x01
+#define PASSKEY_TYPE_DIGIT_ERASED					0x02
+#define PASSKEY_TYPE_CLEARED						0x03
+#define PASSKEY_TYPE_ENTRY_COMPLETED				0x04
 
 #define PARING_FAIL_REASON_PASSKEY_ENTRY			0x01
 #define PARING_FAIL_REASON_OOB_NOT_AVAILABLE		0x02
@@ -359,7 +383,7 @@ static const stk_generationMethod_t stk_generation_method[5][5] = {
 #define PARING_FAIL_REASON_DHKEY_CHECK_FAIL			0x0b
 #define PARING_FAIL_REASON_NUMUERIC_FAILED			0x0c
 #define PARING_FAIL_REASON_BREDR_PARING				0x0d
-#define PARING_FAIL_REASON_CROSS_TRANSKEY_NOT_ALLOW		0x0e
+#define PARING_FAIL_REASON_CROSS_TRANSKEY_NOT_ALLOW	0x0e
 
 #define	ENCRYPRION_KEY_SIZE_MAXINUM				16
 #define	ENCRYPRION_KEY_SIZE_MINIMUN				7

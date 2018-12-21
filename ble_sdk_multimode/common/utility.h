@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     utility.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     Sep. 30, 2010
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 
 #pragma once
 #include "types.h"
@@ -53,7 +74,7 @@
 #define U32_CPY(addr1,addr2)	U32_SET(addr1, U32_GET(addr2))
 
 #define MAKE_U16(h,l) 			((unsigned short)(((h) << 8) | (l)))
-#define MAKE_U32(a,b,c,d)		((unsigned short)(((a) << 24) | ((b) << 16) ((c) << 8) | (d)))
+#define MAKE_U32(a,b,c,d)		((unsigned int)(((a) << 24) | ((b) << 16) | ((c) << 8) | (d)))
 
 #define BOUND(x, l, m)			((x) < (l) ? (l) : ((x) > (m) ? (m) : (x)))
 #define SET_BOUND(x, l, m)		((x) = BOUND(x, l, m))

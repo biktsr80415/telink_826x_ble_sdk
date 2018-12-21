@@ -1,7 +1,27 @@
+/********************************************************************************************************
+ * @file     bit.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     Sep. 30, 2010
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 
 #pragma once
 
-// http://www.coranac.com/documents/working-with-bits-and-bitfields/#sec-intro
 
 #include "macro_trick.h"
 
@@ -61,52 +81,19 @@
 
 #define BIT_IS_EVEN(x)     (((x)&1)==0)
 #define BIT_IS_ODD(x)      (!BIT_IS_EVEN((x)))
-
 #define BIT_IS_POW2(x)     (!((x) & ((x)-1)))
-
-/* turn off right-most 1-bit in x */
 #define BIT_TURNOFF_1(x)   ((x) &= ((x)-1))
-/* isolate right-most 1-bit in x */
 #define BIT_ISOLATE_1(x)   ((x) &= (-(x)))
-/* right-propagate right-most 1-bit in x */
 #define BIT_PROPAGATE_1(x) ((x) |= ((x)-1))
-/* isolate right-most 0-bit in x */
 #define BIT_ISOLATE_0(x)   ((x) = ~(x) & ((x)+1))
-/* turn on right-most 0-bit in x */
 #define BIT_TURNON_0(x)    ((x) |= ((x)+1))
-
-#define CLAMP_TO_ONE(x) 		(!!(x))				// compiler defined, not stardard.    0 --> 0,   1 --> 0xffffffff
+#define CLAMP_TO_ONE(x)    (!!(x))				// compiler defined, not stardard.    0 --> 0,   1 --> 0xffffffff
 
 #define ONES(x)				BIT_MASK_LEN(x)
 #define ONES_32				0xffffffff
 #define ALL_SET				0xffffffff
 
-#if 0
-//! Massage \a x for use in bitfield \a name.
-#define BFN_PREP(x, name)    ( ((x)<<name##_SHIFT) & name##_MASK )
 
-//! Get the value of bitfield \a name from \a y. Equivalent to (var=) y.name
-#define BFN_GET(y, name)     ( ((y) & name##_MASK)>>name##_SHIFT )
-
-//! Set bitfield \a name from \a y to \a x: y.name= x.
-#define BFN_SET(y, x, name)  (y = ((y)&~name##_MASK) | BFN_PREP(x,name) )
-
-// Usage: prio get/set like before:
-prio= BFN_GET(attr2, ATTR2_PRIO);
-BFN_SET(attr2, x, ATTR2_PRIO);
-#endif
-
-/* 
-** bithacks.h - bit hacks macros. v1.0
-**
-** Peteris Krumins (peter@catonmat.net)
-** http://www.catonmat.net  --  good coders code, great reuse
-**
-** This file is explained in the following article:
-** http://www.catonmat.net/blog/bit-hacks-header-file
-**
-** Released under the MIT license.
-*/
 
 // Return the bit index of the lowest 1 in y.   ex:  0b00110111000  --> 3
 #define BIT_LOW_BIT(y)  (((y) & BIT(0))?0:(((y) & BIT(1))?1:(((y) & BIT(2))?2:(((y) & BIT(3))?3:			\
@@ -137,13 +124,13 @@ BFN_SET(attr2, x, ATTR2_PRIO);
 #define MV(m, v)											(((v) << BIT_LOW_BIT(m)) & (m))
 
 // warning MASK_VALn  are internal used macro, please use MASK_VAL instead
-#define MASK_VAL2(m, v)    									(MV(m,v))
-#define MASK_VAL4(m1,v1,m2,v2)    							(MV(m1,v1)|MV(m2,v2))
-#define MASK_VAL6(m1,v1,m2,v2,m3,v3)    					(MV(m1,v1)|MV(m2,v2)|MV(m3,v3))
-#define MASK_VAL8(m1,v1,m2,v2,m3,v3,m4,v4)    				(MV(m1,v1)|MV(m2,v2)|MV(m3,v3)|MV(m4,v4))
-#define MASK_VAL10(m1,v1,m2,v2,m3,v3,m4,v4,m5,v5)    		(MV(m1,v1)|MV(m2,v2)|MV(m3,v3)|MV(m4,v4)|MV(m5,v5))
-#define MASK_VAL12(m1,v1,m2,v2,m3,v3,m4,v4,m5,v5,m6,v6)    	(MV(m1,v1)|MV(m2,v2)|MV(m3,v3)|MV(m4,v4)|MV(m5,v5)|MV(m6,v6))
-#define MASK_VAL14(m1,v1,m2,v2,m3,v3,m4,v4,m5,v5,m6,v6,m7,v7) (MV(m1,v1)|MV(m2,v2)|MV(m3,v3)|MV(m4,v4)|MV(m5,v5)|MV(m6,v6)|MV(m7,v7))
+#define MASK_VAL2(m, v)    											(MV(m,v))
+#define MASK_VAL4(m1,v1,m2,v2)    									(MV(m1,v1)|MV(m2,v2))
+#define MASK_VAL6(m1,v1,m2,v2,m3,v3)    							(MV(m1,v1)|MV(m2,v2)|MV(m3,v3))
+#define MASK_VAL8(m1,v1,m2,v2,m3,v3,m4,v4)    						(MV(m1,v1)|MV(m2,v2)|MV(m3,v3)|MV(m4,v4))
+#define MASK_VAL10(m1,v1,m2,v2,m3,v3,m4,v4,m5,v5)    				(MV(m1,v1)|MV(m2,v2)|MV(m3,v3)|MV(m4,v4)|MV(m5,v5))
+#define MASK_VAL12(m1,v1,m2,v2,m3,v3,m4,v4,m5,v5,m6,v6)    			(MV(m1,v1)|MV(m2,v2)|MV(m3,v3)|MV(m4,v4)|MV(m5,v5)|MV(m6,v6))
+#define MASK_VAL14(m1,v1,m2,v2,m3,v3,m4,v4,m5,v5,m6,v6,m7,v7) 		(MV(m1,v1)|MV(m2,v2)|MV(m3,v3)|MV(m4,v4)|MV(m5,v5)|MV(m6,v6)|MV(m7,v7))
 #define MASK_VAL16(m1,v1,m2,v2,m3,v3,m4,v4,m5,v5,m6,v6,m7,v7,m8,v8) (MV(m1,v1)|MV(m2,v2)|MV(m3,v3)|MV(m4,v4)|MV(m5,v5)|MV(m6,v6)|MV(m7,v7)|MV(m8,v8))
 
 #define MASK_VAL(...) 					VARARG(MASK_VAL, __VA_ARGS__) 
@@ -156,64 +143,7 @@ BFN_SET(attr2, x, ATTR2_PRIO);
 
 #define GET_FLD(x, mask)    			BM_MASK_FLD(x, mask)
 
-#ifndef WIN32
-// warning SET_FLD_Vn  are internal used macro, please use SET_FLD_V instead
-#define SET_FLD_V3(x, m, v)    															\
-    BM_SET_MASK_FLD(x,m,MV(m,v))
-    
-#define SET_FLD_V5(x, m1, v1, m2, v2)    												\
-    BM_SET_MASK_FLD(x, m1|m2, MV(m1,v1)| MV(m2,v2))
-
-#define SET_FLD_V7(x, m1, v1, m2, v2, m3, v3)    										\
-    BM_SET_MASK_FLD(x, m1|m2|m3, MV(m1,v1)| MV(m2,v2)| MV(m3,v3))
-
-#define SET_FLD_V9(x, m1, v1, m2, v2, m3, v3, m4, v4)    								\
-    BM_SET_MASK_FLD(x, m1|m2|m3|m4, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4))
-
-#define SET_FLD_V11(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5)    						\
-    BM_SET_MASK_FLD(x, m1|m2|m3|m4|m5, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4)| MV(m5,v5))
-
-#define SET_FLD_V13(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5, m6, v6)    				\
-    BM_SET_MASK_FLD(x, m1|m2|m3|m4|m5|m6, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4)| MV(m5,v5)| MV(m6,v6))
-#else
-#define SET_FLD_V3(x, m, v)    															\
-	__pragma(warning(push))				\
-	__pragma(warning(disable:4244)) 	\
-    BM_SET_MASK_FLD(x,m,MV(m,v))		\
-	__pragma(warning(pop))
-    
-#define SET_FLD_V5(x, m1, v1, m2, v2)    												\
-	__pragma(warning(push))				\
-	__pragma(warning(disable:4244)) 	\
-    BM_SET_MASK_FLD(x, m1|m2, MV(m1,v1)| MV(m2,v2))		\
-	__pragma(warning(pop))
-
-#define SET_FLD_V7(x, m1, v1, m2, v2, m3, v3)    										\
-	__pragma(warning(push))				\
-	__pragma(warning(disable:4244)) 	\
-    BM_SET_MASK_FLD(x, m1|m2|m3, MV(m1,v1)| MV(m2,v2)| MV(m3,v3))						\
-	__pragma(warning(pop))
-
-#define SET_FLD_V9(x, m1, v1, m2, v2, m3, v3, m4, v4)    								\
-	__pragma(warning(push))				\
-	__pragma(warning(disable:4244)) 	\
-    BM_SET_MASK_FLD(x, m1|m2|m3|m4, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4))			\
-	__pragma(warning(pop))
-
-#define SET_FLD_V11(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5)    						\
-	__pragma(warning(push))				\
-	__pragma(warning(disable:4244)) 	\
-    BM_SET_MASK_FLD(x, m1|m2|m3|m4|m5, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4)| MV(m5,v5))	\
-	__pragma(warning(pop))
-
-#define SET_FLD_V13(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5, m6, v6)    				\
-	__pragma(warning(push))				\
-	__pragma(warning(disable:4244)) 	\
-    BM_SET_MASK_FLD(x, m1|m2|m3|m4|m5|m6, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4)| MV(m5,v5)| MV(m6,v6))	\
-	__pragma(warning(pop))
-#endif
-
-#define SET_FLD_V(...) 				VARARG(SET_FLD_V, __VA_ARGS__) 
+#define SET_FLD_V(...) 					VARARG(SET_FLD_V, __VA_ARGS__)
 
 
 // 跟上一个宏不一样，这个表示直接赋值
@@ -223,20 +153,87 @@ BFN_SET(attr2, x, ATTR2_PRIO);
 #define SET_FLD_FULL_V9(x, m1, v1, m2, v2, m3, v3, m4, v4)    				((x) = MASK_VAL8(m1,v1,m2,v2,m3,v3,m4,v4))
 #define SET_FLD_FULL_V11(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5)    		((x) = MASK_VAL10(m1,v1,m2,v2,m3,v3,m4,v4,m5,v5))
 #define SET_FLD_FULL_V13(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5, m6, v6) ((x) = MASK_VAL12(m1,v1,m2,v2,m3,v3,m4,v4,m5,v5,m6,v6))
-#define SET_FLD_FULL_V(...) 			VARARG(SET_FLD_FULL_V, __VA_ARGS__) 
+#define SET_FLD_FULL_V(...) 			VARARG(SET_FLD_FULL_V, __VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////
-#define HEXIFY(y) 0x##y##LU
+#define BIT8_IFY(y)      ( \
+							((y&0x0000000FLU)?1:0)  + ((y&0x000000F0LU)? 2:0) + ((y&0x00000F00LU)? 4:0) + \
+							((y&0x0000F000LU)?8:0)  + ((y&0x000F0000LU)?16:0) + ((y&0x00F00000LU)?32:0) + \
+							((y&0x0F000000LU)?64:0) + ((y&0xF0000000LU)?128:0) \
+                         )
 
-#define BIT_8IFY(y) (((y&0x0000000FLU)?1:0)  + \
-                  ((y&0x000000F0LU)?2:0)  + \
-                  ((y&0x00000F00LU)?4:0)  + \
-                  ((y&0x0000F000LU)?8:0)  + \
-                  ((y&0x000F0000LU)?16:0) + \
-                  ((y&0x00F00000LU)?32:0) + \
-                  ((y&0x0F000000LU)?64:0) + \
-                  ((y&0xF0000000LU)?128:0))
+#define HEX_X(i) 			(0x##i##LU)
 
-#define BIT_8(Z) ((unsigned char)BIT_8IFY(HEXIFY(Z)))
+#define BIT_8(j) 			((unsigned char)BIT8_IFY(HEX_X(j)))
 
+#ifndef WIN32
+	// warning SET_FLD_Vn  are internal used macro, please use SET_FLD_V instead
+	#define SET_FLD_V3(x, m, v)    															\
+		BM_SET_MASK_FLD(x,m,MV(m,v))
 
+	#define SET_FLD_V5(x, m1, v1, m2, v2)    												\
+		BM_SET_MASK_FLD(x, m1|m2, MV(m1,v1)| MV(m2,v2))
+
+	#define SET_FLD_V7(x, m1, v1, m2, v2, m3, v3)    										\
+		BM_SET_MASK_FLD(x, m1|m2|m3, MV(m1,v1)| MV(m2,v2)| MV(m3,v3))
+
+	#define SET_FLD_V9(x, m1, v1, m2, v2, m3, v3, m4, v4)    								\
+		BM_SET_MASK_FLD(x, m1|m2|m3|m4, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4))
+
+	#define SET_FLD_V11(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5)    						\
+		BM_SET_MASK_FLD(x, m1|m2|m3|m4|m5, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4)| MV(m5,v5))
+
+	#define SET_FLD_V13(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5, m6, v6)    				\
+		BM_SET_MASK_FLD(x, m1|m2|m3|m4|m5|m6, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4)| MV(m5,v5)| MV(m6,v6))
+#else
+	#define SET_FLD_V3(x, m, v)    															\
+		__pragma(warning(push))				\
+		__pragma(warning(disable:4244)) 	\
+		BM_SET_MASK_FLD(x,m,MV(m,v))		\
+		__pragma(warning(pop))
+
+	#define SET_FLD_V5(x, m1, v1, m2, v2)    												\
+		__pragma(warning(push))				\
+		__pragma(warning(disable:4244)) 	\
+		BM_SET_MASK_FLD(x, m1|m2, MV(m1,v1)| MV(m2,v2))		\
+		__pragma(warning(pop))
+
+	#define SET_FLD_V7(x, m1, v1, m2, v2, m3, v3)    										\
+		__pragma(warning(push))				\
+		__pragma(warning(disable:4244)) 	\
+		BM_SET_MASK_FLD(x, m1|m2|m3, MV(m1,v1)| MV(m2,v2)| MV(m3,v3))						\
+		__pragma(warning(pop))
+
+	#define SET_FLD_V9(x, m1, v1, m2, v2, m3, v3, m4, v4)    								\
+		__pragma(warning(push))				\
+		__pragma(warning(disable:4244)) 	\
+		BM_SET_MASK_FLD(x, m1|m2|m3|m4, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4))			\
+		__pragma(warning(pop))
+
+	#define SET_FLD_V11(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5)    						\
+		__pragma(warning(push))				\
+		__pragma(warning(disable:4244)) 	\
+		BM_SET_MASK_FLD(x, m1|m2|m3|m4|m5, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4)| MV(m5,v5))	\
+		__pragma(warning(pop))
+
+	#define SET_FLD_V13(x, m1, v1, m2, v2, m3, v3, m4, v4, m5, v5, m6, v6)    				\
+		__pragma(warning(push))				\
+		__pragma(warning(disable:4244)) 	\
+		BM_SET_MASK_FLD(x, m1|m2|m3|m4|m5|m6, MV(m1,v1)| MV(m2,v2)| MV(m3,v3)| MV(m4,v4)| MV(m5,v5)| MV(m6,v6))	\
+		__pragma(warning(pop))
+#endif
+
+#if 0
+	//! Massage \a x for use in bitfield \a name.
+	#define BFN_PREP(x, name)    ( ((x)<<name##_SHIFT) & name##_MASK )
+
+	//! Get the value of bitfield \a name from \a y. Equivalent to (var=) y.name
+	#define BFN_GET(y, name)     ( ((y) & name##_MASK)>>name##_SHIFT )
+
+	//! Set bitfield \a name from \a y to \a x: y.name= x.
+	#define BFN_SET(y, x, name)  (y = ((y)&~name##_MASK) | BFN_PREP(x,name) )
+
+	// Usage: prio get/set like before:
+	prio= BFN_GET(attr2, ATTR2_PRIO);
+	BFN_SET(attr2, x, ATTR2_PRIO);
+#endif

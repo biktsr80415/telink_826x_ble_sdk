@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     i2c.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 
 #pragma once
 #ifndef I2C_H
@@ -7,12 +28,14 @@
 
 // SDA   SCL
 //  C0    C1
+//  C2    C3
 //  A3    A4
 //  B6    D7
 typedef enum {
 	I2C_GPIO_GROUP_A3A4,
 	I2C_GPIO_GROUP_B6D7,
 	I2C_GPIO_GROUP_C0C1,
+	I2C_GPIO_GROUP_C2C3,
 }I2C_GPIO_GroupTypeDef;
 
 

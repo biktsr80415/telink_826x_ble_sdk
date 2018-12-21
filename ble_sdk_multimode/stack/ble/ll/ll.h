@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     ll.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 #ifndef LL__H_
 #define LL__H_
 
@@ -87,29 +108,32 @@
 
 
 #if (BLUETOOTH_VER == BLUETOOTH_VER_4_0)
-	#define LL_FEATURE_MASK_DEFAULT		LL_FEATURE_MASK_LL_ENCRYPTION
-	#define LL_CMD_MAX					LL_REJECT_IND
+	#define LL_FEATURE_MASK_DEFAULT			   LL_FEATURE_MASK_LL_ENCRYPTION
+	#define LL_CMD_MAX						   LL_REJECT_IND
 
 #elif (BLUETOOTH_VER == BLUETOOTH_VER_4_1)
-	#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
-									   	   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
-									   	   LL_FEATURE_MASK_LE_PING					)
-	#define LL_CMD_MAX					LL_PING_RSP
+	#define LL_FEATURE_MASK_DEFAULT			(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
+											   LL_FEATURE_MASK_EXTENDED_REJECT_INDICATION         |   \
+									   	   	   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
+									   	   	   LL_FEATURE_MASK_LE_PING					)
+	#define LL_CMD_MAX						   LL_PING_RSP
 
 #elif (BLUETOOTH_VER == BLUETOOTH_VER_4_2)
 
 	#if (BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE)
 		#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
+											   LL_FEATURE_MASK_EXTENDED_REJECT_INDICATION         |   \
 											   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
 											   LL_FEATURE_MASK_LE_PING							  |   \
 											   LL_FEATURE_MASK_LE_DATA_PACKET_EXTENSION	)
 	#else
 		#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
+											   LL_FEATURE_MASK_EXTENDED_REJECT_INDICATION         |   \
 											   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
 											   LL_FEATURE_MASK_LE_PING					)
 	#endif
 
-	#define LL_CMD_MAX					LL_LENGTH_RSP
+	#define LL_CMD_MAX						   LL_LENGTH_RSP
 
 #else
 
@@ -210,9 +234,13 @@ typedef struct {
 	u8		ll_recentAvgRSSI;
 	u8		ll_localFeature;
 	u8		tx_irq_proc_en;
-
-
 	u8		conn_rx_num;  //slave: rx number in a new interval
+
+#if (LE_AUTHENTICATED_PAYLOAD_TIMEOUT_SUPPORT_EN)
+	u32		tick_LE_Authenticated_Payload;    //timer start tick
+	u32		to_us_LE_Authenticated_Payload;    //timer threshold
+	u8		enable_LE_Authenticated_Payload;
+#endif
 } st_ll_conn_t;
 
 extern st_ll_conn_t  bltParam;
@@ -262,6 +290,7 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_READ_P256_KEY			16
 #define			BLT_EV_FLAG_GENERATE_DHKEY			17
 #define			BLT_EV_FLAG_SMP_PINCODE_PROCESS	    18
+#define			BLT_EV_FLAG_LL_REJECT_IND		    19
 
 
 

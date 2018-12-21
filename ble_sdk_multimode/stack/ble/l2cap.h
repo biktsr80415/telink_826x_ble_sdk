@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     l2cap.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 #pragma  once
 
 //#include "../hci/hci_include.h"
@@ -27,20 +48,11 @@
 #define L2CAP_CMD_FLOW_CTRL_CRED         0x16
 
 
-#define L2CAP_SIGNAL_MSG_TYPE            0x01
-#define L2CAP_DATA_MSG_TYPE              0x02
-
-/** 
- * Command Reject: Reason Codes
- */
-  // Command not understood
-#define L2CAP_REJECT_CMD_NOT_UNDERSTOOD  0x0000
-
-  // Signaling MTU exceeded
-#define L2CAP_REJECT_SIGNAL_MTU_EXCEED   0x0001
-
-  // Invalid CID in request
-#define L2CAP_REJECT_INVALID_CID         0x0002
+#define L2CAP_SIGNAL_MSG_TYPE            1
+#define L2CAP_DATA_MSG_TYPE              2
+#define L2CAP_REJECT_CMD_NOT_UNDERSTOOD  0
+#define L2CAP_REJECT_SIGNAL_MTU_EXCEED   1
+#define L2CAP_REJECT_INVALID_CID         2
 
 // Response Timeout expired
 #define L2CAP_RTX_TIMEOUT_MS             2000

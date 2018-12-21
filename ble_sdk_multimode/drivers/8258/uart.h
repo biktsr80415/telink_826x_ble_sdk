@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     uart.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 
 #include "register.h"
 #include "gpio.h"
@@ -62,10 +83,13 @@ typedef enum {
 } UART_RTSModeTypeDef;
 
 
-// tX:A2 B1
+// tX:A2 B1 D0 D3 D7
 typedef enum{
 	UART_TX_PA2 = GPIO_PA2,
 	UART_TX_PB1 = GPIO_PB1,
+	UART_TX_PD0 = GPIO_PD0,
+	UART_TX_PD3 = GPIO_PD3,
+	UART_TX_PD7 = GPIO_PD7,
 }UART_TxPinDef;
 
 // rx: A0 B0 B7 C3 C5 D6

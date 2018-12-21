@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     blt_config.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 #pragma once
 
 //////////////////////////////////////////////////////////////////////////////
@@ -66,7 +87,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 		 //customize freq_offset adjust cap value, if not customized, default ana_81 is 0xd0
 		 u8 cap_frqoft = *(unsigned char*) CUST_CAP_INFO_ADDR;
 		 if( cap_frqoft != 0xff ){
-//			 analog_write(0x8A, ( analog_read(0x8A) & (~FLD_XO_CDAC_ANA) ) | (cap_frqoft & FLD_XO_CDAC_ANA) );
 			 analog_write(0x8A, cap_frqoft );
 		 }
 	 }
@@ -164,7 +184,9 @@ static inline void blc_app_loadCustomizedParameters(void)
 #define BLS_PROC_LONG_SUSPEND_ENABLE					0
 #endif
 
-
+#ifndef LE_AUTHENTICATED_PAYLOAD_TIMEOUT_SUPPORT_EN
+#define LE_AUTHENTICATED_PAYLOAD_TIMEOUT_SUPPORT_EN		0
+#endif
 
 
 ///////////////////////////////////////dbg channels///////////////////////////////////////////

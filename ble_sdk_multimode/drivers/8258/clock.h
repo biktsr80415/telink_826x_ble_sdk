@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     clock.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 
 #pragma once
 
@@ -37,33 +58,36 @@ enum{
 
 
 typedef enum{
-	SYS_CLK_12M_Crystal = 0x44,
+	SYS_CLK_32M_RC 		= 0x01,
+	SYS_CLK_48M_RC 		= 0x02,
 	SYS_CLK_16M_Crystal = 0x43,
 	SYS_CLK_24M_Crystal = 0x42,
-	SYS_CLK_32M_Crystal = 0x60,
-	SYS_CLK_48M_Crystal = 0x20,
-	SYS_CLK_24M_RC      = 0x00,
+
+	SYS_CLK_RC_THRES	= 0x10,  //not clock setting ,just for code write
 }SYS_CLK_TYPEDEF;
 
-//void clock_init(SYS_CLK_TYPEDEF SYS_CLK);
 
-static inline void clock_init(SYS_CLK_TYPEDEF SYS_CLK)
+
+
+void doubler_calibration(void);
+
+void clock_rc_set(SYS_CLK_TYPEDEF SYS_CLK);
+void rc_24m_cal (void);
+void rc_32k_cal (void);
+void rc_48m_cal (void);
+
+extern int clock_rc_enable;
+static inline int clock_isRcCLock(void)
 {
-	reg_clk_sel = (unsigned char)SYS_CLK;
-
-#if (MODULE_WATCHDOG_ENABLE)
-	reg_tmr_ctrl = MASK_VAL(
-		FLD_TMR_WD_CAPT, (MODULE_WATCHDOG_ENABLE ? (WATCHDOG_INIT_TIMEOUT * CLOCK_SYS_CLOCK_1MS >> WATCHDOG_TIMEOUT_COEFF):0)
-		, FLD_TMR_WD_EN, (MODULE_WATCHDOG_ENABLE?1:0));
-#endif
+	return clock_rc_enable;
 }
 
 
-_attribute_ram_code_ void sleep_us (unsigned long microsec);		//  use register counter to delay
+/********************************* User Interface  *******************************************/
 
+void clock_init(SYS_CLK_TYPEDEF SYS_CLK);
 
-#define WaitUs				sleep_us
-#define WaitMs(t)			sleep_us((t)*1000)
+void sleep_us (unsigned long microsec);		//  use register counter to delay
 
 
 static inline unsigned int clock_time(void)
@@ -72,12 +96,17 @@ static inline unsigned int clock_time(void)
 }
 
 
-#define ClockTime				 clock_time
-
 
 static inline unsigned int clock_time_exceed(unsigned int ref, unsigned int span_us){
 	return ((unsigned int)(clock_time() - ref) > span_us * 16);
 }
 
 
+
 void start_reboot(void);
+
+#define ClockTime				 clock_time
+#define WaitUs				sleep_us
+#define WaitMs(t)			sleep_us((t)*1000)
+
+/*********************************************************************************************/

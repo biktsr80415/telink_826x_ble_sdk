@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     usbdesc.c 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     Sep. 30, 2010
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 
 #include <application/usbstd/usbdesc.h>
 #include "tl_common.h"
@@ -30,14 +51,14 @@
  *  via the language ID table available at USB.org what languages the device supports for its string descriptors.
  */
 const USB_Descriptor_String_t language_desc = { {
-		sizeof(USB_Descriptor_Header_t) + 2, DTYPE_String },
+		sizeof(USB_Descriptor_Hdr_t) + 2, DTYPE_String },
 		{ LANGUAGE_ID_ENG } };
 
 /** Manufacturer descriptor string. This is a Unicode string containing the manufacturer's details in human readable
  *  form, and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
  *  Descriptor.
  */
-const USB_Descriptor_String_t vendor_desc = { { sizeof(USB_Descriptor_Header_t)
+const USB_Descriptor_String_t vendor_desc = { { sizeof(USB_Descriptor_Hdr_t)
 		+ sizeof(STRING_VENDOR) - 2, DTYPE_String }, // Header
 		STRING_VENDOR };
 
@@ -46,21 +67,21 @@ const USB_Descriptor_String_t vendor_desc = { { sizeof(USB_Descriptor_Header_t)
  *  Descriptor.
  */
 const USB_Descriptor_String_t product_desc = { {
-		sizeof(USB_Descriptor_Header_t) + sizeof(STRING_PRODUCT) - 2,
+		sizeof(USB_Descriptor_Hdr_t) + sizeof(STRING_PRODUCT) - 2,
 		DTYPE_String }, // Header
 		STRING_PRODUCT };
 
 /** Serial number string. This is a Unicode string containing the device's unique serial number, expressed as a
  *  series of uppercase hexadecimal digits.
  */
-const USB_Descriptor_String_t serial_desc = { { sizeof(USB_Descriptor_Header_t)
+const USB_Descriptor_String_t serial_desc = { { sizeof(USB_Descriptor_Hdr_t)
 		+ sizeof(STRING_SERIAL) - 2, DTYPE_String }, // Header
 		STRING_SERIAL };
 
 
 #if (MS_OS_DESCRIPTOR_ENABLE)
 const USB_Descriptor_String_t microsoft_OS_desc = { {
-		sizeof(USB_Descriptor_Header_t) + sizeof(STRING_MSFT) - 2,
+		sizeof(USB_Descriptor_Hdr_t) + sizeof(STRING_MSFT) - 2,
 		DTYPE_String }, // Header
 		STRING_MSFT };
 
@@ -236,7 +257,7 @@ const USB_Descriptor_Device_t device_desc = { {
 
 const USB_Descriptor_Configuration_t
 		configuration_desc = { { {
-				sizeof(USB_Descriptor_Configuration_Header_t),
+				sizeof(USB_Descriptor_Configuration_Hdr_t),
 				DTYPE_Configuration }, // Length, type
 				sizeof(USB_Descriptor_Configuration_t), // TotalLength: variable
 				USB_INTF_MAX, // NumInterfaces

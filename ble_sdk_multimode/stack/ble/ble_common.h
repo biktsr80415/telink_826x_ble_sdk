@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     ble_common.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 #ifndef BLE_COMMON_H
 #define BLE_COMMON_H
 
@@ -290,25 +311,17 @@ typedef enum {
 } ble_sts_t;
 
 
-
-
-
-#define BLE_ADDR_LEN                     6
-
 //Definition for BLE Common Address Type
  /* Device Address Type */
 #define BLE_ADDR_PUBLIC                  0
 #define BLE_ADDR_RANDOM                  1
 #define BLE_ADDR_INVALID                 0xff
 
-//static
-#define IS_STATIC_ADDR(type, addr)  					( (type)==BLE_ADDR_RANDOM && (addr[5] & 0xC0) == 0xC0 )
+#define BLE_ADDR_LEN                     6
 
-//non-resolvable private
-#define IS_NON_RESOLVABLE_PRIVATE_ADDR(type, addr)  	( (type)==BLE_ADDR_RANDOM && (addr[5] & 0xC0) == 0x00 )
-
-//resolvable private
-#define IS_RESOLVABLE_PRIVATE_ADDR(type, addr)  		( (type)==BLE_ADDR_RANDOM && (addr[5] & 0xC0) == 0x40 )
+#define IS_STATIC_ADDR(Type, Addr)  					( (Type)==BLE_ADDR_RANDOM && (Addr[5] & 0xC0) == 0xC0 )
+#define IS_NON_RESOLVABLE_PRIVATE_ADDR(Type, Addr)  	( (Type)==BLE_ADDR_RANDOM && (Addr[5] & 0xC0) == 0x00 )
+#define IS_RESOLVABLE_PRIVATE_ADDR(Type, Addr)  		( (Type)==BLE_ADDR_RANDOM && (Addr[5] & 0xC0) == 0x40 )
 
 
 
@@ -344,7 +357,7 @@ typedef enum{
 #define			BLE_GATT_OP_ENC_FAIL			14
 #define			BLE_GATT_OP_ENC_READY			15
 
-///////////////////////////// SMP ///////////////////////////////////
+///////////////////////////// SMP concerned ///////////////////////////////////
 #define			SMP_OP_PAIRING_REQ					1
 #define			SMP_OP_PAIRING_RSP					2
 #define			SMP_OP_PAIRING_CONFIRM				3

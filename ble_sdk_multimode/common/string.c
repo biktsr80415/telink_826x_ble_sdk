@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     string.c 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     Sep. 30, 2010
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 #include "types.h"
 #include "string.h"
 #include "../common/assert.h"
@@ -19,23 +40,21 @@ char * strchr(const char *s, int c) {
 	return (0);
 }
 
-int memcmp(const void * m1, const void *m2, unsigned int n) {
+int memcmp(const void * m1, const void *m2, u32 len) {
+	u8 *st1 = (u8 *) m1;
+	u8 *st2 = (u8 *) m2;
 
-	unsigned char *s1 = (unsigned char *) m1;
-	unsigned char *s2 = (unsigned char *) m2;
-
-	while (n--) {
-		if (*s1 != *s2) {
-			return *s1 - *s2;
+	while(len--){
+		if(*st1 != *st2){
+			return (*st1 - *st2);
 		}
-		s1++;
-		s2++;
+		st1++;
+		st2++;
 	}
 	return 0;
 }
 
-void *
-memchr(register const void * src_void, int c, unsigned int length) {
+void * memchr(register const void * src_void, int c, unsigned int length) {
 	const unsigned char *src = (const unsigned char *) src_void;
 
 	while (length-- > 0) {
@@ -203,14 +222,14 @@ __attribute__((noinline)) volatile void * smemcpy(register char * out, register 
 }
 
 _attribute_session_(".ram_code")
-__attribute__((noinline)) volatile int smemcmp(register char * s1, register char *s2, unsigned int n)
+__attribute__((noinline)) volatile int smemcmp(register char * st1, register char *st2, unsigned int len)
 {
-	while (n--) {
-		if (*s1 != *s2) {
-			return *s1 - *s2;
+	while(len--){
+		if(*st1 != *st2){
+			return (*st1 - *st2);
 		}
-		s1++;
-		s2++;
+		st1++;
+		st2++;
 	}
 	return 0;
 }

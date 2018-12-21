@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     flash.c 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 
 
 #include "flash.h"
@@ -280,14 +301,4 @@ _attribute_ram_code_ unsigned int flash_get_jedec_id(){
 #endif
 
 
-_attribute_ram_code_ unsigned int flash_get_jedec_id(void)
-{
-	unsigned char r = irq_disable();
-	flash_send_cmd(FLASH_GET_JEDEC_ID);
-	unsigned char manufacturer = mspi_read();
-	unsigned char mem_type = mspi_read();
-	unsigned char cap_id = mspi_read();
-	mspi_high();
-	irq_restore(r);
-	return (unsigned int)((manufacturer << 24 | mem_type << 16 | cap_id));
-}
+

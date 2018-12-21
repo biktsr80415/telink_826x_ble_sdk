@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     register_8258.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 #pragma once
 
 
@@ -1266,8 +1287,8 @@ enum{
 };
 
 enum{  //core_b11<0> <1>  audio dmic_n  rising/falling edge
-	AUDIO_DMIC_DATA_IN_RISING_EDGE 		= 0,
-	AUDIO_DMIC_DATA_IN_FALLING_EDGE 	= 1,
+	AUDIO_DMIC_DATA_IN_RISING_EDGE 		= 1,
+	AUDIO_DMIC_DATA_IN_FALLING_EDGE 	= 0,
 };
 
 enum{  //core_b11<3:2>  audio input select

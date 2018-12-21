@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     usbmouse_i.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     Sep. 30, 2010
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 
 #pragma once
 
@@ -27,36 +48,36 @@ static const USB_Descriptor_HIDReport_Datatype_t mouse_report_desc[] = {
 	//这是一个全局（bType为1）条目，选择用途页为普通桌面Generic Desktop Page(0x01)
 	//后面跟一字节数据（bSize为1），后面的字节数就不注释了，
 	//自己根据bSize来判断。
-	HID_RI_USAGE_PAGE(8, 0x01), /* Generic Desktop */
+	HID_RPT_USAGE_PAGE(8, 0x01), /* Generic Desktop */
 
 	//这是一个局部（bType为2）条目，说明接下来的应用集合用途用于鼠标
-    HID_RI_USAGE(8, 0x02)		, /* Mouse */
+    HID_RPT_USAGE(8, 0x02)		, /* Mouse */
 
 	//这是一个主条目（bType为0）条目，开集合，后面跟的数据0x01表示
 	//该集合是一个应用集合。它的性质在前面由用途页和用途定义为
 	//普通桌面用的鼠标。
-    HID_RI_COLLECTION(8, 0x01)		, /* Application */
+    HID_RPT_COLLECTION(8, 0x01)		, /* Application */
 
-    HID_RI_REPORT_ID(8, USB_HID_MOUSE)		, /*Report ID*/
+    HID_RPT_REPORT_ID(8, USB_HID_MOUSE)		, /*Report ID*/
 
-    HID_RI_USAGE_PAGE(8, 0x09)		, /* Button */
+    HID_RPT_USAGE_PAGE(8, 0x09)		, /* Button */
 
 	//这是一个局部条目，说明用途的最小值为1。实际上是鼠标左键。
 	// 1 is mouse left button,2 is mouse right button,3 is central buuton
-    HID_RI_USAGE_MINIMUM(8, 0x01)		,
+    HID_RPT_USAGE_MINIMUM(8, 0x01)		,
 	//这是一个局部条目，说明用途的最大值
-    HID_RI_USAGE_MAXIMUM(8, 0x05),
+    HID_RPT_USAGE_MAXIMUM(8, 0x05),
 
 	//这是一个全局条目，说明返回的数据的逻辑值（就是我们返回的数据域的值啦）
 	//最小为0。因为我们这里用Bit来表示一个数据域，因此最小为0，最大为1。
-    HID_RI_LOGICAL_MINIMUM(8, 0x00)		,
+    HID_RPT_LOGICAL_MINIMUM(8, 0x00)		,
 	//这是一个全局条目，说明逻辑值最大为1。
-    HID_RI_LOGICAL_MAXIMUM(8, 0x01),
+    HID_RPT_LOGICAL_MAXIMUM(8, 0x01),
 
 	//这是一个全局条目，说明每个数据域的长度为1个bit。
-	HID_RI_REPORT_SIZE(8, 0x01),
+	HID_RPT_REPORT_SIZE(8, 0x01),
 	//这是一个全局条目，说明total button 数量为5个。
-    HID_RI_REPORT_COUNT(8, 0x05), /* debug note: 3->5*/
+    HID_RPT_REPORT_COUNT(8, 0x05), /* debug note: 3->5*/
 
 	//这是一个主条目，说明有3个长度为1bit的数据域（数量和长度
 	//由前面的两个全局条目所定义）用来做为输入，
@@ -65,89 +86,89 @@ static const USB_Descriptor_HIDReport_Datatype_t mouse_report_desc[] = {
 	//这样定义的结果就是，第一个数据域bit0表示按键1（左键）是否按下，
 	//第二个数据域bit1表示按键2（右键）是否按下，第三个数据域bit2表示
 	//按键3（中键）是否按下。
-    HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+    HID_RPT_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 	//这是一个全局条目，说明每个数据域的长度为
-	HID_RI_REPORT_SIZE(8, 0x03), /* debug note: 5->3*/
+	HID_RPT_REPORT_SIZE(8, 0x03), /* debug note: 5->3*/
 	//这是一个全局条目，说明数据域数量为1个
-    HID_RI_REPORT_COUNT(8, 0x01),
+    HID_RPT_REPORT_COUNT(8, 0x01),
 
 	//这是一个主条目，输入用，由前面两个全局条目可知，长度为3bit，
 	//数量为1个。它的属性为常量（即返回的数据一直是0）。
 	//这个只是为了凑齐一个字节（前面用了3个bit）而填充的一些数据
 	//而已，所以它是没有实际用途的。
-    HID_RI_INPUT(8, HID_IOF_CONSTANT),
+    HID_RPT_INPUT(8, HID_IOF_CONSTANT),
 
 	//这是一个局部条目。说明用途为指针集合
-    HID_RI_USAGE(8, 0x01), /* Pointer */
+    HID_RPT_USAGE(8, 0x01), /* Pointer */
 
 	//这是一个主条目，开集合，后面跟的数据0x00表示该集合是一个
 	//物理集合，用途由前面的局部条目定义为指针集合。
-    HID_RI_COLLECTION(8, 0x00), /* Physical */
+    HID_RPT_COLLECTION(8, 0x00), /* Physical */
 
 	//这是一个全局条目，选择用途页为普通桌面Generic Desktop Page(0x01)
-    HID_RI_USAGE_PAGE(8, 0x01),  /* Generic Desktop */
+    HID_RPT_USAGE_PAGE(8, 0x01),  /* Generic Desktop */
 
 	//这是一个局部条目，说明用途为X轴
-    HID_RI_USAGE(8, 0x30), /* Usage X */
+    HID_RPT_USAGE(8, 0x30), /* Usage X */
 
 	//这是一个局部条目，说明用途为Y轴
-    HID_RI_USAGE(8, 0x31), /* Usage Y */
+    HID_RPT_USAGE(8, 0x31), /* Usage Y */
 
 	//下面两个为全局条目，说明返回的逻辑最小和最大值。
 	//因为鼠标指针移动时，通常是用相对值来表示的，
 	//相对值的意思就是，当指针移动时，只发送移动量。
 	//往右移动时，X值为正；往下移动时，Y值为正。
 	//对于滚轮，当滚轮往上滚时，值为正。
-    HID_RI_LOGICAL_MINIMUM(8, 0x81), //     LOGICAL_MINIMUM (-127)
-    HID_RI_LOGICAL_MAXIMUM(8, 0x7f), //     LOGICAL_MAXIMUM (127)
+    HID_RPT_LOGICAL_MINIMUM(8, 0x81), //     LOGICAL_MINIMUM (-127)
+    HID_RPT_LOGICAL_MAXIMUM(8, 0x7f), //     LOGICAL_MAXIMUM (127)
 	//这是一个全局条目，说明数据域的长度。如果使用 16，就可以表示绝对坐标
-    HID_RI_REPORT_SIZE(8, 0x08),
-    HID_RI_REPORT_COUNT(8, 0x02),
+    HID_RPT_REPORT_SIZE(8, 0x08),
+    HID_RPT_REPORT_COUNT(8, 0x02),
 	//这是一个主条目。它说明这三个8bit的数据域是输入用的，
 	//属性为：Data,Var,Rel。Data说明数据是可以变的，Var说明
 	//这些数据域是独立的，即第一个8bit表示X轴，第二个8bit表示
 	//Y轴，第三个8bit表示滚轮。Rel表示这些值是相对值。
-    HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
+    HID_RPT_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
 
-    HID_RI_USAGE(8, 0x38),  /* Usage Wheel */
-    HID_RI_LOGICAL_MINIMUM(8, 0x81),	 //LOGICAL_MINIMUM (-127)
-    HID_RI_LOGICAL_MAXIMUM(8, 0x7f),	 //LOGICAL_MAXIMUM (127)
-    HID_RI_REPORT_SIZE(8, 0x08),		 //REPORT_SIZE (8)
-    HID_RI_REPORT_COUNT(8, 0x01),		//REPORT_COUNT (1)
-    HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
+    HID_RPT_USAGE(8, 0x38),  /* Usage Wheel */
+    HID_RPT_LOGICAL_MINIMUM(8, 0x81),	 //LOGICAL_MINIMUM (-127)
+    HID_RPT_LOGICAL_MAXIMUM(8, 0x7f),	 //LOGICAL_MAXIMUM (127)
+    HID_RPT_REPORT_SIZE(8, 0x08),		 //REPORT_SIZE (8)
+    HID_RPT_REPORT_COUNT(8, 0x01),		//REPORT_COUNT (1)
+    HID_RPT_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
 
-    HID_RI_END_COLLECTION(0),
-    HID_RI_END_COLLECTION(0),  
+    HID_RPT_END_COLLECTION(0),
+    HID_RPT_END_COLLECTION(0),
         
-    HID_RI_USAGE_PAGE(8, 0x0c),             //global, usage page (follow 1 bytes) consumer page
-    HID_RI_USAGE(8, 0x01),                  //local,  usage ID 01  Consumer Control
-    HID_RI_COLLECTION(8, 0x01),             //main, collection
-    HID_RI_REPORT_ID(8, USB_HID_KB_MEDIA),  //Report ID
-    HID_RI_REPORT_SIZE(8, 0x10),            //global, report size 16 bits
-    HID_RI_REPORT_COUNT(8, 0x02),           //global, report count 2
-    HID_RI_LOGICAL_MINIMUM(8, 0x01),        //global, min  0x01
-    HID_RI_LOGICAL_MAXIMUM(16, 0x02ff),     //global, max  0x028c
-    HID_RI_USAGE_MINIMUM(8, 0x01),          //local, min   0x01
-    HID_RI_USAGE_MAXIMUM(16, 0x02ff),       //local, max    0x28c
-    HID_RI_INPUT(8, HID_IOF_ABSOLUTE),      //main,  input data varible, absolute
-    HID_RI_END_COLLECTION(0),               //main, end collection
+    HID_RPT_USAGE_PAGE(8, 0x0c),             //global, usage page (follow 1 bytes) consumer page
+    HID_RPT_USAGE(8, 0x01),                  //local,  usage ID 01  Consumer Control
+    HID_RPT_COLLECTION(8, 0x01),             //main, collection
+    HID_RPT_REPORT_ID(8, USB_HID_KB_MEDIA),  //Report ID
+    HID_RPT_REPORT_SIZE(8, 0x10),            //global, report size 16 bits
+    HID_RPT_REPORT_COUNT(8, 0x02),           //global, report count 2
+    HID_RPT_LOGICAL_MINIMUM(8, 0x01),        //global, min  0x01
+    HID_RPT_LOGICAL_MAXIMUM(16, 0x02ff),     //global, max  0x028c
+    HID_RPT_USAGE_MINIMUM(8, 0x01),          //local, min   0x01
+    HID_RPT_USAGE_MAXIMUM(16, 0x02ff),       //local, max    0x28c
+    HID_RPT_INPUT(8, HID_IOF_ABSOLUTE),      //main,  input data varible, absolute
+    HID_RPT_END_COLLECTION(0),               //main, end collection
 
-	HID_RI_USAGE_PAGE(8, 0x01),             //gobal,  USAGE_PAGE 1 (Generic Desktop)
-	HID_RI_USAGE(8, 0x80),                  //local, usage ID 0x80 system control
-	HID_RI_COLLECTION(8, 0x01),             //main conllection
-    HID_RI_REPORT_ID(8, USB_HID_KB_SYS),    //Report ID
-	HID_RI_REPORT_SIZE(8, 0x01),            //global, report size 2
-	HID_RI_REPORT_COUNT(8, 0x03),           //report count  1
-	HID_RI_LOGICAL_MINIMUM(8, 0x00),        //global min 01
-    HID_RI_LOGICAL_MAXIMUM(8, 0x01),        //gobal, max 3
-	HID_RI_USAGE(8, 0x81),					//local usage ID 0x81 system power down
-    HID_RI_USAGE(8, 0x82),                  //local usage ID 0x82 system sleep
-    HID_RI_USAGE(8, 0x83),                  //local usage ID 0x83 system wakeup
-    HID_RI_INPUT(8, HID_IOF_ABSOLUTE|HID_IOF_NO_PREFERRED_STATE|HID_IOF_NULLSTATE),
-    HID_RI_REPORT_SIZE(8, 0x05),            //global report size 6
-	HID_RI_REPORT_COUNT(8, 0x01),			//report count	1
-    HID_RI_INPUT(8, HID_IOF_CONSTANT|HID_IOF_VARIABLE),
-    HID_RI_END_COLLECTION(0),               //end of collection
+	HID_RPT_USAGE_PAGE(8, 0x01),             //gobal,  USAGE_PAGE 1 (Generic Desktop)
+	HID_RPT_USAGE(8, 0x80),                  //local, usage ID 0x80 system control
+	HID_RPT_COLLECTION(8, 0x01),             //main conllection
+    HID_RPT_REPORT_ID(8, USB_HID_KB_SYS),    //Report ID
+	HID_RPT_REPORT_SIZE(8, 0x01),            //global, report size 2
+	HID_RPT_REPORT_COUNT(8, 0x03),           //report count  1
+	HID_RPT_LOGICAL_MINIMUM(8, 0x00),        //global min 01
+    HID_RPT_LOGICAL_MAXIMUM(8, 0x01),        //gobal, max 3
+	HID_RPT_USAGE(8, 0x81),					//local usage ID 0x81 system power down
+    HID_RPT_USAGE(8, 0x82),                  //local usage ID 0x82 system sleep
+    HID_RPT_USAGE(8, 0x83),                  //local usage ID 0x83 system wakeup
+    HID_RPT_INPUT(8, HID_IOF_ABSOLUTE|HID_IOF_NO_PREFERRED_STATE|HID_IOF_NULLSTATE),
+    HID_RPT_REPORT_SIZE(8, 0x05),            //global report size 6
+	HID_RPT_REPORT_COUNT(8, 0x01),			//report count	1
+    HID_RPT_INPUT(8, HID_IOF_CONSTANT|HID_IOF_VARIABLE),
+    HID_RPT_END_COLLECTION(0),               //end of collection
 
 #else
 
@@ -299,7 +320,7 @@ static const USB_Descriptor_HIDReport_Datatype_t mouse_report_desc[] = {
 #endif
 #endif
     //need Jensen's help: report ID 5
-    HID_RI_USAGE_PAGE(8, 0x01),     //global,  USAGE_PAGE 1 (Generic Desktop)
+    HID_RPT_USAGE_PAGE(8, 0x01),     //global,  USAGE_PAGE 1 (Generic Desktop)
 	0x09,0x00,     //usage undefined
 	0xa1,0x01,     //main collection
 	0x85,0x05,     //global report ID 0x5
@@ -310,7 +331,7 @@ static const USB_Descriptor_HIDReport_Datatype_t mouse_report_desc[] = {
 	0x75,0x08,     //global, report size 8
 	0x95,0x07,     //report count  7
 	0xb1,0x02,     //feature (data, var, abs)
-	HID_RI_END_COLLECTION(0),         //main, end collection
+	HID_RPT_END_COLLECTION(0),         //main, end collection
 };
 
 static inline u8* usbmouse_get_report_desc(void) {
