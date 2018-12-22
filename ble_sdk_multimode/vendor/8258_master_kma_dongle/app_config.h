@@ -55,7 +55,7 @@ extern "C" {
 
 
 /////////////////// MODULE /////////////////////////////////
-#define BLE_HOST_SMP_ENABLE							1  //1 for standard security management,  0 for telink referenced paring&bonding(no security)
+#define BLE_HOST_SMP_ENABLE							0  //1 for standard security management,  0 for telink referenced paring&bonding(no security)
 #define BLE_HOST_SIMPLE_SDP_ENABLE					1  //simple service discovery
 
 

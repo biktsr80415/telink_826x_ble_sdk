@@ -23,6 +23,8 @@
 #include "drivers.h"
 #include "stack/ble/ble.h"
 
+#include "vendor/common/blt_common.h"
+
 //module spp Tx / Rx fifo
 #define HCI_RXFIFO_SIZE		80
 #define HCI_RXFIFO_NUM		4
@@ -205,16 +207,8 @@ void user_init_normal(void)
 	random_generator_init();  //this is must
 
 ////////////////// BLE stack initialization ////////////////////////////////////
-	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
-	u32 *pmac = (u32 *) CFG_ADR_MAC;
-	if (*pmac != 0xffffffff)
-	{
-		memcpy (tbl_mac, pmac, 6);
-	}
-	else{
-		tbl_mac[0] = (u8)rand();
-		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
-	}
+	u8  tbl_mac [6];  //BLE public address
+	blc_initMacAddress(CFG_ADR_MAC, tbl_mac, NULL);
 
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU();                      //mandatory

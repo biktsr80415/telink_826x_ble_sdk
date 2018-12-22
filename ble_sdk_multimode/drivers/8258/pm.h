@@ -26,10 +26,6 @@
 #include "gpio.h"
 
 
-#ifndef PM_TIM_RECOVER_MODE
-#define PM_TIM_RECOVER_MODE					1
-#endif
-
 
 
 static inline void usb_dp_pullup_en (int en)
@@ -83,7 +79,7 @@ typedef enum {
 	DEEPSLEEP_MODE_RET_SRAM_LOW32K  	= 0x07,
 
 
-	DEEPSLEEP_RETENTION_FLAG			= 0x7F,
+	DEEPSLEEP_RETENTION_FLAG			= 0x7F,   //not sleep mode, only for code references
 }SleepMode_TypeDef;
 
 
@@ -93,8 +89,8 @@ typedef enum {
 	 PM_WAKEUP_PAD   = BIT(4),    		SUSPENDWAKEUP_SRC_PAD = BIT(4),    DEEPWAKEUP_SRC_PAD   = BIT(4),
 	 PM_WAKEUP_TIMER = BIT(6),	  		SUSPENDWAKEUP_SRC_TIMER = BIT(6),  DEEPWAKEUP_SRC_TIMER = BIT(6),
 
-	 PM_TIM_RECOVER_START =	BIT(14),
-	 PM_TIM_RECOVER_END   =	BIT(15),
+	 PM_TIM_RECOVER_START =	BIT(14),  //not sleep wakeUP source, only for code references
+	 PM_TIM_RECOVER_END   =	BIT(15),  //not sleep wakeUP source, only for code references
 }SleepWakeupSrc_TypeDef;
 
 
@@ -102,9 +98,7 @@ typedef enum {
 
 //wakeup status from return value of "cpu_sleep_wakeup"
 enum {
-	 WAKEUP_STATUS_COMP   = BIT(0),  //wakeup by comparator
 	 WAKEUP_STATUS_TIMER  = BIT(1),
-	 WAKEUP_STATUS_CORE   = BIT(2),
 	 WAKEUP_STATUS_PAD    = BIT(3),
 
 	 STATUS_GPIO_ERR_NO_ENTER_PM  = BIT(7),
@@ -126,19 +120,10 @@ typedef struct{
 extern pm_para_t	pmParam;
 
 
-#if (PM_TIM_RECOVER_MODE)
-	typedef struct{
-		unsigned int   tick_sysClk;
-		unsigned int   tick_32k;
-		unsigned char  recover_flag;
-	}pm_tim_recover_t;
 
-	extern pm_tim_recover_t	pm_timRecover;
-#endif
 
-void cpu_stall_wakeup_by_timer0(unsigned int tick_stall);
-void cpu_stall_wakeup_by_timer1(unsigned int tick_stall);
-void cpu_stall_wakeup_by_timer2(unsigned int tick_stall);
+
+
 
 typedef int (*suspend_handler_t)(void);
 void	bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
@@ -146,34 +131,67 @@ void	bls_pm_registerFuncBeforeSuspend (suspend_handler_t func );
 
 
 
+
+/**
+ * @brief   This function serves to initialize the related analog registers
+ *          to default values after MCU is waked up from deep sleep mode.
+ * @param   none
+ * @return  none
+ */
 void cpu_wakeup_init(void);
+
+/**
+ * @brief      This function configures a GPIO pin as the wakeup pin.
+ * @param[in]  Pin - the pin needs to be configured as wakeup pin
+ * @param[in]  Pol - the wakeup polarity of the pad pin(0: low-level wakeup, 1: high-level wakeup)
+ * @param[in]  En  - enable or disable the wakeup function for the pan pin(1: Enable, 0: Disable)
+ * @return     none
+ */
 void cpu_set_gpio_wakeup (GPIO_PinTypeDef pin, GPIO_LevelTypeDef pol, int en);
 
+/**
+ * @brief      This function servers to wake up the cpu from sleep mode.
+ * @param[in]  sleep_mode - sleep mode type select.
+ * @param[in]  wakeup_src - wake up source select.
+ * @param[in]  wakeup_tick - the time of wake up.
+ * @return     indicate whether the cpu is wake up successful.
+ */
 int cpu_sleep_wakeup (SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int wakeup_tick);
 
-
+/**
+ * @brief      This function servers to confirm which source to wake up pm.
+ * @param[in]  none.
+ * @return     indicate pm is wake up by deep-retention.
+ */
 static inline int pm_is_MCU_deepRetentionWakeup(void)
 {
 	return pmParam.is_deepRetn_back;
 }
 
-
-
+/**
+ * @brief      This function servers to confirm which source to wake up pm.
+ * @param[in]  none.
+ * @return     indicate pm is wake up by pad.
+ */
 static inline int pm_is_deepPadWakeup(void)
 {
 	return pmParam.is_pad_wakeup;
 }
 
-extern unsigned int flash_rdid;
-static inline unsigned int pm_get_flash_rdid(void)
-{
-	return flash_rdid;
-}
 
-//only for debug below, will remove them later
-void shutdown_gpio(void);  //for debug
+/**
+ * @brief      This function servers to pm test.
+ * @param[in]  none.
+ * @return     none.
+ */
+void shutdown_gpio(void);  //only for debug
 
 
-#define PM_Get32kTick			 cpu_get_32k_tick
-#define pm_start				 sleep_start
-
+/**
+ * @brief      This function servers to wake up the cpu from sleep mode.
+ * @param[in]  sleep_mode - sleep mode type select.
+ * @param[in]  wakeup_src - wake up source select.
+ * @param[in]  SleepDurationUs - the time of sleep.
+ * @return     indicate whether the cpu is wake up successful.
+ */
+int cpu_sleep_wakeup2 (SleepMode_TypeDef sleep_mode, SleepWakeupSrc_TypeDef wakeup_src, unsigned int  SleepDurationUs);

@@ -32,7 +32,7 @@
 #include "drivers.h"
 #include "app_config.h"
 #include "vendor/common/blt_soft_timer.h"
-
+#include "vendor/common/blt_common.h"
 
 #if (FEATURE_TEST_MODE == TEST_USER_BLT_SOFT_TIMER)
 
@@ -156,16 +156,10 @@ void feature_soft_timer_test_init_normal(void)
 	random_generator_init();  //this is must
 
 
-	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
-	u32 *pmac = (u32 *) CFG_ADR_MAC;
-	if (*pmac != 0xffffffff)
-	{
-		memcpy (tbl_mac, pmac, 6);
-	}
-	else{
-		tbl_mac[0] = (u8)rand();
-		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
-	}
+
+
+	u8  tbl_mac [6];  //BLE public address
+	blc_initMacAddress(CFG_ADR_MAC, tbl_mac, NULL);
 
 	rf_set_power_level_index (MY_RF_POWER_INDEX);
 

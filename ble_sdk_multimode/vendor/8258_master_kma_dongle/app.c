@@ -22,8 +22,7 @@
 #include "tl_common.h"
 #include "drivers.h"
 #include "stack/ble/ble.h"
-
-
+#include "vendor/common/blt_common.h"
 
 #include "blm_att.h"
 #include "blm_pair.h"
@@ -101,14 +100,8 @@ void user_init()
 
 
 ///////////// BLE stack Initialization ////////////////
-	u8  tbl_mac [6];
-	if (*(u32 *) CFG_ADR_MAC == 0xffffffff){
-		generateRandomNum(6, tbl_mac);
-		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);  //store master address
-	}
-	else{
-		memcpy (tbl_mac, (u8 *) CFG_ADR_MAC, 6);  //copy from flash
-	}
+	u8  tbl_mac [6];  //BLE public address
+	blc_initMacAddress(CFG_ADR_MAC, tbl_mac, NULL);
 
 
 
