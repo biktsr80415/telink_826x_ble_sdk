@@ -15,6 +15,8 @@ unsigned char  cmd_now=1;//1
 unsigned char  run=1;
 unsigned char  tx_cnt=0;
 
+unsigned int tx_num = 0;
+
 
 
 struct  test_list_s {
@@ -127,6 +129,8 @@ void app_rf_emi_test_start(void)
 		   cmd_now = read_reg8(0x840007);  // get the command!
 		   RF_PowerTypeDef pow = rf_power_Level_list[power_level];
 
+		   tx_cnt = read_reg8(0x840005);
+
 			for (i=0; i<sizeof (ate_list)/sizeof (struct test_list_s); i++)
 			{
 				if(cmd_now == ate_list[i].cmd_id)
@@ -197,7 +201,7 @@ void emirx(RF_ModeTypeDef rf_mode,RF_PowerTypeDef pwr,signed char rf_chn)
 
 void emitxprbs9(RF_ModeTypeDef rf_mode,RF_PowerTypeDef pwr,signed char rf_chn)
 {
-	unsigned int tx_num=0;
+	tx_num=0;
 
 	rf_emi_tx_brust_setup(rf_mode,pwr,rf_chn,0);
 
@@ -219,7 +223,7 @@ void emitxprbs9(RF_ModeTypeDef rf_mode,RF_PowerTypeDef pwr,signed char rf_chn)
 
 void emitx55(RF_ModeTypeDef rf_mode,RF_PowerTypeDef pwr,signed char rf_chn)
 {
-	unsigned int tx_num=0;
+	tx_num=0;
 	rf_emi_tx_brust_setup(rf_mode,pwr,rf_chn,2);
 
 	while( ((read_reg8(0x840006)) == run ) &&  ((read_reg8(0x840007)) == cmd_now )\
@@ -239,7 +243,7 @@ void emitx55(RF_ModeTypeDef rf_mode,RF_PowerTypeDef pwr,signed char rf_chn)
 
 void emitx0f(RF_ModeTypeDef rf_mode,RF_PowerTypeDef pwr,signed char rf_chn)
 {
-	unsigned int tx_num=0;
+	tx_num=0;
 	rf_emi_tx_brust_setup(rf_mode,pwr,rf_chn,1);
 	while( ((read_reg8(0x840006)) == run ) &&  ((read_reg8(0x840007)) == cmd_now )\
 			&& ((read_reg8(0x840008)) == power_level ) &&  ((read_reg8(0x840009)) == chn )\
