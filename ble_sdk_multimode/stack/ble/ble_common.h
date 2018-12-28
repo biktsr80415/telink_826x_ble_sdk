@@ -99,6 +99,8 @@ typedef enum {
 
 #define 		ADV_INTERVAL_1S                          	1600
 #define 		ADV_INTERVAL_1_28_S                         0x0800
+#define 		ADV_INTERVAL_1S5                          	2400
+#define 		ADV_INTERVAL_2S                          	3200
 #define 		ADV_INTERVAL_10_24S                         16384
 
 #define 		ADV_LOW_LATENCY_DIRECT_INTERVAL             ADV_INTERVAL_10MS
