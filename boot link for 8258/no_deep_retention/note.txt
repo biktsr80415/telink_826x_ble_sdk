@@ -1,0 +1,7 @@
+1. use boot.link here to replace the old one in SDK
+
+2. bootloader select cstartup_8258.S
+
+3. set "BLC_PM_DEEP_RETENTION_MODE_EN" to 0 in compiler.h. 
+ 
+4. Deep retention must be disabled in application code. For example "PM_DEEPSLEEP_RETENTION_ENABLE" set to 0 in     app_config.h for project "8258_ble_remote"

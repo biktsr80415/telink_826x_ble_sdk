@@ -410,6 +410,7 @@ void user_init_normal(void)
 		bls_pm_setSuspendMask (SUSPEND_ADV | DEEPSLEEP_RETENTION_ADV | SUSPEND_CONN | DEEPSLEEP_RETENTION_CONN);
 		blc_pm_setDeepsleepRetentionThreshold(95, 95);
 		blc_pm_setDeepsleepRetentionEarlyWakeupTiming(400);
+		//blc_pm_setDeepsleepRetentionType(DEEPSLEEP_MODE_RET_SRAM_LOW16K);  //sram retention size default is 16K
 	#else
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 	#endif

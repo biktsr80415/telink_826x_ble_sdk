@@ -1,0 +1,8 @@
+1. use boot.link here to replace the old one in SDK
+
+2. bootloader select cstartup_8258_RET_32K.S
+
+
+3. set deep retention type to DEEPSLEEP_MODE_RET_SRAM_LOW32K when initialization after            "blc_pm_setDeepsleepRetentionEarlyWakeupTiming" as follow:
+
+     blc_pm_setDeepsleepRetentionType(DEEPSLEEP_MODE_RET_SRAM_LOW32K);
