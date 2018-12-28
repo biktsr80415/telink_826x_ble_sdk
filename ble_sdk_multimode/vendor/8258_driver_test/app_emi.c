@@ -144,6 +144,8 @@ void app_rf_emi_test_start(void)
 	   if(run!=0)
 	   {
 		   IRQ_Disable();
+
+		   rf_emi_stop();
 		   power_level = read_reg8(0x840008);
 		   chn = read_reg8(0x840009);
 		   mode=read_reg8(0x84000a);
@@ -169,6 +171,16 @@ void app_rf_emi_test_start(void)
 			}
 			run = 0;
 			write_reg8(0x840006, run);
+	   }
+	   if(cmd_now==0x03)
+	   {
+		   rf_emi_rx_loop();
+
+			if(rf_emi_get_rxpkt_cnt()!=read_reg32(0x84000c))
+			{
+				write_reg8(0x840004, rf_emi_get_rssi_avg());
+				write_reg32(0x84000c,rf_emi_get_rxpkt_cnt());
+			}
 	   }
 	}
 
@@ -205,19 +217,19 @@ void emirx(RF_ModeTypeDef rf_mode,RF_PowerTypeDef pwr,signed char rf_chn)
 
 	write_reg8(0x840004,0);
 	write_reg32(0x84000c,0);
-	while( ((read_reg8(0x840006)) == run ) &&  ((read_reg8(0x840007)) == cmd_now )\
-			&& ((read_reg8(0x840008)) == power_level ) &&  ((read_reg8(0x840009)) == chn )\
-			&& ((read_reg8(0x84000a)) == mode ))
-	{
-		rf_emi_rx_loop();
-
-		if(rf_emi_get_rxpkt_cnt()!=read_reg32(0x84000c))
-		{
-			write_reg8(0x840004, rf_emi_get_rssi_avg());
-			write_reg32(0x84000c,rf_emi_get_rxpkt_cnt());
-		}
-	}
-	rf_emi_stop();
+//	while( ((read_reg8(0x840006)) == run ) &&  ((read_reg8(0x840007)) == cmd_now )\
+//			&& ((read_reg8(0x840008)) == power_level ) &&  ((read_reg8(0x840009)) == chn )\
+//			&& ((read_reg8(0x84000a)) == mode ))
+//	{
+//		rf_emi_rx_loop();
+//
+//		if(rf_emi_get_rxpkt_cnt()!=read_reg32(0x84000c))
+//		{
+//			write_reg8(0x840004, rf_emi_get_rssi_avg());
+//			write_reg32(0x84000c,rf_emi_get_rxpkt_cnt());
+//		}
+//	}
+//	rf_emi_stop();
 }
 
 void emitxprbs9(RF_ModeTypeDef rf_mode,RF_PowerTypeDef pwr,signed char rf_chn)
