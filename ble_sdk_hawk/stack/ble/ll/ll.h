@@ -26,7 +26,7 @@
 //#include "../../../proj/drivers/rf_pa.h"
 
 extern u8					blt_state;
-extern st_ll_scan_t  blts;
+
 
 #define         VENDOR_ID                       0x0211
 #define			BLUETOOTH_VER_4_0				6
@@ -47,7 +47,7 @@ void blt_set_bluetooth_version (u8 v);
 /////////////////////////////////////////////////////////////////////////////
 #define		CLOCK_SYS_CLOCK_1250US			(1250 * sys_tick_per_us)
 #define		CLOCK_SYS_CLOCK_10MS			(10000 * sys_tick_per_us)
-#define		FLG_RF_CONN_DONE	(FLD_RF_IRQ_CMD_DONE | FLD_RF_IRQ_FSM_TIMEOUT | FLD_RF_IRQ_FIRST_TIMEOUT | FLD_RF_IRQ_RX_TIMEOUT)
+#define		FLG_RF_CONN_DONE	(FLD_RF_IRQ_CMD_DONE | FLD_RF_IRQ_FSM_TIMEOUT | FLD_RF_IRQ_FIRST_TIMEOUT | FLD_RF_IRQ_RX_TIMEOUT | FLD_RF_IRQ_RX_CRC_2)
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -225,6 +225,7 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_READ_P256_KEY			16
 #define			BLT_EV_FLAG_GENERATE_DHKEY			17
 #define			BLT_EV_FLAG_SMP_PINCODE_PROCESS	    18
+#define         BLT_EV_FLAG_SMP_KEY_MISSING         19//add for UTB2
 
 
 
@@ -384,6 +385,42 @@ byte0    byte3   byte4       byte5      byte6  byte(6+w-1)
 *-------------*------------------------------------------*
 note: type(1B):llid(2bit) nesn(1bit) sn(1bit) md(1bit),实际向RF 硬件FIFO中压数据，type只表示llid,其他bit位为0！
 *******************************************************************************************************************************************************************************/
+
+
+#define		FIX_HW_CRC_EN							0
+
+typedef struct {
+	u8		save_flg;
+	u8		sn_nesn;
+	u8		dma_tx_rptr;
+}bb_sts_t;
+
+bb_sts_t blt_bb;
+
+static inline void	blt_save_snnesn (void)
+{
+	blt_bb.sn_nesn = ((REG_ADDR8(0xf22) & BIT(0)) << 4) | ((REG_ADDR8(0xf23) & BIT(4)) << 1);
+}
+
+static inline void	blt_restore_snnesn (void)
+{
+	reg_rst0 = FLD_RST0_ZB;
+	reg_rst0 = 0;
+	REG_ADDR8(0xf03) =  (REG_ADDR8(0xf03) & ~ BITS(4,5)) | blt_bb.sn_nesn;
+}
+
+
+static inline void	bls_save_dma_tx_rptr(void)
+{
+	//TX Fifo: 0x52a[0:3] means rptr
+	blt_bb.dma_tx_rptr = reg_dma_tx_rptr & 0x0f;
+}
+
+static inline void	bls_restore_dma_tx_rptr(void)
+{
+	//0x52a[6] rptr set
+	reg_dma_tx_rptr = ( BIT(6) | blt_bb.dma_tx_rptr);//restore tx_rptr
+}
 
 
 

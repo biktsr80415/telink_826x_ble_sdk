@@ -66,7 +66,7 @@ typedef enum{
 extern void uart_pin_set(UART_TxPinDef tx_pin, UART_RxPinDef rx_pin);
 extern void uart_init(unsigned int BaudRate, UART_ParityTypeDef Parity,
 		                       UART_StopBitTypeDef StopBit);
-extern void uart_Reset(void);
+extern void uart_reset(void);
 extern unsigned char uart_error_clr(void);
 
 /* Only use for Normal Mode. -------------------------------------------------*/

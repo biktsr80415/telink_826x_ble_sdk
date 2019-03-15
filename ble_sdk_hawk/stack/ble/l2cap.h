@@ -1,6 +1,8 @@
 #pragma  once
-
+#ifndef _L2CAP_H
+#define _L2CAP_H
 //#include "../hci/hci_include.h"
+#include "blt_config.h"
 
 
 
@@ -67,7 +69,6 @@
 
 
 
-
 #if(RAM_OPTIMZATION_FOR_UEI_EN)
 	#define	L2CAP_RX_BUFF_LEN_MAX			  88
 #else
@@ -122,5 +123,5 @@ void 		blc_l2cap_reg_att_sig_hander(void *p);//signaling pkt proc
 void 		blc_l2cap_SendConnParamUpdateResponse(u16 connHandle, int result);
 
 
-
+#endif
 //Master

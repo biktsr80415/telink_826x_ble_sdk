@@ -63,7 +63,7 @@ typedef enum {
 
 
 
-
+#define 		ADV_INTERVAL_2_5MS                          4
 #define 		ADV_INTERVAL_3_125MS                        5
 #define 		ADV_INTERVAL_3_75MS                         6
 #define 		ADV_INTERVAL_10MS                           16

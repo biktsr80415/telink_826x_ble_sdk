@@ -4,6 +4,27 @@
 #include "driver_config.h"
 #include "compiler.h"
 
+
+
+#ifndef		CFG_ADR_MAC
+#define		CFG_ADR_MAC						0x76000
+#endif
+
+#ifndef		CUST_CAP_INFO_ADDR
+#define		CUST_CAP_INFO_ADDR				0x77000
+#endif
+
+#ifndef		CUST_TP_INFO_ADDR
+#define		CUST_TP_INFO_ADDR				0x77040
+#endif
+
+#ifndef		CUST_32KPAD_CAP_INFO_ADDR
+#define		CUST_32KPAD_CAP_INFO_ADDR		0x77080
+#endif
+
+
+
+
 enum{
 	FLASH_WRITE_STATUS_CMD	=	0x01,
 	FLASH_WRITE_CMD			=	0x02,
@@ -42,6 +63,8 @@ _attribute_ram_code_ void flash_write_page(unsigned long addr, unsigned long len
  * @return none
  */
 _attribute_ram_code_ void flash_read_page(unsigned long addr, unsigned long len, unsigned char *buf);
+
+#if 0
 /**
  * @brief This function reads the status of flash.
  * @param[in]  none
@@ -109,5 +132,7 @@ _attribute_ram_code_ void flash_erase_chip(void);
  * @return none.
  */
 _attribute_ram_code_ unsigned int flash_get_jedec_id();
+
+#endif
 
 

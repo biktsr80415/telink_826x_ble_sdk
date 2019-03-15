@@ -24,7 +24,7 @@
 /*----------------------------------------------------------------------------*/
 #if(IR_PROTOCOL_TYPE == IR_PROTOCOL_NEC)
 	#define IR_CARRIER_FRE                  (38000)//38KHz
-	#define IR_CARRIER_CYCLE                (CLOCK_SYS_CLOCK_HZ/IR_CARRIER_FRE)
+	#define IR_CARRIER_CYCLE                (CLOCK_SYS_CLOCK_HZ/IR_CARRIER_FRE)//Unit: PWM clock tick number
 	#define IR_CARRIER_DUTY                 (3)//duty rate :1/3
 
 	#define IR_START_CARRIER_TIME           (9000)

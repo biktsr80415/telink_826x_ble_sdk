@@ -67,7 +67,7 @@ int putchar(int c){
 //		return swire_putc((char)c);
 //	}
 
-	uart_notDmaModeSendByte((char)c);
+	uart_not_dma_mode_send_byte((char)c);
 	return c;
 }
 

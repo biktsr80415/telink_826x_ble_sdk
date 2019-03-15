@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../common/config/user_config.h"
+#include "common/config/user_config.h"
 
 
 /* PA ------------------------------------------------------------------------*/

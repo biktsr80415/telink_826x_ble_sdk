@@ -176,13 +176,13 @@ enum{
 
 #define reg_clk_en0				REG_ADDR8(0x63)
 enum{
-	FLD_CLK0_SPI_EN = 			BIT(0),
-	FLD_CLK0_I2C_EN = 			BIT(1),
-	FLD_CLK0_HOSTIRQ_EN = 		BIT(2),
+	FLD_CLK0_SPI_EN = 			BIT(0),   // 31 uA
+	FLD_CLK0_I2C_EN = 			BIT(1),   // 36 uA
+	FLD_CLK0_HOSTIRQ_EN = 		BIT(2),   // 11 uA
 	FLD_CLK0_MCU_EN = 			BIT(4),
 	FLD_CLK0_FPU_EN = 			BIT(5),
 	FLD_CLK0_AIF_EN = 			BIT(6),
-	FLD_CLK0_ZB_EN = 			BIT(7),
+	FLD_CLK0_ZB_EN = 			BIT(7),   // 140 uA
 
 };
 
@@ -191,8 +191,8 @@ enum{
 	FLD_CLK1_SYS_TIMER_EN = 	BIT(0),
 	FLD_CLK1_ALGM_EN = 			BIT(1),
 	FLD_CLK1_DMA_EN = 			BIT(2),
-	FLD_CLK1_RS232_EN = 		BIT(3),
-	FLD_CLK1_PWM_EN = 			BIT(4),
+	FLD_CLK1_RS232_EN = 		BIT(3),   // 77uA
+	FLD_CLK1_PWM_EN = 			BIT(4),   // 65 uA
 	FLD_CLK1_AES_EN = 			BIT(5),
 	FLD_CLK1_32K_CLK_EN = 		BIT(6),
 	FLD_CLK1_SWIRE_EN = 		BIT(7),
@@ -202,11 +202,11 @@ enum{
 
 #define reg_clk_en2				REG_ADDR8(0x65)
 enum{
-	FLD_CLK2_32K_QDEC_EN = 		BIT(0),
-	FLD_CLK2_AUDIO_EN = 		BIT(1),
-	FLD_CLK2_DFIFO_EN = 		BIT(2),
-	FLD_CLK2_MCIC_EN = 			BIT(4),
-	FLD_CLK2_QDEC_EN = 			BIT(5),
+	FLD_CLK2_32K_QDEC_EN = 		BIT(0),   // 20uA
+	FLD_CLK2_AUDIO_EN = 		BIT(1),   // 77 uA
+	FLD_CLK2_DFIFO_EN = 		BIT(2),   // 35 uA
+	FLD_CLK2_MCIC_EN = 			BIT(4),   // add 900uA
+	FLD_CLK2_QDEC_EN = 			BIT(5),   // 18 uA
 };
 
 #define reg_clk_sel				REG_ADDR8(0x66)
@@ -811,6 +811,8 @@ enum{
 
 #define reg_rf_chn_rssi			REG_ADDR8(0x458)
 
+#define reg_rf_timestamp		REG_ADDR32(0x460)
+
 #define reg_rf_rx_gain_agc(i)	REG_ADDR32(0x480+((i)<<2))
 
 #define reg_rf_rx_dci			REG_ADDR8(0x4cb)	//  different from the document, why
@@ -1094,14 +1096,14 @@ typedef union
 #define GPIOB_AF  ((GPIO_AFTypeDef *)(REG_BASE_ADDR + 0x5aa))
 #define GPIOC_AF  ((GPIO_AFTypeDef *)(REG_BASE_ADDR + 0x5ac))
 
-//5316 must
-#define reg_gpio_wakeup_irq		REG_ADDR8(0x5b5)
+
+#define reg_gpio_wakeup_and_irq_en  REG_ADDR8(0x5b5)
 enum{
-	FLD_GPIO_WAKEUP_EN	  =	BIT(2),
-	FLD_GPIO_INTERRUPT_EN =	BIT(3),
+    FLD_GPIO_CORE_WAKEUP_EN    = BIT(2),
+    FLD_GPIO_CORE_INTERRUPT_EN = BIT(3),
 };
 
-//5316 must
+
 #define reg_gpio_pb_multi_func_select  REG_ADDR8(0x5b6)
 enum
 {
@@ -1252,7 +1254,7 @@ enum//Use for "reg_sys_timer_ctrl"
 
 
 
-//8267 (为了编译通过而保留)
+
 #define reg_system_tick_irq		REG_ADDR32(0x744)
 #define reg_system_wakeup_tick	REG_ADDR32(0x748)
 #define reg_system_tick_mode	REG_ADDR8(0x74c)

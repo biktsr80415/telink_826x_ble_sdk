@@ -245,11 +245,6 @@ typedef enum{
 #define reg_gpio_irq_risc1_en(i)    REG_ADDR8(0x5c0 + (i >> 8))	  // reg_irq_mask: FLD_IRQ_GPIO_RISC1_EN
 #define reg_gpio_irq_risc2_en(i)    REG_ADDR8(0x5c8 + (i >> 8))   // reg_irq_mask: FLD_IRQ_GPIO_RISC2_EN
 
-#define reg_gpio_wakeup_and_irq_en  REG_ADDR8(0x5b5)
-enum{
-    FLD_GPIO_CORE_WAKEUP_EN    = BIT(2),
-    FLD_GPIO_CORE_INTERRUPT_EN = BIT(3),
-};
 
 static inline void gpio_core_wakeup_enable_all (int en)
 {

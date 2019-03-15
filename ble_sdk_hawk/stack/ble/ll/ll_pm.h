@@ -41,6 +41,11 @@ typedef struct {
 	u8		conn_no_suspend;
 	u8 		timer_wakeup;
 	u8      ble_busy_pending;
+	u8		appWakeup_loop_noLatency;
+
+	u8 		timing_miss;
+	u8      timing_synced;
+	u16		pm_border_flag;
 
 }st_ll_pm_t;
 

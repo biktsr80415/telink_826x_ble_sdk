@@ -98,7 +98,7 @@ int 	blt_soft_timer_delete(blt_timer_callback_t func)
 
 			if(i == 0){  //删除的是最近的timer，需要更新时间
 
-				if( (u32)(blt_timer.timer[0].t - clock_time()) < 3000 *  sys_tick_per_us){
+				if( (u32)(blt_timer.timer[0].t - clock_time()) < 3000 *  CLOCK_16M_SYS_TIMER_CLK_1MS){
 					bls_pm_setAppWakeupLowPower(blt_timer.timer[0].t,  1);
 				}
 				else{

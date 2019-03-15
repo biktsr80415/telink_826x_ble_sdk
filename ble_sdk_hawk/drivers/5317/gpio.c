@@ -328,10 +328,8 @@ void gpio_set_wakeup(GPIO_PinTypeDef pin, GPIO_LevelTypeDef level, int en)
 
     if(level){
         BM_CLR(reg_gpio_pol(pin), bit);
-        gpio_setup_up_down_resistor(pin, GPIO_PULL_DOWN_100K);
     }else{
         BM_SET(reg_gpio_pol(pin), bit);
-        gpio_setup_up_down_resistor(pin,GPIO_PULL_UP_1M);
     }
 
     gpio_set_func(pin,AS_GPIO);

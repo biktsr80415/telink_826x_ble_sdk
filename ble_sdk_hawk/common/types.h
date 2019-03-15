@@ -37,8 +37,17 @@ typedef u8 bool;
 #ifndef FALSE
 #define FALSE 	0
 #endif
+
 #ifndef TRUE
 #define TRUE 	(!FALSE)
+#endif
+
+#ifndef ENABLE
+#define ENABLE   1
+#endif
+
+#ifndef DISABLE
+#define DISABLE   0
 #endif
 
 #define false 	FALSE

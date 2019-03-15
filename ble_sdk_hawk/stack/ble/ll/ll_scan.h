@@ -42,9 +42,10 @@ typedef struct {
 	//u32		scan_interval;
 }st_ll_scan_t;
 
-st_ll_scan_t  blts;
-
-u32		blts_scan_interval;
+#if (MCU_CORE_TYPE == MCU_CORE_5316)
+	st_ll_scan_t  blts;
+	u32		blts_scan_interval;
+#endif
 
 extern 			rf_packet_scan_req_t	pkt_scan_req;
 

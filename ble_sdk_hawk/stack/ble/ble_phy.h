@@ -27,14 +27,12 @@
 #endif
 
 
-
-
 #define 		BLC_PHYTEST_DISABLE						0
 #define 		BLC_PHYTEST_ENABLE						1
 
 
 
-#define			PHY_CMD_RESET							0
+#define			PHY_CMD_SETUP							0
 #define			PHY_CMD_RX								1
 #define			PHY_CMD_TX								2
 #define			PHY_CMD_END								3
@@ -97,6 +95,7 @@ ble_sts_t blc_phy_setTransmitterTest (u8 tx_chn, u8 length, u8 pkt_type);
 ble_sts_t blc_phy_setPhyTestEnd(u8 *pkt_num);
 
 ble_sts_t blc_phy_reset(void);
+void blc_phy_preamble_length_set(unsigned char len);
 
 
 

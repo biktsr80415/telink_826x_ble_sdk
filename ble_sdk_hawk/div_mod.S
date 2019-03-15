@@ -298,3 +298,134 @@ MZ_MUL2_END:
 	tpop 	{r4, r5, r6, r7}
     tjex	lr
     tnop
+
+
+
+#if 0
+
+///////// asm crc24 function 2
+	.section	.ram_code,"ax" //in ram code
+	.align	2
+	.global	blt_packet_crc24_opt
+	.code 16
+	.thumb_func
+	.type	blt_packet_crc24_opt, %function
+blt_packet_crc24_opt:
+	tpush	{r3, r4, r5, r6, r7, lr}
+	tmov	r5, r8
+	tpush	{r5}
+	tmov	r5, r1
+	tneg	r1, r0
+	tmov	r4, #3
+	tand	r1, r4			//number of byte CRC of pre_process to align CRC to word boundary
+	tsub	r5, r1
+	tjge	CRC24_SAVE_WORD_NUM
+	tadd	r1, r5
+	tmov	r5, #0
+CRC24_SAVE_WORD_NUM:
+	tmov	r8, r5			//save to r8
+	//tloadr	r3, CRC24_DAT
+	tadd	r4, r0, #0
+	tmov	r0, #0
+	tmov	r7, #60			//r7 = 15 * 4
+CRC24_BYTE_LOOP:			//r4: src; r6: dat; r2: crc; r5: tmp
+	tcmp	r0, r1
+	tjeq	CRC24_BYTE_END
+	tloadrb	r6, [r4, r0]	//r6 = dat[r0]
+	txor	r6, r2			//r6 = crc ^ dat
+	tshftl	r5, r6, #2		//r5 = r6 << 2
+	tand	r5, r7			//r2 = r2 & 60
+	tloadr	r5, [r5, r3]	//load table
+	tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+	tshftr	r6, r6, #2		// r6 = r6 >> 2
+	txor	r2, r5			//r2 = r5 ^  r2
+	tand	r6, r7			//r6 = r6 & 60
+
+	tloadr	r6, [r6, r3]
+	tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+	tadd	r0, #1
+	txor	r2, r6			//r2 = r6 ^  r2
+	tjne	CRC24_BYTE_LOOP
+CRC24_BYTE_END:
+	tmov	r1, r8
+	tcmp	r1, #0
+	tjeq	CRC24_END
+	tmov	r5, #0
+	tmov	r8, r5
+	tadd	r4, r0
+	tmov	r0, #0
+CRC24_WORD_LOOP:
+		tsub	r1, #4
+		tjlt	CRC24_WORD_END
+		tloadr	r0, [r4, #0]	//r0 = dat[r0]
+		tadd	r4, #4
+		tshftr	r6, r0, #0		// r6 = r0 >> 0
+	CRC24_WORD_nib0:
+		txor	r6, r2			//r6 = crc ^ dat
+		tshftl	r5, r6, #2		//r5 = r6 << 2
+		tand	r5, r7			//r2 = r2 & 60
+		tloadr	r5, [r5, r3]	//load table
+		tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+		tshftr	r6, r6, #2		// r6 = r6 >> 2
+		tand	r6, r7			//r6 = r6 & 60
+		tloadr	r6, [r6, r3]
+		txor	r2, r5			//r2 = r5 ^  r2
+	CRC24_WORD_nib1:
+		tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+		tshftr	r5, r0, #8		//dat >> 8
+		txor	r2, r6			//r2 = r6 ^  r2
+	CRC24_WORD_nib2:
+		txor	r5, r2			//r6 = crc ^ dat
+		tshftl	r6, r5, #2		//r5 << 2
+		tand	r6, r7
+		tloadr	r6, [r6, r3]
+		tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+		tshftr	r5, r5, #2
+		tand	r5, r7			//r6 = r6 & 60
+		tloadr	r5, [r5, r3]
+		txor	r2, r6			//r2 = r6 ^  r2
+	CRC24_WORD_nib3:
+		tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+		tshftr	r6, r0, #16		//dat >> 8
+		txor	r2, r5			//r2 = r6 ^  r2
+	CRC24_WORD_nib4:
+		txor	r6, r2			//r6 = crc ^ dat
+		tshftl	r5, r6, #2		//r5 = r6 << 2
+		tand	r5, r7			//r2 = r2 & 60
+		tloadr	r5, [r5, r3]	//load table
+		tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+		tshftr	r6, r6, #2		// r6 = r6 >> 2
+		tand	r6, r7			//r6 = r6 & 60
+		tloadr	r6, [r6, r3]
+		txor	r2, r5			//r2 = r5 ^  r2
+	CRC24_WORD_nib5:
+		tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+		tshftr	r5, r0, #24		//dat >> 8
+		txor	r2, r6			//r2 = r6 ^  r2
+	CRC24_WORD_nib6:
+		txor	r5, r2			//r6 = crc ^ dat
+		tshftl	r6, r5, #2		//r5 << 2
+		tand	r6, r7
+		tloadr	r6, [r6, r3]
+		tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+		tshftr	r5, r5, #2
+		tand	r5, r7			//r5 = r5 & 60
+		tloadr	r5, [r5, r3]
+		txor	r2, r6			//r2 = r6 ^  r2
+	CRC24_WORD_nib7:
+		tasr	r2, r2, #4		//r2 >> 4 (crc >> 4)
+		tmov	r0, #0
+		txor	r2, r5			//r2 = r6 ^  r2
+	tj		CRC24_WORD_LOOP
+	CRC24_WORD_END:
+		tadd	r1, #4
+		tj		CRC24_BYTE_LOOP
+CRC24_END:
+	tadd	r0, r2, #0
+	tpop	{r5}
+	tmov	r8, r5
+	tpop	{r3, r4, r5, r6, r7, pc}
+	tnop
+
+
+#endif

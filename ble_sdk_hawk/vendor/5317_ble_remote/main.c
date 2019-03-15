@@ -25,17 +25,25 @@ _attribute_ram_code_ void irq_handler(void)
 
 int main(void){
 
-	pm_init(LSC_32kSrc_RC);
+	blc_pm_select_internal_32k_crystal();
 
 	cpu_wakeup_init();
 
-	clock_init();
+	#if (CLOCK_SYS_CLOCK_HZ == 16000000)
+		clock_init(SYS_CLK_16M_Crystal);
+	#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
+		clock_init(SYS_CLK_32M_Crystal);
+	#endif
 
 	gpio_init();
 
-	deep_wakeup_proc();
+	#if(RC_BTN_ENABLE)
+		deep_wakeup_proc();
+	#endif
 
 	rf_drv_init(RF_MODE_BLE_1M);
+
+	random_generator_init();
 
 	user_init();
 

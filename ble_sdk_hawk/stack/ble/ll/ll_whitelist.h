@@ -9,12 +9,16 @@
 #define LL_WHITELIST_H_
 
 #include <stack/ble/ble_common.h>
+#include "stack/ble/blt_config.h"
 
 
 
+#if (RAM_OPTIMZATION_FOR_UEI_EN)
+	#define  	MAX_WHITE_LIST_SIZE    				1
+#else
+	#define  	MAX_WHITE_LIST_SIZE    				4
+#endif
 
-
-#define  	MAX_WHITE_LIST_SIZE    				4
 
 #if (RAMCODE_OPTIMIZE_CONN_POWER_NEGLECT_ENABLE || BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN || RAM_OPTIMZATION_FOR_UEI_EN)
 	#define 	MAX_WHITE_IRK_LIST_SIZE          	1   //save ramcode

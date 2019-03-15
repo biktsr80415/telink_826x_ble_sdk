@@ -3,7 +3,8 @@
 #include <stack/ble/ble.h>
 
 
-#if (__PROJECT_5316_BLE_REMOTE__ || __PROJECT_5317_BLE_REMOTE__)
+//#if (__PROJECT_5316_BLE_REMOTE__ || __PROJECT_5317_BLE_REMOTE__)
+#if (__PROJECT_5316_BLE_REMOTE__)
 
 typedef struct
 {
@@ -382,27 +383,9 @@ const attribute_t my_Attributes[] = {
 	{0,ATT_PERMISSIONS_RDWR,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
 	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
 
-
-#if (BLE_AUDIO_ENABLE)
-	////////////////////////////////////// Audio /////////////////////////////////////////////////////
-	// 0032 Audio
-	{8,ATT_PERMISSIONS_READ,2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_AudioUUID), 0},
-
-	// 0033 - 0036  MIC
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&PROP_READ_NOTIFY), 0},				//prop
-	{0,ATT_PERMISSIONS_READ,16,sizeof(my_MicData),(u8*)(&my_MicUUID), 	(u8*)(&my_MicData), 0},	//value
-	{0,ATT_PERMISSIONS_RDWR,2,sizeof(micDataCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)(micDataCCC), 0},	//value
-	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_MicName),(u8*)(&userdesc_UUID), (u8*)(my_MicName), 0},
-
-	// 0037 - 0039  SPEAKER
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&PROP_WRITE_NORSP), 0},				//prop
-	{0,ATT_PERMISSIONS_WRITE,16,sizeof(my_SpeakerData),(u8*)(&my_SpeakerUUID), 	(u8*)(&my_SpeakerData), 0},//value
-	{0,ATT_PERMISSIONS_RDWR,2,sizeof (my_SpeakerName),(u8*)(&userdesc_UUID), (u8*)(my_SpeakerName), 0},
-#endif
-
 };
 
-void	my_att_init ()
+void my_att_init(void)
 {
 	bls_att_setAttributeTable ((u8 *)my_Attributes);
 }

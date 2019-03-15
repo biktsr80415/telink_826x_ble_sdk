@@ -42,22 +42,23 @@ typedef enum {
 	RF_POWER_11P8dBm	= 0,
 	RF_POWER_9P6dBm		= 1,
 	RF_POWER_7P9dBm		= 2,
-	RF_POWER_6P3dBm		= 3,
-	RF_POWER_4P9dBm		= 4,
-	RF_POWER_3P3dBm		= 5,
-	RF_POWER_1P6dBm		= 6,
-	RF_POWER_0dBm		= 7,
-	RF_POWER_m1P5dBm	= 8,
-	RF_POWER_m3P1dBm	= 9,
-	RF_POWER_m5dBm		= 10,
-	RF_POWER_m7P3dBm	= 11,
-	RF_POWER_m9P6dBm	= 12,
-	RF_POWER_m11P5dBm	= 13,
-	RF_POWER_m13P3dBm	= 14,
-	RF_POWER_m16dBm		= 15,
-	RF_POWER_m17P8dBm	= 16,
-	RF_POWER_m19P5dBm	= 17,
-	RF_POWER_OFF		= 18,
+	RF_POWER_7dBm		= 3,
+	RF_POWER_6P3dBm		= 4,
+	RF_POWER_4P9dBm		= 5,
+	RF_POWER_3P3dBm		= 6,
+	RF_POWER_1P6dBm		= 7,
+	RF_POWER_0dBm		= 8,
+	RF_POWER_m1P5dBm	= 9,
+	RF_POWER_m3P1dBm	= 10,
+	RF_POWER_m5dBm		= 11,
+	RF_POWER_m7P3dBm	= 12,
+	RF_POWER_m9P6dBm	= 13,
+	RF_POWER_m11P5dBm	= 14,
+	RF_POWER_m13P3dBm	= 15,
+	RF_POWER_m16dBm		= 16,
+	RF_POWER_m17P8dBm	= 17,
+	RF_POWER_m19P5dBm	= 18,
+	RF_POWER_OFF		= 19,
 }RF_TxPowerTypeDef;
 
 
@@ -73,11 +74,32 @@ typedef enum {
 
 #define	SET_RF_TX_DMA_ADR(a)			write_reg16 (0x80050c, a)
 
-#define POWER_DOWN_64MHZ_CLK   //analog_write(0x82, IS_XTAL_12M(xtalType_rfMode) ? 0x00 : 0x14)
-#define POWER_ON_64MHZ_CLK     //analog_write(0x82, IS_XTAL_12M(xtalType_rfMode) ? 0x20 : 0x34)
 
-#define PHY_POWER_DOWN   	   //analog_write(0x06, sar_adc_pwdn_en ? 0xff : 0xfe)
-#define PHY_POWER_UP	 	   //analog_write(0x06, sar_adc_pwdn_en);//sar_adc_pwdn_en ? 0x01 : 0x00)
+#if 1
+static inline void rf_ldo_power_down(void)
+{
+	analog_write(0x06, 0xff);
+}
+
+static inline void rf_ldo_power_on(void)
+{
+	analog_write(0x06, 0x00);
+}
+
+static inline void rf_clk_disable(void)
+{
+//	reg_clk_en0 &= ~FLD_CLK0_ZB_EN; //ERR
+//	analog_write(0x80, 0x69);  		//ERR
+//	analog_write(0x82, 0x53);  		//ERR
+}
+
+static inline void rf_clk_enable(void)
+{
+//	reg_clk_en0 |= FLD_CLK0_ZB_EN;
+	analog_write(0x80, 0x61);
+	analog_write(0x82, 0x5f);
+}
+#endif
 
 #define	RF_PACKET_LENGTH_OK(p)		(p[0] == (p[13])+17)
 #define	RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x40)
@@ -136,21 +158,21 @@ static inline void rf_start_brx(void* addr, unsigned int tick)
 //manual rx mode
 static inline void rf_set_rxmode (void)
 {
-    write_reg8 (0x800428, 0x80 | BIT(0));	// rx disable
-    write_reg8 (0x800f02, 0x45 | BIT(5));	// RX enable
+    write_reg8 (0x428, read_reg8(0x428) | BIT(0));
+    write_reg8 (0xf02, 0x45 | BIT(5));		// RX enable
 }
 
 //manual tx mode
 static inline void rf_set_txmode (void)
 {
-	write_reg8(0x800f02, 0x45 | BIT(4));	//TX enable
+	write_reg8(0xf02, 0x45 | BIT(4));	// TX enable
 }
 
 //maunal mode off
 static inline void rf_set_tx_rx_off(void)
 {
 	write_reg8(0x800f16, 0x29);
-	write_reg8(0x800428, 0x80);	// rx disable
+	write_reg8(0x800428, read_reg8(0x428)&0xfe);	// rx disable
 	write_reg8(0x800f02, 0x45);	// reset tx/rx state machine
 }
 

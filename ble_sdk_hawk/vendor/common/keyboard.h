@@ -57,6 +57,21 @@ extern unsigned int deepback_key_tick;
 #endif
 
 
+#define 	SCAN_PIN_MAX_NUM_8					1
+#define		SCAN_PIN_MAX_NUM_16					2
+#define		SCAN_PIN_MAX_NUM_32					3
+
+#ifndef     SCAN_PIN_SCALE
+#define 	SCAN_PIN_SCALE   					SCAN_PIN_MAX_NUM_32
+#endif
+
+
+#if (SCAN_PIN_SCALE == SCAN_PIN_MAX_NUM_8)
+	#define	  DTYPE_MATRIX      unsigned char
+#else
+	#define   DTYPE_MATRIX		unsigned int
+#endif
+
 
 
 

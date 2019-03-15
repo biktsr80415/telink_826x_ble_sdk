@@ -1,22 +1,29 @@
 #pragma once
 
 /* Function Select -----------------------------------------------------------*/
-#define BLE_REMOTE_PM_ENABLE		1
-#define BLE_REMOTE_SECURITY_ENABLE  1
-#define BLE_REMOTE_OTA_ENABLE		1
-#define REMOTE_IR_ENABLE			1
-#define BATT_CHECK_ENABLE       	1//enable or disable battery voltage detection
+#define BLE_REMOTE_PM_ENABLE		        1//PM Enable
+#define BLE_REMOTE_SECURITY_ENABLE  		1
+#define BLE_REMOTE_OTA_ENABLE				0
+#define REMOTE_IR_ENABLE					0
+#define BATT_CHECK_ENABLE       			1//enable or disable battery voltage detection
+#define RC_BTN_ENABLE               		1
+#define BLT_APP_LED_ENABLE					1
+
+#define BLT_TEST_SOFT_TIMER_ENABLE			0
+
+#if(BLT_TEST_SOFT_TIMER_ENABLE)
+	#define BLT_SOFTWARE_TIMER_ENABLE		1
+#endif
 
 /* Audio Configuration -------------------------------------------------------*/
 #define BLE_AUDIO_ENABLE		    1
-
-#if (BLE_AUDIO_ENABLE)
+#if(BLE_AUDIO_ENABLE)
 	#define BLE_DMIC_ENABLE			0  //0: Amic   1: Dmic
 	#define	ADPCM_PACKET_LEN		128
 	#define TL_MIC_ADPCM_UNIT_SIZE	248
-	#define	TL_MIC_32K_FIR_16K		0
+	#define	TL_MIC_32K_FIR_16K		1
 
-	#if TL_MIC_32K_FIR_16K
+	#if(TL_MIC_32K_FIR_16K)
 		#define	TL_MIC_BUFFER_SIZE	1984
 	#else
 		#define	TL_MIC_BUFFER_SIZE	992
@@ -25,7 +32,19 @@
 	#define GPIO_MIC_BIAS			((BLE_DMIC_ENABLE)? GPIO_PA2:GPIO_PA6)
 #endif
 
-/* LED -----------------------------------------------------------------------*/
+/* System Clock -------------------------------------------------------------*/
+#define CLOCK_SYS_CLOCK_HZ      16000000
+enum{
+	CLOCK_SYS_CLOCK_1S  = CLOCK_SYS_CLOCK_HZ,
+	CLOCK_SYS_CLOCK_1MS = (CLOCK_SYS_CLOCK_1S / 1000),
+	CLOCK_SYS_CLOCK_1US = (CLOCK_SYS_CLOCK_1S / 1000000),
+};
+
+/* WatchDog ------------------------------------------------------------------*/
+#define MODULE_WATCHDOG_ENABLE	0
+#define WATCHDOG_INIT_TIMEOUT	500  //Unit:ms
+
+/* LED Indicator -------------------------------------------------------------*/
 #define	GPIO_LED	GPIO_PB2
 
 /* Matrix Key Configuration --------------------------------------------------*/
@@ -69,7 +88,6 @@
 #define	VOICE			0xc0
 #define KEY_MODE_SWITCH	0xc1
 #define	PHY_TEST		0xc2
-
 
 #define IR_VK_0			0x00
 #define IR_VK_1			0x01
@@ -119,69 +137,59 @@
 #define	T_VK_CH_DN		0xd1
 
 
+#if(RC_BTN_ENABLE)
 /* 5317 hardware: C1T132A5_V1.0 */
-#if (REMOTE_IR_ENABLE)  //with IR key map
+#if(REMOTE_IR_ENABLE)  //with IR key map
 	#define GPIO_IR_CONTROL	 GPIO_PA0
 
 	#define	KB_MAP_NORMAL {\
-				{VOICE,		           1,	   2,	   3,	  4},  \
-				{KEY_MODE_SWITCH,  6,	   7,	   8,     9},  \
-				{10,               11,	   12,     13,	  14}, \
-				{15,	           16,     17,	   18,	  19}, \
-				{20,	           21,	   22,	   23,	  24}, \
-				{25,	           26,	   27,	   28,	  29}, }
-
+				{0,	    KEY_MODE_SWITCH,  2,   3,   4,  5}, \
+				{6,     7,	              8,   9,  10, 11}, \
+				{12,    13,	              14, 15,  16, 17}, \
+				{18,    VOICE,            20, 21,  22, 23}, \
+				{24,    25,               26, 27,  28, 29}, \
+	            }
 	#define	KB_MAP_BLE	{\
-				VOICE,		      VK_UP,	   VK_ENTER,	VK_DOWN,	 VK_NONE,   \
-				KEY_MODE_SWITCH,  VK_LEFT,	   CR_MENU,	    CR_VOL_MUTE, VK_RIGHT,  \
-				VK_POWER,         CR_HOME,	   VK_7,   	    VK_2,	     CR_BACK,   \
-				VK_NONE,	 	  CR_VOL_DN,   VK_NONE,	    VK_5,	     CR_VOL_UP, \
-				VK_NONE,	 	  VK_1,	       VK_0,	    VK_8,	     VK_3,      \
-				VK_NONE,		  VK_4,	       VK_NONE,	    VK_9,	     VK_6, }
-
+				{VK_NONE,  KEY_MODE_SWITCH,	 VK_POWER,	VK_NONE,   VK_NONE, VK_NONE	},   \
+				{VK_UP,	   VK_LEFT,	  		 CR_HOME,	CR_VOL_DN, VK_1,    VK_4		},   \
+				{VK_ENTER, CR_MENU,	   		 VK_7,	    VK_NONE,   VK_0,   	CR_VOL_MUTE},   \
+				{VK_DOWN,  VOICE,	  	   	 VK_2,	    VK_5,	   VK_8,    VK_9		},   \
+				{VK_NONE,  VK_RIGHT,	     CR_BACK,	CR_VOL_UP, VK_3,    VK_6		},   }
 	#define	KB_MAP_IR	{\
-				VK_NONE,	        IR_UP,	    IR_SEL,	    IR_DN,	    VK_NONE,    \
-				KEY_MODE_SWITCH,	IR_LEFT,	IR_MENU,	VK_NONE,	IR_RIGHT,	\
-				IR_POWER ,	        IR_HOME,	IR_VK_7,	IR_VK_2,	IR_BACK,	\
-				VK_NONE,	        IR_VOL_DN,	VK_NONE,	IR_VK_5,    IR_VOL_UP,	\
-				VK_NONE,            IR_VK_1,	IR_VK_0,	IR_VK_8,	IR_VK_3,	\
-				VK_NONE,	        IR_VK_4,	VK_NONE,	IR_VK_9,	IR_VK_6,  }
+				VK_NONE, KEY_MODE_SWITCH,  IR_POWER,  VK_NONE,	   VK_NONE,  VK_NONE,  \
+				IR_UP,	 IR_LEFT,	       IR_HOME,	  IR_VOL_DN,   IR_VK_1,	 IR_VK_4,  \
+				VK_NONE, IR_MENU,	       IR_VK_7,	  VK_NONE,	   IR_VK_0,	 VK_NONE,  \
+				IR_DN,	 IR_VOICE,	       IR_VK_2,	  IR_VK_5,     IR_VK_8,	 IR_VK_9,  \
+				VK_NONE, IR_RIGHT,	       IR_BACK,	  IR_VOL_UP,   IR_VK_3,	 IR_VK_6,\
+				}
 #else//key map
 	#define	KB_MAP_NORMAL	{\
-				{VOICE,		      VK_UP,	   VK_ENTER,	VK_DOWN,	 VK_NONE},   \
-				{KEY_MODE_SWITCH, VK_LEFT,	   CR_MENU,	    CR_VOL_MUTE, VK_RIGHT},  \
-				{VK_POWER,        CR_HOME,	   VK_7,   	    VK_2,	     CR_BACK},   \
-				{VK_NONE,	 	  CR_VOL_DN,   VK_NONE,	    VK_5,	     CR_VOL_UP}, \
-				{VK_NONE,	 	  VK_1,	       VK_0,	    VK_8,	     VK_3},      \
-				{VK_NONE,		  VK_4,	       VK_NONE,	    VK_9,	     VK_6}, }
+				{VK_NONE,		  KEY_MODE_SWITCH,	   VK_POWER,	VK_NONE,	 VK_NONE,    VK_NONE	},   \
+				{VK_UP,		      VK_LEFT,	  		   CR_HOME,	    CR_VOL_DN,	 VK_1,       VK_4		},   \
+				{VK_ENTER,		  CR_MENU,	   		   VK_7,	    VK_NONE,	 VK_0,   	 CR_VOL_MUTE},   \
+				{VK_DOWN,		  VOICE,	  	   	   VK_2,	    VK_5,	     VK_8,       VK_9		},   \
+				{VK_NONE,		  VK_RIGHT,	           CR_BACK,	    CR_VOL_UP,	 VK_3,       VK_6		},   }
 #endif /* End of REMOTE_IR_ENABLE */
 
-#define KB_DRIVE_PINS  {GPIO_PB1, GPIO_PA4, GPIO_PA3, GPIO_PA2, GPIO_PA1}
-#define KB_SCAN_PINS   {GPIO_PC6, GPIO_PC5, GPIO_PC4, GPIO_PC3, GPIO_PC2, GPIO_PC1}
+#define KB_DRIVE_PINS  	 {GPIO_PC6, GPIO_PC5, GPIO_PC4, GPIO_PC3, GPIO_PC2, GPIO_PC1}
+#define KB_SCAN_PINS     {GPIO_PB1, GPIO_PA4, GPIO_PA3, GPIO_PA2, GPIO_PA1}
 
 //drive pin need 100K pulldown
-#define	PULL_WAKEUP_SRC_PB1		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PA4		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PA3		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PA2		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PA1		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PC6		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PC5		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PC4		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PC3		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PC2		MATRIX_ROW_PULL
+#define	PULL_WAKEUP_SRC_PC1		MATRIX_ROW_PULL
 
 //scan  pin need 10K pullup
-#define	PULL_WAKEUP_SRC_PC6		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PC5		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PC4		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PC3		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PC2		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PC1		MATRIX_COL_PULL
+#define	PULL_WAKEUP_SRC_PB1		MATRIX_COL_PULL
+#define	PULL_WAKEUP_SRC_PA4		MATRIX_COL_PULL
+#define	PULL_WAKEUP_SRC_PA3		MATRIX_COL_PULL
+#define	PULL_WAKEUP_SRC_PA2		MATRIX_COL_PULL
+#define	PULL_WAKEUP_SRC_PA1		MATRIX_COL_PULL
 
 //drive pin open input to read gpio wakeup level
-#define PB1_INPUT_ENABLE		1
-#define PA4_INPUT_ENABLE		1
-#define PA3_INPUT_ENABLE		1
-#define PA2_INPUT_ENABLE		1
-#define PA1_INPUT_ENABLE		1
-
-//scan pin open input to read gpio level
 #define PC6_INPUT_ENABLE		1
 #define PC5_INPUT_ENABLE		1
 #define PC4_INPUT_ENABLE		1
@@ -189,9 +197,17 @@
 #define PC2_INPUT_ENABLE		1
 #define PC1_INPUT_ENABLE		1
 
+//scan pin open input to read gpio level
+#define PB1_INPUT_ENABLE		1
+#define PA4_INPUT_ENABLE		1
+#define PA3_INPUT_ENABLE		1
+#define PA2_INPUT_ENABLE		1
+#define PA1_INPUT_ENABLE		1
+
+#endif//end of RC_BTN_ENABLE
+
 #define	KB_MAP_NUM		KB_MAP_NORMAL
 #define	KB_MAP_FN		KB_MAP_NORMAL
-
 
 /* ATT Handle define ---------------------------------------------------------*/
 typedef enum
@@ -330,9 +346,11 @@ typedef enum
 
 
 
-
-
-
+#define PRINT_DEBUG_INFO        0
+#if(PRINT_DEBUG_INFO)
+#define DEBUG_INFO_TX_PIN       GPIO_PB7
+#define PULL_WAKEUP_SRC_PB7     PM_PIN_PULLUP_1M
+#endif
 
 
 /* Debug Interface -----------------------------------------------------------*/

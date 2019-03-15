@@ -45,7 +45,6 @@ extern u32 blt_ota_timeout_us;
 
 extern u32	ota_program_offset;
 extern int 	ota_firmware_size_k;
-extern u32	bls_ota_bootFlagAddr;
 
 
 typedef void (*ota_startCb_t)(void);
@@ -80,12 +79,10 @@ extern int otaRead(void * p);
 
 extern void start_reboot(void);
 
-//firmware_size_k  must be 4k aligned, ota_offset will be ignored in 8267/8269, valid in 8261/8266
+//firmware_size_k  must be 4k aligned
 void bls_ota_setFirmwareSizeAndOffset(int firmware_size_k, u32 ota_offset);
 
 
-//only valid for 8261/8266
-void bls_ota_setBootFlagAddr(u32 bootFlag_addr);
 
 void bls_ota_clearNewFwDataArea(void);
 

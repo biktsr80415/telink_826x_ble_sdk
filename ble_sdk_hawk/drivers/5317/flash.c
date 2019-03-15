@@ -108,6 +108,8 @@ _attribute_ram_code_ void flash_read_page(unsigned long addr, unsigned long len,
 
 	irq_restore(r);
 }
+
+#if 0
 /**
  * @brief This function reads the status of flash.
  * @param[in]  none
@@ -274,4 +276,6 @@ _attribute_ram_code_ unsigned int flash_get_jedec_id(){
 	irq_restore(r);
 	return (unsigned int)((manufacturer << 24 | mem_type << 16 | cap_id));
 }
+#endif
+
 #endif

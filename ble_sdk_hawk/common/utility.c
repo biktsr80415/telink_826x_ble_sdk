@@ -65,42 +65,6 @@ void freeTimerTask(void **arg)
 }
 
 
-/*********************************************************************
- * @fn          generateRandomNum
- *
- * @brief       generate random number
- *
- * @param       len - len
- *
- * @param       data -  buffer
- *
- * @return      None
- */
-void generateRandomNum(u8 len, u8 *data)
-{
-	u8 i;
-	u16 randNums = 0;
-    /* if len is odd */
-	for (i=0; i<len-1; i+=2 ) {
-#ifdef WIN32
-		*(u16*)(data+i) = my_random();
-#else
-		randNums = rand();
-		data[i] = randNums & 0xff;
-		data[i+1] = randNums >> 8 &0xff;
-
-#endif
-	}
-
-    if ( i != len ) {
-#ifdef WIN32
-        data[len-1] = my_random();
-#else
-        data[len-1] = rand();
-#endif
-    }
-}
-
 // general swap/endianess utils
 
 void swapX(const u8 *src, u8 *dst, int len)

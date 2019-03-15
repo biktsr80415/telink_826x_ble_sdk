@@ -121,27 +121,25 @@ static u16 vk_consumer_map[16] = {
 /*------------- IR  Function                                  ----------------*/
 /*----------------------------------------------------------------------------*/
 #if (REMOTE_IR_ENABLE)
-	//ir key
-	#define TYPE_IR_SEND			1
-	#define TYPE_IR_RELEASE			2
+//ir key
+#define TYPE_IR_SEND			1
+#define TYPE_IR_RELEASE			2
 
-	///////////////////// key mode //////////////////////
-	#define KEY_MODE_BLE	   		0    //ble key
-	#define KEY_MODE_IR        		1    //ir  key
+///////////////////// key mode //////////////////////
+#define KEY_MODE_BLE	   		0    //ble key
+#define KEY_MODE_IR        		1    //ir  key
 
+static const u8 kb_map_ble[] = KB_MAP_BLE;  //5*6
+static const u8 kb_map_ir[]  = KB_MAP_IR;   //5*6
 
-	static const u8 kb_map_ble[] = 	KB_MAP_BLE;  //5*6
-	static const u8 kb_map_ir[] = 	KB_MAP_IR;   //5*6
-
-
-	void ir_dispatch(u8 type, u8 syscode ,u8 ircode){
-		if(type == TYPE_IR_SEND){
-			IR_SendNec(syscode,~(syscode),ircode);
-		}
-		else if(type == TYPE_IR_RELEASE){
-			IR_Stop();
-		}
+void ir_dispatch(u8 type, u8 syscode ,u8 ircode){
+	if(type == TYPE_IR_SEND){
+		IR_SendNec(syscode,~(syscode),ircode);
 	}
+	else if(type == TYPE_IR_RELEASE){
+		IR_Stop();
+	}
+}
 #endif
 
 
@@ -149,112 +147,36 @@ static u16 vk_consumer_map[16] = {
 /*------------- OTA  Function                                 ----------------*/
 /*----------------------------------------------------------------------------*/
 #if (BLE_REMOTE_OTA_ENABLE)
-	void entry_ota_mode(void)
-	{
-		ota_is_working = 1;
-		device_led_setup(led_cfg[LED_SHINE_OTA]);
-		bls_ota_setTimeout(15 * 1000 * 1000); //set OTA timeout  15 seconds
-	}
+void entry_ota_mode(void)
+{
+	ota_is_working = 1;
+	device_led_setup(led_cfg[LED_SHINE_OTA]);
+	bls_ota_setTimeout(15 * 1000 * 1000); //set OTA timeout  15 seconds
+}
 
-	void LED_show_ota_result(int result)
-	{
-		#if 0
-			irq_disable();
-			WATCHDOG_DISABLE;
+void LED_show_ota_result(int result)
+{
+	#if 0
+		irq_disable();
+		WATCHDOG_DISABLE;
 
-			gpio_set_output_en(GPIO_LED, 1);
+		gpio_set_output_en(GPIO_LED, 1);
 
-			if(result == OTA_SUCCESS){  //OTA success
-				gpio_write(GPIO_LED, 1);
-				sleep_us(2000000);  //led on for 2 second
-				gpio_write(GPIO_LED, 0);
-			}
-			else{  //OTA fail
+		if(result == OTA_SUCCESS){  //OTA success
+			gpio_write(GPIO_LED, 1);
+			sleep_us(2000000);  //led on for 2 second
+			gpio_write(GPIO_LED, 0);
+		}
+		else{  //OTA fail
 
-			}
+		}
 
-			gpio_set_output_en(GPIO_LED, 0);
-		#endif
-	}
+		gpio_set_output_en(GPIO_LED, 0);
+	#endif
+}
 #endif
 
 
-/*----------------------------------------------------------------------------*/
-/*------------- Audio  Function                               ----------------*/
-/*----------------------------------------------------------------------------*/
-#if (BLE_AUDIO_ENABLE)
-	u32 key_voice_pressTick = 0;
-
-	void ui_enable_mic (u8 en)
-	{
-		ui_mic_enable = en;
-
-		//AMIC Bias output
-		gpio_set_output_en (GPIO_AMIC_BIAS, en);
-		gpio_write (GPIO_AMIC_BIAS, en);
-
-		device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
-
-
-		if(en){  //audio on
-			lowBattDet_enable = 0;
-			ADC_PowerOn();
-			//battery2audio();////switch auto mode
-		}
-		else{  //audio off
-			//audio2battery();////switch manual mode
-			lowBattDet_enable = 1;
-			ADC_PowerOff();
-		}
-	}
-
-	void voice_press_proc(void)
-	{
-		key_voice_press = 0;
-		ui_enable_mic (1);
-		if(ui_mtu_size_exchange_req && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
-			ui_mtu_size_exchange_req = 0;
-			blc_att_requestMtuSizeExchange(BLS_CONN_HANDLE, 0x009e);
-		}
-	}
-
-	void task_audio (void)
-	{
-		static u32 audioProcTick = 0;
-		if(clock_time_exceed(audioProcTick, 5000)){
-			audioProcTick = clock_time();
-		}
-		else{
-			return;
-		}
-
-		///////////////////////////////////////////////////////////////
-		log_event(TR_T_audioTask);
-
-		proc_mic_encoder ();
-
-		//////////////////////////////////////////////////////////////////
-		if (blc_ll_getTxFifoNumber() < 10)
-		{
-			int *p = mic_encoder_data_buffer ();
-			if (p)					//around 3.2 ms @16MHz clock
-			{
-				log_event (TR_T_audioData);
-				bls_att_pushNotifyData (AUDIO_MIC_INPUT_DP_H, (u8*)p, ADPCM_PACKET_LEN);
-			}
-		}
-	}
-
-	void blc_checkConnParamUpdate(void)
-	{
-		if(	 interval_update_tick && clock_time_exceed(interval_update_tick,5*1000*1000) && \
-			 blc_ll_getCurrentState() == BLS_LINK_STATE_CONN &&  bls_ll_getConnectionInterval()!= 8 )
-		{
-			interval_update_tick = clock_time() | 1;
-			bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);
-		}
-	}
-#endif
 
 
 /*----------------------------------------------------------------------------*/
@@ -278,14 +200,11 @@ void ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 
 	if(*p == HCI_ERR_CONN_TIMEOUT){
 
-	}
-	else if(*p == HCI_ERR_REMOTE_USER_TERM_CONN){  //0x13
+	}else if(*p == HCI_ERR_REMOTE_USER_TERM_CONN){  //0x13
 
-	}
-	else if(*p == HCI_ERR_CONN_TERM_MIC_FAILURE){
+	}else if(*p == HCI_ERR_CONN_TERM_MIC_FAILURE){
 
-	}
-	else{
+	}else{
 
 	}
 
@@ -296,11 +215,6 @@ void ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 	}
 #endif
 
-#if (BLE_AUDIO_ENABLE)
-	if(ui_mic_enable){
-		ui_enable_mic (0);
-	}
-#endif
 
 	advertise_begin_tick = clock_time();
 }
@@ -321,6 +235,7 @@ void task_connect (u8 e, u8 *p, int n)
 /*----------------------------------------------------------------------------*/
 /*------------- Key Function                                  ----------------*/
 /*----------------------------------------------------------------------------*/
+#if(RC_BTN_ENABLE)
 void deep_wakeup_proc(void)
 {
 #if(DEEPBACK_FAST_KEYSCAN_ENABLE)
@@ -406,19 +321,6 @@ void key_change_proc(void)
 			user_key_mode = !user_key_mode;
 			device_led_setup(led_cfg[LED_SHINE_SLOW + user_key_mode]);
 		}
-#if (BLE_AUDIO_ENABLE)
-		else if (key0 == VOICE)
-		{
-			if(ui_mic_enable){  //if voice on, voice off
-				//adc_clk_powerdown();
-				ui_enable_mic (0);
-			}
-			else{ //if voice not on, mark voice key press tick
-				key_voice_press = 1;
-				key_voice_pressTick = clock_time();
-			}
-		}
-#endif
 
 #if (REMOTE_IR_ENABLE)
 		else if(user_key_mode == KEY_MODE_BLE)
@@ -466,9 +368,7 @@ void key_change_proc(void)
 				bls_att_pushNotifyData (HID_NORMAL_KB_REPORT_INPUT_DP_H, key_buf, 8);
 			}
 		}
-
 #endif
-
 	}
 	else   //kb_event.cnt == 0,  key release
 	{
@@ -514,7 +414,6 @@ void proc_keyboard (u8 e, u8 *p, int n)
 		gpioWakeup_keyProc_cnt --;
 	}
 
-
 	if(gpioWakeup_keyProc_cnt || clock_time_exceed(keyScanTick, 8000)){
 		keyScanTick = clock_time();
 	}
@@ -535,14 +434,6 @@ void proc_keyboard (u8 e, u8 *p, int n)
 		key_change_proc();
 	}
 	
-#if (BLE_AUDIO_ENABLE)
-	 //long press voice 1 second
-		if(key_voice_press && !ui_mic_enable && blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && \
-			clock_time_exceed(key_voice_pressTick,1000000)){
-
-			voice_press_proc();
-		}
-#endif
 
 #if(DEEPBACK_FAST_KEYSCAN_ENABLE)
 	if(deepback_key_state != DEEPBACK_KEY_IDLE){
@@ -550,7 +441,7 @@ void proc_keyboard (u8 e, u8 *p, int n)
 	}
 #endif
 }
-
+#endif
 
 extern u32	scan_pin_need;
 //_attribute_ram_code_
@@ -563,7 +454,7 @@ void blt_pm_proc(void)
 	}
 #if(REMOTE_IR_ENABLE)
 	#if(MCU_CORE_TYPE == MCU_CORE_5316)
-	else if(IR_GetIrState() == IR_STATE_SENDING){
+	if(IR_GetIrState() == IR_STATE_SENDING){
 		bls_pm_setSuspendMask(SUSPEND_DISABLE);
 	}
 	#else
@@ -572,12 +463,14 @@ void blt_pm_proc(void)
 	}
 	#endif
 #endif
+
 #if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE)
 	else if( blc_phy_isPhyTestEnable() )
 	{
 		bls_pm_setSuspendMask(SUSPEND_DISABLE);  //phy test can not enter suspend
 	}
 #endif
+
 	else
 	{
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
@@ -589,6 +482,7 @@ void blt_pm_proc(void)
 				extern int key_matrix_same_as_last_cnt;
 				if(!ota_is_working && key_matrix_same_as_last_cnt > 5){  //key matrix stable can optize
 					bls_pm_setManualLatency(3);
+					DBG_CHN1_TOGGLE;
 				}
 				else{
 					bls_pm_setManualLatency(0);  //latency off: 0
@@ -599,7 +493,7 @@ void blt_pm_proc(void)
 		}
 
 
-	#if 0 //deepsleep
+	#if 1 //deepsleep
 		if(sendTerminate_before_enterDeep == 1){ //sending Terminate and wait for ack before enter deepsleep
 			if(user_task_flg){  //detect key Press again,  can not enter deep now
 				sendTerminate_before_enterDeep = 0;
@@ -635,15 +529,14 @@ void blt_pm_proc(void)
 			sendTerminate_before_enterDeep = 1;
 		}
 	#endif
-
 	}
-
 #endif  //END of  BLE_REMOTE_PM_ENABLE
 }
 
-_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
-{                                                                                                                //3995*16
-	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * sys_tick_per_us){  //suspend time > 30ms.add gpio wakeup
+
+void  ble_remote_set_sleep_wakeup(u8 e, u8 *p, int n)
+{                                                                                                                //3995*16     sys_tick_per_us
+	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 *CLOCK_16M_SYS_TIMER_CLK_1MS ){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
 	}
 }
@@ -660,188 +553,17 @@ _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 #define PM_32K_WAKEUP_DEEP      4
 /* End of 5316 Driver test. --------------------------------------------------*/
 
-u8 debug_pkt_adv_2[30] = { 10,0,0,0,  0, 8, 0x44,0x44,0x44,0x44,0x33,0x33, 0x01,0xAA};
-
-u8 A_test = 0;
-void ble_tx_adv_test(void)
-{
-	rf_set_power_level_index (RF_POWER_7P9dBm);
-	rf_set_ble_crc_adv ();
-
-	//由于是在广播channel发包，使用特殊的access code 0x12345678，避免受其他设备的干扰
-	rf_set_ble_access_code_adv ();
-//	write_reg32 (0x800408, 0x12345678);
-
-	while(1){
-		STOP_RF_STATE_MACHINE;						// stop SM
-//		REG_ADDR8(0xf00) = 0x80;
-
-		rf_set_ble_channel (37);
-
-		sleep_us(100);
-		reg_rf_irq_status = 0xffff;
-
-//		debug_pkt_adv.data[0] ++;
-		debug_pkt_adv_2[12]++;
-		rf_start_stx ((void *)&debug_pkt_adv_2, clock_time() + 1000);
-
-		//sleep_us(19870);  //20ms发一个包
-		sleep_us(100000);  //20ms发一个包
-		DBG_CHN5_TOGGLE;
-		A_test++;
-	}
-}
 
 //u16 ADC_SampleValue[16];
 void user_init()
 {
-#if 0
-	sleep_us(3000000);
-//	if(blt_miscParam.pad32k_en)
-//	{
-//		blt_miscParam.pm_enter_en = 1;
-//	}
-
-#if 0 // ADC test
-//	gpio_set_func(GPIO_LED,AS_GPIO);
-//	gpio_set_output_en(GPIO_LED, 1);
-//	gpio_write(GPIO_LED,0);//LED2 ON
-
-	UART_GPIO_INIT_PB4B5();
-	uart_Init(9,13,PARITY_NONE, STOP_BIT_ONE);//baudrate 115200
-	uart_notDmaModeInit(1,1,0,0);
-
-//	gpio_set_func(GPIO_PA6,AS_GPIO);
-//	gpio_set_input_en(GPIO_PA6,1);
-//	gpio_setup_up_down_resistor(GPIO_PA6, PM_PIN_PULLDOWN_100K);
-
-//	sleep_us(2000000);
-
-	gpio_set_func(GPIO_PA6,AS_GPIO);
-	gpio_set_func(GPIO_PA7,AS_GPIO);
-	gpio_set_input_en(GPIO_PA6,0);
-	gpio_set_input_en(GPIO_PA7,0);
-	gpio_write(GPIO_PA6,0);
-	gpio_write(GPIO_PA7,0);
-
-//	ADC_ClockSet(3000000);//3MHz
-//	ADC_Init(ADC_Module_M,ADC_Mode_Diff,ADC_Vref_1p2, ADC_Resolution_14b);
-//	ADC_DifferChannelSet(ADC_Module_L,ADC_Channel_PA6, ADC_Channel_PA7);
-//	ADC_Cmd(ADC_Module_M,ENABLE);
-
-	ADC_BatteryCheckInit();
-	ADC_VbatDivFactorSet(ADC_Vbat_Div_Factor_2);
-#endif
-
-#if 0 // IR test
-	IR_Init(IR_Pin_PA0);
-    irq_enable();
-    u8 cnt = 10;
-#endif
-//    gpio_set_func(GPIO_PA0,AS_AF);
-//    GPIOA_AF->RegBits.P0_AF = GPIOA0_32K_CLK_OUTPUT;
-
-
-	while(1)
-	{
-#if 0 //BLE RF test
-
-		ble_tx_adv_test();
-		//sleep_us(10000);
-		//DBG_CHN5_TOGGLE;
-#endif
-
-		#if 0 //IR test
-			while(cnt)
-			{
-				if(IR_GetIrState() == IR_STATE_IDLE)
-				{
-					u8 addr = 0x00;
-					IR_Send(addr,(~addr),0x00);
-					sleep_us(110000);
-					cnt--;
-				}
-
-				if(cnt == 0)
-				{
-					//IR_KeyRelease();
-				}
-			}
-			//IR_KeyRelease();
-			//IR_RepeatCodeSend();
-			sleep_us(1000000);
-		#endif
-
-		#if 0 //ADC Test
-			u32 sum = 0;
-			for(volatile int i = 0; i< 16; i++)
-			{
-				sum += ADC_GetConvertValue();
-			}
-			//u16 adcValue = ADC_GetConvertValue();
-			u16 adcValue = (u16)(sum/16);
-			u16 vol = 0;
-			if((adcValue & BIT(14)) != 0)
-			{
-				adcValue += 1;
-				adcValue = ~adcValue;
-			}
-
-			vol = adcValue *1200*2 /(1<<13);//Unit:mV
-			write_reg16(0x8000,vol);
-			printf("vol = %dmV\n",vol);
-			sleep_us(100000);
-		#endif
-
-
-		#if(PM_TEST == PM_GPIO_WAKEUP_SUSPEND)
-			DBG_CHN3_TOGGLE;
-			gpio_set_wakeup(GPIO_PA6,1,1);
-			cpu_sleep_wakeup(0,PM_WAKEUP_CORE,0);
-
-		#elif(PM_TEST == PM_PAD_WAKEUP_SUSPEND)
-//			DBG_CHN3_TOGGLE;
-			DBG_CHN1_LOW;
-
-			cpu_set_gpio_wakeup(GPIO_PA6,1,1);
-			//pm_set_filter(1);
-			cpu_sleep_wakeup(SUSPEND_MODE,PM_WAKEUP_PAD,0);
-
-			DBG_CHN1_HIGH;
-			sleep_us(100000);
-
-		#elif(PM_TEST == PM_32K_WAKEUP_SUSPEND)
-
-			DBG_CHN1_LOW;
-			cpu_sleep_wakeup(0,PM_WAKEUP_TIMER, (30*1000*16) + clock_time());
-			DBG_CHN1_HIGH;
-
-			sleep_us(10000);
-			//for(volatile int i=0; i<1000; i++);// (16MHz)
-
-		#elif(PM_TEST == PM_PAD_WAKEUP_DEEP)
-
-			cpu_set_gpio_wakeup(GPIO_PA6,1,1);
-			//pm_set_filter(1);
-			cpu_sleep_wakeup(1, PM_WAKEUP_PAD, 0);
-
-		#elif(PM_TEST == PM_32K_WAKEUP_DEEP)
-
-			sleep_us(20000);
-			cpu_sleep_wakeup(1,PM_WAKEUP_TIMER, 2*1000*1000*16+clock_time());
-		#endif
-
-	}
-
-#else
-
 	/* load customized freq_offset CAP value and TP value.*/
 	blc_app_loadCustomizedParameters();
 
 	/*-- BLE stack initialization --------------------------------------------*/
-	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
-	u32 *pmac = (u32 *) CFG_ADR_MAC;
-	if (*pmac != 0xffffffff)
+	u8  tbl_mac[] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
+	u32 *pmac = (u32 *)CFG_ADR_MAC;
+	if(*pmac != 0xffffffff)
 	{
 		memcpy (tbl_mac, pmac, 6);
 	}
@@ -851,17 +573,16 @@ void user_init()
 	}
 
 	/*-- BLE Controller initialization ---------------------------------------*/
-	blc_ll_initBasicMCU(tbl_mac);   //mandatory
-	blc_ll_initAdvertising_module(tbl_mac); //adv module:  mandatory for BLE slave,
-	blc_ll_initSlaveRole_module();			//slave module:mandatory for BLE slave,
+	blc_ll_initBasicMCU(tbl_mac);//mandatory
+	blc_ll_initAdvertising_module(tbl_mac);//adv module: mandatory for BLE slave,
+	blc_ll_initSlaveRole_module();//slave module: mandatory for BLE slave,
 
 	/*-- BLE Host initialization ---------------------------------------------*/
-	extern void my_att_init ();
+	extern void my_att_init(void);
 	//GATT initialization
-	my_att_init ();
+	my_att_init();
 	//L2CAP initialization
-	blc_l2cap_register_handler (blc_l2cap_packet_receive);
-
+	blc_l2cap_register_handler(blc_l2cap_packet_receive);
 
 	/*-- BLE SMP initialization ----------------------------------------------*/
 #if (BLE_REMOTE_SECURITY_ENABLE)
@@ -878,8 +599,9 @@ void user_init()
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
+
 	/* Configure ADV packet */
-#if (BLE_REMOTE_SECURITY_ENABLE)
+#if(BLE_REMOTE_SECURITY_ENABLE)
 	//get bonded device number
 	u8 bond_number = blc_smp_param_getCurrentBondingDeviceNumber();
 	smp_param_save_t  bondInfo;
@@ -897,15 +619,14 @@ void user_init()
 										bondInfo.peer_addr_type,  bondInfo.peer_addr,
 										MY_APP_ADV_CHANNEL,
 										ADV_FP_NONE);
-		//debug: adv setting err
+		//debug: ADV setting err
 		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }
 
 		//it is recommended that direct adv only last for several seconds, then switch to indirect adv
 		bls_ll_setAdvDuration(MY_DIRECT_ADV_TMIE, 1);
 		bls_app_registerEventCallback (BLT_EV_FLAG_ADV_DURATION_TIMEOUT, &app_switch_to_indirect_adv);
-
 	}
-	else   //set indirect adv
+	else//set indirect ADV
 #endif
 	{
 		u8 status = bls_ll_setAdvParam(  MY_ADV_INTERVAL_MIN, MY_ADV_INTERVAL_MAX,
@@ -913,27 +634,28 @@ void user_init()
 										 0,  NULL,
 										 MY_APP_ADV_CHANNEL,
 										 ADV_FP_NONE);
-		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }  //debug: adv setting err
+		//debug: ADV setting err
+		if(status != BLE_SUCCESS) { write_reg8(0x8000, 0x11); 	while(1); }
 	}
 
-	bls_ll_setAdvEnable(1);//adv enable
+	bls_ll_setAdvEnable(1);  //adv enable
 	rf_set_power_level_index (RF_POWER_7P9dBm);//OK
 
 	//ble event call back
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
 	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
 
-
 	/* Keyboard matrix initialization */
+#if(RC_BTN_ENABLE)
 	u32 pin[] = KB_DRIVE_PINS;
-	for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
+	for(int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
 	{
 		gpio_set_wakeup(pin[i],1,1);  	   //drive pin core(gpio) high wakeup suspend
 		cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
 	}
 
 	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_keyboard);
-
+#endif
 
 	/* Power Management initialization */
 #if(BLE_REMOTE_PM_ENABLE)
@@ -960,8 +682,7 @@ void user_init()
 #endif
 
 	/* OTA Function Initialization  */
-#if (BLE_REMOTE_OTA_ENABLE)
-	////////////////// OTA relative ////////////////////////
+#if(BLE_REMOTE_OTA_ENABLE)
 	bls_ota_clearNewFwDataArea(); //must
 	bls_ota_registerStartCmdCb(entry_ota_mode);
 	bls_ota_registerResultIndicateCb(LED_show_ota_result);
@@ -969,11 +690,11 @@ void user_init()
 
 
 	/* LED Indicator Initialization */
+#if (BLT_APP_LED_ENABLE)
 	device_led_init(GPIO_LED, 1);
+#endif
 
 	advertise_begin_tick = clock_time();
-
-#endif
 
 //	gpio_set_func(GPIO_PB1, AS_GPIO);
 //	gpio_set_output_en(GPIO_PB1,1);
@@ -990,6 +711,7 @@ u32 tick_loop;
 void main_loop (void)
 {
 	tick_loop ++;
+//	DBG_CHN0_TOGGLE;
 
 	/* BLE entry -------------------------------------------------------------*/
 	blt_sdk_main_loop();
@@ -1000,12 +722,17 @@ void main_loop (void)
 		  battery_power_check();
 		}
 	#endif
-	//lowBatt_alarmFlag =  //low battery detect
 
-	proc_keyboard (0, 0, 0);
+	#if(RC_BTN_ENABLE)
+		proc_keyboard(0, 0, 0);
+	#endif
 
-	device_led_process();
+	#if (BLT_APP_LED_ENABLE)
+		device_led_process();
+	#endif
 
+
+	/*-- Power Management  -------------------------------------------------------*/
 	blt_pm_proc();
 }
 #endif  //end of__PROJECT_5316_BLE_REMOTE__

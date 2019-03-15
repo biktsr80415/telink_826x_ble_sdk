@@ -90,7 +90,7 @@ void 	sdm_decode_rate (int step, int adj);
 int   	sdm_bytes_in_buffer ();
 
 
-
-void audio_biquad_filter(int*coeff0, int*coeff1, u8 shift, u8 en);
+void audio_set_biquad_filter0(int *coeff0, u8 shift, u8 en);
+void audio_set_biquad_filter1(int *coeff1, u8 shift, u8 en);
 
 #endif

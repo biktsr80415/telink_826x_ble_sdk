@@ -4,8 +4,6 @@
 /**
  *  @brief  Definition for Device info
  */
-//#include "../../proj/mcu/analog.h"
-//#include "../rf_drv.h"
 #include "drivers.h"
 #include "tl_common.h"
 
@@ -19,51 +17,12 @@
 
 #define RAMCODE_OPTIMIZE_CONN_POWER_NEGLECT_ENABLE			0
 
+//Use for UEI UTB2
+#define RAM_OPTIMZATION_FOR_UEI_EN    						0
 
-
-
-/////////////////// Flash  Address Config ////////////////////////////
-#if( __TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) )
-	#ifndef		CFG_ADR_MAC
-	#define		CFG_ADR_MAC						0x1F000
-	#endif
-
-	#ifndef		CUST_CAP_INFO_ADDR
-	#define		CUST_CAP_INFO_ADDR				0x1E000
-	#endif
-
-	#ifndef		CUST_TP_INFO_ADDR
-	#define		CUST_TP_INFO_ADDR				0x1E040
-	#endif
-
-	#ifndef		CUST_32KPAD_CAP_INFO_ADDR
-	#define		CUST_32KPAD_CAP_INFO_ADDR		0x1E080
-	#endif
-#else  //8266 8267 8269
-	#ifndef		CFG_ADR_MAC
-	#define		CFG_ADR_MAC						0x76000
-	#endif
-
-	#ifndef		CUST_CAP_INFO_ADDR
-	#define		CUST_CAP_INFO_ADDR				0x77000
-	#endif
-
-	#ifndef		CUST_TP_INFO_ADDR
-	#define		CUST_TP_INFO_ADDR				0x77040
-	#endif
-
-	#ifndef		CUST_32KPAD_CAP_INFO_ADDR
-	#define		CUST_32KPAD_CAP_INFO_ADDR		0x77080
-	#endif
+#if (RAM_OPTIMZATION_FOR_UEI_EN)
+	#define SMP_BONDING_DEVICE_MAX_NUM						1
 #endif
-
-
-//master
-#ifndef		CFG_ADR_PEER
-#define		CFG_ADR_PEER					0x78000
-#endif
-
-
 
 
 
@@ -124,25 +83,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 /////////////////// Code Zise & Feature ////////////////////////////
 
-#if ( __TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) )
-	#define BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE		1
-	#define BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE		0
-#endif
-
-
-#ifndef BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE
-#define BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE			0
-#endif
-
-
-
-
-//for 8261 128k flash
-#if (BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE)
-	#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
-#endif
-
-
 
 
 #ifndef SECURE_CONNECTION_ENABLE
@@ -190,15 +130,6 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 
-
-#if (BLE_MODULE_LIB_ENABLE || BLE_MODULE_APPLICATION_ENABLE)  //for ble module
-	#define		BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE		1
-	#define		BLS_SEND_TLK_MODULE_EVENT_ENABLE				1
-	#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
-#endif
-
-
-
 //when rf dma & uart dma work together
 #ifndef		BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE
 #define		BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE		0
@@ -214,21 +145,11 @@ static inline void blc_app_loadCustomizedParameters(void)
 #define		BLS_ADV_INTERVAL_CHECK_ENABLE					1
 #endif
 
-#if LIB_TELINK_MESH_SCAN_MODE_ENABLE
-#define		BLS_TELINK_MESH_SCAN_MODE_ENABLE				1
-#endif
 
-/////////////////  scan mode config  //////////////////////////
-#ifndef		BLS_TELINK_MESH_SCAN_MODE_ENABLE
-#define		BLS_TELINK_MESH_SCAN_MODE_ENABLE				0
-#endif
 
-#if(BLS_TELINK_MESH_SCAN_MODE_ENABLE)
-	#define		BLS_BT_STD_SCAN_MODE_ENABLE					0
-#else
-	#ifndef		BLS_BT_STD_SCAN_MODE_ENABLE
-	#define		BLS_BT_STD_SCAN_MODE_ENABLE					1
-	#endif
+
+#ifndef		BLS_BT_STD_SCAN_MODE_ENABLE
+#define		BLS_BT_STD_SCAN_MODE_ENABLE					1
 #endif
 
 
@@ -242,6 +163,10 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 #define	BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN		0
 
+
+#if (MCU_CORE_TYPE == MCU_CORE_5317)
+	#define	BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE	0
+#endif
 
 
 //conn param update/map update
@@ -262,8 +187,6 @@ typedef struct{
 }uart_data_t;
 
 
-//Use for UEI UTB2
-#define RAM_OPTIMZATION_FOR_UEI_EN    0
 
 
 ///////////////////////////////////////dbg channels///////////////////////////////////////////

@@ -9,6 +9,8 @@
 
 #include "tl_common.h"
 #include "myprintf.h"
+#include "drivers.h"
+
 #if(PRINT_DEBUG_INFO)
 #define va_start(ap,v)    (ap = (char *)((int)&v + sizeof(v)))
 #define va_arg(ap,t)      ((t *)(ap += sizeof(t)))[-1]

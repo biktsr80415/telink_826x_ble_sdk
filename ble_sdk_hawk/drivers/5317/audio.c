@@ -220,34 +220,84 @@ enum{
 							}while(0)
 
 
-unsigned char AMIC_ADC_SampleLength[3] = {0xf0/*96K*/,0xab/*132K*/,0x75/*192K*/};
+const unsigned char AMIC_ADC_SampleLength[3] = {
+	0xf0/*96K*/,0xab/*132K*/,0x75/*192K*/
+};
 
-unsigned char DMIC_CLK_Mode[RATE_SIZE] = {47/*8	k	1021.277*/,	47/*16k	1021.277*/,
-										  34/*22k	1411.765*/,	47/*32k	1021.277*/,
-										  34/*44k	1411.765*/,	32/*48k	1500	*/,
-										  32/*96k	1500	*/};
+const unsigned char DMIC_CLK_Mode[RATE_SIZE] = {
+	47/*8k	1021.277*/,	47/*16k	1021.277*/,
+	34/*22k	1411.765*/,	47/*32k	1021.277*/,
+	34/*44k	1411.765*/,	32/*48k	1500	*/,
+	32/*96k	1500	*/
+};
 
-unsigned char DMIC_CIC_Rate[RATE_SIZE] = {0x23/*8k 7.978723		CIC_MODE 0*/,	0x22/*16k 15.95745	CIC_MODE 0*/,
-										  0x32/*22k 22.05882	CIC_MODE 0*/,	0x11/*32k 31.91489	CIC_MODE 0*/,
-										  0x11/*44k 44.11765	CIC_MODE 0*/,	0x11/*48k 46.875	CIC_MODE 0*/,
-										  0x00/*96k 93.75 		CIC_MODE 0*/};
+const unsigned char DMIC_CIC_Rate[RATE_SIZE] = {
+	0x23/*8k 7.978723	CIC_MODE 0*/,0x22/*16k 15.95745	CIC_MODE 0*/,
+	0x32/*22k 22.05882	CIC_MODE 0*/,0x11/*32k 31.91489	CIC_MODE 0*/,
+	0x11/*44k 44.11765	CIC_MODE 0*/,0x11/*48k 46.875	CIC_MODE 0*/,
+	0x00/*96k 93.75 	CIC_MODE 0*/
+};
 
-unsigned char AMIC_CIC_Rate[RATE_SIZE] = {0xab/*8k  96/12	*/,	0x85/*16k 96/6	*/,
-										  0x85/*22k 132/6	*/,	0x42/*32k 96/3	*/,
-										  0x42/*44k 132/3	*/,	0x31/*48k 96/2	*/,
-										  0x20/*96k			*/};
+const unsigned char AMIC_CIC_Rate[RATE_SIZE] = {
+	0xab/*8k  96/12	*/,	0x85/*16k 96/6	*/,
+	0x85/*22k 132/6	*/,	0x42/*32k 96/3	*/,
+	0x42/*44k 132/3	*/,	0x31/*48k 96/2	*/,
+	0x20/*96k		*/
+};
 
 /*  matrix used under condition: I2S = 2 MHz  */
-unsigned long ASDM_Rate_Matching[RATE_SIZE] = {0x00832001/*8k */,0x01063001/*16k*/,
-											   0x01687001/*22k*/,0x020C5001/*32k*/,
-											   0x02D4D001/*44k*/,0x03127001/*48k*/,
-											   0x0624d001/*96k*/};
+const unsigned long ASDM_Rate_Matching[RATE_SIZE] = {
+	0x00832001/*8k */,0x01063001/*16k*/,
+	0x01687001/*22k*/,0x020C5001/*32k*/,
+	0x02D4D001/*44k*/,0x03127001/*48k*/,
+	0x0624d001/*96k*/
+};
 
 /*  matrix used under condition: I2S = 2 MHz  */
-unsigned long DSDM_Rate_Matching[RATE_SIZE] = {0x00820001/*8 k*/,0x01058001/*16k*/,
-											   0x01697001/*22k*/,0x020AF001/*32k*/,
-											   0x02D2E001/*44k*/,0x03000001/*48k*/,
-											   0x06000001/*96k*/};
+const unsigned long DSDM_Rate_Matching[RATE_SIZE] = {
+	0x00820001/*8 k*/,0x01058001/*16k*/,
+	0x01697001/*22k*/,0x020AF001/*32k*/,
+	0x02D2E001/*44k*/,0x03000001/*48k*/,
+	0x06000001/*96k*/
+};
+
+/* Audio biquad factor */
+const signed char Audio_Biquad_tab[2][10] = {
+	{0xc5, 0x03, 0x38, 0x00, 0xb7, 0x03, 0xc8, 0x0f, 0x84, 0x0c},
+	{0x38, 0x03, 0xb9, 0x01, 0x20, 0x03, 0x47, 0x0e, 0xa8, 0x0d},
+};
+
+void audio_biquad_filter(u8 filter0_en, u8 filter1_en)
+{
+	/* Biquad filter 0 setting */
+	if(filter0_en)
+	{
+		for(volatile int i =0; i<10; i++)
+		{
+			write_reg8(0xb60+i,Audio_Biquad_tab[0][i]);
+		}
+		reg_audio_biquad_cfg &= ~FLD_AUDIO_BIQUAD_FILTER0_DISABLE;
+	}
+	else
+	{
+		reg_audio_biquad_cfg |= FLD_AUDIO_BIQUAD_FILTER0_DISABLE;
+	}
+
+	/* Biquad filter 1 setting */
+	if(filter1_en)
+	{
+		for(volatile int i=0; i<10; i++)
+		{
+			write_reg8(0xb6a+i,Audio_Biquad_tab[1][i]);
+		}
+
+		reg_audio_biquad_cfg &= ~FLD_AUDIO_BIQUAD_FILTER1_DISABLE;
+	}
+	else
+	{
+		reg_audio_biquad_cfg |= FLD_AUDIO_BIQUAD_FILTER1_DISABLE;
+	}
+}
 
 /**
  * @brief     set the mic buffer's address and size
@@ -270,11 +320,17 @@ void audio_set_alc_hpf_lpf(Audio_ALC_HPF_LPF_Typedef Pro_M,unsigned char HPF_ADJ
  */
 void audio_amic_init(AUDIO_RateTypeDef Audio_Rate)
 {
+	adc_power_on_sar_adc(0);
+
 	/*******1.ADC setting for analog audio sample**************************/
 	set_ana_ldo_trim(LDO_OUT_VOLT_TRIM_1P9);
 	adc_set_atb(ADC_SEL_ATB_1);//防止低温抖动
+
+	analog_write(02, 0xc1);//???
+
 	adc_reset_adc_module();   //reset whole digital adc module
-	adc_enable_clk_24m_to_sar_adc(1);  //enable signal of 24M clock to sar adc
+
+	//adc_enable_clk_24m_to_sar_adc(1);  //enable signal of 24M clock to sar adc
 
 	adc_set_sample_clk(5); //adc sample clk= 24M/(1+5)=4M
 
@@ -299,8 +355,9 @@ void audio_amic_init(AUDIO_RateTypeDef Audio_Rate)
 	adc_set_ain_channel_differential_mode(ADC_LEFT_CHN, PGA0P, PGA0N);  //left channel positive and negative data in
 
 	adc_set_ref_voltage(ADC_LEFT_CHN, ADC_VREF_1P2V);					//left channel vref
+	adc_set_vref_vbat_divider(ADC_VBAT_DIVIDER_OFF);
 	adc_set_resolution(ADC_LEFT_CHN, RES14);							//left channel resolution
-	adc_set_tsample_cycle(ADC_LEFT_CHN, SAMPLING_CYCLES_3);				//left channel tsample
+	adc_set_tsample_cycle(ADC_LEFT_CHN, SAMPLING_CYCLES_6);				//left channel tsample
 
 	adc_set_ain_pre_scaler(ADC_PRESCALER_1);                            //ain pre scaler none
 
@@ -320,24 +377,22 @@ void audio_amic_init(AUDIO_RateTypeDef Audio_Rate)
 
 	WriteAnalogReg(0xfe,0x05);					//0xfe default value is 0xe5,for output audio, mast claer 0xfe<7:5>
 
-	adc_power_on_sar_adc(1);   //power on sar adc
+	//adc_power_on_sar_adc(1);   //power on sar adc
 
 	PGA_SetGain(PGA_PreGain_26dB,PGA_PostGain_0dB);
 
 	////////////////////////////// ALC HPF LPF setting /////////////////////////////////
 	//Enable HPF, Enable LPF, Disable ALC, Enable double_down_sampling
-	reg_audio_alc_hpf_lpf_en = MASK_VAL( FLD_AUD_IN_HPF_SFT,    0x0b,   //different pcb may set different value.
+	reg_audio_alc_hpf_lpf_en = MASK_VAL( FLD_AUD_IN_HPF_SFT,    0x09,   //different pcb may set different value.
 										 FLD_AUD_IN_HPF_BYPASS, 0,
 										 FLD_AUD_IN_ALC_BYPASS, 1,
 										 FLD_AUD_IN_LPF_BYPASS, 0,
-										 FLD_DOUBLE_DOWN_SAMPLING_ON, 1);
+										 FLD_DOUBLE_DOWN_SAMPLING_ON, 0);//32k
 	//ALC mode select digital mode
 	reg_audio_alc_cfg &= ~FLD_AUDIO_ALC_ANALOG_AGC_EN;
 	//ALC left channel select manual regulate, and set volume
 	reg_audio_alc_vol_l = MASK_VAL( FLD_AUDIO_ALC_VOL_VALUE,  0x24,
 									FLD_AUDIO_ALC_AUTO_MODE_EN, 0);
-
-
 	//2. Dfifo setting
 	reg_clk_en2 |= FLD_CLK2_DFIFO_EN; //enable dfifo clock, this will be initialed in cpu_wakeup_int()
 	reg_dfifo_mode = FLD_AUD_DFIFO0_IN;
@@ -350,16 +405,20 @@ void audio_amic_init(AUDIO_RateTypeDef Audio_Rate)
 
 	reg_audio_dec_mode |= FLD_AUD_LNR_VALID_SEL | FLD_AUD_CIC_MODE;
 	reg_audio_dec = 0x65;  // 96k/3 = 32k, down sampling to 16K by set core_b40<7>
+
+	audio_biquad_filter(1,1);//解决带外混频问题,此时的audio sample rate = 32K
+
+	adc_power_on_sar_adc(1);   //power on sar adc
 }
 
 
-void  audio_dmic_init (AUDIO_RateTypeDef Audio_Rate,unsigned int MicBufSize)
+void audio_dmic_init (AUDIO_RateTypeDef Audio_Rate,unsigned int MicBufSize)
 {
 	/*******1.Dmic setting for audio input**************************/
 	reg_audio_ctrl = 0x00;
 //	REG_AUDIO_DEC_RATIO = DMIC_CIC_Rate[Audio_Rate];
-	REG_AUDIO_DEC_RATIO = 0x3a;//32K
-	//write_reg8(0x800b40,0xfb);
+	REG_AUDIO_DEC_RATIO = 0x3a;//32k
+	write_reg8(0x800b40,0xfb);
 	REG_AUDIO_DFIFO_MODE = AUDIO_DFIFO0_IN|AUDIO_DFIFO0_OUT|AUDIO_DFIFO0_L_INT;
 	REG_CLK2_EN |= FLD_CLK2_DFIFO_EN; 		//enable the DFIFO clock
 
@@ -377,7 +436,8 @@ void  audio_dmic_init (AUDIO_RateTypeDef Audio_Rate,unsigned int MicBufSize)
 										 FLD_AUD_IN_HPF_BYPASS, 0,
 										 FLD_AUD_IN_ALC_BYPASS, 0,
 										 FLD_AUD_IN_LPF_BYPASS, 0,
-										 FLD_DOUBLE_DOWN_SAMPLING_ON, 1);//down sample 1:enable -> /2; 0:disable
+										 FLD_DOUBLE_DOWN_SAMPLING_ON, 0);//down sample 1:enable -> /2; 0:disable
+	audio_biquad_filter(1,1);//解决带外混频问题,此时的audio sample rate = 32K
 }
 
 /**

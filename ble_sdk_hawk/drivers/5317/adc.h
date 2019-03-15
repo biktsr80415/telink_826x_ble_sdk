@@ -462,6 +462,13 @@ static inline void adc_set_length_capture_state_for_chn_left_right(unsigned shor
 	analog_write(anareg_r_max_s,  (analog_read(anareg_r_max_s)&(~FLD_R_MAX_C1)) | (r_max_c>>8)<<4 );
 }
 
+static inline void adc_set_state_length(unsigned short R_max_mc, unsigned short R_max_c,unsigned char R_max_s)
+{
+	WriteAnalogReg(anareg_r_max_mc, R_max_mc);
+	WriteAnalogReg(anareg_r_max_c, 	R_max_c);
+	WriteAnalogReg(anareg_r_max_s,  ((R_max_mc>>8)<<6) | ((R_max_c>>8)<<4)  | (R_max_s & FLD_R_MAX_S)   );
+}
+
 /***************************************************************************************
 afe_0xF2
     BIT<0>   r_en_left    Enable left  channel. 1: enable;  0: disable
@@ -722,6 +729,10 @@ static inline void adc_set_right_gain_bias(Gain_BiasTypeDef bias)
 {
 	analog_write(0xFC, (analog_read(0xFC)&(~FLD_PGA_ITRIM_GAIN_R)) | (bias<<2) );
 }
+static inline void adc_set_left_right_gain_bias(Gain_BiasTypeDef bias_L, Gain_BiasTypeDef bias_R)
+{
+	analog_write(0xFC, (analog_read(0xFC) & 0xF0) | (bias_L | bias_R<<2) );
+}
 
 /********************************	configure set state	  ****************************/
 
@@ -754,6 +765,30 @@ void adc_set_ain_channel_differential_mode(ADC_ChTypeDef ch_n, ADC_InputPchTypeD
 
 void adc_set_ain_pre_scaler(ADC_PreScalingTypeDef v_scl);
 
+/**
+ * Name     :RNG_Set
+ * Function :Set the source and mode of the random number generator
+ * Input    :RNG_SrcTypeDef src
+ *          :RNG_UpdataTypeDef update_type
+ * return   :void
+ */
+static inline void RNG_Set(RNG_SrcTypeDef src,RNG_UpdataTypeDef update_type)
+{
+	WriteAnalogReg(0xfe, src | update_type);			//Set
+}
+
+
+/**
+ * Name     :RNG_read
+ * Function :Read the value of the random number generator
+ * Input    :None
+ * return   :unsigned short RngValue
+ *          :random number
+ */
+static inline unsigned short RNG_Read(void)
+{
+	return ( ReadAnalogReg(0xf6)<<8 |  ReadAnalogReg(0xf5) );
+}
 
 #else
 /**

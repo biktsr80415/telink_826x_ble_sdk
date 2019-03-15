@@ -49,8 +49,20 @@ static inline void adc_config_misc_channel_buf(signed short* pbuff,unsigned int 
 	reg_dfifo_misc_chn_addr = (unsigned short)((unsigned int)pbuff);
 	reg_dfifo_misc_chn_size = (byte_size>>4)-1;
 
-	reg_dfifo_mode |= FLD_AUD_DFIFO2_IN; // misc chn can only use dfifo2
+	reg_dfifo2_write_ptr = 0;
+	//reg_dfifo_mode |= FLD_AUD_DFIFO2_IN; // misc chn can only use dfifo2
 }
+
+static inline void dfifo_enable_dfifo2(void)
+{
+	reg_dfifo_mode |= FLD_AUD_DFIFO2_IN;
+}
+
+static inline void dfifo_disable_dfifo2(void)
+{
+	reg_dfifo_mode &= ~FLD_AUD_DFIFO2_IN;
+}
+
 
 static inline void audio_config_mic_buf(signed short* pbuff,unsigned int byte_size)
 {

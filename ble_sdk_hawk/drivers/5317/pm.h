@@ -5,8 +5,11 @@
 #include "bsp.h"
 #include "gpio.h"
 
-#define SUSPEND_MODE	0
-#define DEEPSLEEP_MODE	1
+
+#ifndef PM_TIM_RECOVER_MODE
+#define PM_TIM_RECOVER_MODE					1
+#endif
+
 
 //5316 analog register 0x34-0x3e can store infomation when MCU in deepsleep mode
 //store your information in these ana_regs before deepsleep by calling analog_write function
@@ -34,7 +37,7 @@
 
 #define SYS_DEEP_ANA_REG 0x3e  //ana_3e system use for external 32k mode, user can not use
 
-
+/* Use for 32K RC ------------------------------------------------------------*/
 #define BLT_RESET_WAKEUP_TIME_2000		1
 #if (BLT_RESET_WAKEUP_TIME_2000)
 	#define RESET_TIME_US	    	  2000//1500
@@ -60,61 +63,85 @@
 
 #endif
 
+
 /* Sleep mode define */
-typedef enum{
-	PM_SleepMode_Suspend = 0x00,
-	PM_SLeepMode_Deep    = 0x01,
-}PM_SleepModeTypdeDef;
+typedef enum {
+	PM_SleepMode_Suspend = 0x00,		SUSPEND_MODE	= 0x00,
+	PM_SLeepMode_Deep    = 0x01,		DEEPSLEEP_MODE	= 0x01,
+}SleepMode_TypeDef;
+
+
 
 /* Wakeup source define */
 typedef enum {
 	 PM_WAKEUP_PAD   = BIT(4),
 	 PM_WAKEUP_CORE  = BIT(5),
 	 PM_WAKEUP_TIMER = BIT(6),
-}PM_WakeupSrcTypeDef;
+
+
+	 PM_TIM_RECOVER_START =	BIT(14),
+	 PM_TIM_RECOVER_END   =	BIT(15),
+}SleepWakeupSrc_TypeDef;
+
+
 
 /* Wakeup status from return value of "cpu_sleep_wakeup()" */
-typedef enum {
+enum {
 	 WAKEUP_STATUS_COMP   = BIT(0),  //wakeup by comparator
 	 WAKEUP_STATUS_TIMER  = BIT(1),
 	 WAKEUP_STATUS_CORE   = BIT(2),
 	 WAKEUP_STATUS_PAD    = BIT(3),
 
-	 STATUS_GPIO_ERR_NO_ENTER_PM  = BIT(7),//Abnormal wakeup
+	 STATUS_GPIO_ERR_NO_ENTER_PM  = BIT(7), //Abnormal wakeup
+
+	 STATUS_ENTER_SUSPEND  = BIT(30),
 }PM_WakeupStatusTypeDef;
+
 
 #define WAKEUP_STATUS_TIMER_CORE	( WAKEUP_STATUS_TIMER | WAKEUP_STATUS_CORE)
 
-/* 32K clock source define.(Low Speed Clock(LSC)) */
-typedef enum{
-	LSC_32kSrc_RC   = (1<<0),
-	LSC_32kSrc_XTAL = (1<<1),
-}LSC_32kSrcTypeDef;
+
 
 typedef void (*pm_optimize_handler_t)(void);
 typedef int (*suspend_handler_t)(void);
-typedef int (*cpu_pm_handler_t)(int, int, unsigned int);
+typedef int (*cpu_pm_handler_t)(SleepMode_TypeDef,  SleepWakeupSrc_TypeDef, unsigned int);
 
 extern cpu_pm_handler_t cpu_sleep_wakeup;
+extern suspend_handler_t func_before_suspend;
+extern unsigned char PM_PAD_FILTER_EN;
 
 /*-- User Interface ----------------------------------------------------------*/
 void cpu_wakeup_init(void);
-void pm_init(LSC_32kSrcTypeDef LSC_32KSrc);
 _attribute_ram_code_ _attribute_no_inline_ void  sleep_start(void);
 
-void MCU_32kClockSourceSelect(LSC_32kSrcTypeDef LSC_32kSrc);
 void mcu_32k_rc_clock_calibration(void);
+unsigned int pm_get_32k_tick(void);
+void pm_set_32k_tick(unsigned int tick);
 
-void bls_pm_registerFuncBeforeSuspend(suspend_handler_t func );
-int cpu_sleep_wakeup_32krc(int deepsleep, int wakeup_src, unsigned int wakeup_tick);
-int cpu_sleep_wakeup_32kpad(int deepsleep, int wakeup_src, unsigned int wakeup_tick);
 
+void bls_pm_registerFuncBeforeSuspend(suspend_handler_t func);
+int cpu_sleep_wakeup_32krc (SleepMode_TypeDef sleep_mode,  SleepWakeupSrc_TypeDef wakeup_src, unsigned int  wakeup_tick);
+int cpu_sleep_wakeup_32kpad (SleepMode_TypeDef sleep_mode,  SleepWakeupSrc_TypeDef wakeup_src, unsigned int  wakeup_tick);
+
+void blc_pm_select_internal_32k_crystal(void);
+void blc_pm_select_external_32k_crystal(void);
 void blt_pm_ext32k_crystal_init(void);
 
 void cpu_set_gpio_wakeup(GPIO_PinTypeDef pin, int pol, int en);
 void pm_set_filter(unsigned char en);
 
-void cpu_stall_wakeup_by_timer0(unsigned int tick_stall);
+
+#if (PM_TIM_RECOVER_MODE)
+	typedef struct{
+		unsigned int   tick_sysClk;
+		unsigned int   tick_32k;
+		unsigned char  recover_flag;
+	}pm_tim_recover_t;
+
+	extern pm_tim_recover_t	pm_timRecover;
+#endif
+
+
 void cpu_stall_wakeup_by_timer1(unsigned int tick_stall);
 void cpu_stall_wakeup_by_timer2(unsigned int tick_stall);
 /*---------------------------- End of File -----------------------------------*/

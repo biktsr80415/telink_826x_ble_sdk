@@ -96,18 +96,6 @@
 
 
 
-/*********************************************************************
- * @fn          generateRandomNum
- *
- * @brief       generate random number
- *
- * @param       len - len
- *
- * @param       data -  buffer
- *
- * @return      None
- */
-void generateRandomNum(u8 len, u8 *data);
 
 void swapX(const u8 *src, u8 *dst, int len);
 

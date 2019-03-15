@@ -16,7 +16,7 @@ typedef struct {
 	u8 		ll_remoteFeature; //not only one for BLE master, use connHandle to identify
 	u8		remoteFeatureReq;
 
-	u8 		rsvd2;
+	u8 		long_suspend;
 	u8		interval_level;
 	u16		connHandle;
 
@@ -71,11 +71,13 @@ typedef struct {
 	u8		conn_terminate_pending;   // terminate_pending = master_terminate || slave_terminate
 	u32 	conn_slaveTerminate_time;
 
+#if (BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE)
 	u32		conn_pkt_rcvd;
 	u32		conn_pkt_rcvd_no;
 	u8 *	conn_pkt_dec_pending;
 	int		conn_enc_dec_busy;
 	int		conn_stop_brx;
+#endif
 } st_ll_conn_slave_t;
 
 

@@ -402,7 +402,7 @@ const attribute_t my_Attributes[] = {
 
 };
 
-void my_att_init ()
+void my_att_init(void)
 {
 	bls_att_setAttributeTable ((u8 *)my_Attributes);
 }

@@ -26,7 +26,6 @@
 
  #define putchar(c) outbyte(c)
  */
-#if(!__PROJECT_8263_BLE_MODULE__)
 #ifndef WIN32
 
 #if 1
@@ -199,6 +198,5 @@ int my_sprintf(char *out, const char *format, ...) {
 	return print(&out, format, args);
 }
 
-#endif
 #endif
 #endif

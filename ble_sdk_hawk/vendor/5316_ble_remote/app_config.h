@@ -10,27 +10,10 @@ extern "C" {
 #define BLE_REMOTE_PM_ENABLE			1
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_REMOTE_OTA_ENABLE			0
-#define REMOTE_IR_ENABLE				1
+#define REMOTE_IR_ENABLE				0
 #define BATT_CHECK_ENABLE       		0//enable or disable battery voltage detection
+#define RC_BTN_ENABLE               	1
 
-/* Audio Configuration -------------------------------------------------------*/
-#define BLE_AUDIO_ENABLE				    0
-#if (BLE_AUDIO_ENABLE)
-	#define BLE_DMIC_ENABLE					0  //0: Amic   1: Dmic
-	#define	ADPCM_PACKET_LEN				128
-	#define TL_MIC_ADPCM_UNIT_SIZE			248
-
-	#define	TL_MIC_32K_FIR_16K				0
-
-	#if TL_MIC_32K_FIR_16K
-		#define	TL_MIC_BUFFER_SIZE			1984
-	#else
-		#define	TL_MIC_BUFFER_SIZE			992
-	#endif
-
-	#define GPIO_AMIC_BIAS					GPIO_PA6
-
-#endif
 
 /* LED -----------------------------------------------------------------------*/
 #define	GPIO_LED	GPIO_PB0
@@ -127,6 +110,7 @@ extern "C" {
 #define			T_VK_CH_DN		0xd1
 
 
+#if(RC_BTN_ENABLE)
 //5316 hardware: C1T125A5_V1.0
 #if (REMOTE_IR_ENABLE)  //with IR key map
 	#define GPIO_IR_CONTROL	 GPIO_PA0
@@ -198,6 +182,7 @@ extern "C" {
 #define PC2_INPUT_ENABLE		1
 #define PC1_INPUT_ENABLE		1
 
+#endif
 #define		KB_MAP_NUM		KB_MAP_NORMAL
 #define		KB_MAP_FN		KB_MAP_NORMAL
 
@@ -303,25 +288,6 @@ typedef enum
 
 
 	
-#if (BLE_AUDIO_ENABLE)
-	//// Audio ////
-	/**********************************************************************************************/
-	AUDIO_PS_H, 							//UUID: 2800, 	VALUE: telink audio service uuid
-	
-	//mic
-	AUDIO_MIC_INPUT_CD_H,					//UUID: 2803, 	VALUE:  			Prop: Read | Notify
-	AUDIO_MIC_INPUT_DP_H,					//UUID: telink mic uuid,  VALUE: micData
-	AUDIO_MIC_INPUT_CCB_H,					//UUID: 2A19 	VALUE: micDataCCC
-	AUDIO_MIC_INPUT_DESC_H,					//UUID: 2901, 	VALUE: micName
-
-	//speaker
-	AUDIO_SPEAKER_OUT_CD_H,					//UUID: 2803, 	VALUE:  			Prop: write_without_rsp
-	AUDIO_SPEAKER_OUT_DP_H,					//UUID: telink speaker uuid,  VALUE: speakerData
-	AUDIO_SPEAKEROUT_DESC_H,				//UUID: 2901, 	VALUE: speakerName
-#endif
-
-
-
 	ATT_END_H,
 
 }ATT_HANDLE;

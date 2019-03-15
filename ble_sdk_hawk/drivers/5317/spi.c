@@ -156,7 +156,7 @@ void spi_master_init(unsigned char div_clk, SPI_ModeTypDef spi_mode)
 }
 
 /**
- * @brief: when chip act as spi slave, the cs pin must be the pin of hardware module. i.e. 8266's E6 and 8267's A5/B4
+ * @brief: when chip act as spi slave, the cs pin must be the pin of hardware module.
  *           spi slave get the interrupt from cs pin. so can not instead of the cs pin using the other normal gpio.
  */
 void spi_slave_init(SPI_ModeTypDef spi_mode)
