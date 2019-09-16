@@ -226,6 +226,8 @@
 #define HCI_CMD_LE_READ_PHY                       					 0x30//LE Read PHY Command - [5] 7.8.47
 #define HCI_CMD_LE_SET_DEFAULT_PHY              					 0x31//LE Set Default PHY Command - [5] 7.8.48
 #define HCI_CMD_LE_SET_PHY                      					 0x32//LE Set PHY Command - [5] 7.8.49
+#define HCI_CMD_LE_ENHANCED_RECEIVER_TEST							 0x33
+#define HCI_CMD_LE_ENHANCED_TRANSMITTER_TEST						 0x34
 
 #define HCI_CMD_LINK_POLICY_OPCODE_OGF								 0x08 //0x02<<2 = 0x08
 #define HCI_CMD_TEST_OPCODE_OGF										 0x18 //0x06<<2 = 0x18
