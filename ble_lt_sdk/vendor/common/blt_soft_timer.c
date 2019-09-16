@@ -1,9 +1,24 @@
-/*
- * blt_soft_timer.c
+/********************************************************************************************************
+ * @file     blt_soft_timer.c
  *
- *  Created on: 2016-10-28
- *      Author: Administrator
- */
+ * @brief    for TLSR chips
+ *
+ * @author	 BLE Group
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *
+ *			 The information contained herein is confidential and proprietary property of Telink
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai)
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in.
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided.
+ *
+ *******************************************************************************************************/
 
 #include "../../proj/tl_common.h"
 #include "../../proj_lib/ble/ll/ll.h"
@@ -18,8 +33,9 @@
 
 blt_soft_timer_t	blt_timer;
 
-
-//按照定时时间将timer排序，便于process时 依次触发timer
+/***
+ * ort timers by timing order, so that timers can be triggered sequentially
+ */
 int  blt_soft_timer_sort(void)
 {
 	if(blt_timer.currentNum < 1 || blt_timer.currentNum > MAX_TIMER_NUM){
@@ -27,7 +43,7 @@ int  blt_soft_timer_sort(void)
 		return 0;
 	}
 	else{
-		// 冒泡排序  BubbleSort
+		//BubbleSort
 		int n = blt_timer.currentNum;
 		u8 temp[sizeof(blt_time_event_t)];
 
@@ -54,7 +70,6 @@ int  blt_soft_timer_sort(void)
 //user add timer
 int blt_soft_timer_add(blt_timer_callback_t func, u32 interval_us)
 {
-	int i;
 	u32 now = clock_time();
 
 	if(blt_timer.currentNum >= MAX_TIMER_NUM){  //timer full
@@ -67,12 +82,18 @@ int blt_soft_timer_add(blt_timer_callback_t func, u32 interval_us)
 		blt_timer.currentNum ++;
 
 		blt_soft_timer_sort();
+
+		bls_pm_setAppWakeupLowPower(blt_timer.timer[0].t,  1);
+
 		return  1;
 	}
 }
 
 
-//timer 本来就是有序的，删除的时候，采用往前覆盖，所以不会破坏顺序，不需要重新排序
+/**
+ * when delete one soft timer, move forward the post soft timer.
+ * thus, we not need to re-sort.
+ */
 int  blt_soft_timer_delete_by_index(u8 index)
 {
 	if(index >= blt_timer.currentNum){
@@ -97,7 +118,7 @@ int 	blt_soft_timer_delete(blt_timer_callback_t func)
 		if(blt_timer.timer[i].cb == func){
 			blt_soft_timer_delete_by_index(i);
 
-			if(i == 0){  //删除的是最近的timer，需要更新时间
+			if(i == 0){  //when delete the latest soft timer, need to update time
 
 				if( (u32)(blt_timer.timer[0].t - clock_time()) < 3000 *  CLOCK_SYS_CLOCK_1MS){
 					bls_pm_setAppWakeupLowPower(blt_timer.timer[0].t,  1);
@@ -166,7 +187,7 @@ void  	blt_soft_timer_process(int type)
 			blt_soft_timer_sort();
 		}
 
-		if( (u32)(blt_timer.timer[0].t - now) < 3000 *  CLOCK_SYS_CLOCK_1MS){
+		if( (u32)(blt_timer.timer[0].t - now) < 8000 *  CLOCK_SYS_CLOCK_1MS){
 			bls_pm_setAppWakeupLowPower(blt_timer.timer[0].t,  1);
 		}
 		else{

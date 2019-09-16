@@ -7,14 +7,10 @@ extern "C" {
 
 
 
-#if (__PROJECT_8261_HID_SAMPLE__)
-	#define CHIP_TYPE				CHIP_TYPE_8261
-#elif (__PROJECT_8266_HID_SAMPLE__)
+#if (__PROJECT_8266_HID_SAMPLE__)
 	#define CHIP_TYPE				CHIP_TYPE_8266
 #elif (__PROJECT_8267_HID_SAMPLE__)
 	#define CHIP_TYPE				CHIP_TYPE_8267
-#elif (__PROJECT_8269_HID_SAMPLE__)
-	#define CHIP_TYPE				CHIP_TYPE_8269
 #else
 
 #endif
@@ -24,7 +20,7 @@ extern "C" {
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_PM_ENABLE					1
-
+#define RC_BTN_ENABLE               	1
 
 
 
@@ -40,47 +36,16 @@ extern "C" {
 	#define PULL_WAKEUP_SRC_PD4		PM_PIN_PULLUP_10K	//btn
 	#define PULL_WAKEUP_SRC_PD5		PM_PIN_PULLUP_10K	//btn
 
-	//---------------  led ----------------------------------
-	#define	 GPIO_LED_GREEN			GPIO_PC0
-	#define	 GPIO_LED_RED			GPIO_PC4
-	#define	 GPIO_LED_BLUE			GPIO_PC2
-	#define	 GPIO_LED_WHITE			GPIO_PA1
-
-	#define	 PC0_OUTPUT_ENABLE		1
-	#define	 PC4_OUTPUT_ENABLE		1
-	#define  PC2_OUTPUT_ENABLE		1
-	#define	 PA1_OUTPUT_ENABLE		1
-#else  //8261/8267/8269 hid sample
-	//---------------  Button ----------------------------------
+#else  //8267 hid sample
+//---------------  Button ----------------------------------
+	#define PC7_INPUT_ENABLE		1
 	#define PD2_INPUT_ENABLE		1
-	#define PC5_INPUT_ENABLE		1
-	#define	SW2_GPIO				GPIO_PC5
-	#define	SW1_GPIO				GPIO_PD2
-	//PC5 1m pullup not very stable, so we use 10k pullup
-	//#define PULL_WAKEUP_SRC_PC5     PM_PIN_PULLUP_1M	//btn
-	#define PULL_WAKEUP_SRC_PC5     PM_PIN_PULLUP_10K	//btn
-	#define PULL_WAKEUP_SRC_PD2     PM_PIN_PULLUP_1M  	//btn
+	#define	SW1_GPIO				GPIO_PC7
+	#define	SW2_GPIO				GPIO_PD2
+	#define PULL_WAKEUP_SRC_PC7		PM_PIN_PULLUP_10K	//btn
+	#define PULL_WAKEUP_SRC_PD2		PM_PIN_PULLUP_10K	//btn
 
-	//---------------  led ----------------------------------
-	#define	 GPIO_LED_WHITE			GPIO_PB4
-	#define	 GPIO_LED_GREEN			GPIO_PB6
-	#define	 GPIO_LED_RED			GPIO_PC2
-	#define	 GPIO_LED_BLUE			GPIO_PC3
-	#define	 GPIO_LED_YELLOW		GPIO_PC3
-
-
-	#define	 PB4_OUTPUT_ENABLE		1
-	#define	 PB6_OUTPUT_ENABLE		1
-	#define  PC2_OUTPUT_ENABLE		1
-	#define	 PC3_OUTPUT_ENABLE		1
-	#define	 PC0_OUTPUT_ENABLE		1
 #endif
-
-
-#define LED_ON_LEVAL 				1 		//gpio output high voltage to turn on led
-#define LED_OFF_LEVAL 				0
-
-
 
 
 /////////////////// Clock  /////////////////////////////////
@@ -94,11 +59,6 @@ extern "C" {
 /////////////////// watchdog  //////////////////////////////
 #define MODULE_WATCHDOG_ENABLE		0
 #define WATCHDOG_INIT_TIMEOUT		500  //ms
-
-
-
-
-
 
 
 
@@ -152,7 +112,7 @@ typedef enum
 
 	//boot keyboard output report
 	HID_BOOT_KB_REPORT_OUTPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | write| write_without_rsp
-	HID_BOOT_KB_REPORT_OUTPUT_CCB_H,		//UUID: 2A32, 	VALUE: bootKeyOutReport
+	HID_BOOT_KB_REPORT_OUTPUT_DP_H,		//UUID: 2A32, 	VALUE: bootKeyOutReport
 
 	//consume report in
 	HID_CONSUME_REPORT_INPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
@@ -192,7 +152,35 @@ typedef enum
 	BATT_LEVEL_INPUT_DP_H,					//UUID: 2A19 	VALUE: batVal
 	BATT_LEVEL_INPUT_CCB_H,					//UUID: 2902, 	VALUE: batValCCC
 
+
+	//// Ota ////
+	/**********************************************************************************************/
+	OTA_PS_H, 								//UUID: 2800, 	VALUE: telink ota service uuid
+	OTA_CMD_OUT_CD_H,						//UUID: 2803, 	VALUE:  			Prop: read | write_without_rsp
+	OTA_CMD_OUT_DP_H,						//UUID: telink ota uuid,  VALUE: otaData
+	OTA_CMD_OUT_DESC_H,						//UUID: 2901, 	VALUE: otaName
+
+
+
+#if (BLE_AUDIO_ENABLE)
+	//// Audio ////
+	/**********************************************************************************************/
+	AUDIO_PS_H, 							//UUID: 2800, 	VALUE: telink audio service uuid
 	
+	//mic
+	AUDIO_MIC_INPUT_CD_H,					//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	AUDIO_MIC_INPUT_DP_H,					//UUID: telink mic uuid,  VALUE: micData
+	AUDIO_MIC_INPUT_CCB_H,					//UUID: 2A19 	VALUE: micDataCCC
+	AUDIO_MIC_INPUT_DESC_H,					//UUID: 2901, 	VALUE: micName
+
+	//speaker
+	AUDIO_SPEAKER_OUT_CD_H,					//UUID: 2803, 	VALUE:  			Prop: write_without_rsp
+	AUDIO_SPEAKER_OUT_DP_H,					//UUID: telink speaker uuid,  VALUE: speakerData
+	AUDIO_SPEAKEROUT_DESC_H,				//UUID: 2901, 	VALUE: speakerName
+#endif
+
+
+
 	ATT_END_H,
 
 }ATT_HANDLE;
@@ -210,7 +198,13 @@ typedef enum
 
 
 
-#define DEBUG_GPIO_ENABLE							1
+
+
+
+
+
+
+#define DEBUG_GPIO_ENABLE							0
 
 #if(DEBUG_GPIO_ENABLE)
 	#if (__PROJECT_8266_HID_SAMPLE__)

@@ -7,8 +7,7 @@
 	  __TL_LIB_8261__ || MCU_CORE_TYPE == MCU_CORE_8261 || \
 	  __TL_LIB_8269__ || MCU_CORE_TYPE == MCU_CORE_8269 )
 #include "../mcu_spec/register_8267.h"
-#elif(__TL_LIB_5316__ || MCU_CORE_TYPE == MCU_CORE_5316)
-#include "../mcu_spec/register_5316.h"
+
 #else
 #endif
 

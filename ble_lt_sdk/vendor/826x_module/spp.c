@@ -62,8 +62,10 @@ int event_handler(u32 h, u8 *para, int n)
 				printf("PIN Code Number : %s\n", pc);
 
 				blc_smp_enableAuthMITM (1, pinCode_random);//pincode
+				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
 	#else//Popup dialog box on your phone , you need to enter the pincode:123456 to match
 				blc_smp_enableAuthMITM (1, 123456);//pincode
+				blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);
 	#endif
 #endif
 			}
@@ -110,7 +112,7 @@ int event_handler(u32 h, u8 *para, int n)
 				break;
 			case BLT_EV_FLAG_ADV_DURATION_TIMEOUT:
 			{
-				app_switch_to_indirect_adv();
+//				app_switch_to_indirect_adv();
 			}
 
 				break;
@@ -257,8 +259,7 @@ int bls_uart_handler (u8 *p, int n)
 	// restart module: 18 ff 00 00
 	else if (cmd == SPP_CMD_RESTART_MOD)
 	{
-		//cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 10000 * sys_tick_per_us);
-		cpu_reboot();
+		cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER, clock_time() + 10000 * sys_tick_per_us);
 	}
 	// enable/disable MAC binding function: 19 ff 01 00 00(disable, 01 enable)
 	else if (cmd == 0x19)

@@ -1,3 +1,24 @@
+/********************************************************************************************************
+ * @file     utility.c 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 public@telink-semi.com;
+ * @date     Sep. 30, 2010
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 
 #include "../tl_common.h"
 #include "utility.h"
@@ -160,7 +181,7 @@ void store_16(u8 *buffer, u16 pos, u16 value){
 
 
 
-void my_fifo_init (my_fifo_t *f, u8 s, u8 n, u8 *p)
+void my_fifo_init (my_fifo_t *f, int s, u8 n, u8 *p)
 {
 	f->size = s;
 	f->num = n;
@@ -183,7 +204,7 @@ void my_fifo_next (my_fifo_t *f)
 	f->wptr++;
 }
 
-int my_fifo_push (my_fifo_t *f, u8 *p, u8 n)
+int my_fifo_push (my_fifo_t *f, u8 *p, int n)
 {
 	if (((f->wptr - f->rptr) & 255) >= f->num)
 	{
@@ -195,8 +216,8 @@ int my_fifo_push (my_fifo_t *f, u8 *p, u8 n)
 		return -1;
 	}
 	u8 *pd = f->p + (f->wptr++ & (f->num-1)) * f->size;
-	*pd++ = n;
-	*pd++ = n >> 8;
+	*pd++ = n & 0xff;
+	*pd++ = (n >> 8) & 0xff;
 	memcpy (pd, p, n);
 	return 0;
 }

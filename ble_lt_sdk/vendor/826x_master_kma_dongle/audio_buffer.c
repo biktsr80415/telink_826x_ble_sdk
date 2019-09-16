@@ -112,7 +112,7 @@ _attribute_ram_code_ void abuf_dec_usb ()
 	u8 num = abuf_dec_wptr - (abuf_dec_rptr/MIC_SHORT_DEC_SIZE);
 	if (num)
 	{
-		if (buffer_empty && num >= 3 || !buffer_empty && (num >= 1 || (n_usb_iso & 3)))
+		if ( (buffer_empty && num >= 3) || (!buffer_empty && (num >= 1 || (n_usb_iso & 3)) ) )
 		{
 			buffer_empty = 0;
 

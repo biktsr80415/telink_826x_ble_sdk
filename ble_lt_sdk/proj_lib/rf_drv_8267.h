@@ -1,3 +1,10 @@
+#include "../proj/config/user_config.h"
+#include "../proj/mcu/config.h"		// must include this
+
+#if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
+	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
+	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269)	)
+
 #ifndef _RF_DRV_H_
 #define _RF_DRV_H_
 
@@ -11,6 +18,11 @@ enum{
 	XTAL_12M	= XTAL_12M_RF_1m_MODE,
  	XTAL_16M    = XTAL_16M_RF_1m_MODE,
 };
+
+typedef enum{
+	RF_MODE_BLE_1M = BIT(0),
+	RF_MODE_BLE_2M = BIT(1),
+}RF_ModeTypeDef;
 
 
 #define IS_XTAL_12M(mode)  		( (mode) & 0x03)
@@ -99,9 +111,13 @@ static inline void adc_clk_poweron(void)
 	sar_adc_pwdn_en = 0;
 }
 
-#define PHY_POWER_DOWN   	analog_write(0x06, sar_adc_pwdn_en ? 0xff : 0xfe)
-#define PHY_POWER_UP	 	analog_write(0x06, sar_adc_pwdn_en);//sar_adc_pwdn_en ? 0x01 : 0x00)
-
+#if(CLOCK_SYS_CLOCK_HZ == 16000000 || CLOCK_SYS_CLOCK_HZ == 24000000)
+	#define PHY_POWER_DOWN   	analog_write(0x06, sar_adc_pwdn_en ? 0xff : 0xfe)
+	#define PHY_POWER_UP	 	analog_write(0x06, sar_adc_pwdn_en);//sar_adc_pwdn_en ? 0x01 : 0x00)
+#else
+	#define PHY_POWER_DOWN
+	#define PHY_POWER_UP
+#endif
 
 static inline void pga_enable (int en) {
 	u8 st = ReadAnalogReg (0x07);		//bit 2
@@ -120,6 +136,16 @@ void TxPkt (void* addr);
 void rf_set_ble_channel (signed char chn);
 void rf_start_stx2rx  (void* addr, u32 tick);
 void rf_start_btx (void* addr, u32 tick);
+
+static inline unsigned char is_rf_receiving_pkt(void)
+{
+	unsigned char tmp_val = 0;
+	tmp_val = (read_reg8(0x443)&0x0f);
+	if( (tmp_val== 10) || (tmp_val == 11) || (tmp_val == 12)){
+		return 1;
+	}
+	return 0;
+}
 
 #define	rf_get_pipe(p)		p[7]
 
@@ -342,6 +368,11 @@ static inline void emi_cd_recovery( void ){
     write_reg8(0x800400, emi_var[6]);
 }
 
+static inline void rf_adjust_tx_settle(u8 txSettle_us)
+{
+	write_reg16(0xf04, txSettle_us);
+}
+
 static inline void rf_start_brx  (void* addr, u32 tick)
 {
 //	write_reg32 (0x800f04, 0x56);						// tx_wait = 0; tx_settle = 86 us
@@ -363,6 +394,7 @@ void 	rf_multi_receiving_init (u8 channel_mask);
 void	rf_multi_receiving_start  (signed char chn, unsigned short set);
 void	rf_set_ack_packet  (void* addr);
 void 	rf_receiving_pipe_enble(u8 channel_mask);
+
 
 //#define		RF_FAST_MODE_1M		1
 //#define		RF_MODE_250K		1
@@ -393,8 +425,8 @@ void 	rf_receiving_pipe_enble(u8 channel_mask);
 		#define		RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x40)
 	#endif
 #elif		RF_FAST_MODE_1M
-#define		RF_PACKET_LENGTH_OK(p)		(p[0] == (p[13]&0x3f)+17)
-#define		RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x40)
+#define		RF_PACKET_LENGTH_OK(p)		( *((unsigned int*)p) == p[13]+17)    			//dma_len must 4 byte aligned
+#define		RF_PACKET_CRC_OK(p)			((p[*((unsigned int*)p) + 3] & 0x51) == 0x40)
 #else
 #define		RF_PACKET_LENGTH_OK(p)		(p[0] == p[12]+13)
 #define		RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x10)
@@ -461,6 +493,7 @@ static inline void rf_ble_stx  (void* addr, u32 tick)
 void rf_start_stx  (void* addr, u32 tick);
 
 void rf_update_tp_value (u8 tp0, u8 tp1);
+void rf_update_2m_tp_value(u8 tp0, u8 tp1);
 
 
 static inline void rf_set_12M_Crystal_1m_mode(void)
@@ -499,3 +532,5 @@ static inline void rf_set_16M_Crystal_2m_mode(void)
 
 
 #endif
+
+#endif /////end of (#if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) ||__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || __TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269)	)

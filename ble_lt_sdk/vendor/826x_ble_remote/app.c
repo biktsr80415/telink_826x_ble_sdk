@@ -13,12 +13,12 @@
 #include "../../proj/drivers/battery.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
-#include "../../proj_lib/ble/ble_phy.h"
+#include "../../proj_lib/ble/phy/phy_test.h"
 #include "../../proj/drivers/uart.h"
 
 #include "rc_ir.h"
 
-#if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8266_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
+#if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
 
 
@@ -38,12 +38,6 @@
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
 MYFIFO_INIT(blt_txfifo, 40, 16);
-
-
-#if (BLE_PHYTEST_MODE == PHYTEST_MODE_THROUGH_2_WIRE_UART || BLE_PHYTEST_MODE == PHYTEST_MODE_OVER_HCI_WITH_UART )
-	MYFIFO_INIT(hci_rx_fifo, 64, 2);
-	MYFIFO_INIT(hci_tx_fifo, 64, 2);
-#endif
 
 
 
@@ -90,11 +84,14 @@ u32		advertise_begin_tick;
 u8		ui_mic_enable = 0;
 u8 		key_voice_press = 0;
 
-int 	lowBattDet_enable = 1;
+int 	lowBattDet_enable = 0;
 int		lowBatt_alarmFlag = 0;
 
 
 int     ui_mtu_size_exchange_req = 0;
+
+extern u8		buffer_mic_pkt_wptr;
+extern u8		buffer_mic_pkt_rptr;
 
 
 //////////////////// key type ///////////////////////
@@ -215,7 +212,28 @@ static u16 vk_consumer_map[16] = {
 #if (BLE_AUDIO_ENABLE)
 	u32 	key_voice_pressTick = 0;
 
-	void		ui_enable_mic (u8 en)
+#if (BLE_DMIC_ENABLE)
+	void ui_enable_dmic(u8 en){
+		ui_mic_enable = en;
+
+		//DMIC Bias output
+		gpio_set_output_en (GPIO_DMIC_BIAS, en);
+		gpio_write (GPIO_DMIC_BIAS, en);
+
+		device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
+
+		if(en){
+			///DMA start write mic sensor data to ram buffer:buffer_mic
+			MIC_FIFO_WPTR_EN();
+			buffer_mic_pkt_rptr = buffer_mic_pkt_wptr = 0;
+		}else{
+			///DMA stop write data to ram buffer: buffer_mic
+			MIC_FIFO_WPTR_DIS();
+			buffer_mic_pkt_rptr = buffer_mic_pkt_wptr = 0;
+		}
+	}
+#else
+	void	ui_enable_mic (u8 en)
 	{
 		ui_mic_enable = en;
 
@@ -229,12 +247,17 @@ static u16 vk_consumer_map[16] = {
 		if(en){  //audio on
 			lowBattDet_enable = 0;
 			battery2audio();////switch auto mode
+			MIC_FIFO_WPTR_EN();
+			buffer_mic_pkt_rptr = buffer_mic_pkt_wptr = 0;
 		}
 		else{  //audio off
 			audio2battery();////switch manual mode
 			lowBattDet_enable = 1;
+			MIC_FIFO_WPTR_DIS();
+			buffer_mic_pkt_rptr = buffer_mic_pkt_wptr = 0;
 		}
 	}
+#endif
 
 	void voice_press_proc(void)
 	{
@@ -249,13 +272,15 @@ static u16 vk_consumer_map[16] = {
 
 	void	task_audio (void)
 	{
-		static u32 audioProcTick = 0;
-		if(clock_time_exceed(audioProcTick, 5000)){
-			audioProcTick = clock_time();
-		}
-		else{
-			return;
-		}
+		#if (!IIR_FILTER_ENABLE)
+			static u32 audioProcTick = 0;
+			if(clock_time_exceed(audioProcTick, 5000)){
+				audioProcTick = clock_time();
+			}
+			else{
+				return;
+			}
+		#endif
 
 		///////////////////////////////////////////////////////////////
 		log_event(TR_T_audioTask);
@@ -263,13 +288,16 @@ static u16 vk_consumer_map[16] = {
 		proc_mic_encoder ();
 
 		//////////////////////////////////////////////////////////////////
-		if (blc_ll_getTxFifoNumber() < 10)
+		if (blc_ll_getTxFifoNumber() < 9)
 		{
 			int *p = mic_encoder_data_buffer ();
 			if (p)					//around 3.2 ms @16MHz clock
 			{
 				log_event (TR_T_audioData);
-				bls_att_pushNotifyData (AUDIO_MIC_INPUT_DP_H, (u8*)p, ADPCM_PACKET_LEN);
+				if ( BLE_SUCCESS == bls_att_pushNotifyData (AUDIO_MIC_INPUT_DP_H, (u8*)p, ADPCM_PACKET_LEN) ){
+					extern u8		buffer_mic_pkt_rptr;
+					buffer_mic_pkt_rptr++; ///only send successfully, then next buffer
+				}
 			}
 		}
 	}
@@ -432,13 +460,20 @@ void key_change_proc(void)
 
 
 	u8 key0 = kb_event.keycode[0];
-	//u8 key1 = kb_event.keycode[1];
+	u8 key1 = kb_event.keycode[1];
 	u8 key_value;
 
 	key_not_released = 1;
 	if (kb_event.cnt == 2)   //two key press, do  not process
 	{
-
+#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE)  //"enter + back" trigger PhyTest
+		//notice that if IR enable, trigger keys must be defined in key map
+		if ( (key0 == VK_ENTER && key1 == CR_BACK) || (key0 == CR_BACK && key1 == VK_ENTER))
+		{
+			extern void app_trigger_phytest_mode(void);
+			app_trigger_phytest_mode();
+		}
+#endif
 	}
 	else if(kb_event.cnt == 1)
 	{
@@ -457,18 +492,6 @@ void key_change_proc(void)
 			else{ //if voice not on, mark voice key press tick
 				key_voice_press = 1;
 				key_voice_pressTick = clock_time();
-			}
-		}
-#endif
-
-#if (BLE_PHYTEST_MODE == PHYTEST_MODE_THROUGH_2_WIRE_UART)
-		else if (key0 == PHY_TEST)
-		{
-			static u8 phyTestFlag = 0;
-			if(!phyTestFlag && blc_ll_getCurrentState() != BLS_LINK_STATE_CONN){
-				phyTestFlag = 1;
-				device_led_setup(led_cfg[LED_SHINE_FAST]);
-				blc_phy_setPhyTestEnable( BLC_PHYTEST_ENABLE );
 			}
 		}
 #endif
@@ -623,17 +646,21 @@ void blt_pm_proc(void)
 #if(BLE_REMOTE_PM_ENABLE)
 	if(ui_mic_enable)
 	{
-		bls_pm_setSuspendMask (MCU_STALL);
+		#if (IIR_FILTER_ENABLE)
+			bls_pm_setSuspendMask (SUSPEND_DISABLE);
+		#else
+			bls_pm_setSuspendMask (MCU_STALL);
+		#endif
 	}
 #if(REMOTE_IR_ENABLE)
 	else if( ir_send_ctrl.is_sending || ir_send_ctrl.repeat_timer_enable){
 		bls_pm_setSuspendMask(SUSPEND_DISABLE);
 	}
 #endif
-#if (BLE_PHYTEST_MODE == PHYTEST_MODE_THROUGH_2_WIRE_UART)
+#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE)
 	else if( blc_phy_isPhyTestEnable() )
 	{
-		bls_pm_setSuspendMask(SUSPEND_DISABLE);
+		bls_pm_setSuspendMask(SUSPEND_DISABLE);  //phy test can not enter suspend
 	}
 #endif
 	else
@@ -711,11 +738,97 @@ _attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 
 
 
+
+
 void user_init()
 {
 
-	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
+	/***********************************************************************************
+	 * Keyboard matrix initialization. These section must be before battery_power_check.
+	 * Because when low battery,chip will entry deep.if placed after battery_power_check,
+	 * it is possible that can not wake up chip.
+	 *  *******************************************************************************/
+	u32 pin[] = KB_DRIVE_PINS;
+	for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
+	{
+		gpio_set_wakeup(pin[i],1,1);  	   //drive pin core(gpio) high wakeup suspend
+		cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
+	}
 
+
+	///////////////////// AUDIO initialization///////////////////
+	#if (BLE_AUDIO_ENABLE)
+		//buffer_mic set must before audio_init !!!
+		config_mic_buffer ((u32)buffer_mic, TL_MIC_BUFFER_SIZE);
+
+		#if (BLE_DMIC_ENABLE)  //DMIC config. DMIC's setting is not
+			/////////////// DMIC: PA0-data, PA1-clk, PA3-power ctl
+			////config DMIC VDD pin
+			gpio_set_func(GPIO_DMIC_BIAS, AS_GPIO);
+			gpio_set_input_en(GPIO_DMIC_BIAS, 1);
+			gpio_set_output_en(GPIO_DMIC_BIAS, 1);
+			gpio_write(GPIO_DMIC_BIAS, 0);
+
+			#if TL_MIC_32K_FIR_16K
+				audio_dmic_init(DMIC_CLOCK_PIN_RATE, R32, CLOCK_SYS_TYPE); ///default is 32000
+			#else
+				audio_dmic_init(DMIC_CLOCK_PIN_RATE, R64, CLOCK_SYS_TYPE); ///default is 16000
+			#endif
+		#else  //Amic config
+			//////////////// AMIC: PC3 - bias; PC4/PC5 - input
+			#if TL_MIC_32K_FIR_16K
+				#if (CLOCK_SYS_CLOCK_HZ == 16000000)
+					audio_amic_init( DIFF_MODE, 26,  9, R2, CLOCK_SYS_TYPE);
+					audio_finetune_sample_rate(2);  //reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
+				#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
+					audio_amic_init( DIFF_MODE, 33, 15, R2, CLOCK_SYS_TYPE);
+					audio_finetune_sample_rate(3);
+				#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
+					audio_amic_init( DIFF_MODE, 45, 20, R2, CLOCK_SYS_TYPE); // 16 , 15
+				#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
+					audio_amic_init( DIFF_MODE, 65, 15, R3, CLOCK_SYS_TYPE);
+				#endif
+			#else
+				#if (CLOCK_SYS_CLOCK_HZ == 16000000)
+					audio_amic_init( DIFF_MODE, 26,  9, R4, CLOCK_SYS_TYPE);
+					audio_finetune_sample_rate(2);
+				#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
+					audio_amic_init( DIFF_MODE, 33, 15, R4, CLOCK_SYS_TYPE);
+					audio_finetune_sample_rate(3);
+				#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
+					audio_amic_init( DIFF_MODE, 45, 20, R4, CLOCK_SYS_TYPE);
+				#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
+					audio_amic_init( DIFF_MODE, 65, 15, R6, CLOCK_SYS_TYPE);
+				#endif
+			#endif
+
+			audio_amic_input_set(PGA_CH);//audio input set, ignore the input parameter
+		#endif//end of BLE_DMIC_ENABLE
+
+		#if (IIR_FILTER_ENABLE)
+			extern void filter_setting();
+			filter_setting();
+		#endif
+
+	#endif ///end of #if (BLE_AUDIO_ENABLE)
+
+
+	/*****************************************************************************************
+	 Note: battery check must do before any flash write/erase operation, cause flash write/erase
+		   under a low or unstable power supply will lead to error flash operation
+
+		   Some module initialization may involve flash write/erase, include: OTA initialization,
+				SMP initialization, ..
+				So these initialization must be done after  battery check
+	*****************************************************************************************/
+	#if (BATT_CHECK_ENABLE)  //battery check must do before OTA relative operation
+		if(analog_read(DEEP_ANA_REG2) == BATTERY_VOL_LOW){
+			battery_power_check(VBAT_ALARM_THRES_MV + 200);//2.2V
+		}
+		else{
+			battery_power_check(VBAT_ALARM_THRES_MV);//2.0 V
+		}
+	#endif
 
 ////////////////// BLE stack initialization ////////////////////////////////////
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
@@ -734,7 +847,6 @@ void user_init()
 
 	blc_ll_initAdvertising_module(tbl_mac); 	//adv module: 		 mandatory for BLE slave,
 	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
-	blc_ll_initPowerManagement_module();        //pm module:      	 optional
 
 
 
@@ -749,6 +861,9 @@ void user_init()
 	blc_smp_param_setBondingDeviceMaxNumber(4);  	//default is SMP_BONDING_DEVICE_MAX_NUM, can not bigger that this value
 													//and this func must call before bls_smp_enableParing
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
+
+	//blc_smp_enableScFlag(1);
+	//blc_smp_setEcdhDebugMode(1);//debug
 #else
 	bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
 #endif
@@ -757,8 +872,7 @@ void user_init()
 
 
 
-
-///////////////////// USER application initialization ///////////////////
+	///////////////////// USER application initialization ///////////////////
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
@@ -808,112 +922,8 @@ void user_init()
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
 	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &ble_remote_terminate);
 
-
-	///////////////////// keyboard matrix initialization///////////////////
-	u32 pin[] = KB_DRIVE_PINS;
-	for (int i=0; i<(sizeof (pin)/sizeof(*pin)); i++)
-	{
-		gpio_set_wakeup(pin[i],1,1);  	   //drive pin core(gpio) high wakeup suspend
-		cpu_set_gpio_wakeup (pin[i],1,1);  //drive pin pad high wakeup deepsleep
-	}
-
-
+	///////////////////////////
 	bls_app_registerEventCallback (BLT_EV_FLAG_GPIO_EARLY_WAKEUP, &proc_keyboard);
-
-
-	///////////////////// AUDIO initialization///////////////////
-#if (BLE_AUDIO_ENABLE)
-	//buffer_mic set must before audio_init !!!
-	config_mic_buffer ((u32)buffer_mic, TL_MIC_BUFFER_SIZE);
-
-	#if (BLE_DMIC_ENABLE)  //Dmic config
-		/////////////// DMIC: PA0-data, PA1-clk, PA3-power ctl
-		gpio_set_func(GPIO_PA0, AS_DMIC);
-		gpio_set_func(GPIO_PA1, AS_DMIC);
-
-		gpio_set_input_en(GPIO_PA0 , 1);                //PA0 as input
-
-		gpio_set_func(GPIO_PA3, AS_GPIO);
-		gpio_set_input_en(GPIO_PA3, 1);
-		gpio_set_output_en(GPIO_PA3, 1);
-		gpio_write(GPIO_PA3, 0);
-
-		#if TL_MIC_SOFT_DOWNSAMPLING
-			audio_dmic_init(1, R32, CLOCK_SYS_TYPE);  //1 indicate 1M; 32K
-		#else
-			audio_dmic_init(1, R64, CLOCK_SYS_TYPE);  //1 indicate 1M; 16K
-		#endif
-	#else  //Amic config
-		//////////////// AMIC: PC3 - bias; PC4/PC5 - input
-#if (TL_MIC_RATE==TL_MIC_16K)
-		#if TL_MIC_SOFT_DOWNSAMPLING
-			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 26,  9, R2, CLOCK_SYS_TYPE);
-				audio_finetune_sample_rate(2);  //reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate
-			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 33, 15, R2, CLOCK_SYS_TYPE);
-				audio_finetune_sample_rate(3);
-			#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
-				audio_amic_init( DIFF_MODE, 45, 20, R2, CLOCK_SYS_TYPE); // 16 , 15
-			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R3, CLOCK_SYS_TYPE);
-			#endif
-		#else
-			#if (CLOCK_SYS_CLOCK_HZ == 16000000)
-				audio_amic_init( DIFF_MODE, 26,  9, R4, CLOCK_SYS_TYPE);
-				audio_finetune_sample_rate(2);
-			#elif (CLOCK_SYS_CLOCK_HZ == 24000000)
-				audio_amic_init( DIFF_MODE, 33, 15, R4, CLOCK_SYS_TYPE);
-				audio_finetune_sample_rate(3);
-			#elif (CLOCK_SYS_CLOCK_HZ == 32000000)
-				audio_amic_init( DIFF_MODE, 45, 20, R4, CLOCK_SYS_TYPE);
-			#elif (CLOCK_SYS_CLOCK_HZ == 48000000)
-				audio_amic_init( DIFF_MODE, 65, 15, R6, CLOCK_SYS_TYPE);
-			#endif
-		#endif
-#elif(TL_MIC_RATE==TL_MIC_8K)
-		#if TL_MIC_SOFT_DOWNSAMPLING/* GET THE BEST FREQUENCY RESPONSE*/
-			#if(CLOCK_SYS_CLOCK_HZ==16000000)
-				audio_amic_init(DIFF_MODE,18,11,R4, CLOCK_SYS_TYPE);//64k
-				audio_finetune_sample_rate(2);
-			#elif(CLOCK_SYS_CLOCK_HZ==24000000)
-				audio_amic_init(DIFF_MODE,53,10,R4, CLOCK_SYS_TYPE);//64k
-				audio_finetune_sample_rate(3);
-			#elif(CLOCK_SYS_CLOCK_HZ==32000000)
-				audio_amic_init(DIFF_MODE,65,15,R4, CLOCK_SYS_TYPE);//64k
-			#elif(CLOCK_SYS_CLOCK_HZ==48000000)
-				audio_amic_init(DIFF_MODE,87,25,R4, CLOCK_SYS_TYPE);//64k
-				audio_finetune_sample_rate(2);
-			#endif
-		#else/*GET THE BEST SNR AND THD*/
-			#if (CLOCK_SYS_CLOCK_HZ==16000000)
-				audio_amic_init(DIFF_MODE,18,11,R8, CLOCK_SYS_TYPE);//64k
-				audio_finetune_sample_rate(2);
-			#elif (CLOCK_SYS_CLOCK_HZ==24000000)
-				audio_amic_init(DIFF_MODE,53,10,R8, CLOCK_SYS_TYPE);//64k
-				audio_finetune_sample_rate(3);
-			#elif (CLOCK_SYS_CLOCK_HZ==32000000)
-				audio_amic_init(DIFF_MODE,65,15,R8, CLOCK_SYS_TYPE);//64k
-			#elif (CLOCK_SYS_CLOCK_HZ==48000000)
-				audio_amic_init(DIFF_MODE,87,25,R8, CLOCK_SYS_TYPE);//64k
-				audio_finetune_sample_rate(2);
-			#endif
-		#endif
-
-#endif
-	audio_amic_input_set(PGA_CH);//audio input set, ignore the input parameter
-	#endif//end of BLE_DMIC_ENABLE
-#endif
-
-#if(BATT_CHECK_ENABLE)
-	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
-	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-		adc_Init(ADC_CLK_4M, ADC_CHN_C4, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
-	#endif
-#endif
-
-
 
 
 
@@ -928,7 +938,9 @@ void user_init()
 
 
 	////////////////LED initialization /////////////////////////
+#if (BLT_APP_LED_ENABLE)
 	device_led_init(GPIO_LED, 1);
+#endif
 
 #if (BLE_REMOTE_OTA_ENABLE)
 	////////////////// OTA relative ////////////////////////
@@ -948,34 +960,9 @@ void user_init()
 #endif
 
 
-#if (BLE_PHYTEST_MODE == PHYTEST_MODE_THROUGH_2_WIRE_UART || BLE_PHYTEST_MODE == PHYTEST_MODE_OVER_HCI_WITH_UART )
-	blc_phy_initPhyTest_module();
-
-	#if (MCU_CORE_TYPE == MCU_CORE_8267)
-		gpio_set_input_en(GPIO_PB2, 1);   		//UART B2 B3
-		gpio_set_input_en(GPIO_PB3, 1);
-		gpio_setup_up_down_resistor(GPIO_PB2, PM_PIN_PULLUP_1M);
-		gpio_setup_up_down_resistor(GPIO_PB3, PM_PIN_PULLUP_1M);
-		gpio_set_func(GPIO_PB2, AS_UART);
-		gpio_set_func(GPIO_PB3, AS_UART);
-	#endif
-
-	reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX; //clear uart rx/tx status
-	#if (CLOCK_SYS_CLOCK_HZ == 32000000)
-		CLK32M_UART115200;
-	#elif(CLOCK_SYS_CLOCK_HZ == 16000000)
-		CLK16M_UART115200;
-	#else
-		need config uart clock here
-	#endif
-
-	uart_BuffInit(hci_rx_fifo_b, hci_rx_fifo.size, hci_tx_fifo_b);
-	#if (BLE_PHYTEST_MODE == PHYTEST_MODE_THROUGH_2_WIRE_UART)
-		blc_register_hci_handler (phy_test_2_wire_rx_from_uart, phy_test_2_wire_tx_to_uart);
-	#endif
-
-
-
+#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE )
+	extern void app_phytest_init(void);
+	app_phytest_init();
 #endif
 
 
@@ -987,8 +974,7 @@ void user_init()
 // main loop flow
 /////////////////////////////////////////////////////////////////////
 u32 tick_loop;
-//unsigned short battValue[20];
-
+u32 lowBattDet_tick = 0;
 
 void main_loop (void)
 {
@@ -997,7 +983,6 @@ void main_loop (void)
 
 	////////////////////////////////////// BLE entry /////////////////////////////////
 	blt_sdk_main_loop();
-
 
 
 	////////////////////////////////////// UI entry /////////////////////////////////
@@ -1009,8 +994,9 @@ void main_loop (void)
 	#endif
 
 	#if (BATT_CHECK_ENABLE)
-		if(lowBattDet_enable){
-			battery_power_check();//whether or not entry battery check
+		if(lowBattDet_enable && clock_time_exceed(lowBattDet_tick, 500*1000)){
+			lowBattDet_tick = clock_time();
+			battery_power_check(VBAT_ALARM_THRES_MV);
 		}
 	#endif
 	//lowBatt_alarmFlag =  //low battery detect

@@ -71,6 +71,9 @@ int main (void) {
 
 	gpio_init();
 
+	///NOTE:This function must be placed before the following function rf_drv_init().
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
+
 	rf_drv_init(CRYSTAL_TYPE);
 
 	usb_init ();

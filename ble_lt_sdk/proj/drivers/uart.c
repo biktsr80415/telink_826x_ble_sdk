@@ -72,165 +72,6 @@ unsigned char uart_tx_is_busy(){
 #endif
 }
 
-/**
- * @Brief: UART Pin initialization.
- * @Param: uartPin ->
- * @ReVal: None.
- */
-void uart_pin_init(eUART_PinTypeDef uartPin)
-{
-#if(MCU_CORE_TYPE == MCU_CORE_8266)
-	if(uartPin == UART_PIN_PC6C7)
-	gpio_set_func(GPIO_PC6, AS_UART);
-	gpio_set_func(GPIO_PC7, AS_UART);
-	//gpio_set_func(GPIO_UTX, AS_UART);
-	//gpio_set_func(GPIO_URX, AS_UART);
-#elif (MCU_CORE_TYPE == MCU_CORE_8261||MCU_CORE_TYPE == MCU_CORE_8267||MCU_CORE_TYPE == MCU_CORE_8269)
-    if( uartPin == UART_PIN_PA6A7)
-    {
-        //UART_GPIO_CFG_PA6_PA7();
-        gpio_set_func(GPIO_PA6, AS_UART);
-        gpio_set_func(GPIO_PA7, AS_UART);
-    }
-    else if(uartPin == UART_PIN_PB2B3)
-    {
-        //UART_GPIO_CFG_PB2_PB3();
-    	gpio_set_func(GPIO_PB2, AS_UART);
-    	gpio_set_func(GPIO_PB3, AS_UART);
-    }
-    else if(uartPin == UART_PIN_PC2C3)
-    {
-        //UART_GPIO_CFG_PC2_PC3();
-    	gpio_set_func(GPIO_PC2, AS_UART);
-    	gpio_set_func(GPIO_PC3, AS_UART);
-    }
-#elif (MCU_CORE_TYPE == MCU_CORE_5316)
-	if(uartPin == UART_PIN_PA3A4)
-	{
-		//Disable GPIO function of PA3 PA4.
-		gpio_set_func(GPIO_PA3,AS_UART);//Tx
-		gpio_set_func(GPIO_PA4,AS_UART);//Rx
-
-		gpio_set_output_en(GPIO_PA3,1);
-		gpio_set_input_en(GPIO_PA4,1);
-
-		//gpio_setup_up_down_resistor(GPIO_PA3,PM_PIN_PULLUP_10K);
-		gpio_setup_up_down_resistor(GPIO_PA4,PM_PIN_PULLUP_10K);
-
-		//Set PA3 PA4 as UART.
-		GPIOA_AF->RegBits.P3_AF = GPIOA3_UART_TX;
-		GPIOA_AF->RegBits.P4_AF = GPIOA4_UART_RX;
-
-		/* Disable UART function of other Pins. */
-		//PB4 PB5
-		if(GPIOB_AF->RegBits.P4_AF == GPIOB4_UART_TX)//PB4
-		{
-			gpio_set_func(GPIO_PB4,AS_GPIO);
-		}
-		if(GPIOB_AF->RegBits.P5_AF == GPIOB5_UART_RX)//PB5
-		{
-			gpio_set_func(GPIO_PB5,AS_GPIO);
-		}
-		//PC4 PC5
-		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_UART_TX)//PC4
-		{
-			gpio_set_func(GPIO_PC4,AS_GPIO);
-		}
-		if(GPIOC_AF->RegBits.P5_AF == GPIOC5_UART_RX)//PC5
-		{
-			gpio_set_func(GPIO_PC5,AS_GPIO);
-		}
-	}
-	else if(uartPin == UART_PIN_PB4B5)
-	{
-		//Disable GPIO function of PB4 PB5.
-		gpio_set_func(GPIO_PB4,AS_UART);//Tx
-		gpio_set_func(GPIO_PB5,AS_UART);//Rx
-
-		gpio_set_output_en(GPIO_PB4,1);
-		gpio_set_input_en(GPIO_PB5,1);
-
-		gpio_setup_up_down_resistor(GPIO_PB5,PM_PIN_PULLUP_10K);
-
-		//Set PB4 PB5 as UART.
-		GPIOB_AF->RegBits.P4_AF = GPIOB4_UART_TX;
-		GPIOB_AF->RegBits.P5_AF = GPIOB5_UART_RX;
-
-		/* Disable UART function of other Pins. */
-		//PA3 PA4
-		if(GPIOA_AF->RegBits.P3_AF == GPIOA3_UART_TX)//PA3
-		{
-			gpio_set_func(GPIO_PA3,AS_GPIO);
-		}
-		if(GPIOA_AF->RegBits.P4_AF == GPIOA4_UART_RX)//PA4
-		{
-			gpio_set_func(GPIO_PA4,AS_GPIO);
-		}
-		//PC4 PC5
-		if(GPIOC_AF->RegBits.P4_AF == GPIOC4_UART_TX)//PC4
-		{
-			gpio_set_func(GPIO_PC4,AS_GPIO);
-		}
-		if(GPIOC_AF->RegBits.P5_AF == GPIOC5_UART_RX)//PC5
-		{
-			gpio_set_func(GPIO_PC5,AS_GPIO);
-		}
-	}
-	else if(uartPin == UART_PIN_PC4C5)
-	{
-		//Disable GPIO function of PC4 PC5.
-		gpio_set_func(GPIO_PC4,AS_UART);//Tx
-		gpio_set_func(GPIO_PC5,AS_UART);//Rx
-
-		gpio_set_output_en(GPIO_PC4,1);
-		gpio_set_input_en(GPIO_PC5,1);
-
-		gpio_setup_up_down_resistor(GPIO_PC5,PM_PIN_PULLUP_10K);
-
-		//Set PC4 PC5 as UART.
-		GPIOC_AF->RegBits.P4_AF = GPIOC4_UART_TX;
-		GPIOC_AF->RegBits.P5_AF = GPIOC5_UART_RX;
-
-		/* Disable UART function of other Pins. */
-		//PA3 PA4
-		if(GPIOA_AF->RegBits.P3_AF == GPIOA3_UART_TX)//PA3
-		{
-			gpio_set_func(GPIO_PA3,AS_GPIO);
-		}
-		if(GPIOA_AF->RegBits.P4_AF == GPIOA4_UART_RX)//PA4
-		{
-			gpio_set_func(GPIO_PA4,AS_GPIO);
-		}
-		//PB4 PB5
-		if(GPIOB_AF->RegBits.P4_AF == GPIOB4_UART_TX)//PB4
-		{
-			gpio_set_func(GPIO_PB4,AS_GPIO);
-		}
-		if(GPIOB_AF->RegBits.P5_AF == GPIOB5_UART_RX)//PB5
-		{
-			gpio_set_func(GPIO_PB5,AS_GPIO);
-		}
-	}
-#endif
-}
-
-
-void uart_io_init(unsigned char uart_io_sel){
-#if(MCU_CORE_TYPE == MCU_CORE_8266)
-	uart_io_sel = uart_io_sel;
-	gpio_set_func(GPIO_UTX, AS_UART);
-	gpio_set_func(GPIO_URX, AS_UART);
-#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-    if(UART_GPIO_8267_PA6_PA7 == uart_io_sel){
-        UART_GPIO_CFG_PA6_PA7();
-    }else if(UART_GPIO_8267_PC2_PC3 == uart_io_sel){
-        UART_GPIO_CFG_PC2_PC3();
-    }else if(UART_GPIO_8267_PB2_PB3 == uart_io_sel){
-        UART_GPIO_CFG_PB2_PB3();
-    }
-#endif
-}
-
 /**********************************************************
 *
 *	@brief	reset uart module
@@ -411,17 +252,14 @@ unsigned char uart_notDmaModeRevData(void)
  * @param[in] uartData - the data to be send.
  * @return    1: send success ; 0: uart busy
  */
-unsigned char uart_TxIndex = 0;
 unsigned char uart_notDmaModeSendByte(unsigned char uartData)
 {
-	//static unsigned char uart_TxIndex = 0;
+	static unsigned char uart_TxIndex = 0;
 
 	while((read_reg8(0x9c)>>4) > 7 );  //t_buf_cnt < 8, data send OK
 	write_reg8(0x90+uart_TxIndex,uartData);
 	uart_TxIndex++;
 	uart_TxIndex &= 0x03;    //cycle the four register 0x90 0x91 0x92 0x93.
-
-	return 0;
 }
 
 /********************************************************************************
@@ -436,7 +274,7 @@ unsigned char uart_Send(unsigned char* addr){
 	if(uart_tx_is_busy()){
 		return 0;
 	}
-	reg_dma1_addr = (unsigned int)addr & 0xffff;   //packet data, start address is sendBuff+1
+	reg_dma1_addr = addr;   //packet data, start address is sendBuff+1
 	STARTTX;
 	return 1;
 }
@@ -455,7 +293,7 @@ unsigned char uart_Send(unsigned char* addr){
 void uart_RecBuffInit(unsigned char *recAddr, unsigned short recBuffLen){
 	unsigned char bufLen;
 	bufLen = recBuffLen>>4;
-	reg_dma0_addr = (unsigned int)(recAddr) & 0xffff;//set receive buffer address
+	reg_dma0_addr = (unsigned short)(recAddr);//set receive buffer address
 
 	BM_CLR(reg_dma0_ctrl, FLD_DMA_BUF_SIZE);
 	reg_dma0_ctrl |= MASK_VAL(FLD_DMA_BUF_SIZE, bufLen);  //set receive buffer size
@@ -569,6 +407,22 @@ unsigned char uart_Send_kma(unsigned char* addr){
 	return 1;
 }
 
+//////////////////////////////////////////////////////////////////////
+void uart_io_init(unsigned char uart_io_sel){
+#if(MCU_CORE_TYPE == MCU_CORE_8266)
+	uart_io_sel = uart_io_sel;
+	gpio_set_func(GPIO_UTX, AS_UART);
+	gpio_set_func(GPIO_URX, AS_UART);
+#else
+    if(UART_GPIO_8267_PA6_PA7 == uart_io_sel){
+        UART_GPIO_CFG_PA6_PA7();
+    }else if(UART_GPIO_8267_PC2_PC3 == uart_io_sel){
+        UART_GPIO_CFG_PC2_PC3();
+    }else if(UART_GPIO_8267_PB2_PB3 == uart_io_sel){
+        UART_GPIO_CFG_PB2_PB3();
+    }
+#endif
+}
 
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
@@ -653,274 +507,4 @@ void uart_CTSCfg(unsigned char enable, unsigned char select)
     	BM_CLR(reg_uart_ctrl0, FLD_UART_CTS_I_SELECT); //invert CTS
     }
 }
-
-#elif (MCU_CORE_TYPE == MCU_CORE_5316)
-/**
- * @Brief:  UART CTS/RTS Pin initialization.
- * @Param:  flowCtrlPin -> CTS/RTS Pin.
- * @Retval: None.
- */
-void UART_FlowCtrlPinInit(eUART_FlowCtrlPinTypeDef flowCtrlPin)
-{
-	/* CTS Pin Configuration. ------------------------------------------------*/
-	if(flowCtrlPin == UART_FLOW_CTRL_CTS_PA1)
-	{
-		//Disable GPIO function of PA1
-		gpio_set_func(GPIO_PA1,AS_UART);//CTS
-
-		//Set PA1 as CTS function
-		GPIOA_AF->RegBits.P1_AF = GPIOA1_UART_CTS;
-
-		/* Disable CTS function of other GPIO Pin. */
-		//PB2
-		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_UART_CTS_OR_SPI_DI)
-		{
-			gpio_set_func(GPIO_PB2,AS_GPIO);
-		}
-		//PC2
-		if(GPIOC_AF->RegBits.P2_AF == GPIOC2_UART_CTS)
-		{
-			gpio_set_func(GPIO_PC2,AS_GPIO);
-		}
-		//PB7
-		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_UART_CTS)
-		{
-			gpio_set_func(GPIO_PB7,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_CTS_PB2)
-	{
-		//Disable GPIO function of PB2
-		gpio_set_func(GPIO_PB2,AS_UART);//CTS
-
-		//Set PB2 as CTS function
-		GPIOB_AF->RegBits.P2_AF = GPIOB2_UART_CTS_OR_SPI_DI;
-
-		/* Disable CTS function of other GPIO Pin. */
-		//PA1
-		if(GPIOA_AF->RegBits.P1_AF == GPIOA1_UART_CTS)
-		{
-			gpio_set_func(GPIO_PA1,AS_GPIO);
-		}
-		//PC2
-		if(GPIOC_AF->RegBits.P2_AF == GPIOC2_UART_CTS)
-		{
-			gpio_set_func(GPIO_PC2,AS_GPIO);
-		}
-		//PB7
-		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_UART_CTS)
-		{
-			gpio_set_func(GPIO_PB7,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_CTS_PB7)
-	{
-		//Disable GPIO function of PB7
-		gpio_set_func(GPIO_PB7,AS_UART);
-
-		//Set PB7 as CTS function
-		GPIOB_AF->RegBits.P7_AF = GPIOB7_UART_CTS;
-
-		/* Disable CTS function of other GPIO Pin. */
-		//PA1
-		if(GPIOA_AF->RegBits.P1_AF == GPIOA1_UART_CTS)
-		{
-			gpio_set_func(GPIO_PA1,AS_GPIO);
-		}
-		//PB2
-		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_UART_CTS_OR_SPI_DI)
-		{
-			gpio_set_func(GPIO_PB2,AS_GPIO);
-		}
-		//PC2
-		if(GPIOC_AF->RegBits.P2_AF == GPIOC2_UART_CTS)
-		{
-			gpio_set_func(GPIO_PC2,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_CTS_PC2)
-	{
-		//Disable GPIO function of PC2
-		gpio_set_func(GPIO_PC2,AS_UART);//CTS
-
-		//Set PC2 as CTS function
-		GPIOC_AF->RegBits.P2_AF = GPIOC2_UART_CTS;
-
-		/* Disable CTS function of other GPIO Pin. */
-		//PA1
-		if(GPIOA_AF->RegBits.P1_AF == GPIOA1_UART_CTS)
-		{
-			gpio_set_func(GPIO_PA1,AS_GPIO);
-		}
-		//PB2
-		if(GPIOB_AF->RegBits.P2_AF == GPIOB2_UART_CTS_OR_SPI_DI)
-		{
-			gpio_set_func(GPIO_PB2,AS_GPIO);
-		}
-		//PB7
-		if(GPIOB_AF->RegBits.P7_AF == GPIOB7_UART_CTS)
-		{
-			gpio_set_func(GPIO_PB7,AS_GPIO);
-		}
-	}
-	/* RTS Pin Configuration. ------------------------------------------------*/
-	else if(flowCtrlPin == UART_FLOW_CTRL_RTS_PA2)
-	{
-		//Disable GPIO function of PA2
-		gpio_set_func(GPIO_PA2,AS_UART);//RTS
-
-		//Set PA2 as RTS function
-		GPIOA_AF->RegBits.P2_AF = GPIOA2_UART_RTS;
-
-		/* Disable RTS function of other GPIO Pin. */
-		//PB3
-		if(GPIOB_AF->RegBits.P3_AF == GPIOB3_UART_RTS_OR_SPI_CK)
-		{
-			gpio_set_func(GPIO_PB3,AS_GPIO);
-		}
-		//PB6
-		if(GPIOB_AF->RegBits.P6_AF ==GPIOB6_UART_RTS)
-		{
-			gpio_set_func(GPIO_PB6,AS_GPIO);
-		}
-		//PC3
-		if(GPIOC_AF->RegBits.P3_AF == GPIOC3_UART_RTS)
-		{
-			gpio_set_func(GPIO_PC3,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_RTS_PB3)
-	{
-		//Disable GPIO function of PB3
-		gpio_set_func(GPIO_PB3,AS_UART);//RTS
-
-		//Set PB3 as RTS function
-		GPIOB_AF->RegBits.P3_AF = GPIOB3_UART_RTS_OR_SPI_CK;
-		reg_gpio_pb_multi_func_select |= FLD_PB_MULTI_FUNC_SEL;//must
-
-		/* Disable RTS function of other GPIO Pin. */
-		//PA2
-		if(GPIOA_AF->RegBits.P2_AF == GPIOA2_UART_RTS)
-		{
-			gpio_set_func(GPIO_PA2,AS_GPIO);
-		}
-		//PB6
-		if(GPIOB_AF->RegBits.P6_AF ==GPIOB6_UART_RTS)
-		{
-			gpio_set_func(GPIO_PB6,AS_GPIO);
-		}
-		//PC3
-		if(GPIOC_AF->RegBits.P3_AF == GPIOC3_UART_RTS)
-		{
-			gpio_set_func(GPIO_PC3,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_RTS_PB6)
-	{
-		//Disable GPIO function of PB6
-		gpio_set_func(GPIO_PB6,AS_UART);
-
-		//Set PB6 as RTS function
-		GPIOB_AF->RegBits.P6_AF = GPIOB6_UART_RTS;
-
-		/* Disable RTS function of other GPIO Pin. */
-		//PA2
-		if(GPIOA_AF->RegBits.P2_AF == GPIOA2_UART_RTS)
-		{
-			gpio_set_func(GPIO_PA2,AS_GPIO);
-		}
-		//PB3
-		if(GPIOB_AF->RegBits.P3_AF == GPIOB3_UART_RTS_OR_SPI_CK)
-		{
-			gpio_set_func(GPIO_PB3,AS_GPIO);
-		}
-		//PC3
-		if(GPIOC_AF->RegBits.P3_AF == GPIOC3_UART_RTS)
-		{
-			gpio_set_func(GPIO_PC3,AS_GPIO);
-		}
-	}
-	else if(flowCtrlPin == UART_FLOW_CTRL_RTS_PC3)
-	{
-		//Disable GPIO function of PC3
-		gpio_set_func(GPIO_PC3,AS_UART);//RTS
-
-		//Set PC3 as RTS function
-		GPIOC_AF->RegBits.P3_AF = GPIOC3_UART_RTS;
-
-		/* Disable RTS function of other GPIO Pin. */
-		//PA2
-		if(GPIOA_AF->RegBits.P2_AF == GPIOA2_UART_RTS)
-		{
-			gpio_set_func(GPIO_PA2,AS_GPIO);
-		}
-		//PB3
-		if(GPIOB_AF->RegBits.P3_AF == GPIOB3_UART_RTS_OR_SPI_CK)
-		{
-			gpio_set_func(GPIO_PB3,AS_GPIO);
-		}
-		//PB6
-		if(GPIOB_AF->RegBits.P6_AF == GPIOB6_UART_RTS)
-		{
-			gpio_set_func(GPIO_PB6,AS_GPIO);
-		}
-	}
-}
-
-/**
- * @Brief:  UART RTS initialization.
- * @Param:
- * @Retval: None.
- */
-void UART_RTS_Init(u8 rtsTriggerLevel,u8 isInvertRtsValue,u8 rtsManualModeEn,u8 rtsEnable)
-{
-	//Set RTS trigger level.
-	UART_CTRL2->Bits.RTS_TriggerLevel = rtsTriggerLevel;
-
-	//whether RTS Pin value is inverted.
-	UART_CTRL2->Bits.RTS_ValueInvert = isInvertRtsValue;
-
-	//Set RTS as Manual mode.
-	UART_CTRL2->Bits.RTS_ManualModeEnable = rtsManualModeEn;
-
-	//Enable RTS.
-	UART_CTRL2->Bits.RTS_Enable = rtsEnable;
-}
-
-/**
- * @Brief:  Set UART RTS Pin as High/Low level when RTS works in manual mode.
- * @Param:  pinValue -> RTS Pin value.
- * @Retval: None.
- */
-void UART_RTS_SetPinValue(u8 pinValue)
-{
-	UART_CTRL2->Bits.RTS_Value = pinValue;
-}
-
-/**
- * @Brief:  UART CTS initialization.
- * @Param:
- * @Retval: None.
- */
-void UART_CTS_Init(u8 pinValue, u8 ctsEnable)
-{
-	if(pinValue)
-	{
-		reg_uart_ctrl0 |= FLD_UART_CTS_I_SELECT;
-	}
-	else
-	{
-		reg_uart_ctrl0 &= ~FLD_UART_CTS_I_SELECT;
-	}
-
-	if(ctsEnable)
-	{
-		reg_uart_ctrl0 |= FLD_UART_CTS_EN;
-	}
-	else
-	{
-		reg_uart_ctrl0 &= ~FLD_UART_CTS_EN;
-	}
-}
-
 #endif

@@ -1627,7 +1627,7 @@ static inline void config_adc (int chn_mic, int chn_adc, int sample) {
 	reg_clk_en2 |= FLD_CLK2_DIFIO_EN;
 	reg_dfifo_ana_in = FLD_DFIFO_AUD_INPUT_MONO | FLD_DFIFO_MIC_ADC_IN;
 	reg_dfifo_scale = 0x25;				// down scale by 6
-#if TL_MIC_SOFT_DOWNSAMPLING
+#if TL_MIC_32K_FIR_16K
 	reg_aud_hpf_alc = 9;				// reg0xb05 volume setting
 #else	//clr lpf ,when no fir 32k to 16k
 	reg_aud_hpf_alc = 0x4b;//11;				// reg0xb05 volume setting
@@ -1675,7 +1675,7 @@ static inline void config_adc (int chn_mic, int chn_adc, int sample) {
 
 	}
 	else if(sample == SYS_16M_AMIC_16K){
-#if TL_MIC_SOFT_DOWNSAMPLING
+#if TL_MIC_32K_FIR_16K
 		//16000/(187+4*16)/2 = 16000/251/2 = 31.87 K
 		// down scale by 2
         reg_dfifo_scale       = 0x21;  // reg0xb04[6:4] cic filter output select 1 , cic[22:5] , reg0xb04[3:0] down scale by 2,
@@ -1695,7 +1695,7 @@ static inline void config_adc (int chn_mic, int chn_adc, int sample) {
 #endif
 	}
 	else if(sample == SYS_48M_AMIC_16K){
-#if TL_MIC_SOFT_DOWNSAMPLING
+#if TL_MIC_32K_FIR_16K
 		//48000/(260+15*16)/3 = 48000/500/3 = 32 K
 		reg_dfifo_scale       = 0x22; //down scale by 3
 		reg_adc_period_chn0   = 260;

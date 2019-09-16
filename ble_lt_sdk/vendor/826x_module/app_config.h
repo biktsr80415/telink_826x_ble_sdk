@@ -28,29 +28,55 @@ extern "C" {
 #define BLE_MODULE_PM_ENABLE				1
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
-#if	(__PROJECT_8261_MODULE__ || __PROJECT_8266_MODULE__)
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
-#endif
 #define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
 #define SIG_PROC_ENABLE 					0   //To known if the Master accepted or rejected Connection_Parameters_Update or not!
 
 /////////////////// DEBUG  /////////////////////////////////
 //826x module's pin simulate as a uart tx, Just for debugging
-#define PRINT_DEBUG_INFO               		0	//open/close myprintf
+#define PRINT_DEBUG_INFO               		1	//open/close myprintf
 
 
 //////////////// SMP SETTING  //////////////////////////////
-#define SMP_DISABLE			   				0
-#define SMP_JUST_WORK       				1
+#define SMP_DO_NOT_SUPPORT 			   	    1
+#define SMP_JUST_WORK       				0
 #define SMP_PASSKEY_ENTRY   				0
+#define SMP_NUMERIC_COMPARISON   			0
+
+#if (SMP_NUMERIC_COMPARISON)
+    //NC confirm method select
+	#define SMP_BUTTON_ENABLE               1
+    #define SMP_UART_ENABLE                 0
+#elif (SMP_PASSKEY_ENTRY)
+	#define SMP_UART_ENABLE                 1
+#endif
+
 #if SMP_PASSKEY_ENTRY
-#define PINCODE_RANDOM_ENABLE               0//0:default: 123456
-#if PINCODE_RANDOM_ENABLE
+#define PINCODE_RANDOM_ENABLE               1//if 0: use default: 123456
+#endif
+#define DEFAULT_PINCODE                     123456
+
+#if (!SMP_DO_NOT_SUPPORT)
 #define PRINT_DEBUG_INFO                    1
 #endif
+
+
+
+//8267 EVK board
+/////////////////// button pin /////////////////////////////////
+#if SMP_BUTTON_ENABLE
+// KEY1		GPIO_PD2
+// KEY2		GPIO_PC7
+#define MAX_BTN_SIZE			2
+#define BTN_VALID_LEVEL			0
+//                              KEY1-GPIO_PD2   KEY2-GPIO_PC7
+#define BTN_PINS				{GPIO_PD2, GPIO_PC7}
+#define BTN_MAP					{1, 2}
+#define	PULL_WAKEUP_SRC_PC7		PM_PIN_PULLUP_10K
+#define	PULL_WAKEUP_SRC_PD2		PM_PIN_PULLUP_10K
+#define PC7_INPUT_ENABLE		1
+#define PD2_INPUT_ENABLE		1
 #endif
-
-
 
 
 #define     MY_APP_ADV_CHANNEL					BLT_ENABLE_ADV_ALL
@@ -216,6 +242,73 @@ extern "C" {
 #endif
 
 #endif
+
+
+
+///////////////////////////////////// ATT  HANDLER define ///////////////////////////////////////
+typedef enum
+{
+	ATT_H_START = 0,
+
+
+	//// Gap ////
+	/**********************************************************************************************/
+	GenericAccess_PS_H, 					//UUID: 2800, 	VALUE: uuid 1800
+	GenericAccess_DeviceName_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	GenericAccess_DeviceName_DP_H,			//UUID: 2A00,   VALUE: device name
+	GenericAccess_Appearance_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read
+	GenericAccess_Appearance_DP_H,			//UUID: 2A01,	VALUE: appearance
+	CONN_PARAM_CD_H,						//UUID: 2803, 	VALUE:  			Prop: Read
+	CONN_PARAM_DP_H,						//UUID: 2A04,   VALUE: connParameter
+
+
+	//// gatt ////
+	/**********************************************************************************************/
+	GenericAttribute_PS_H,					//UUID: 2800, 	VALUE: uuid 1801
+	GenericAttribute_ServiceChanged_CD_H,	//UUID: 2803, 	VALUE:  			Prop: Indicate
+	GenericAttribute_ServiceChanged_DP_H,   //UUID:	2A05,	VALUE: service change
+	GenericAttribute_ServiceChanged_CCB_H,	//UUID: 2902,	VALUE: serviceChangeCCC
+
+
+	//// device information ////
+	/**********************************************************************************************/
+	DeviceInformation_PS_H,					//UUID: 2800, 	VALUE: uuid 180A
+	DeviceInformation_pnpID_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read
+	DeviceInformation_pnpID_DP_H,			//UUID: 2A50,	VALUE: PnPtrs
+
+
+#if (TELIK_SPP_SERVICE_ENABLE)
+	//// TELIK_SPP ////
+	/**********************************************************************************************/
+	SPP_PS_H, 								//UUID: 2800, 	VALUE: telink audio service uuid
+
+	//Server2Client
+	SPP_Server2Client_INPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
+	SPP_Server2Client_INPUT_DP_H,			//UUID: TELIK_SPP_Server2Client uuid,  VALUE: SppDataServer2ClientData
+	SPP_Server2Client_INPUT_CCB_H,			//UUID: 2902 	VALUE: SppDataServer2ClientDataCCC
+	SPP_Server2Client_INPUT_DESC_H,			//UUID: 2901, 	VALUE: TelinkSPPS2CDescriptor
+
+	//Client2Server
+	SPP_Client2Server_OUT_CD_H,				//UUID: 2803, 	VALUE:  			Prop: Read | write_without_rsp
+	SPP_Client2Server_OUT_DP_H,				//UUID: TELIK_SPP_Client2Server uuid,  VALUE: SppDataClient2ServerData
+	SPP_Client2Server_DESC_H,				//UUID: 2901, 	VALUE: TelinkSPPC2SDescriptor
+#endif
+
+
+	//// Ota ////
+	/**********************************************************************************************/
+	OTA_PS_H, 								//UUID: 2800, 	VALUE: telink ota service uuid
+	OTA_CMD_OUT_CD_H,						//UUID: 2803, 	VALUE:  			Prop: read | write_without_rsp
+	OTA_CMD_OUT_DP_H,						//UUID: telink ota uuid,  VALUE: otaData
+	OTA_CMD_OUT_DESC_H,						//UUID: 2901, 	VALUE: otaName
+
+
+	ATT_END_H,
+
+}ATT_HANDLE;
+
+
+
 
 
 

@@ -9,6 +9,9 @@
 #define APP_PAIR_H_
 
 
+void app_setCurrentReadReq_attHandle(u16 handle);
+
+
 int user_tbl_slave_mac_add(u8 adr_type, u8 *adr);
 int user_tbl_slave_mac_search(u8 adr_type, u8 * adr);
 

@@ -38,6 +38,7 @@ const u8	tbl_scanRsp [] = {
 
 u8 	ui_ota_is_working = 0;
 
+
 #if SIG_PROC_ENABLE
 /*------------------------------------------------------------------- l2cap data pkt(SIG) ---------------------------------------------------*
  | stamp_time(4B) |llid nesn sn md |  pdu-len   | l2cap_len(2B)| chanId(2B)| Code(1B)|Id(1B)|Data-Len(2B) |           Result(2B)             |
@@ -45,15 +46,10 @@ u8 	ui_ota_is_working = 0;
  |                |                |            |     0x0006   |    0x05   |   0x13  | 0x01 |  0x0002     |             0x0000               |
  |                |          data_headr         |                                                       payload                              |
  *-------------------------------------------------------------------------------------------------------------------------------------------*/
-u8 conn_update_cnt;//连接参数table的当前index
 int att_sig_proc_handler (u16 connHandle, u8 * p)
 {
 	rf_pkt_l2cap_sig_connParaUpRsp_t* pp = (rf_pkt_l2cap_sig_connParaUpRsp_t*)p;
-
-#if 0//test debug
-	foreach(i, 16){PrintHex(*((u8*)pp + i));}printf(".\n");
-#endif
-
+	static u8 conn_update_cnt;
 	u8 sig_conn_param_update_rsp[9] = { 0x0A, 0x06, 0x00, 0x05, 0x00, 0x13, 0x01, 0x02, 0x00 };
 	if(!memcmp(sig_conn_param_update_rsp, &pp->rf_len, 9) && ((pp->type&0b11) == 2)){//l2cap data pkt, start pkt
 		if(pp->result == 0x0000){
@@ -128,7 +124,7 @@ void show_ota_result(int result)
 void	task_connect (void)
 {
 	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
-
+#if 0
 	//update connParam
 	if(bls_ll_getConnectionInterval() > MAX_INTERVAL_VAL)//
 	{
@@ -140,6 +136,7 @@ void	task_connect (void)
 		printf("ConnInterval < 20ms.\nSlave NOT need sent update connPara req!\n");
 		printf("Connection interval:%dus.\n", bls_ll_getConnectionInterval() * 1250 );
 	}
+#endif
 	
 #if 0
 	gpio_write(RED_LED, ON);
@@ -149,18 +146,109 @@ void	task_connect (void)
 }
 
 
-void 	app_switch_to_indirect_adv(u8 e, u8 *p, int n)
-{
+#if SMP_BUTTON_ENABLE
+u32 ctrl_btn[] = BTN_PINS;
+u8 btn_map[MAX_BTN_SIZE] = BTN_MAP;
 
-	bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS + 16,
-						ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC,
-						0,  NULL,
-						MY_APP_ADV_CHANNEL,
-						ADV_FP_NONE);
+typedef	struct{
+	u8 	cnt;				//count button num
+	u8 	btn_press;
+	u8 	keycode[MAX_BTN_SIZE];			//6 btn
+}vc_data_t;
+vc_data_t vc_event;
 
-	bls_ll_setAdvEnable(1);  //must: set adv enable
+typedef struct{
+	u8  btn_history[4];		//vc history btn save
+	u8  btn_filter_last;
+	u8	btn_not_release;
+	u8 	btn_new;					//new btn  flag
+}btn_status_t;
+btn_status_t 	btn_status;
+
+u8 mybtn_debounce_filter(u8 *btn_v);
+u8 myvc_detect_button(int read_key);
+extern u8  confirm_f_uart_btn;
+void proc_button (void){
+	if(blc_smp_getGenMethod() == NUMERIC_COMPARISON && !confirm_f_uart_btn &&\
+	   blc_get_pc_start_tick() && !clock_time_exceed(blc_get_pc_start_tick(), blc_get_pc_timeout_duration())){
+		static u32 button_det_tick;
+		if(clock_time_exceed(button_det_tick, 5000))
+		{
+			button_det_tick = clock_time();
+		}
+		else{
+			return;
+		}
+
+		extern void blc_smp_setNCTimeoutTick (u32 t);
+
+		int det_key = myvc_detect_button(1);
+
+		if (det_key){
+
+			u8 key = vc_event.keycode[0];
+
+			if(vc_event.cnt == 2)  //two key press
+			{
+
+			}
+			else if(vc_event.cnt == 1) //one key press
+			{
+		        if(key == 1){
+					printf("Slave confirmed: 'YES'(pairing).\n");
+					confirm_f_uart_btn = 1;
+					blc_smp_setNCconfirmValue(NC_CONFIRM_YES);
+		        }
+		        else if(key == 2){
+		        	printf("Slave confirmed: 'NO'(cancel).\n");
+					confirm_f_uart_btn = 1;
+					blc_smp_setNCconfirmValue(NC_CONFIRM_NO);
+		        }
+			}
+			else if(vc_event.cnt == 0){
+				//printf("Key Released!\n");
+			}
+		}
+	}
 }
 
+u8 mybtn_debounce_filter(u8 *btn_v)
+{
+	u8 change = 0;
+	for(int i=3; i>0; i--){
+		btn_status.btn_history[i] = btn_status.btn_history[i-1];
+	}
+	btn_status.btn_history[0] = *btn_v;
+	if(  btn_status.btn_history[0] == btn_status.btn_history[1] && btn_status.btn_history[1] == btn_status.btn_history[2] && \
+		btn_status.btn_history[0] != btn_status.btn_filter_last ){
+		change = 1;
+		btn_status.btn_filter_last = btn_status.btn_history[0];
+	}
+	return change;
+}
+
+u8 myvc_detect_button(int read_key)
+{
+	u8 btn_changed, i;
+	memset(&vc_event,0,sizeof(vc_data_t));			//clear vc_event
+	//vc_event.btn_press = 0;
+	for(i=0; i<MAX_BTN_SIZE; i++){
+		if(BTN_VALID_LEVEL != !gpio_read(ctrl_btn[i])){
+			vc_event.btn_press |= BIT(i);
+		}
+	}
+	btn_changed = mybtn_debounce_filter(&vc_event.btn_press);
+	if(btn_changed && read_key){
+		for(i=0; i<MAX_BTN_SIZE; i++){
+			if(vc_event.btn_press & BIT(i)){
+				vc_event.keycode[vc_event.cnt++] = btn_map[i];
+			}
+		}
+		return 1;
+	}
+	return 0;
+}
+#endif
 
 
 void led_init(void)
@@ -221,6 +309,14 @@ void app_power_management ()
 	uart_ErrorCLR();
 #endif
 
+#if (SECURE_CONNECTION_ENABLE && SMP_NUMERIC_COMPARISON && SMP_UART_ENABLE)//use uart confirm 'YES/NO'(NC)
+	extern u8  pm_ctrl_flg;
+	if(pm_ctrl_flg){
+		bls_pm_setSuspendMask(SUSPEND_DISABLE);
+		return;
+	}
+#endif
+
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
@@ -256,8 +352,6 @@ void app_power_management ()
 
 void user_init()
 {
-	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
-
 	REG_ADDR8(0x74) = 0x53;
 	REG_ADDR16(0x7e) = 0x08d1;
 	REG_ADDR8(0x74) = 0x00;
@@ -297,17 +391,33 @@ void user_init()
 #if SIG_PROC_ENABLE
 	blc_l2cap_reg_att_sig_hander(att_sig_proc_handler);         //register sig process handler
 #endif
+
 	//smp initialization
-#if ( SMP_DISABLE )
-	//bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
-#elif ( SMP_JUST_WORK || SMP_PASSKEY_ENTRY )
+#if ( SMP_DO_NOT_SUPPORT )
+	bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
+#else //if (SMP_JUST_WORK || SMP_PASSKEY_ENTRY || SMP_NUMERIC_COMPARISON)
 	//Just work encryption: TK default is 0, that is, pin code defaults to 0, without setting
-	//Passkey entry encryption: generate random numbers, or set the default pin code, processed in the event_handler function
+	//Passkey entry encryption: generate random numbers pinCode, or set the default pinCode, processed in the event_handler function
+
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
-	#if (SMP_PASSKEY_ENTRY )
-		blc_smp_enableAuthMITM (1, 123456);
-		blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);   //Responder displays PK, initiator inputs PK
-	#endif
+
+	#if SECURE_CONNECTION_ENABLE
+		blc_smp_enableScFlag (1);//support smp4.2
+		#if (SMP_NUMERIC_COMPARISON)//if 0:SC_JUST_WORK; if 1:SC_NC.
+		    blc_smp_enableAuthMITM (1, DEFAULT_PINCODE);
+			blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_YESNO);
+        #elif (SMP_JUST_WORK)
+			//do nothing.
+		#endif
+    #endif
+
+	#if SMP_PASSKEY_ENTRY//if blc_smp_enableScFlag (1) && enable BLE_P256_PUBLIC_KEY_ENABLE: SC_PASSKEY ENTRY
+		blc_smp_enableAuthMITM (1, DEFAULT_PINCODE);
+		//blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);   //Responder displays PK, initiator inputs PK
+		blc_smp_setIoCapability (IO_CAPABLITY_KEYBOARD_ONLY);   //Initiator displays PK, responder inputs PK
+    #endif
+
+	//HID_service_on_android7p0_init();
 #endif
 
 	///////////////////// USER application initialization ///////////////////
@@ -374,7 +484,7 @@ void user_init()
 
 	extern int event_handler(u32 h, u8 *para, int n);
 	blc_hci_registerControllerEventHandler(event_handler);		//register event callback
-	bls_hci_mod_setEventMask_cmd(0xffff);			//enable all 15 events,event list see ble_ll.h
+	bls_hci_mod_setEventMask_cmd(0xfffff);			//enable all 18 events,event list see ble_ll.h
 
 	// OTA init
 	bls_ota_clearNewFwDataArea(); //must
@@ -402,7 +512,7 @@ void user_init()
 #endif
 }
 
-extern void battery_power_check(void);
+
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
@@ -415,6 +525,10 @@ void main_loop ()
 	blt_sdk_main_loop();
 
 	////////////////////////////////////// UI entry /////////////////////////////////
+#if SMP_BUTTON_ENABLE
+	proc_button();
+#endif
+
 #if (BATT_CHECK_ENABLE)
 	if(tick_loop%300 == 0)
 	{

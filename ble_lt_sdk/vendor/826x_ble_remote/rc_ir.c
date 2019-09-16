@@ -283,11 +283,11 @@ static inline void ir_set_repeat_timer(void)
         ir_send_ctrl.repeat_timer_enable = 1;
 		ir_send_ctrl.repeat_time = clock_time();
 
-		//set timer2 cap 108 ms
-		reg_irq_mask |= FLD_IRQ_TMR2_EN;
-		reg_tmr2_tick = 0;
-		reg_tmr2_capt = CLOCK_SYS_CLOCK_1US * 1000 * 108 ;
-		reg_tmr_ctrl |= FLD_TMR2_EN;
+		//set timer1 cap 108 ms
+		reg_irq_mask |= FLD_IRQ_TMR1_EN;
+		reg_tmr1_tick = 0;
+		reg_tmr1_capt = CLOCK_SYS_CLOCK_1US * 1000 * 108 ;
+		reg_tmr_ctrl |= FLD_TMR1_EN;
 	}
 }
 
@@ -295,8 +295,8 @@ static inline void ir_set_repeat_timer(void)
 static inline void ir_release_repeat_timer(){
 	if(ir_send_ctrl.repeat_timer_enable){
 		ir_send_ctrl.repeat_timer_enable = 0;
-		reg_irq_mask &= ~FLD_IRQ_TMR2_EN;
-		reg_tmr_ctrl  &=  ~FLD_TMR2_EN;  //stop timer2
+		reg_irq_mask &= ~FLD_IRQ_TMR1_EN;
+		reg_tmr_ctrl  &=  ~FLD_TMR1_EN;  //stop timer1
 	}
 }
 

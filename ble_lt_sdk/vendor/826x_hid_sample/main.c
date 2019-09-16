@@ -9,10 +9,11 @@
 
 
 
-#if (__PROJECT_8261_HID_SAMPLE__ || __PROJECT_8266_HID_SAMPLE__ || __PROJECT_8267_HID_SAMPLE__ || __PROJECT_8269_HID_SAMPLE__)
+#if (__PROJECT_8266_HID_SAMPLE__ || __PROJECT_8267_HID_SAMPLE__)
 
 extern void user_init();
 extern void main_loop (void);
+extern void deep_wakeup_proc(void);
 
 _attribute_ram_code_ void irq_handler(void)
 {
@@ -32,6 +33,9 @@ int main (void) {
 
 	gpio_init();
 
+	///NOTE:This function must be placed before the following function rf_drv_init().
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
+
 	rf_drv_init(CRYSTAL_TYPE);
 
 	user_init ();
@@ -45,7 +49,6 @@ int main (void) {
 		main_loop ();
 	}
 }
-
 
 
 #endif

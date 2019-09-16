@@ -9,8 +9,6 @@ extern "C" {
 
 #if (__PROJECT_8261_BLE_REMOTE__)
 	#define CHIP_TYPE				CHIP_TYPE_8261
-#elif (__PROJECT_8266_BLE_REMOTE__)
-	#define CHIP_TYPE				CHIP_TYPE_8266
 #elif (__PROJECT_8267_BLE_REMOTE__)
 	#define CHIP_TYPE				CHIP_TYPE_8267
 #elif (__PROJECT_8269_BLE_REMOTE__)
@@ -26,8 +24,10 @@ extern "C" {
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_REMOTE_OTA_ENABLE			1
 #define REMOTE_IR_ENABLE				0
-#define BATT_CHECK_ENABLE       		0   //enable or disable battery voltage detection
-#define BLE_PHYTEST_MODE				PHYTEST_MODE_DISABLE
+
+#define BATT_CHECK_ENABLE       		1   //enable or disable battery voltage detection
+#define BLT_APP_LED_ENABLE              1
+
 
 #if (__PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 	#define BLE_AUDIO_ENABLE				1
@@ -41,28 +41,29 @@ extern "C" {
 ////////////////////////// AUDIO CONFIG /////////////////////////////
 #if (BLE_AUDIO_ENABLE)
 	#define BLE_DMIC_ENABLE					0  //0: Amic   1: Dmic
+
+	/////voice packet
 	#define	ADPCM_PACKET_LEN				128
-	#define TL_MIC_ADPCM_UNIT_SIZE			248
+	#define TL_MIC_ADPCM_UNIT_SIZE			248  ///sample--2bytes
 
-	#define	TL_MIC_8K						0
-	#define	TL_MIC_16K						1
-	#define	TL_MIC_RATE						TL_MIC_8K
+	#define	TL_MIC_32K_FIR_16K				1
 
-	#define	TL_MIC_SOFT_DOWNSAMPLING		0
-
-	#if TL_MIC_SOFT_DOWNSAMPLING
+	#if TL_MIC_32K_FIR_16K
 		#define	TL_MIC_BUFFER_SIZE				1984
 	#else
 		#define	TL_MIC_BUFFER_SIZE				992
 	#endif
 
-	#define GPIO_AMIC_BIAS					GPIO_PC6
+
+	#if (BLE_DMIC_ENABLE)
+		#define GPIO_DMIC_BIAS                  GPIO_PA3
+		#define DMIC_CLOCK_PIN_RATE             1 //need to be set based on DMIC spec. 1---1.024M;2---2.048M;4---4.096M
+	#else
+		#define GPIO_AMIC_BIAS					GPIO_PC6
+	#endif
 
 #endif
 
-///////////// avoid ADC module current leakage (when module on suspend status) //////////////////////////////
-#define ADC_MODULE_CLOSED               BM_CLR(reg_adc_mod, FLD_ADC_CLK_EN)  // adc clk disable
-#define ADC_MODULE_ENABLE               BM_SET(reg_adc_mod, FLD_ADC_CLK_EN) // adc clk open
 
 //////////////////////////// KEYSCAN/MIC  GPIO //////////////////////////////////
 #define	MATRIX_ROW_PULL					PM_PIN_PULLDOWN_100K
@@ -158,108 +159,100 @@ extern "C" {
 //8261/8267/8269 hardware: C59T80A5_V1.1
 #if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
-	#define			GPIO_LED				GPIO_PC7
+#if (BLT_APP_LED_ENABLE)
+	#define         LED_ON_LEVEL         1  //1 indicate high level turn on LED; 0 indicate low level will turn off LED. based on actual spec.
+	#define			GPIO_LED		     GPIO_PD1
+	#define         GPIO_LED1            GPIO_PD2
+#endif
 
-	#if (REMOTE_IR_ENABLE)  //with IR keymap
-			#define 		GPIO_IR_CONTROL			GPIO_PD0
+#if (REMOTE_IR_ENABLE)  //with IR keymap
+	#define 		GPIO_IR_CONTROL			GPIO_PA3
 
-			#define		KB_MAP_NORMAL	{\
-							{0, 	1,		2,		3,		4,		5,		6,		}, \
-							{7,		8,		9,		10,		11,		12,		13,		}, \
-							{14,	15,		16,		17,		18,		19, 	KEY_MODE_SWITCH, }, \
-							{21,	22,		23,		24,		25,		26,		27,		}, \
-							{28,	29,		VOICE,	31,		32,		33,		34,		}, \
-							{35,	36,		37,		38,		39,		40,		41,		}, \
-							{42,	43,		44,		45,		46,		47,		48,		}, }
+	#define		KB_MAP_NORMAL	{\
+				{KEY_MODE_SWITCH,	1,		2,		3,		4,}, \
+				{VOICE, 	6,		7,		8,		9,}, \
+				{10,	11, 	12, 	13, 	14,}, \
+				{15,	16, 	17, 	18, 	19,}, \
+				{20,	21, 	22, 	23, 	24,}, \
+				{25,	26, 	27, 	28, 	29,}, }
 
-			#define		KB_MAP_BLE	{\
-							VK_7,		VK_4,			VK_1,		VK_NONE,			CR_VOL_DN,	CR_VOL_UP,	CR_BACK	, \
-							VK_LEFT,	VK_NONE,		VK_NONE,	VK_NONE,			CR_RECORD,	VK_NONE,	CR_POWER, \
-							VK_RIGHT,	CR_HOME,		VK_NONE,	CR_FAST_FORWARD,	CR_STOP,	CR_SEARCH,	KEY_MODE_SWITCH , \
-							VK_9,	 	VK_6,			VK_3,		VK_NONE,			CR_CHN_DN,	CR_CHN_UP,	CR_MENU , \
-							VK_NONE,	CR_VOL_MUTE,	VOICE,		VK_DOWN,			VK_ENTER,	VK_UP,		VK_NONE , \
-							VK_NONE,	VK_NONE,		VK_0,		VK_8,				VK_5,		VK_2,		VK_NONE , \
-							CR_PAUSE,	CR_PLAY,		VK_NONE,	VK_NONE,			VK_NONE,	VK_NONE,	VK_NONE, }
+	#define			KB_MAP_BLE	{\
+				VK_F,		CR_POWER,		VK_A,	VK_G,	CR_HOME,	 \
+				VOICE,		VK_E,		VK_B,	CR_VOL_UP,	CR_VOL_DN,	 \
+				VK_2,		VK_RIGHT,		VK_C,	VK_3,		VK_1,	 \
+				VK_5,		VK_ENTER,		VK_D,	VK_6,		VK_4,	 \
+				VK_8,		VK_DOWN,		VK_UP,	VK_9,		VK_7,	 \
+				VK_0,		CR_BACK,		VK_LEFT,	CR_VOL_MUTE,		CR_MENU,	}
 
+	#define		KB_MAP_IR	{\
+				VK_NONE,	IR_POWER,	VK_NONE,	VK_NONE,	IR_HOME,\
+				IR_VOICE,	VK_NONE,	VK_NONE,	IR_VOL_UP,	IR_VOL_DN,\
+				IR_VK_2,	IR_RIGHT,	VK_NONE,	IR_VK_3,	IR_VK_1,\
+				IR_VK_5,	IR_SEL, 	VK_NONE,	IR_VK_6,	IR_VK_4,\
+				IR_VK_8,	IR_DN,		IR_UP,		IR_VK_9,	IR_VK_7,	\
+				IR_VK_0,	IR_BACK,	IR_LEFT,	IR_AUDIO_MUTE,	IR_MENU, }
+#else   //key map
 
-			#define		KB_MAP_IR	{\
-							IR_VK_7,	IR_VK_4,	IR_VK_1,	IR_RED_KEY,	IR_VOL_DN,	IR_VOL_UP,	IR_BACK	, \
-							IR_LEFT,	VK_NONE,	VK_NONE,	IR_PREV,	VK_NONE,	VK_MMODE,	IR_POWER, \
-							IR_RIGHT,	IR_HOME,	VK_NONE,	IR_NEXT,	IR_STOP,	IR_SEARCH,	KEY_MODE_SWITCH , \
-							IR_VK_9,	IR_VK_6,	IR_VK_3,	IR_BLUE_KEY,VK_CH_DN,	VK_CH_UP,	IR_MENU , \
-							IR_YELLOW_KEY,VK_NONE,	VK_NONE,	IR_DN,		IR_SEL,		IR_UP,		VK_NONE , \
-							VK_NONE,	VK_NONE,	IR_VK_0,	IR_VK_8,	IR_VK_5,	IR_VK_2,	IR_GREEN_KEY , \
-							IR_PAUSE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE,	VK_NONE, }
-	#else   //key map
+	#define		KB_MAP_NORMAL	{\
+				VK_F,	CR_POWER,		VK_A,	VK_G,	CR_HOME,	 \
+				VOICE,		VK_E,		VK_B,	CR_VOL_UP,	CR_VOL_DN,	 \
+				VK_2,		VK_RIGHT,		VK_C,	VK_3,		VK_1,	 \
+				VK_5,		VK_ENTER,		VK_D,	VK_6,		VK_4,	 \
+				VK_8,		VK_DOWN,		VK_UP,	VK_9,		VK_7,	 \
+				VK_0,	CR_BACK,		VK_LEFT,	CR_VOL_MUTE,		CR_MENU,	}
 
-			#define		KB_MAP_NORMAL	{\
-							VK_7,		VK_4,			VK_1,		VK_NONE,			CR_VOL_DN,	CR_VOL_UP,	CR_BACK	, \
-							VK_LEFT,	PHY_TEST,		VK_NONE,	VK_NONE,			CR_RECORD,	VK_NONE,	CR_POWER, \
-							VK_RIGHT,	CR_HOME,		VK_NONE,	CR_FAST_FORWARD,	CR_STOP,	CR_SEARCH,	KEY_MODE_SWITCH , \
-							VK_9,	 	VK_6,			VK_3,		VK_NONE,			CR_CHN_DN,	CR_CHN_UP,	CR_MENU , \
-							VK_NONE,	CR_VOL_MUTE,	VOICE,		VK_DOWN,			VK_ENTER,	VK_UP,		VK_NONE , \
-							VK_NONE,	VK_NONE,		VK_0,		VK_8,				VK_5,		VK_2,		VK_NONE , \
-							CR_PAUSE,	CR_PLAY,		VK_NONE,	VK_NONE,			VK_NONE,	VK_NONE,	VK_NONE, }
-
-	#endif  //end of REMOTE_IR_ENABLE
-
-
-	#define  KB_DRIVE_PINS  {GPIO_PA6, GPIO_PA7, GPIO_PB1, GPIO_PB4, GPIO_PB5, GPIO_PB6, GPIO_PB7}
-	#define  KB_SCAN_PINS   {GPIO_PD3, GPIO_PD4, GPIO_PD5, GPIO_PD6, GPIO_PD7, GPIO_PE0, GPIO_PE1}
-
-	#define	PA6_FUNC				AS_GPIO
-	#define	PA7_FUNC				AS_GPIO
-	#define	PB1_FUNC				AS_GPIO
-	#define	PB4_FUNC				AS_GPIO
-	#define	PB5_FUNC				AS_GPIO
-	#define	PB6_FUNC				AS_GPIO
-	#define	PB7_FUNC				AS_GPIO
-	//drive pin need 100K pulldown
-	#define	PULL_WAKEUP_SRC_PA6		MATRIX_ROW_PULL
-	#define	PULL_WAKEUP_SRC_PA7		MATRIX_ROW_PULL
-	#define	PULL_WAKEUP_SRC_PB1		MATRIX_ROW_PULL
-	#define	PULL_WAKEUP_SRC_PB4		MATRIX_ROW_PULL
-	#define	PULL_WAKEUP_SRC_PB5		MATRIX_ROW_PULL
-	#define	PULL_WAKEUP_SRC_PB6		MATRIX_ROW_PULL
-	#define	PULL_WAKEUP_SRC_PB7		MATRIX_ROW_PULL
-	//drive pin open input to read gpio wakeup level
-	#define PA6_INPUT_ENABLE		1
-	#define PA7_INPUT_ENABLE		1
-	#define PB1_INPUT_ENABLE		1
-	#define PB4_INPUT_ENABLE		1
-	#define PB5_INPUT_ENABLE		1
-	#define PB6_INPUT_ENABLE		1
-	#define PB7_INPUT_ENABLE		1
+#endif  //end of REMOTE_IR_ENABLE
 
 
-	#define	PD3_FUNC				AS_GPIO
-	#define	PD4_FUNC				AS_GPIO
-	#define	PD5_FUNC				AS_GPIO
-	#define	PD6_FUNC				AS_GPIO
-	#define	PD7_FUNC				AS_GPIO
+	#define  KB_DRIVE_PINS  {GPIO_PE0, GPIO_PD5, GPIO_PD7, GPIO_PE1, GPIO_PA1}
+	#define  KB_SCAN_PINS   {GPIO_PC7, GPIO_PA2, GPIO_PB1, GPIO_PA6, GPIO_PA5, GPIO_PD6}
+
 	#define	PE0_FUNC				AS_GPIO
+	#define	PD5_FUNC				AS_GPIO
+	#define	PD7_FUNC				AS_GPIO
 	#define	PE1_FUNC				AS_GPIO
-	//scan  pin need 10K pullup
-	#define	PULL_WAKEUP_SRC_PD3		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PD4		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PD5		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PD6		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PD7		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PE0		MATRIX_COL_PULL
-	#define	PULL_WAKEUP_SRC_PE1		MATRIX_COL_PULL
-	//scan pin open input to read gpio level
-	#define PD3_INPUT_ENABLE		1
-	#define PD4_INPUT_ENABLE		1
-	#define PD5_INPUT_ENABLE		1
-	#define PD6_INPUT_ENABLE		1
-	#define PD7_INPUT_ENABLE		1
+	#define	PA1_FUNC				AS_GPIO
+	//drive pin need 100K pulldown
+	#define	PULL_WAKEUP_SRC_PE0		MATRIX_ROW_PULL
+	#define	PULL_WAKEUP_SRC_PD5		MATRIX_ROW_PULL
+	#define	PULL_WAKEUP_SRC_PD7		MATRIX_ROW_PULL
+	#define	PULL_WAKEUP_SRC_PE1		MATRIX_ROW_PULL
+	#define	PULL_WAKEUP_SRC_PA1		MATRIX_ROW_PULL
+	//drive pin open input to read gpio wakeup level
 	#define PE0_INPUT_ENABLE		1
+	#define PD5_INPUT_ENABLE		1
+	#define PD7_INPUT_ENABLE		1
 	#define PE1_INPUT_ENABLE		1
+	#define PA1_INPUT_ENABLE		1
 
+
+	#define	PC7_FUNC				AS_GPIO
+	#define	PA2_FUNC				AS_GPIO
+	#define	PB1_FUNC				AS_GPIO
+	#define	PA6_FUNC				AS_GPIO
+	#define	PA5_FUNC				AS_GPIO
+	#define	PD6_FUNC				AS_GPIO
+	//scan  pin need 10K pullup
+	#define	PULL_WAKEUP_SRC_PC7		MATRIX_COL_PULL
+	#define	PULL_WAKEUP_SRC_PA2		MATRIX_COL_PULL
+	#define	PULL_WAKEUP_SRC_PB1		MATRIX_COL_PULL
+	#define	PULL_WAKEUP_SRC_PA6		MATRIX_COL_PULL
+	#define	PULL_WAKEUP_SRC_PA5		MATRIX_COL_PULL
+	#define	PULL_WAKEUP_SRC_PD6		MATRIX_COL_PULL
+	//scan pin open input to read gpio level
+	#define PC7_INPUT_ENABLE		1
+	#define PA2_INPUT_ENABLE		1
+	#define PB1_INPUT_ENABLE		1
+	#define PA6_INPUT_ENABLE		1
+	#define PA5_INPUT_ENABLE		1
+	#define PD6_INPUT_ENABLE		1
 
 #else  //8266 hardware: C43T53A5_V1.0
 
-	#define	GPIO_LED							GPIO_PC2
+#if (BLT_APP_LED_ENABLE)
+	#define LED_ON_LEVEL         			1  //1 indicate high level turn on LED; 0 indicate low level will turn off LED. based on actual spec.
+	#define	GPIO_LED					 	GPIO_PC2
+#endif
 
 #define		KB_MAP_NORMAL	{\
 					{VK_NONE,		VK_3,	  	VK_1,		VK_NONE,	}, \
@@ -378,7 +371,7 @@ typedef enum
 
 	//boot keyboard output report
 	HID_BOOT_KB_REPORT_OUTPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | write| write_without_rsp
-	HID_BOOT_KB_REPORT_OUTPUT_CCB_H,		//UUID: 2A32, 	VALUE: bootKeyOutReport
+	HID_BOOT_KB_REPORT_OUTPUT_DP_H,		//UUID: 2A32, 	VALUE: bootKeyOutReport
 
 	//consume report in
 	HID_CONSUME_REPORT_INPUT_CD_H,			//UUID: 2803, 	VALUE:  			Prop: Read | Notify
@@ -476,67 +469,50 @@ typedef enum
 
 #if(DEBUG_GPIO_ENABLE)
 
-	//8261/8267/8269 hardware: C59T80A5_V1.1
+	//8261/8267/8269 hardware: C1T100A5_V1.1
 	#if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
-			#define PA2_FUNC				AS_GPIO //debug gpio chn0 : A2
-			#define PA3_FUNC				AS_GPIO //debug gpio chn1 : A3
-			#define PA4_FUNC				AS_GPIO //debug gpio chn2 : A4
-			#define PA5_FUNC				AS_GPIO //debug gpio chn3 : A5
-			#define PB2_FUNC				AS_GPIO //debug gpio chn4 : B2
-			#define PB3_FUNC				AS_GPIO //debug gpio chn5 : B3
+			#define GPIO_CHN0							GPIO_PB4
+			#define GPIO_CHN1							GPIO_PB5
+			#define GPIO_CHN2							GPIO_PB6
+			#define GPIO_CHN3							GPIO_PB7
+			#define GPIO_CHN4							GPIO_PB2
+			#define GPIO_CHN5							GPIO_PB3
 
-			#define PA2_OUTPUT_ENABLE					1
-			#define PA3_OUTPUT_ENABLE					1
-			#define PA4_OUTPUT_ENABLE					1
-			#define PA5_OUTPUT_ENABLE					1
+			#define PB4_FUNC							AS_GPIO
+			#define PB5_FUNC							AS_GPIO
+			#define PB6_FUNC							AS_GPIO
+			#define PB7_FUNC							AS_GPIO
+			#define PB2_FUNC							AS_GPIO
+			#define PB3_FUNC							AS_GPIO
+
+			#define PB4_OUTPUT_ENABLE					1
+			#define PB5_OUTPUT_ENABLE					1
+			#define PB6_OUTPUT_ENABLE					1
+			#define PB7_OUTPUT_ENABLE					1
 			#define PB2_OUTPUT_ENABLE					1
 			#define PB3_OUTPUT_ENABLE					1
 
-			#define DBG_CHN0_LOW		( *(unsigned char *)0x800583 &= (~0x04) )
-			#define DBG_CHN0_HIGH		( *(unsigned char *)0x800583 |= 0x04 )
-			#define DBG_CHN0_TOGGLE		( *(unsigned char *)0x800583 ^= 0x04 )
-			#define DBG_CHN1_LOW		( *(unsigned char *)0x800583 &= (~0x08) )
-			#define DBG_CHN1_HIGH		( *(unsigned char *)0x800583 |= 0x08 )
-			#define DBG_CHN1_TOGGLE		( *(unsigned char *)0x800583 ^= 0x08 )
-			#define DBG_CHN2_LOW		( *(unsigned char *)0x800583 &= (~0x10) )
-			#define DBG_CHN2_HIGH		( *(unsigned char *)0x800583 |= 0x10 )
-			#define DBG_CHN2_TOGGLE		( *(unsigned char *)0x800583 ^= 0x10 )
-			#define DBG_CHN3_LOW		( *(unsigned char *)0x800583 &= (~0x20) )
-			#define DBG_CHN3_HIGH		( *(unsigned char *)0x800583 |= 0x20 )
-			#define DBG_CHN3_TOGGLE		( *(unsigned char *)0x800583 ^= 0x20 )
-			#define DBG_CHN4_LOW		( *(unsigned char *)0x80058b &= (~0x04) )
-			#define DBG_CHN4_HIGH		( *(unsigned char *)0x80058b |= 0x04 )
-			#define DBG_CHN4_TOGGLE		( *(unsigned char *)0x80058b ^= 0x04 )
-			#define DBG_CHN5_LOW		( *(unsigned char *)0x80058b &= (~0x08) )
-			#define DBG_CHN5_HIGH		( *(unsigned char *)0x80058b |= 0x08 )
-			#define DBG_CHN5_TOGGLE		( *(unsigned char *)0x80058b ^= 0x08 )
-	#else //8266 hardware: C43T53A5_V1.0
-			#define PB0_FUNC				AS_GPIO //debug gpio chn0 : PB0
-			#define PC3_FUNC				AS_GPIO //debug gpio chn1 : PC3
-			#define PE7_FUNC				AS_GPIO //debug gpio chn2 : PE7
-			#define PF1_FUNC				AS_GPIO //debug gpio chn3 : PF1
-
-			#define PB0_INPUT_ENABLE					0
-			#define PC3_INPUT_ENABLE					0
-			#define PE7_INPUT_ENABLE					0
-			#define PF1_INPUT_ENABLE					0
-			#define PB0_OUTPUT_ENABLE					1
-			#define PC3_OUTPUT_ENABLE					1
-			#define PE7_OUTPUT_ENABLE					1
-			#define PF1_OUTPUT_ENABLE					1
-
-			#define DBG_CHN0_LOW		( *(unsigned char *)0x80058b &= (~0x01) )
-			#define DBG_CHN0_HIGH		( *(unsigned char *)0x80058b |= 0x01 )
-			#define DBG_CHN0_TOGGLE		( *(unsigned char *)0x80058b ^= 0x01 )
-			#define DBG_CHN1_LOW		( *(unsigned char *)0x800593 &= (~0x08) )
-			#define DBG_CHN1_HIGH		( *(unsigned char *)0x800593 |= 0x08 )
-			#define DBG_CHN1_TOGGLE		( *(unsigned char *)0x800593 ^= 0x08 )
-			#define DBG_CHN2_LOW		( *(unsigned char *)0x8005a3 &= (~0x80) )
-			#define DBG_CHN2_HIGH		( *(unsigned char *)0x8005a3 |= 0x80 )
-			#define DBG_CHN2_TOGGLE		( *(unsigned char *)0x8005a3 ^= 0x80 )
-			#define DBG_CHN3_LOW		( *(unsigned char *)0x8005ab &= (~0x02) )
-			#define DBG_CHN3_HIGH		( *(unsigned char *)0x8005ab |= 0x02 )
-			#define DBG_CHN3_TOGGLE		( *(unsigned char *)0x8005ab ^= 0x02 )
+			#define DBG_CHN0_LOW		gpio_write(GPIO_CHN0, 0)
+			#define DBG_CHN0_HIGH		gpio_write(GPIO_CHN0, 1)
+			#define DBG_CHN0_TOGGLE		gpio_toggle(GPIO_CHN0)
+			#define DBG_CHN1_LOW		gpio_write(GPIO_CHN1, 0)
+			#define DBG_CHN1_HIGH		gpio_write(GPIO_CHN1, 1)
+			#define DBG_CHN1_TOGGLE		gpio_toggle(GPIO_CHN1)
+			#define DBG_CHN2_LOW		gpio_write(GPIO_CHN2, 0)
+			#define DBG_CHN2_HIGH		gpio_write(GPIO_CHN2, 1)
+			#define DBG_CHN2_TOGGLE		gpio_toggle(GPIO_CHN2)
+			#define DBG_CHN3_LOW		gpio_write(GPIO_CHN3, 0)
+			#define DBG_CHN3_HIGH		gpio_write(GPIO_CHN3, 1)
+			#define DBG_CHN3_TOGGLE		gpio_toggle(GPIO_CHN3)
+			#define DBG_CHN4_LOW		gpio_write(GPIO_CHN4, 0)
+			#define DBG_CHN4_HIGH	    gpio_write(GPIO_CHN4, 1)
+			#define DBG_CHN4_TOGGLE		gpio_toggle(GPIO_CHN4)
+			#define DBG_CHN5_LOW		gpio_write(GPIO_CHN5, 0)
+			#define DBG_CHN5_HIGH		gpio_write(GPIO_CHN5, 1)
+			#define DBG_CHN5_TOGGLE		gpio_toggle(GPIO_CHN5)
+			#define DBG_CHN6_LOW		gpio_write(GPIO_CHN6, 0)
+			#define DBG_CHN6_HIGH		gpio_write(GPIO_CHN6, 1)
+			#define DBG_CHN6_TOGGLE		gpio_toggle(GPIO_CHN6)
 	#endif
 
 
@@ -561,6 +537,21 @@ typedef enum
 #define DBG_CHN5_TOGGLE
 
 #endif  //end of DEBUG_GPIO_ENABLE
+
+
+
+
+
+
+#define	PHYTEST_MODE_DISABLE					0
+#define PHYTEST_MODE_THROUGH_2_WIRE_UART		1   //Direct Test Mode through a 2-wire UART interface
+#define PHYTEST_MODE_OVER_HCI_WITH_USB			2   //Direct Test Mode over HCI(UART hardware interface)
+#define PHYTEST_MODE_OVER_HCI_WITH_UART			3   //Direct Test Mode over HCI(USB  hardware interface)
+
+
+#define BLE_PHYTEST_MODE						PHYTEST_MODE_DISABLE
+
+
 
 
 

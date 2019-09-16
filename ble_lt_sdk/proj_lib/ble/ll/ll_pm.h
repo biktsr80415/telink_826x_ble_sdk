@@ -40,7 +40,10 @@ typedef struct {
 
 	u8		conn_no_suspend;
 	u8 		timer_wakeup;
-	u8      ble_busy_pending;
+	u8      appWakeup_loop_noLatency;
+	u8		conn_rcvd_last_pkt;   // correctly received last packet of master(consider if more data take effect)
+
+	u32     current_wakeup_tick;
 
 }st_ll_pm_t;
 

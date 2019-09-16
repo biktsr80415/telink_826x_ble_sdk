@@ -72,6 +72,8 @@ extern u8 read_by_type_req_uuid[16];
 
 
 extern void	att_keyboard (u16 conn, u8 *p);
+extern void	att_keyboard_media (u16 conn, u8 *p);
+extern void	att_mic (u16 conn, u8 *p);
 
 #if(USB_MOUSE_ENABLE)
 extern void att_mouse(u16 conn, u8 *p);
@@ -296,7 +298,7 @@ int app_l2cap_handler (u16 conn_handle, u8 *raw_pkt)
 			{
 				//when master host accept slave's conn param update req, should send a conn param update response on l2cap
 				//with CONN_PARAM_UPDATE_ACCEPT; if not accpet,should send  CONN_PARAM_UPDATE_REJECT
-				blc_l2cap_SendConnParamUpdateResponse(current_connHandle, CONN_PARAM_UPDATE_ACCEPT);  //send SIG Connection Param Update Response
+				blc_l2cap_SendConnParamUpdateResponse(current_connHandle, CONN_PARAM_UPDATE_ACCEPT, req);  //send SIG Connection Param Update Response
 
 
 				//if accept, master host should mark this, add will send  update conn param req on link layer later
@@ -308,7 +310,7 @@ int app_l2cap_handler (u16 conn_handle, u8 *raw_pkt)
 			}
 			else
 			{
-				blc_l2cap_SendConnParamUpdateResponse(current_connHandle, CONN_PARAM_UPDATE_REJECT);  //send SIG Connection Param Update Response
+				blc_l2cap_SendConnParamUpdateResponse(current_connHandle, CONN_PARAM_UPDATE_REJECT, req);  //send SIG Connection Param Update Response
 			}
 		}
 
@@ -352,7 +354,7 @@ int app_event_callback (u32 h, u8 *p, int n)
 		u8 evtCode = h & 0xff;
 
 		//------------ disconnect -------------------------------------
-		if(evtCode == HCI_CMD_DISCONNECTION_COMPLETE)  //connection terminate
+		if(evtCode == HCI_EVT_DISCONNECTION_COMPLETE)  //connection terminate
 		{
 			event_disconnection_t	*pd = (event_disconnection_t *)p;
 
@@ -529,7 +531,7 @@ int app_event_callback (u32 h, u8 *p, int n)
 					u8 status = blc_ll_createConnection( SCAN_INTERVAL_100MS, SCAN_INTERVAL_100MS, INITIATE_FP_ADV_SPECIFY,  \
 											 pa->adr_type, pa->mac, BLE_ADDR_PUBLIC, \
 											 CONN_INTERVAL_10MS, CONN_INTERVAL_10MS, 0, CONN_TIMEOUT_4S, \
-											 0, 0);
+											 0, 0xFFFF);
 
 					if(status != BLE_SUCCESS)  //create connection fail
 					{
@@ -618,8 +620,6 @@ int app_event_callback (u32 h, u8 *p, int n)
 ///////////////////////////////////////////
 void user_init()
 {
-	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
-
 	//set USB ID
 	usb_log_init ();
 	REG_ADDR8(0x74) = 0x53;
@@ -661,6 +661,7 @@ void user_init()
 	blc_ll_initInitiating_module();			//initiate module: 	 mandatory for BLE master,
 	blc_ll_initMasterRoleSingleConn_module();			//master module: 	 mandatory for BLE master,
 
+	//blc_ll_init2MPhy_feature();  ///mandatory for 2M phy
 
 	//// controller hci event mask config ////
 	//bluetooth event
@@ -723,6 +724,12 @@ void user_init()
 							  OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_ANY);
 	blc_ll_setScanEnable (BLC_SCAN_ENABLE, 0);
 
+
+
+#if (UI_UPPER_COMPUTER_ENABLE)
+	extern void app_upper_com_init(void);
+	app_upper_com_init();
+#endif
 }
 
 
@@ -801,6 +808,12 @@ int main_idle_loop (void)
 	if(button_detect_en){
 		proc_button();  //button triggers pair & unpair  and OTA
 	}
+#endif
+
+
+#if (UI_UPPER_COMPUTER_ENABLE)
+	extern void app_upper_com_proc(void);
+	app_upper_com_proc();
 #endif
 
 

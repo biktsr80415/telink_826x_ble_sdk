@@ -148,6 +148,16 @@ typedef struct {
 
 
 
+/**
+ *  @brief  Definition for HCI LE PHY Update Complete event
+ */
+typedef struct{
+	u8 subEventCode;
+	u8 status;
+	u16 connHandle;
+	u8 txPhy;
+	u8 rxPhy;
+}hci_le_phyUpdateCompleteEvt_t;
 
 
 
@@ -171,7 +181,7 @@ void hci_le_readRemoteFeaturesComplete_evt(u8 status, u16 connHandle, u8 * featu
 
 
 
-
+void hci_le_phyUpdateComplete_evt(u16 connhandle,u8 status, u8 new_phy);
 int hci_le_longTermKeyRequest_evt(u16 connHandle, u8* random, u16 ediv, u8* result);
 int hci_le_readLocalP256KeyComplete_evt(u8* localP256Key, u8* result);
 int hci_le_generateDHKeyComplete_evt(u8* DHkey,  u8* result);

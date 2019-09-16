@@ -35,6 +35,7 @@ static inline int usb_mic_is_enable(){
 
 extern u8 usb_just_wakeup_from_suspend;
 extern u8 usb_has_suspend_irq;
+extern u8 edp_toggle[8];
 
 void usb_init();
 

@@ -4,11 +4,12 @@
 #include "adc.h"
 
 #include "../../proj_lib/pm.h"
+//#include "vendor/826x_ble_remote/app_config.h"
 #if(BATT_CHECK_ENABLE)
 
 
 
-
+int adc_hw_initialized = 0;
 
 
 /***
@@ -47,55 +48,54 @@ unsigned short filter_data(unsigned short* pData,unsigned char len)
  * let the chip enter deep sleep mode.
  **/
 #define  BATT_CHECK_CNT  8
-void battery_power_check(void)
+void battery_power_check(u16 alarm_vol_mv)
 {
-	static u32 battCheckTick = 0;
-	if(clock_time_exceed(battCheckTick, 100000)){
-		battCheckTick = clock_time();
 
-		#if (MCU_CORE_TYPE == MCU_CORE_5316)
-			ADC_PowerOn();
+	if(!adc_hw_initialized){
+
+		adc_hw_initialized = 0;
+
+		#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+			adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
+		#elif(MCU_CORE_TYPE == MCU_CORE_8266)
+			adc_Init(ADC_CLK_4M, ADC_CHN_D4, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
 		#endif
 	}
-	else{
-		return;
-	}
 
 
-
-	int adc_idx = 0;
 	unsigned short adcValue[BATT_CHECK_CNT] = {0};
 
-	for(adc_idx=0;adc_idx<BATT_CHECK_CNT;adc_idx++){
-	#if (MCU_CORE_TYPE == MCU_CORE_5316)
-		adcValue[adc_idx] = ADC_GetConvertValue();
-	#else
+	for(int adc_idx = 0; adc_idx < BATT_CHECK_CNT; adc_idx++){
 		adcValue[adc_idx] = adc_SampleValueGet();
-	#endif
 	}
 
 	unsigned short average_data;
 	average_data = filter_data(adcValue,BATT_CHECK_CNT);
-	#if(MCU_CORE_TYPE == MCU_CORE_5316)
-		if((average_data & BIT(14)) != 0)//negative
-		{
-			average_data += 1;
-			average_data= ~average_data;
-		}
-	#endif
 
 
 	unsigned int tem_batteryVol;         //2^14 - 1 = 16383;
-#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-	tem_batteryVol = 3*(1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
-#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-	tem_batteryVol = 3*((1300*average_data)>>14);
-#elif(MCU_CORE_TYPE == MCU_CORE_5316)
-	tem_batteryVol = 8 *((average_data * 1200) >> 13);
-	ADC_PowerOff();//save power
-#endif
 
-	if(tem_batteryVol < 2000){  //when battery voltage is lower than 2.0v, chip will enter deep sleep mode
+	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
+		tem_batteryVol = 3*(1428*(average_data-128)/(16383-256)); //2^14 - 1 = 16383;
+	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
+		tem_batteryVol = 3*((1300*average_data)>>14);
+	#endif
+
+	if(tem_batteryVol < alarm_vol_mv){  //when battery voltage is lower than 2.0v, chip will enter deep sleep mode
+
+
+		analog_write(DEEP_ANA_REG2, BATTERY_VOL_LOW);
+
+		#if (BLT_APP_LED_ENABLE)
+			gpio_set_output_en(GPIO_LED, 1); /// output enable
+			for(int k=0; k < 3; k++){
+				gpio_write(GPIO_LED, LED_ON_LEVEL);
+				sleep_us(200*1000);
+				gpio_write(GPIO_LED,!LED_ON_LEVEL);
+				sleep_us(200*1000);
+			}
+		#endif
+
 		cpu_sleep_wakeup(1, PM_WAKEUP_PAD, 0);
 	}
 }

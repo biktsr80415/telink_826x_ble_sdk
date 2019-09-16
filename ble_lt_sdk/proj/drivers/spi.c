@@ -1,13 +1,7 @@
 #include "../tl_common.h"
 #include "spi.h"
 
-#if(MCU_CORE_TYPE != MCU_CORE_8263)
-
 #define SPI_BUSY_FLAG     ((reg_spi_ctrl & FLD_SPI_BUSY)?1:0)
-
-#if (MCU_CORE_TYPE == MCU_CORE_5316)
-static eGPIO_PinTypeDef SpiCsPin = GPIO_NONE;/* <!Store SPI CS pin. */
-#endif
 
 /****
 * @brief: spi bus can drive more than one spi slave. so we can use cs line to select spi slave that response master.
@@ -16,7 +10,7 @@ static eGPIO_PinTypeDef SpiCsPin = GPIO_NONE;/* <!Store SPI CS pin. */
 */
 #if(MCU_CORE_TYPE == MCU_CORE_8266)
 void spi_master_pin_init(unsigned int cs_pin)
-#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269)||(MCU_CORE_TYPE == MCU_CORE_5316))
+#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin)
 #endif
 {
@@ -50,77 +44,12 @@ void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin)
 			gpio_set_func(GPIO_PB6, AS_GPIO);
 			gpio_set_func(GPIO_PB7, AS_GPIO);
 		}
-#elif (MCU_CORE_TYPE == MCU_CORE_5316)
-		if(data_clk_pin == SPI_PIN_GROUPB)
-		{
-			//Disable GPIO fucntion of PB1 PB2 and PB3.
-			gpio_set_func(GPIO_PB1,AS_SPI);//MDO
-			gpio_set_func(GPIO_PB2,AS_SPI);//MDI
-			gpio_set_func(GPIO_PB3,AS_SPI);//MCK
-
-			//Set PB1 PB2 and PB3 as SPI.
-			GPIOB_AF->RegBits.P1_AF = GPIOB1_SPI_MDO;
-			GPIOB_AF->RegBits.P2_AF = GPIOB2_SPI_MDI;
-			GPIOB_AF->RegBits.P3_AF = GPIOB3_SPI_MCK;
-
-			//Disable SPI function of PC2 PC3 PC4 PC5.
-			if(GPIOC_AF->RegBits.P2_AF == GPIOC2_SPI_MCN)
-			{
-				gpio_set_func(GPIO_PC2,AS_GPIO);//MCN
-			}
-			if(GPIOC_AF->RegBits.P3_AF == GPIOC3_SPI_MDO)
-			{
-				gpio_set_func(GPIO_PC3,AS_GPIO);//MDO
-			}
-			if(GPIOC_AF->RegBits.P4_AF == GPIOC4_SPI_MDI)
-			{
-				gpio_set_func(GPIO_PC4,AS_GPIO);//MDI
-			}
-			if(GPIOC_AF->RegBits.P5_AF == GPIOC5_SPI_MCK)
-			{
-				gpio_set_func(GPIO_PC5,AS_GPIO);//MCK
-			}
-		}
-		else if(data_clk_pin == SPI_PIN_GROUPC)
-		{
-			//Disable GPIO fucntion of PB1 PB2 and PB3.
-			gpio_set_func(GPIO_PC3,AS_SPI);//MDO
-			gpio_set_func(GPIO_PC4,AS_SPI);//MDI
-			gpio_set_func(GPIO_PC5,AS_SPI);//MCK
-
-			//Set  PC3 PC4 and PC5 as SPI.
-			GPIOC_AF->RegBits.P3_AF = GPIOC3_SPI_MDO;
-			GPIOC_AF->RegBits.P4_AF = GPIOC4_SPI_MDI;
-			GPIOC_AF->RegBits.P5_AF = GPIOC5_SPI_MCK;
-
-			//Disable SPI function of PB0 PB1 PB2 and PB3.
-			if(GPIOB_AF->RegBits.P0_AF == GPIOB0_SPI_MCN)
-			{
-				gpio_set_func(GPIO_PB0,AS_GPIO);
-			}
-			if(GPIOB_AF->RegBits.P1_AF == GPIOB1_SPI_MDO)
-			{
-				gpio_set_func(GPIO_PB1,AS_GPIO);
-			}
-			if(GPIOB_AF->RegBits.P2_AF == GPIOB2_SPI_MDI)
-			{
-				gpio_set_func(GPIO_PB2,AS_GPIO);
-			}
-			if(GPIOB_AF->RegBits.P3_AF == GPIOB3_SPI_MCK)
-			{
-				gpio_set_func(GPIO_PB3,AS_GPIO);
-			}
-		}
-
-		//Set CS pin
-		SpiCsPin = (eGPIO_PinTypeDef)cs_pin;
 	#endif
 
-//	BM_SET(reg_spi_sp, FLD_SPI_ENABLE);  //enable spi function. because i2c and spi share part of the hardware in the chip.
+	BM_SET(reg_spi_sp, FLD_SPI_ENABLE);  //enable spi function. because i2c and spi share part of the hardware in the chip.
 
 	gpio_set_func(cs_pin, AS_GPIO);      //cs pin as gpio function
 	gpio_set_input_en(cs_pin,0);  //disable input
-	gpio_setup_up_down_resistor(cs_pin,PM_PIN_PULLUP_10K);
 	gpio_write(cs_pin,1);         // output high level in idle status.
 	gpio_set_output_en(cs_pin,1); //enable output
 }
@@ -133,24 +62,11 @@ void spi_master_pin_init(enum spi_pin_t data_clk_pin, unsigned int cs_pin)
  */
 void spi_master_init(unsigned char div_clk, enum spi_mode_t spi_mode)
 {
-	BM_SET(reg_spi_sp, FLD_SPI_ENABLE);  //enable spi function. because i2c and spi share part of the hardware in the chip.
-
 	/***set the spi clock. spi_clk = system_clock/((div_clk+1)*2)***/
 	BM_CLR(reg_spi_sp, FLD_MASTER_SPI_CLK);  //clear the spi clock division bits
 	reg_spi_sp |= MASK_VAL(FLD_MASTER_SPI_CLK, div_clk&0x7f); //set the clock div bits
 
-#if(MCU_CORE_TYPE == MCU_CORE_5316)
-
-	//Enable SPI peripheral clock
-	reg_rst0 &= ~FLD_RST_SPI;
-	reg_clk_en0 |= FLD_CLK_EN0_SPI_EN;
-
-	//Enable SPI Master.
-	reg_spi_ctrl &= ~(FLD_SPI_MASTER_EN|FLD_SPI_SLAVE_EN);
-	reg_spi_ctrl |= FLD_SPI_MASTER_EN;
-#else
 	BM_SET(reg_spi_ctrl, FLD_SPI_MASTER_MODE_EN);  //enable spi master mode
-#endif
 
 	/***config the spi woking mode.For spi mode spec, pls refer to datasheet***/
 	BM_CLR(reg_spi_inv_clk, FLD_INVERT_SPI_CLK|FLD_DAT_DLY_HALF_CLK);//clear the mode bits
@@ -164,7 +80,7 @@ void spi_master_init(unsigned char div_clk, enum spi_mode_t spi_mode)
 */
 #if(MCU_CORE_TYPE == MCU_CORE_8266)
 void spi_slave_init(enum spi_mode_t spi_mode)
-#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269) || (MCU_CORE_TYPE == MCU_CORE_5316))
+#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 void spi_slave_init(enum spi_pin_t spi_grp, enum spi_mode_t spi_mode)
 #endif
 {
@@ -180,9 +96,6 @@ void spi_slave_init(enum spi_pin_t spi_grp, enum spi_mode_t spi_mode)
 		gpio_set_input_en(GPIO_PE7, 1);
 		gpio_set_input_en(GPIO_PF0, 1);                  //enable input
 		gpio_set_input_en(GPIO_PF1, 1);
-
-		/***enable slave***/
-		BM_CLR(reg_spi_ctrl, FLD_SPI_MASTER_MODE_EN);  //disable spi master mode, .i.e enable spi slave mode
 
 	#elif((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 		if(spi_grp == SPI_PIN_GROUPB){
@@ -206,86 +119,9 @@ void spi_slave_init(enum spi_pin_t spi_grp, enum spi_mode_t spi_mode)
 			gpio_set_func(GPIO_PB6,	AS_GPIO);
 			gpio_set_func(GPIO_PB7,	AS_GPIO);
 		}
-
-		/***enable slave***/
-		BM_CLR(reg_spi_ctrl, FLD_SPI_MASTER_MODE_EN);  //disable spi master mode, .i.e enable spi slave mode
-
-	#elif (MCU_CORE_TYPE == MCU_CORE_5316)
-		if(spi_grp == SPI_PIN_GROUPB)/* SPI slave GPIO settings. */
-		{
-			//Disable GPIO fucntion of PB0 PB1 PB2 and PB3.
-			gpio_set_func(GPIO_PB0,AS_SPI);//CN
-			gpio_set_func(GPIO_PB1,AS_SPI);//DO
-			gpio_set_func(GPIO_PB2,AS_SPI);//DI
-			gpio_set_func(GPIO_PB3,AS_SPI);//CK
-
-			//Set PB0 PB1 PB2 and PB3 as SPI slave function.
-			GPIOB_AF->RegBits.P0_AF = GPIOB0_RX_CYC2LNA_OR_SPI_CN;
-			GPIOB_AF->RegBits.P1_AF = GPIOB1_TX_CYC2LNA_OR_SPI_DO;
-			GPIOB_AF->RegBits.P2_AF = GPIOB2_UART_CTS_OR_SPI_DI;
-			GPIOB_AF->RegBits.P3_AF = GPIOB3_UART_RTS_OR_SPI_CK;
-
-			reg_gpio_pb_multi_func_select &= ~FLD_PB_MULTI_FUNC_SEL;//must
-
-			//Disable SPI function of PC2 PC3 PC4 PC5.
-			if(GPIOC_AF->RegBits.P2_AF == GPIOC2_SPI_CN)
-			{
-				gpio_set_func(GPIO_PC2,AS_GPIO);//CN
-			}
-			if(GPIOC_AF->RegBits.P3_AF == GPIOC3_SPI_DO)
-			{
-				gpio_set_func(GPIO_PC3,AS_GPIO);//DO
-			}
-			if(GPIOC_AF->RegBits.P4_AF == GPIOC4_SPI_DI_OR_I2C_SD)
-			{
-				gpio_set_func(GPIO_PC4,AS_GPIO);//DI
-			}
-			if(GPIOC_AF->RegBits.P5_AF == GPIOC5_SPI_CK_OR_I2C_CK)
-			{
-				gpio_set_func(GPIO_PC5,AS_GPIO);//CK
-			}
-		}
-		else if(spi_grp == SPI_PIN_GROUPC)
-		{
-			//Disable GPIO fucntion of PC2 PC3 PC4 and PC5.
-			gpio_set_func(GPIO_PC2,AS_SPI);//CN
-			gpio_set_func(GPIO_PC3,AS_SPI);//DO
-			gpio_set_func(GPIO_PC4,AS_SPI);//DI
-			gpio_set_func(GPIO_PC5,AS_SPI);//CK
-
-			//Set PC2 PC3 PC4 and PC5 as SPI.
-			GPIOC_AF->RegBits.P2_AF = GPIOC2_SPI_CN;
-			GPIOC_AF->RegBits.P3_AF = GPIOC3_SPI_DO;
-			GPIOC_AF->RegBits.P4_AF = GPIOC4_SPI_DI_OR_I2C_SD;
-			GPIOC_AF->RegBits.P5_AF = GPIOC5_SPI_CK_OR_I2C_CK;
-
-			//Disable SPI function of PB0 PB1 PB2 and PB3.
-			if(GPIOB_AF->RegBits.P0_AF == GPIOB0_RX_CYC2LNA_OR_SPI_CN)
-			{
-				gpio_set_func(GPIO_PB0,AS_GPIO);//CN
-			}
-			if(GPIOB_AF->RegBits.P1_AF == GPIOB1_TX_CYC2LNA_OR_SPI_DO)
-			{
-				gpio_set_func(GPIO_PB1,AS_GPIO);//DO
-			}
-			if(GPIOB_AF->RegBits.P2_AF == GPIOB2_UART_CTS_OR_SPI_DI)
-			{
-				gpio_set_func(GPIO_PB2,AS_GPIO);//DI
-			}
-			if(GPIOB_AF->RegBits.P3_AF == GPIOB3_UART_RTS_OR_SPI_CK)
-			{
-				gpio_set_func(GPIO_PB3,AS_GPIO);//CK
-			}
-		}
-
-		//Enable SPI peripheral clock
-		reg_rst0 &= ~FLD_RST_SPI;
-		reg_clk_en0 |= FLD_CLK_EN0_SPI_EN;
-
-		//Enable SPI slave.
-		reg_spi_ctrl &= ~(FLD_SPI_MASTER_EN|FLD_SPI_SLAVE_EN);
-		reg_spi_ctrl |= FLD_SPI_SLAVE_EN;
 	#endif
+	/***enable slave***/
+	BM_CLR(reg_spi_ctrl, FLD_SPI_MASTER_MODE_EN);  //disable spi master mode, .i.e enable spi slave mode
 
 	BM_SET(reg_spi_sp, FLD_SPI_ENABLE); //enalbe spi function
 	/***config the spi woking mode.For spi mode spec, pls refer to datasheet***/
@@ -368,115 +204,3 @@ void spi_read(unsigned char* addr_cmd, unsigned char addr_cmd_len, unsigned char
 
 }
 
-
-
-#if (MCU_CORE_TYPE == MCU_CORE_5316)
-/**---------------------------------Author£º Gaoqiu------------------------------
- * @Brief:  SPI send data.
- * @Param:  addr    ->
- * @Param:  addrLen -> max = 2,min = 1.
- * @Param:  pBuf    ->
- * @Param:  len     ->
- * @Retval: None.
- */
-void spi_writeEx(unsigned short addr,unsigned char addrLen, unsigned char* pBuf, unsigned int len)
-{
-	unsigned int i = 0;
-
-	if(SpiCsPin == GPIO_NONE || addrLen > 2 || addrLen == 0)
-		return;
-
-	/* Set CS signal as low level. */
-	gpio_write(SpiCsPin,0);
-
-	/* Enable SPI data output and SPI write command. */
-	reg_spi_ctrl &= ~(FLD_SPI_DATA_OUT_DIS|FLD_SPI_RD);
-
-	/* Send Address. */
-	if(addrLen == 1)
-	{
-		reg_spi_data = addr & 0xff;
-		while(SPI_BUSY_FLAG);
-	}
-	else
-	{
-		//Write Address High bit first.
-		reg_spi_data = (addr>>8) & 0xff;
-		while(SPI_BUSY_FLAG);
-		reg_spi_data = addr & 0xff;
-		while(SPI_BUSY_FLAG);
-	}
-
-	/* Send write command. */
-	reg_spi_data = SPI_WRITE_CMD;
-	while(SPI_BUSY_FLAG);
-
-	/* Send data. */
-	for(i = 0; i < len; i++)
-	{
-		reg_spi_data = *pBuf++;
-		while(SPI_BUSY_FLAG);
-	}
-
-	/* Set CS signal as high level. */
-	gpio_write(SpiCsPin,1);
-}
-/**---------------------------------Author£º Gaoqiu------------------------------
- * @Brief:  SPI Read data.
- * @Param:  addr    ->
- * @Param:  addrLen -> max = 2,min = 1.
- * @Param:  pBuf    ->
- * @Param:  len     ->
- * @Retval: None.
- */
-void spi_ReadEx(unsigned short addr, unsigned char addrLen, unsigned char *pBuf, unsigned int len)
-{
-	unsigned i = 0;
-	unsigned char dummyData = 0;
-
-	if(SpiCsPin == GPIO_NONE || addrLen > 2 || addrLen == 0)
-		return;
-
-	/* Set CS signal as low level. */
-	gpio_write(SpiCsPin,0);
-
-	/* Enable SPI data output and SPI write command. */
-	reg_spi_ctrl &= ~(FLD_SPI_DATA_OUT_DIS|FLD_SPI_RD);
-
-	/* Send Address. */
-	if(addrLen == 1)
-	{
-		reg_spi_data = addr & 0xff;
-		while(SPI_BUSY_FLAG);
-	}
-	else
-	{
-		//Write Address High bit first.
-		reg_spi_data = (addr>>8) & 0xff;
-		while(SPI_BUSY_FLAG);
-		reg_spi_data = addr & 0xff;
-		while(SPI_BUSY_FLAG);
-	}
-
-	/* Send Read command. */
-	reg_spi_data = SPI_READ_CMD;
-	while(SPI_BUSY_FLAG);
-
-	/* Read dummy data. */
-	reg_spi_ctrl |= FLD_SPI_DATA_OUT_DIS|FLD_SPI_RD;
-	dummyData = reg_spi_data;
-	while(SPI_BUSY_FLAG);
-
-	/* Read real data. */
-	for(i = 0; i < len; i++)
-	{
-		*pBuf++ = reg_spi_data;
-		while(SPI_BUSY_FLAG);
-	}
-
-	/* Set CS signal as high level. */
-	gpio_write(SpiCsPin,1);
-}
-#endif
-
-#endif

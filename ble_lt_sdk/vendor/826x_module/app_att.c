@@ -2,6 +2,8 @@
 #include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/service/ble_ll_ota.h"
+#include "../../proj_lib/ble/att.h"
+#include "../../proj_lib/ble/gap.h"
 
 #if(__PROJECT_8261_MODULE__ || __PROJECT_8266_MODULE__ || __PROJECT_8267_MODULE__ || __PROJECT_8269_MODULE__)
 
@@ -174,55 +176,112 @@ static u8 my_OtaProp		= CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP;
 const u8  my_OtaName[] = {'O', 'T', 'A'};
 u8	 	my_OtaData 		= 0x00;
 
+// GAP attribute values
+static const u8 my_devNameCharVal[5] = {
+	CHAR_PROP_READ | CHAR_PROP_NOTIFY,
+	U16_LO(GenericAccess_DeviceName_DP_H), U16_HI(GenericAccess_DeviceName_DP_H),
+	U16_LO(GATT_UUID_DEVICE_NAME), U16_HI(GATT_UUID_DEVICE_NAME)
+};
+static const u8 my_appearanceCharVal[5] = {
+	CHAR_PROP_READ,
+	U16_LO(GenericAccess_Appearance_DP_H), U16_HI(GenericAccess_Appearance_DP_H),
+	U16_LO(GATT_UUID_APPEARANCE), U16_HI(GATT_UUID_APPEARANCE)
+};
+static const u8 my_periConnParamCharVal[5] = {
+	CHAR_PROP_READ,
+	U16_LO(CONN_PARAM_DP_H), U16_HI(CONN_PARAM_DP_H),
+	U16_LO(GATT_UUID_PERI_CONN_PARAM), U16_HI(GATT_UUID_PERI_CONN_PARAM)
+};
+
+
+// GATT attribute values
+static const u8 my_serviceChangeCharVal[5] = {
+	CHAR_PROP_INDICATE,
+	U16_LO(GenericAttribute_ServiceChanged_DP_H), U16_HI(GenericAttribute_ServiceChanged_DP_H),
+	U16_LO(GATT_UUID_SERVICE_CHANGE), U16_HI(GATT_UUID_SERVICE_CHANGE)
+};
+
+
+// device Information  attribute values
+static const u8 my_PnCharVal[5] = {
+	CHAR_PROP_READ,
+	U16_LO(DeviceInformation_pnpID_DP_H), U16_HI(DeviceInformation_pnpID_DP_H),
+	U16_LO(CHARACTERISTIC_UUID_PNP_ID), U16_HI(CHARACTERISTIC_UUID_PNP_ID)
+};
+
+
+#if (TELIK_SPP_SERVICE_ENABLE)
+// SPP attribute values
+static const u8 my_SPP_S2C_CharVal[19] = {
+	CHAR_PROP_READ | CHAR_PROP_NOTIFY,
+	U16_LO(SPP_Server2Client_INPUT_DP_H), U16_HI(SPP_Server2Client_INPUT_DP_H),
+	TELINK_SPP_DATA_SERVER2CLIENT,
+};
+static const u8 my_SPP_C2S_CharVal[19] = {
+	CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP,
+	U16_LO(SPP_Client2Server_OUT_DP_H), U16_HI(SPP_Client2Server_OUT_DP_H),
+	TELINK_SPP_DATA_CLIENT2SERVER,
+};
+#endif
+
+
+// OTA attribute values
+static const u8 my_OtaCharVal[19] = {
+	CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP,
+	U16_LO(OTA_CMD_OUT_DP_H), U16_HI(OTA_CMD_OUT_DP_H),
+	TELINK_SPP_DATA_OTA,
+};
+
 
 // TM : to modify
 const attribute_t my_Attributes[] = {
-#if (TELIK_SPP_SERVICE_ENABLE)
-	{26,0,0,0,0,0},	// total num of attribute
-#else
-	{18,0,0,0,0,0},	// total num of attribute
-#endif
+
+	{ATT_END_H - 1, 0,0,0,0,0},	// total num of attribute
+
 
 	// 0001 - 0007  gap
 	{7,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gapServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_devNameCharacter), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof(my_devNameCharVal),(u8*)(&my_characterUUID), (u8*)(my_devNameCharVal), 0},
 	{0,ATT_PERMISSIONS_READ,2,MAX_DEV_NAME_LEN, (u8*)(&my_devNameUUID), (u8*)(&ble_devName), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_appearanceCharacter), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof(my_appearanceCharVal),(u8*)(&my_characterUUID), (u8*)(my_appearanceCharVal), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_appearance), (u8*)(&my_appearanceUIID), 	(u8*)(&my_appearance), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_periConnParamChar), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof(my_periConnParamCharVal),(u8*)(&my_characterUUID), (u8*)(my_periConnParamCharVal), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_periConnParameters),(u8*)(&my_periConnParamUUID), 	(u8*)(&my_periConnParameters), 0},
 
 
 	// 0008 - 000b gatt
 	{4,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_gattServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&serviceChangedProp), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof(my_serviceChangeCharVal),(u8*)(&my_characterUUID), 		(u8*)(my_serviceChangeCharVal), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (serviceChangeVal), (u8*)(&serviceChangeUIID), 	(u8*)(&serviceChangeVal), 0},
 	{0,ATT_PERMISSIONS_RDWR,2,sizeof (serviceChangeCCC),(u8*)(&clientCharacterCfgUUID), (u8*)(serviceChangeCCC), 0},
 
 
-
 	// 000c - 000e  device Information Service
 	{3,ATT_PERMISSIONS_READ,2,2,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_devServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&my_PnPCharacter), 0},
+	{0,ATT_PERMISSIONS_READ,2,sizeof(my_PnCharVal),(u8*)(&my_characterUUID), (u8*)(my_PnCharVal), 0},
 	{0,ATT_PERMISSIONS_READ,2,sizeof (my_PnPtrs),(u8*)(&my_PnPUUID), (u8*)(my_PnPtrs), 0},
+
 
 ////////////////////////////////////// SPP Service /////////////////////////////////////////////////////
 #if (TELIK_SPP_SERVICE_ENABLE)
 	{8,ATT_PERMISSIONS_READ,2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&TelinkSppServiceUUID), 0},
 
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataServer2ClientProp), 0},				//prop
+	// Server2Client
+	{0,ATT_PERMISSIONS_READ, 2,sizeof(my_SPP_S2C_CharVal),(u8*)(&my_characterUUID), 		(u8*)(my_SPP_S2C_CharVal), 0},				//prop
 	{0,ATT_PERMISSIONS_READ,16,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataServer2ClientUUID), (u8*)(SppDataServer2ClientData), 0},	//value
-	{0,ATT_PERMISSIONS_RDWR,2,2,(u8*)&clientCharacterCfgUUID,(u8*)(&SppDataServer2ClientDataCCC)},
-	{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPS2CDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPS2CDescriptor)},
+	{0,ATT_PERMISSIONS_RDWR, 2,sizeof(SppDataServer2ClientDataCCC),(u8*)(&clientCharacterCfgUUID), 	(u8*)(SppDataServer2ClientDataCCC), 0},	//value
+	{0,ATT_PERMISSIONS_READ, 2,sizeof(TelinkSPPS2CDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPS2CDescriptor)},
 
-	{0,ATT_PERMISSIONS_READ,2,1,(u8*)(&my_characterUUID), 		(u8*)(&SppDataClient2ServerProp), 0},				//prop
+	// Client2Server
+	{0,ATT_PERMISSIONS_READ, 2,sizeof(my_SPP_C2S_CharVal),(u8*)(&my_characterUUID), 		(u8*)(my_SPP_C2S_CharVal), 0},				//prop
 	{0,ATT_PERMISSIONS_RDWR,16,sizeof(SppDataClient2ServerData),(u8*)(&TelinkSppDataClient2ServerUUID), (u8*)(SppDataClient2ServerData), &module_onReceiveData},	//value
-	{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPC2SDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPC2SDescriptor)},
+	{0,ATT_PERMISSIONS_READ, 2,sizeof(TelinkSPPC2SDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPC2SDescriptor)},
 #endif
+
 
 	// OTA
 	{4,ATT_PERMISSIONS_READ, 2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&my_OtaServiceUUID), 0},
-	{0,ATT_PERMISSIONS_READ, 2, 1,(u8*)(&my_characterUUID), 		(u8*)(&my_OtaProp), 0},				//prop
+	{0,ATT_PERMISSIONS_READ, 2,sizeof(my_OtaCharVal),(u8*)(&my_characterUUID), (u8*)(my_OtaCharVal), 0},				//prop
 	{0,ATT_PERMISSIONS_RDWR,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
 	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
 

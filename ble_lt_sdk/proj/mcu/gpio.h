@@ -39,9 +39,6 @@ enum{
 	  __TL_LIB_8269__ || MCU_CORE_TYPE == MCU_CORE_8269 )
 #include "../mcu_spec/gpio_default_8267.h"
 #include "../mcu_spec/gpio_8267.h"
-#elif(__TL_LIB_5316__ || MCU_CORE_TYPE == MCU_CORE_5316)
-#include "../mcu_spec/gpio_default_5316.h"
-#include "../mcu_spec/gpio_5316.h"
 #else
 #endif
 

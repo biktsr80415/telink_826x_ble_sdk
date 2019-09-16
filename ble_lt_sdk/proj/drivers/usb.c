@@ -226,18 +226,18 @@ void usb_handle_std_intf_req() {
 			g_response_len = usbaud_get_report_desc_size();
 		}
 #endif
-#if(USB_MOUSE_ENABLE)
-		if (index_l == (USB_DESCRIPTER_CONFIGURATION_FOR_KM_DONGLE ? mouse_interface_number : USB_INTF_MOUSE)) {   //for km dongle customization (add by sihui)
-			//mouse
-			g_response = (u8*) usbmouse_get_report_desc();
-			g_response_len = usbmouse_get_report_desc_size();
-		}
-#endif
 #if(USB_KEYBOARD_ENABLE)
-		else if (index_l == (USB_DESCRIPTER_CONFIGURATION_FOR_KM_DONGLE ? keyboard_interface_number : USB_INTF_KEYBOARD)) {   //for km dongle customization (add by sihui)
+		if (index_l == (USB_DESCRIPTER_CONFIGURATION_FOR_KM_DONGLE ? keyboard_interface_number : USB_INTF_KEYBOARD)) {   //for km dongle customization (add by sihui)
 			//keyboard
 			g_response = (u8*) usbkb_get_report_desc();
 			g_response_len = usbkb_get_report_desc_size();
+		}
+#endif
+#if(USB_MOUSE_ENABLE)
+		else if (index_l == (USB_DESCRIPTER_CONFIGURATION_FOR_KM_DONGLE ? mouse_interface_number : USB_INTF_MOUSE)) {   //for km dongle customization (add by sihui)
+			//mouse
+			g_response = (u8*) usbmouse_get_report_desc();
+			g_response_len = usbmouse_get_report_desc_size();
 		}
 #endif
 #if(USB_SOMATIC_ENABLE)
@@ -693,6 +693,8 @@ void usb_resume_host(void)
 	sleep_us(6000);
 }
 #endif
+u8 edp_toggle[8];
+
 
 void usb_handle_irq(void) {
 	u32 irq = usbhw_get_ctrl_ep_irq();
@@ -713,6 +715,7 @@ void usb_handle_irq(void) {
 		reg_irq_src3 = BIT(1);					//Clear USB reset flag
 		for (int i=0; i<8; i++) {
 			reg_usb_ep_ctrl(i) = 0;
+			edp_toggle[i]=0;
 		}
 	}
 	irq = reg_usb_irq;							// data irq
@@ -752,6 +755,8 @@ void usb_handle_irq(void) {
 		//usbkb_release_check();
 	#endif
 #endif
+
+	usb_hid_report_fifo_proc();
 }
 
 void usb_init_interrupt() {

@@ -68,8 +68,8 @@
 
 
 
-#define	L2CAP_RX_BUFF_LEN_MAX			  256
-#define	ATT_RX_MTU_SIZE_MAX		  		 (L2CAP_RX_BUFF_LEN_MAX - 14)
+#define	L2CAP_RX_BUFF_LEN_MAX			  268//12(rf pakect) + 2(link layer) + 4(l2cap) + 247(payload) = 265; align->268
+#define	ATT_RX_MTU_SIZE_MAX		  		 (L2CAP_RX_BUFF_LEN_MAX - 18)
 
 #define L2CAP_RX_PDU_OFFSET				  12
 
@@ -115,7 +115,9 @@ void 		blc_l2cap_reg_att_sig_hander(void *p);//signaling pkt proc
 
 
 
-void 		blc_l2cap_SendConnParamUpdateResponse(u16 connHandle, int result);
+void 		blc_l2cap_SendConnParamUpdateResponse(u16 connHandle, int result, u8* req);
+
+ble_sts_t  blc_l2cap_pushData_2_controller (u16 connHandle, u16 cid, u8 *format, int format_len, u8 *pDate, int data_len);
 
 
 

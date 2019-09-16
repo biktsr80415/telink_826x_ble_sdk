@@ -1,7 +1,26 @@
 
 #pragma once
 
+#include "../proj/config/user_config.h"
+//#include "../proj/mcu/config.h"
+
 #if(__TL_LIB_8266__ || MCU_CORE_TYPE == MCU_CORE_8266)
+
+
+#ifndef PM_TIM_RECOVER_MODE
+#define PM_TIM_RECOVER_MODE			    	0
+#endif
+
+#if (PM_TIM_RECOVER_MODE)
+
+typedef struct{
+	unsigned int   tick_sysClk;
+	unsigned int   tick_32k;
+	unsigned int   recover_flag;
+}pm_tim_recover_t;
+
+extern _attribute_aligned_(4) pm_tim_recover_t			pm_timRecover;
+#endif
 
 static inline void usb_dp_pullup_en (int en)
 {
@@ -101,6 +120,9 @@ enum {
 	 PM_WAKEUP_TIMER = BIT(6),
 	 PM_WAKEUP_COMP  = BIT(7),
 	 PM_WAKEUP_PAD   = BIT(8),
+
+	 PM_TIM_RECOVER_START =	BIT(14),
+	 PM_TIM_RECOVER_END   =	BIT(15),
 };
 
 

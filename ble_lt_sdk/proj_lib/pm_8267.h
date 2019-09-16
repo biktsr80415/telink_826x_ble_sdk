@@ -1,9 +1,30 @@
 
 #pragma once
 
+#include "../proj/config/user_config.h"
+#include "../proj/mcu/config.h"
+
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
 	__TL_LIB_8269__ || (MCU_CORE_TYPE == MCU_CORE_8269)	)
+
+
+#ifndef PM_TIM_RECOVER_MODE
+#define PM_TIM_RECOVER_MODE			    	0
+#endif
+
+
+#if (PM_TIM_RECOVER_MODE)
+
+typedef struct{
+	unsigned int   tick_sysClk;
+	unsigned int   tick_32k;
+	unsigned int   recover_flag;
+}pm_tim_recover_t;
+
+extern _attribute_aligned_(4) pm_tim_recover_t			pm_timRecover;
+#endif
+
 
 typedef void (*pm_optimize_handler_t)(void);
 
@@ -117,6 +138,9 @@ enum {
 	 PM_WAKEUP_CORE  = BIT(5),
 	 PM_WAKEUP_TIMER = BIT(6),
 	 PM_WAKEUP_COMP  = BIT(7),
+
+	 PM_TIM_RECOVER_START =	BIT(14),
+	 PM_TIM_RECOVER_END   =	BIT(15),
 };
 
 
@@ -154,7 +178,7 @@ void cpu_stall_wakeup_by_timer0(u32 tick_stall);
 void cpu_stall_wakeup_by_timer1(u32 tick_stall);
 void cpu_stall_wakeup_by_timer2(u32 tick_stall);
 
-
+#define PM_8267_EXT32_PWM_WAKE_ENABLE  1
 
 
 #endif

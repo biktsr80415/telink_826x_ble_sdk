@@ -13,6 +13,7 @@
 #include "audio.h"
 #include "pga.h"
 #include "../mcu_spec/adc_8267.h"
+#include "../mcu/register.h"
 
 #if(__TL_LIB_8267__ || (MCU_CORE_TYPE == MCU_CORE_8267) || \
 	__TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) || \
@@ -106,7 +107,7 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
 	}
 	reg_adc_chn_l_sel |= FLD_ADC_DATA_FORMAT;                  //4.signed adc data
 	BM_CLR(reg_dfifo_ana_in,FLD_DFIFO_MIC_ADC_IN|FLD_DFIFO_AUD_INPUT_MONO);
-	reg_dfifo_ana_in |= MASK_VAL(FLD_DFIFO_MIC_ADC_IN,AUD_AMIC,FLD_DFIFO_AUD_INPUT_MONO,3); //select AMIC,enable dfifo and wptr
+	reg_dfifo_ana_in |= MASK_VAL(FLD_DFIFO_MIC_ADC_IN,AUD_AMIC,FLD_DFIFO_AUD_INPUT_MONO,0); //select AMIC
 
 	SET_PFM(misc_sys_tick); //set system tick of misc channel
 	SET_PFL(left_sys_tick); //set system tick of left channel
@@ -118,32 +119,29 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
 	/***decimation/down sample[3:0]Decimation rate [6:4]decimation shift select(0~5)***/
 	switch(d_samp&0x0f){
 	case R1:
-		tmp_shift = 0x01;
+		tmp_shift = 0x00;  //0x01
 		break;
 	case R2:
 	case R3:
-		tmp_shift = 0x02;
+		tmp_shift = 0x00; //0x02
 		break;
 	case R4:
 	case R5:
-		tmp_shift = 0x03;
+		tmp_shift = 0x00; //0x03
 		break;
 	case R6:
-		tmp_shift = 0x05;
-		break;
-	case R8:
-		tmp_shift = 0x06;
+		tmp_shift = 0x00; //0x04
 		break;
 	default:
-		tmp_shift = 0x06;
+		tmp_shift = 0x00; //0x05
 		break;
 	}
 	reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,tmp_shift);
 	/***************HPF setting[3:0]HPF shift [4]bypass HPF [5]bypass ALC [6]bypass LPF********/
 	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_SFT);
-	reg_aud_hpf_alc |= MASK_VAL(FLD_AUD_IN_HPF_SFT,0x09);//different pcb may set different value.
+	reg_aud_hpf_alc |= MASK_VAL(FLD_AUD_IN_HPF_SFT,AUDIO_HPF_SHIFT);//different pcb may set different value.
 	/***************ALC Volume[5:0]manual volume [6]0:manual 1:auto**************************/
-	reg_aud_alc_vol = MASK_VAL(FLD_AUD_MANUAL_VOLUME,0x1c,FLD_AUD_VOLUME_CTRL_MODE,AUD_VOLUME_MANUAL);//0x1c is the level of volume.0x1c
+	reg_aud_alc_vol = MASK_VAL(FLD_AUD_MANUAL_VOLUME,MANUAL_VOLUMN_SETTINGS,FLD_AUD_VOLUME_CTRL_MODE,AUD_VOLUME_MANUAL);
 }
 
 /**
@@ -157,7 +155,7 @@ void audio_amic_init(enum audio_mode_t mode_flag,unsigned short misc_sys_tick, u
  */
 void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned char fhs_source)
 {
-	unsigned char adc_mode;
+	unsigned char adc_mode = 0;
 	reg_clk_en2 |= FLD_CLK2_DIFIO_EN; //enable dfifo clock.
 
 	/***judge which clock is the source of FHS. three selection: 1--PLL 2--RC32M 3--16Mhz crystal oscillator***/
@@ -178,6 +176,7 @@ void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned
 	gpio_set_input_en(GPIO_DMIC_DI,1);    //enable DI input
 	gpio_set_input_en(GPIO_DMIC_CK,1);    //enable CK input
 	reg_gpio_config_func0 |= FLD_DMIC_DI_PWM0; //enable PA0 as dmic pin
+
 	/***configure DMIC clock ***/
 	BM_CLR(reg_dmic_step,FLD_DMIC_STEP);
 	reg_dmic_step |= MASK_VAL(FLD_DMIC_STEP,dmic_speed);
@@ -185,29 +184,29 @@ void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned
 	reg_dmic_step |= FLD_DMIC_CLK_EN; // enable dmic clock
 	
 	BM_CLR(reg_dfifo_ana_in,FLD_DFIFO_MIC_ADC_IN|FLD_DFIFO_AUD_INPUT_MONO);
-	reg_dfifo_ana_in |= MASK_VAL(FLD_DFIFO_MIC_ADC_IN,AUD_DMIC,FLD_DFIFO_AUD_INPUT_MONO,3); //select AMIC,enable dfifo and wptr
+	reg_dfifo_ana_in |= MASK_VAL(FLD_DFIFO_MIC_ADC_IN,AUD_DMIC,FLD_DFIFO_AUD_INPUT_MONO,0); //enable DMIC
 
 	/***************decimation/down sample[3:0]Decimation rate [6:4]decimation shift select(0~5)***/
 	switch(d_samp){
 	case R32:
-		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x02);
+		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x00);
 		break;
 	case R64:
-		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x05);
+		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x00);
 		break;
 	default:
-		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x05);
+		reg_dfifo_scale = MASK_VAL(FLD_DFIFO2_DEC_CIC,d_samp,FLD_DFIFO0_DEC_SCALE,0x00);
 		break;
 	}
 	/***************HPF setting[3:0]HPF shift [4]bypass HPF [5]bypass ALC [6]bypass LPF*************/
 	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_SFT);
-	reg_aud_hpf_alc |= MASK_VAL(FLD_AUD_IN_HPF_SFT,0x05);//different pcb may set different value.
+	reg_aud_hpf_alc |= MASK_VAL(FLD_AUD_IN_HPF_SFT,AUDIO_HPF_SHIFT);//different pcb may set different value.
 	/***************ALC Volume[5:0]manual volume [6]0:manual 1:auto*********************************/
-	reg_aud_alc_vol = 0x30;  //0x24
+	reg_aud_alc_vol = MANUAL_VOLUMN_SETTINGS;
 
 	/*************enable HPF ,ALC and disable LPF***/
 	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_BYPASS|FLD_AUD_IN_ALC_BYPASS|FLD_AUD_IN_LPF_BYPASS);//open hpf,alc,lpf
-	reg_aud_hpf_alc |= FLD_AUD_IN_LPF_BYPASS; //close lpf
+//	reg_aud_hpf_alc |= FLD_AUD_IN_LPF_BYPASS; //close lpf
 }
 /************************************************************************************
 *
@@ -218,11 +217,11 @@ void audio_dmic_init(unsigned char dmic_speed, enum audio_deci_t d_samp,unsigned
 *	@return	none
 */
 void audio_amic_input_set(enum audio_input_t adc_ch){
-	unsigned char tem;
+
 	if(adc_ch == PGA_CH){ //this selection is diff mode. the input is pga.
 		pgaInit();
-		preGainAdjust(DB20); //set pre pga gain to 20db
-		postGainAdjust(DB9); //set post pga gain to 0db
+		preGainAdjust(PRE_DB20); //set pre pga gain to 20db
+		postGainAdjust(POST_DB3); //set post pga gain to 0db
 	}
 	else{                 //this selection is signed end
 		reg_adc_chn_l_sel &= (~FLD_ADC_CHN_SEL);
@@ -230,7 +229,7 @@ void audio_amic_input_set(enum audio_input_t adc_ch){
 	}
 	//configure filter and volume control register
 	BM_CLR(reg_aud_hpf_alc,FLD_AUD_IN_HPF_BYPASS|FLD_AUD_IN_ALC_BYPASS|FLD_AUD_IN_LPF_BYPASS);//open hpf,alc,lpf
-	reg_aud_hpf_alc |= FLD_AUD_IN_LPF_BYPASS; //close lpf
+//	reg_aud_hpf_alc |= FLD_AUD_IN_LPF_BYPASS; //close lpf
 }
 /**
 *	@brief		reg0x30[1:0] 2 bits for fine tuning, divider for slow down sample rate

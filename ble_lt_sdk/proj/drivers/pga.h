@@ -13,15 +13,15 @@
 #define		setPGAchannel_TWO			(*(volatile unsigned char  *)0x800028 |= 0x01)
 
 enum PREAMPValue{
-	DBP0,
-	DB20,
+	PRE_DBP0,
+	PRE_DB20,
 };
 
 enum POSTAMPValue{
-	DB0,
-	DB3,
-	DB6,
-	DB9,
+	POST_DB0,
+	POST_DB3,
+	POST_DB6,
+	POST_DB9,
 };
 
 

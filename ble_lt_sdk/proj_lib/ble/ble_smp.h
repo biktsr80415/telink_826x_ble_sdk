@@ -9,7 +9,8 @@
 #define BLE_SMP_H_
 
 #include "ble_common.h"
-
+#include "blt_config.h"
+#include "../../proj/tl_common.h"
 
 
 #define 		BOND_DEVICE_WHITELIST_MANAGEMANT_ENABLE		1
@@ -89,10 +90,11 @@ typedef union {
 
 typedef union{
 	struct {
-		u32 encKey : 1;
-		u32 idKey : 1;
-		u32 sign  : 1;
-		u32 linkKey : 4;
+		u8 encKey : 1;
+		u8 idKey : 1;
+		u8 sign  : 1;
+		u8 linkKey : 1;
+		u8 rsvd : 4;
 	};
 	u8 keyIni;
 }smp_keyDistribution_t;
@@ -175,14 +177,6 @@ typedef struct{
 	u8  notifyType;
 }smp_key_notify_t;
 
-typedef struct{
-	u8 sc_sk_dhk_own[32];  // keep sk before receive Ea. and keep dhkey after that.
-	u8 sc_pk_own[64];
-	u8 sc_pk_peer[64];
-}smp_sc_key_t;
-
-
-
 /*
  * smp parameter about peer device.
  * */
@@ -245,14 +239,14 @@ typedef struct {  //82
 typedef struct{
 	smp_paring_req_rsp_t  	paring_req;
 	smp_paring_req_rsp_t  	paring_rsp;
+	u16						save_key_flag;
+	smp_authReq_t			auth_req;
 	u8						own_conn_type;  //current connection peer own type
 	u8						own_conn_addr[6];
-	smp_authReq_t			auth_req;
+
 	u8						paring_tk[16];   // in security connection to keep own random
 	u8						paring_confirm[16];  // in security connection oob mode to keep peer random
 	u8						own_ltk[16];   //used for generate ediv and random
-
-	u8						save_key_flag;
 }smp_param_own_t;
 
 u8 cur_enc_keysize;
@@ -285,12 +279,17 @@ typedef struct {
 	u32 bond_flash_idx[SMP_BONDING_DEVICE_MAX_NUM];  //mark paired slave mac address in flash
 } bond_device_t;
 
-
-
-
+typedef struct{
+	u8	type;				//RFU(3)_MD(1)_SN(1)_NESN(1)-LLID(2)
+	u8  rf_len;				//LEN(5)_RFU(3)
+	u16	l2capLen;
+	u16	chanId;
+	u8  opcode;
+	u8 data[21];
+}smp2llcap_type_t;
 
 typedef void (*smp_check_handler_t)(u32);
-typedef void (*smp_init_handler_t)(u8 *p);
+typedef int (*smp_init_handler_t)(u8 *p);
 typedef u8 * (*smp_info_handler_t)(void);
 typedef void (*smp_bond_clean_handler_t)(void);
 typedef int (*smp_enc_done_cb_t)(void);
@@ -302,14 +301,17 @@ extern smp_info_handler_t		func_smp_info;
 extern smp_bond_clean_handler_t  func_bond_check_clean;
 extern smp_enc_done_cb_t		func_smp_enc_done_cb;
 
-
+extern smp_param_peer_t   	    smp_param_peer;
+extern smp_param_own_t		    smp_param_own;
+extern smp2llcap_type_t 		smpResSignalPkt;
 
 typedef enum {
 	JUST_WORKS,
 	PK_RESP_INPUT,  // Initiator displays PK, initiator inputs PK
 	PK_INIT_INPUT,  // Responder displays PK, responder inputs PK
-	OK_BOTH_INPUT,  // Only input on both, both input PK
-	OOB             // OOB available on both sides
+	PK_BOTH_INPUT,  // Only input on both, both input PK
+	OOB,            // OOB available on both sides
+	NUMERIC_COMPARISON,
 } stk_generationMethod_t;
 
 // IO Capability Values
@@ -324,13 +326,43 @@ typedef enum {
 
 // horizontal: initiator capabilities
 // vertial:    responder capabilities
-static const stk_generationMethod_t stk_generation_method[5][5] = {
+static const stk_generationMethod_t gen_method_legacy[5][5] = {
 	{ JUST_WORKS,      JUST_WORKS,       PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
 	{ JUST_WORKS,      JUST_WORKS,       PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
-	{ PK_RESP_INPUT,   PK_RESP_INPUT,    OK_BOTH_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
+	{ PK_RESP_INPUT,   PK_RESP_INPUT,    PK_BOTH_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
 	{ JUST_WORKS,      JUST_WORKS,       JUST_WORKS,      JUST_WORKS,    JUST_WORKS    },
 	{ PK_RESP_INPUT,   PK_RESP_INPUT,    PK_INIT_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
 };
+
+#if SECURE_CONNECTION_ENABLE
+/////////////////////////// smp method map table ///////////////////////////////////////
+static const stk_generationMethod_t gen_method_sc[5][5] = {
+	{ JUST_WORKS,      JUST_WORKS,       	PK_INIT_INPUT,   JUST_WORKS,    PK_INIT_INPUT },
+	{ JUST_WORKS,      NUMERIC_COMPARISON,  PK_INIT_INPUT,   JUST_WORKS,    NUMERIC_COMPARISON },
+	{ PK_RESP_INPUT,   PK_RESP_INPUT,   	PK_BOTH_INPUT,   JUST_WORKS,    PK_RESP_INPUT },
+	{ JUST_WORKS,      JUST_WORKS,       	JUST_WORKS,      JUST_WORKS,    JUST_WORKS    },
+	{ PK_RESP_INPUT,   NUMERIC_COMPARISON,  PK_INIT_INPUT,   JUST_WORKS,    NUMERIC_COMPARISON },
+};
+
+typedef u8* (* smp_sc_cmd_handler_t)(u16 conn, u8*p);
+typedef void (* smp_sc_pushPkt_handler_t)( u32 type );
+
+extern smp_sc_cmd_handler_t		 func_smp_sc_cmd_proc;
+extern smp_sc_pushPkt_handler_t  func_smp_sc_pushPkt_proc;
+
+extern const u8 PublicKey[64];
+extern const u8 PrivateKey[32];
+
+typedef struct{
+	u8 sc_sk_dhk_own[32];  // keep sk before receive Ea. and keep dhkey after that.
+	u8 sc_prk_own[32];     // own  private key
+	u8 sc_pk_own[64];      // own  public key
+	u8 sc_pk_peer[64];     // peer public key
+}smp_sc_key_t;
+
+extern smp_sc_key_t smp_sc_key;
+
+#endif
 
 #define IO_CAPABLITY_DISPLAY_ONLY		0x00
 #define IO_CAPABLITY_DISPLAY_YESNO		0x01
@@ -413,7 +445,7 @@ u32 		blc_smp_param_loadByIndex(u8 index, smp_param_save_t* smp_param_load);
 u32			blc_smp_param_loadByAddr(u8 addr_type, u8* addr, smp_param_save_t* smp_param_load);
 
 
-
+void		bls_smp_eraseAllParingInformation(void);
 
 /*************************************************
  * 	used for enable oob flag
@@ -433,6 +465,13 @@ void blc_smp_setMaxKeySize (u8 maxKeySize);
 int blc_smp_enableAuthMITM (int en, u32 pinCodeInput);
 
 /*************************************************
+ * 	@brief 		used for set MITM protect input pinCode
+ * 	@return  	0 - setting failure
+ * 				others - pin code in ranged.(0 ~ 999,999)
+ */
+int blc_smp_set_pinCode(u32 pinCodeInput);
+
+/*************************************************
  * 	@brief 		used for enable authentication bonding flag.
  */
 int blc_smp_enableBonding (int en);
@@ -442,20 +481,30 @@ int blc_smp_enableBonding (int en);
  * */
 void blc_smp_setIoCapability (u8 ioCapablility);
 
+#if (SECURE_CONNECTION_ENABLE)
+/*************************************************
+ * 	used for enable sc flag
+ * */
+void blc_smp_enableScFlag (int en);
+/*************************************************
+ * 	used for enable sc only
+ * 	set sc only.if master do not support sc,
+ * 	slave disconnect the link layer
+ * */
+void set_smp_sc_only(u8 flg);
+
+/*************************************************
+ * 	used for ecdh debug mode
+ * */
+u8   blc_smp_getEcdhDebugMode(void);
+void blc_smp_setEcdhDebugMode(u8 mode);
+#endif
+
 /*
  * API used for set distribute key enable.
  * */
-smp_keyDistribution_t blc_smp_setDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
-
-/*
- * API used for set distribute key enable.
- * */
-smp_keyDistribution_t blc_smp_expectDistributeKey (u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
-
-
-
-
-
+smp_keyDistribution_t blc_smp_setInitiatorKey(u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
+smp_keyDistribution_t blc_smp_setResponderKey(u8 LTK_distributeEn, u8 IRK_distributeEn, u8 CSRK_DistributeEn);
 
 
 /************************* Stack Interface, user can not use!!! ***************************/
@@ -504,14 +553,17 @@ typedef struct {
 	u16  rsvd;
 } smp_ctrl_t;
 
-extern smp_ctrl_t 	blc_smp_ctrl;
+extern smp_ctrl_t blc_smp_ctrl;
 
 void blc_smp_checkSecurityReqeustSending(u32 connStart_tick);
 void HID_service_on_android7p0_init(void);
 
+void blc_smp_procParingEnd(u8 err_reason);
 
-
-
+#if (SMP_BLE_CERT_TEST)
+void 	blc_smp_setCertTimeoutTick (u32 t);
+void 	blc_smp_certTimeoutLoopEvt (u8 as_master);
+#endif
 
 
 

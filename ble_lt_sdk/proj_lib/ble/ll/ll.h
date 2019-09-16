@@ -29,27 +29,20 @@
 extern u8					blt_state;
 extern st_ll_scan_t  blts;
 
-#define         VENDOR_ID                       0x0211
-#define			BLUETOOTH_VER_4_0				6
-#define			BLUETOOTH_VER_4_1				7
-#define			BLUETOOTH_VER_4_2				8
-
-#define			BLUETOOTH_VER					BLUETOOTH_VER_4_2
-
-#if (BLUETOOTH_VER == BLUETOOTH_VER_4_2)
-	#define			BLUETOOTH_VER_SUBVER			0x22BB
-#else
-	#define			BLUETOOTH_VER_SUBVER			0x4103
-#endif
 
 void blt_set_bluetooth_version (u8 v);
-
 
 /////////////////////////////////////////////////////////////////////////////
 #define		CLOCK_SYS_CLOCK_1250US			(1250 * sys_tick_per_us)
 #define		CLOCK_SYS_CLOCK_10MS			(10000 * sys_tick_per_us)
-#define		FLG_RF_CONN_DONE	(FLD_RF_IRQ_CMD_DONE | FLD_RF_IRQ_FSM_TIMEOUT | FLD_RF_IRQ_FIRST_TIMEOUT | FLD_RF_IRQ_RX_TIMEOUT)
+#define		FLG_RF_CONN_DONE				(FLD_RF_IRQ_CRC | FLD_RF_IRQ_CMD_DONE | FLD_RF_IRQ_FSM_TIMEOUT | FLD_RF_IRQ_FIRST_TIMEOUT | FLD_RF_IRQ_RX_TIMEOUT)
 
+
+//LL_DATA_PDU header LLID field
+#define LLID_RESERVED				 0x00
+#define LLID_DATA_CONTINUE			 0x01
+#define LLID_DATA_START				 0x02
+#define LLID_CONTROL				 0x03
 
 /////////////////////////////////////////////////////////////////////////////
 #define 				CONTROLLER_ONLY				0//1//
@@ -80,6 +73,11 @@ void blt_set_bluetooth_version (u8 v);
 #define					LL_PING_RSP					0x13
 #define 				LL_LENGTH_REQ				0x14
 #define					LL_LENGTH_RSP				0x15
+
+#define 				LL_PHY_REQ					0x16	//core_5.0
+#define 				LL_PHY_RSP					0x17	//core_5.0
+#define 				LL_PHY_UPDATE_IND			0x18	//core_5.0
+#define 				LL_MIN_USED_CHN_IND			0x19	//core_5.0
 
 #define					LL_ENC_REQ					0x03
 #define					LL_ENC_RSP					0x04
@@ -172,14 +170,39 @@ typedef struct {
 
 
 	u8		ll_recentAvgRSSI;
-	u8		ll_localFeature;
 	u8		tx_irq_proc_en;
-
-
 	u8		conn_rx_num;  //slave: rx number in a new interval
+	u8      md_max_nums;  //supported max md nums, default value: 0
+
+	u8		drop_rx_data;
+	u8		sdk_mainLoop_run_flag;  //Prevent enter sleep in first main_loop
+    u8      rsvd0;
+    u8      rsvd1;
+
+	u16		bluetooth_subver;
+    u8  	bluetooth_ver;
+    u8      rsvd2;
+
+	u32 	custom_access_code;
+
+
+#if (LE_AUTHENTICATED_PAYLOAD_TIMEOUT_SUPPORT_EN)
+	u32		tick_LE_Authenticated_Payload;    //timer start tick
+	u32		to_us_LE_Authenticated_Payload;    //timer threshold
+	u8		enable_LE_Authenticated_Payload;
+#endif
+
 } st_ll_conn_t;
 
-st_ll_conn_t  bltParam;
+_attribute_aligned_(4) st_ll_conn_t  bltParam;
+
+typedef struct {
+	u8		save_flg;
+	u8		sn_nesn;
+	u8		dma_tx_rptr;
+}bb_sts_t;
+
+bb_sts_t blt_bb;
 
 
 typedef struct {
@@ -194,11 +217,20 @@ typedef struct {
 
 	u16 	connInitialMaxTxOctets;
 	u8		connMaxTxRxOctets_req;
+    u8      connRxDiff100;
+    u8      connTxDiff100;
 }ll_data_extension_t;
 
-ll_data_extension_t  bltData;
+_attribute_aligned_(4) ll_data_extension_t  bltData;
 
 
+
+typedef struct{
+	u8 llid;
+	u8 rf_len;
+	u8 opcode;
+	u8 ctrlData;
+}ll_unknown_rsp_t;
 
 
 
@@ -223,10 +255,10 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			BLT_EV_FLAG_CONN_PARA_UPDATE		13
 #define			BLT_EV_FLAG_SUSPEND_ENTER			14
 #define			BLT_EV_FLAG_SUSPEND_EXIT			15
-#define			BLT_EV_FLAG_READ_P256_KEY			16
-#define			BLT_EV_FLAG_GENERATE_DHKEY			17
-#define			BLT_EV_FLAG_BEACON_DONE				18
-
+#define         BLT_EV_FLAG_LL_REJECT_IND           16
+#define			BLT_EV_FLAG_SMP_PINCODE_PROCESS	    17
+#define			BLT_EV_FLAG_RX_DATA_ABANDOM			18
+#define 		BLT_EV_FLAG_PHY_UPDATE				19
 
 
 
@@ -238,8 +270,8 @@ typedef void (*blt_event_callback_t)(u8 e, u8 *p, int n);
 #define			EVENT_MASK_CONN_PARA_REQ			BIT(BLT_EV_FLAG_CONN_PARA_REQ)
 #define			EVENT_MASK_CHN_MAP_UPDATE			BIT(BLT_EV_FLAG_CHN_MAP_UPDATE)
 #define			EVENT_MASK_CONN_PARA_UPDATE			BIT(BLT_EV_FLAG_CONN_PARA_UPDATE)
-#define			EVENT_MASK_READ_P256_KEY			BIT(BLT_EV_FLAG_READ_P256_KEY)
-#define			EVENT_MASK_GENERATE_DHKEY			BIT(BLT_EV_FLAG_GENERATE_DHKEY)
+#define			EVENT_MASK_RX_DATA_ABANDOM			BIT(BLT_EV_FLAG_RX_DATA_ABANDOM)
+#define 		EVENT_MASK_PHY_UPDATE				BIT(BLT_EV_FLAG_PHY_UPDATE)
 
 
 
@@ -287,15 +319,17 @@ u8 			blc_ll_getLatestAvgRSSI(void);
 u16   		blc_ll_setInitTxDataLength (u16 maxTxOct);   //core4.2 long data packet
 
 
-
-
-
-
 // application
 void		bls_app_registerEventCallback (u8 e, blt_event_callback_t p);
 
-
-
+inline u8 blc_ll_get_connEffectiveMaxTxOctets(void)
+{
+	#if(BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE)
+		return bltData.connEffectiveMaxTxOctets;
+	#else
+		return 27;
+	#endif
+}
 
 
 
@@ -307,7 +341,7 @@ ble_sts_t  		blc_hci_ltkRequestReply (u16 connHandle,  u8*ltk);
 
 void 			blc_ll_setEncryptionBusy(u8 enc_busy);
 bool 			blc_ll_isEncryptionBusy(void);
-void 			blc_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t* evtCbFunc);
+void 			blc_ll_registerLtkReqEvtCb(blt_LTK_req_callback_t evtCbFunc);
 
 void 			blc_ll_setIdleState(void);
 ble_sts_t 		blc_hci_le_getLocalSupportedFeatures(u8 *features);
@@ -323,24 +357,41 @@ ble_sts_t 		blc_hci_readSuggestedDefaultTxDataLength (u8 *tx, u8 *txtime);
 ble_sts_t 		blc_hci_writeSuggestedDefaultTxDataLength (u16 tx, u16 txtime);
 
 
+ble_sts_t       blt_ll_unknown_rsp(u16 connHandle, u8 opcode);
+
+unsigned int reverse_32bit(volatile unsigned int x);
+
+
 
 
 int blm_send_acl_to_btusb (u16 conn, u8 *p);
 
 
-
-
-
-
-static inline u8  blc_ll_getTxFifoNumber (void)
+static inline void  blc_ll_set_CustomedAdvScanAccessCode(u32 accss_code)
 {
-	return  ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 )  +  ( (blt_txfifo.wptr - blt_txfifo.rptr) & 31 ) ;
+	bltParam.custom_access_code = accss_code;
 }
 
 
-static inline u8  blc_ll_getTxHardWareFifoNumber (void)
+static inline void blt_ll_set_ble_access_code_adv(void)
 {
-	return  ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 );
+	write_reg32 (0x800408, bltParam.custom_access_code ? bltParam.custom_access_code : 0xd6be898e);
+}
+
+static inline u8  blc_ll_getTxFifoNumber (void)
+{
+	u8 r = irq_disable();
+
+#if (LL_MASTER_SINGLE_CONNECTION || LL_MASTER_MULTI_CONNECTION)
+	st_ll_conn_master_t *pm = &blm[0];
+	u8 fifo_num = ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15)  + ( (pm->tx_wptr-pm->tx_rptr) & 31);
+#else
+	u8 fifo_num = ((reg_dma_tx_wptr - reg_dma_tx_rptr) & 15 )  +  ( (blt_txfifo.wptr - blt_txfifo.rptr) & 31 ) ;
+#endif
+
+	irq_restore(r);
+
+	return  fifo_num;
 }
 
 
@@ -360,6 +411,15 @@ static inline void blc_ll_recordRSSI(u8 rssi)
 	}
 }
 
+static inline u8* 	blc_ll_get_macAddrRandom(void)
+{
+	return bltMac.macAddress_random;
+}
+
+static inline u8* 	blc_ll_get_macAddrPublic(void)
+{
+	return bltMac.macAddress_public;
+}
 
 
 /************************************************************* RF DMA RX\TX data strcut ***************************************************************************************

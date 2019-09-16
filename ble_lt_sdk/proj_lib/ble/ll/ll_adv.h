@@ -42,11 +42,12 @@ typedef struct {
 	u32		adv_interval;     // system tick
 	u32		adv_duration_us;
 	u32		adv_begin_tick;
+	u32     own_addr_type;    // own addr type
 }st_ll_adv_t;
 
 
 
-
+extern _attribute_aligned_(4) st_ll_adv_t  blta;
 
 
 
@@ -105,8 +106,10 @@ ble_sts_t 	bls_hci_le_setAdvParam(adv_para_t *para);
 ble_sts_t 	bls_hci_le_readChannelMap(u16 connHandle, u8 *returnChannelMap);
 
 
-
-
+static inline u8 blt_ll_getOwnAddrType(void)
+{
+	return blta.own_addr_type;
+}
 
 
 

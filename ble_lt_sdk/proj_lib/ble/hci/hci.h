@@ -76,6 +76,8 @@ int 		blc_hci_sendACLData2Host (u16 handle, u8 *p);
 int blc_hci_send_data (u32 h, u8 *para, int n);
 void blc_enable_hci_master_handler ();
 
+void blc_set_customer_lmp_subversion(u16 subversion);
+
 
 
 

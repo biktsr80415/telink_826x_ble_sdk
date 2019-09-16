@@ -32,7 +32,8 @@ extern "C" {
 
 
 #if(__PROJECT_8261_MASTER_KMA_DONGLE__)
-	#define FLASH_ADR_PARING   0x1e000
+    //0x1e000 is used for SDK 3.2.0 or earlier, conflict with "CUST_CAP_INFO_ADDR" of 8261, must change this value
+	#define FLASH_ADR_PARING   0x19000
 #else
 	#define FLASH_ADR_PARING   0x78000
 #endif
@@ -45,7 +46,7 @@ extern "C" {
 #define UI_AUDIO_ENABLE								1
 #define UI_BUTTON_ENABLE							1
 #define UI_LED_ENABLE								1
-
+#define UI_UPPER_COMPUTER_ENABLE					1   //work with upper computer
 
 
 #if (__PROJECT_8261_MASTER_KMA_DONGLE__)

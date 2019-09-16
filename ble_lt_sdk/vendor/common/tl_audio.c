@@ -1,9 +1,14 @@
 #include "tl_audio.h"
 #include "../../proj_lib/ble/trace.h"
+#include "user_config.h"
+#include "../../proj/mcu/register.h"
+#include "../../proj/drivers/audio.h"
 
-#ifndef		TL_MIC_SOFT_DOWNSAMPLING
-#define		TL_MIC_SOFT_DOWNSAMPLING		0
+
+#ifndef		TL_MIC_32K_FIR_16K
+#define		TL_MIC_32K_FIR_16K		0
 #endif
+
 
 int md_long =0;
 int md_short =0;
@@ -187,7 +192,8 @@ void mic_to_adpcm_split (signed short *ps, int len, signed short *pds, int start
 	//byte5- byte128: 124 byte(62 sample) adpcm data
 	for (i=0; i<len; i++) {
 
-		s16 di = ps[TL_MIC_SOFT_DOWNSAMPLING ? i * 2 : i];
+//		s16 di = ps[TL_MIC_32K_FIR_16K ? i * 2 : i];
+		s16 di = ps[i];
 		int step = steptbl[predict_idx];
 		int diff = di - predict;
 
@@ -318,9 +324,6 @@ void adpcm_to_pcm (signed short *ps, signed short *pd, int len){
 	}
 }
 
-#ifndef		ADPCM_PACKET_LEN
-#define		ADPCM_PACKET_LEN					128
-#endif
 
 #if		TL_MIC_BUFFER_SIZE
 
@@ -334,89 +337,322 @@ u32		adb_t2;
 
 
 #define TL_NOISE_SUPRESSION_ENABLE 0 // TODO : too much calculation can have packet drop
-#if 	IIR_FILTER_ENABLE
-int c1[5] = {5751, 895, 1010, 253, -187};//filter all 
-int c2[5] = {4294, -6695, 3220, 1674, -855};//filter 1.2khz 
-int c3[5] = {4739, -2293, 1254, 573, -474};//filter 4khz
-int filter_1[10];
-int filter_2[10];
-int filter_3[10];
+#if (IIR_FILTER_ENABLE)
+
+///inner band EQ default parameter. user need to set according to actual situation.
+int filter_1[10] = {995*4, 1990*4, 995*4, 849*4, 734*4};
+int filter_2[10] = {3691*4, -5564*4, 2915*4, 5564*4, -2510*4};
+int filter_3[10] = {2534*4, -1482*4, 955*4,  3956*4, -1866*4};
+
 u8  filter1_shift;
 u8  filter2_shift;
 u8  filter3_shift;
 
-void voice_iir (signed short * ps, signed short *pd, int* coef, int nsample,u8 shift)
+////used for OOB processing. i.e LPF
+int LPF_FILTER_1[10] = {739,87,739,2419,-1401};
+int LPF_FILTER_2[10] = {4301,5262,4299,889,-3601};
+
+u8  lpf_filter1_shift;
+u8  lpf_filter2_shift;
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+
+
+///voice data out of band need to be processed using 12 bits.
+void voice_iir_OOB(signed short * ps, signed short *pd, int* coef, int nsample,u8 shift)
 {
-      int i = 0;
-      int s = 0;
-      for (i=0; i<nsample; i++)
-      {
-            s = (*ps * coef[0])>>shift;                  //input 16-bit
-            s += coef[5] * coef[1];
-            s += coef[6] * coef[2];       //coef 0,1,2: 12-bit
-            s += coef[7] * coef[3];
-            s += coef[8] * coef[4];      //coef 4 & 5: 10-bit; coef 7 & 8: 18-bit
-            s = s >> 10;                        //18-bit
-            if (s >= (1<<18))
-                  s = (1<<18) - 1;
-            else if (s < -(1<<18))
-                  s = - (1<<18);
-            coef[6] = coef[5];                  //16-bit
-            coef[5] = *ps++;              //16-bit
-            coef[8] = coef[7];                  //18-bit
-            coef[7] = s;
-            *pd++ = s >> 2;
-      }
+	int i = 0;
+	long int s = 0;
+	for (i=0; i<nsample; i++)
+	{
+		 //s = (*ps * coef[0])>>shift;
+		s = (*ps * coef[0])>>0;          		//input 16-bit
+		s += coef[5] * coef[1];
+		s += coef[6] * coef[2];       		//coef 0,1,2: 12-bit
+		s += coef[7] * coef[3];
+		s += coef[8] * coef[4];      		//coef 4 & 5: 10-bit; coef 7 & 8: 18-bit
+		//s = s >> 10;                        //18-bit
+		//s = s >> 12;                        //18-bit
+
+		s = ((s + (1 << 11)) >> 12); /////this line code indicate that process sample data with 12 bits
+
+#if 0
+		if (s >= (1<<18))
+			  s = (1<<18) - 1;
+		else if (s < -(1<<18))
+			  s = - (1<<18);
+#endif
+		coef[6] = coef[5];                  //16-bit
+		coef[5] = *ps++;              		//16-bit
+		coef[8] = coef[7];                  //18-bit
+		coef[7] = s;
+		//*pd++ = s >> 3;
+		//*pd++ = s >> 1;
+
+		///EQ filter bug fixed by QW
+		if(s > 32767){
+			s = 32767;
+		}
+		else if(s < -32768){
+			s = -32768;
+		}
+
+		*pd++ = s >> shift;
+	}
 }
-#endif 
+
+///voice data inner band need to be processed using 14 bits.
+void voice_iir(signed short * ps, signed short *pd, int* coef, int nsample,u8 shift)
+{
+	int i = 0;
+	long int s = 0;
+	for (i=0; i<nsample; i++)
+	{
+		 //s = (*ps * coef[0])>>shift;
+		s = (*ps * coef[0])>>0;          		//input 16-bit
+		s += coef[5] * coef[1];
+		s += coef[6] * coef[2];       		//coef 0,1,2: 12-bit
+		s += coef[7] * coef[3];
+		s += coef[8] * coef[4];      		//coef 4 & 5: 10-bit; coef 7 & 8: 18-bit
+		//s = s >> 10;                        //18-bit
+		//s = s >> 12;                        //18-bit
+
+		s = ((s + (1 << 13)) >> 14);   /////this line code indicate that process sample data with 14 bits
+//		s = ((s + (1 << 11)) >> 12);
+#if 0
+		if (s >= (1<<18))
+			  s = (1<<18) - 1;
+		else if (s < -(1<<18))
+			  s = - (1<<18);
+#endif
+		coef[6] = coef[5];                  //16-bit
+		coef[5] = *ps++;              		//16-bit
+		coef[8] = coef[7];                  //18-bit
+		coef[7] = s;
+		//*pd++ = s >> 3;
+		//*pd++ = s >> 1;
+
+		//EQ filter bug fixed by QW
+		if(s > 32767){
+			s = 32767;
+		}
+		else if(s < -32768){
+			s = -32768;
+		}
+
+		*pd++ = s >> shift;
+	}
+}
+
+void Audio_VolumeSet(unsigned char input_output_select,unsigned char volume_set_value){
+
+	if(input_output_select)
+		write_reg8(0xb06,volume_set_value);
+	else
+		write_reg8(0x561,volume_set_value);
+}
+
+
+#define  IIR_FILTER_ADR  0x71000
+#define  CBUFFER_SIZE    20
+u8 filter_step_enable = 0;
+u8 vol_gain_tmp       = 0xff;
+u8 filter_cmp[20];
+/*
+ FLASH 0x71000开始，滤波器重设参数分布如下：
+ +----------------0x71000
+  | c1(20B) 带内滤波器参数
+ +----------------0x71013
+  | c2(20B) 带内滤波器参数
+ +----------------0x71027
+  | c3(20B) 带内滤波器参数
+ +----------------0x7103B
+  | c4(20B) 带外滤波器参数
+ +----------------0x71xxx
+  | c5(20B) 带外滤波器参数
+ +----------------0x71xxx
+  | f1_sft(1B) | f2_sft(1B) |f3_sft(1B) |f4_sft(1B) | f5_sft(1B) 滤波器shift系数
+ +----------------0x7109F
+  | vol_gain(1B)语音音量基准: 0x710A0
+ +----------------0x710A1
+*/
+void filter_setting()
+{
+	/////get the cfg data in the flash
+	u32 *pfilter     = (u32*)IIR_FILTER_ADR;
+	u8  *p_start_iir = (u8 *)(pfilter);
+	u8  vol_gain_tmp = 0;
+
+	memset(filter_cmp, 0xff,sizeof(filter_cmp));
+
+	if(memcmp(p_start_iir,filter_cmp,sizeof(filter_cmp)))//step 1 disaptch
+	{
+		memcpy((u8 *)filter_1,p_start_iir,CBUFFER_SIZE);
+		filter_step_enable |=BIT(1);
+	}
+	if(memcmp(p_start_iir+CBUFFER_SIZE,filter_cmp,sizeof(filter_cmp)))//step 2 disaptch
+	{
+		memcpy((u8 *)filter_2,p_start_iir+CBUFFER_SIZE,CBUFFER_SIZE);
+		filter_step_enable |=BIT(2);
+	}
+	if(memcmp(p_start_iir+(CBUFFER_SIZE*2),filter_cmp,sizeof(filter_cmp)))//step 3 dispatch
+	{
+		memcpy((u8 *)filter_3,p_start_iir+(CBUFFER_SIZE*2),CBUFFER_SIZE);
+		filter_step_enable |=BIT(3);
+	}
+
+	if(memcmp(p_start_iir+(CBUFFER_SIZE*3),filter_cmp,sizeof(filter_cmp)))//step 4 dispatch
+	{
+		memcpy((u8 *)LPF_FILTER_1,p_start_iir+(CBUFFER_SIZE*3),CBUFFER_SIZE);
+		filter_step_enable |=BIT(4);
+	}
+	if(memcmp(p_start_iir+(CBUFFER_SIZE*4),filter_cmp,sizeof(filter_cmp)))//step 5 dispatch
+	{
+		memcpy((u8 *)LPF_FILTER_2,p_start_iir+(CBUFFER_SIZE*4),CBUFFER_SIZE);
+		filter_step_enable |=BIT(5);
+	}
+
+	int i;
+	i = CBUFFER_SIZE*5;
+
+	filter1_shift = (p_start_iir[i]==0xff)		?	0:p_start_iir[i];
+    filter2_shift = (p_start_iir[i+1]==0xff)	?	0:p_start_iir[i+1];
+	filter3_shift = (p_start_iir[i+2]==0xff)	?  	0:p_start_iir[i+2];
+
+	lpf_filter1_shift = (p_start_iir[i+3]==0xff)?	0:p_start_iir[i+3];
+	lpf_filter2_shift = (p_start_iir[i+4]==0xff)?	0:p_start_iir[i+4];
+
+//volumn setting .position 0x710A0
+	vol_gain_tmp = p_start_iir[0xA0];
+	if(vol_gain_tmp!=0xff){
+		if(vol_gain_tmp&0x80){
+			if(MANUAL_VOLUMN_SETTINGS<(vol_gain_tmp&0x7f)){
+				return;
+			}
+			Audio_VolumeSet(1,MANUAL_VOLUMN_SETTINGS-(vol_gain_tmp&0x7f));
+		}else{
+			if(MANUAL_VOLUMN_SETTINGS+vol_gain_tmp>0x3f){
+				return;
+			}
+			Audio_VolumeSet(1,MANUAL_VOLUMN_SETTINGS+vol_gain_tmp);
+		}
+	}else{
+		Audio_VolumeSet(1,MANUAL_VOLUMN_SETTINGS);
+	}
+	return ;
+}
+
+#endif
+
+
+#if (BLE_AUDIO_ENABLE)
+void audio_high_pass_filter(s16* ps, u32 len)
+{
+	u16 i = 0;
+	static s16 ps_last = 0;
+	static s16 pd_last = 0;
+	static int pd_last_bk = 0;
+	int ajst = 	AUDIO_HPF_SHIFT == 1 ? 0x1 :
+				AUDIO_HPF_SHIFT == 2 ? 0x3 :
+				AUDIO_HPF_SHIFT == 3 ? 0x7 :
+				AUDIO_HPF_SHIFT == 4 ? 0xf :
+				AUDIO_HPF_SHIFT == 5 ? 0x1f :
+				AUDIO_HPF_SHIFT == 6 ? 0x3f :
+				AUDIO_HPF_SHIFT == 7 ? 0x7f :
+				AUDIO_HPF_SHIFT == 8 ? 0xff :
+				AUDIO_HPF_SHIFT == 9 ? 0x1ff :
+				AUDIO_HPF_SHIFT == 10 ? 0x3ff :
+				AUDIO_HPF_SHIFT == 11 ? 0x7ff :
+				AUDIO_HPF_SHIFT == 12 ? 0xfff :
+				AUDIO_HPF_SHIFT == 13 ? 0x1fff :
+				AUDIO_HPF_SHIFT == 14 ? 0x3fff :
+				AUDIO_HPF_SHIFT == 15 ? 0x7fff :
+				0x0;
+
+	for(i=0; i< len; i++)
+	{
+		int y_ajst = (pd_last<0) ? ajst : 0;
+		pd_last_bk = (( ((ps[i] - ps_last + pd_last) << AUDIO_HPF_SHIFT) - pd_last ) + y_ajst) >> (AUDIO_HPF_SHIFT); //256
+//		pd_last = ps[i] - ps_last +( (( ( pd_last << AUDIO_HPF_SHIFT) - pd_last ) + y_ajst) >> (AUDIO_HPF_SHIFT) ); //256 now
+
+		//high pass filter bug fixed by QW
+		if(pd_last_bk > 32767){
+			pd_last_bk = 32767;
+		}
+		else if(pd_last_bk < -32768){
+			pd_last_bk = -32768;
+		}
+
+		pd_last = (s16)pd_last_bk;
+		ps_last = ps[i];
+		ps[i] = pd_last;
+
+	}
+}
+#endif
+
+static inline void audio_getHalfsample_func(s16*ps, u16 len){
+	for(int i=0;i<(len>>1);i++){
+		ps[i] = ps[2*i];
+	}
+}
+
 void	proc_mic_encoder (void)
 {
 	static u16	buffer_mic_rptr;
 	u16 mic_wptr = reg_audio_wr_ptr;
 	u16 l = ((mic_wptr<<1) >= buffer_mic_rptr) ? ((mic_wptr<<1) - buffer_mic_rptr) : 0xffff;
 
-	if (l >=(TL_MIC_BUFFER_SIZE>>2)) {
-		log_task_begin (TR_T_adpcm);
+	if ((l >=(TL_MIC_BUFFER_SIZE>>2))&& \
+	   ((( (u8)(buffer_mic_pkt_wptr - buffer_mic_pkt_rptr) )&(TL_MIC_PACKET_BUFFER_NUM*2-1)) < TL_MIC_PACKET_BUFFER_NUM)) {
 
 		s16 *ps = buffer_mic + buffer_mic_rptr;
-#if 	TL_NOISE_SUPRESSION_ENABLE
-        // for FIR adc sample data, only half part data are effective
-		for (int i=0; i<TL_MIC_ADPCM_UNIT_SIZE*2; i++) {
-			ps[i] = noise_supression (ps[i]);
-        }
-#endif
-#if 	IIR_FILTER_ENABLE
-		extern u8 mic_start_flag;
-		if(mic_start_flag){
-			mic_start_flag =0;
-			memset(filter_1,0,sizeof(filter_1));
-			memset(filter_2,0,sizeof(filter_2));
-			memset(filter_3,0,sizeof(filter_3));
-		}
-		memcpy(filter_1,c1,sizeof(c1));
-		memcpy(filter_2,c2,sizeof(c2));
-		memcpy(filter_3,c3,sizeof(c3));
-		#if 1
-		voice_iir(ps,ps,filter_2,(TL_MIC_BUFFER_SIZE>>2),filter2_shift);
-		voice_iir(ps,ps,filter_3,(TL_MIC_BUFFER_SIZE>>2),filter3_shift);
-		voice_iir(ps,ps,filter_1,(TL_MIC_BUFFER_SIZE>>2),filter1_shift);
+
+		#if (IIR_FILTER_ENABLE)
+			///out of band voice EQ process
+			voice_iir_OOB(ps, ps, LPF_FILTER_1, (TL_MIC_BUFFER_SIZE>>2), lpf_filter1_shift);//12 bits
+			voice_iir_OOB(ps, ps, LPF_FILTER_2, (TL_MIC_BUFFER_SIZE>>2), lpf_filter2_shift);//12 bits
+
+			/////     32K按2抽1->16K语音数据过来        ////////
+			/////step2: 为了能够使用5阶EQ filter，我们需要做一个处理。带外的语音使用32K处理完成之后（即：第一步之后），我们将audio数据进行2:1抽取，
+			audio_getHalfsample_func(ps, TL_MIC_BUFFER_SIZE>>2); //496B/2=> 248B
+
+			/////inner band voice EQ process
+			if((filter_step_enable&0x0e)!=0)
+			{
+				///////step3: 3阶EQ filter处理带内语音数据，此时使用14bits EQ filter算法。 ////////
+				if(filter_step_enable&BIT(1))
+				{
+					voice_iir(ps,ps,filter_1,(TL_MIC_BUFFER_SIZE>>3),filter1_shift);
+				}
+				if(filter_step_enable&BIT(2))
+				{
+					voice_iir(ps,ps,filter_2,(TL_MIC_BUFFER_SIZE>>3),filter2_shift);
+				}
+				if(filter_step_enable&BIT(3))
+				{
+					voice_iir(ps,ps,filter_3,(TL_MIC_BUFFER_SIZE>>3),filter3_shift);
+				}
+			}
+		#else
+			audio_getHalfsample_func(ps, TL_MIC_BUFFER_SIZE>>2); //我们将audio数据进行2:1抽取
 		#endif
-#endif 
-		mic_to_adpcm_split (	ps,	TL_MIC_ADPCM_UNIT_SIZE,
-						(s16 *)(buffer_mic_enc + (ADPCM_PACKET_LEN>>2) *
-						(buffer_mic_pkt_wptr & (TL_MIC_PACKET_BUFFER_NUM - 1))), 1);
+
+		#if (SOFT_HPF_EN)
+			audio_high_pass_filter(ps, (TL_MIC_BUFFER_SIZE>>3));
+		#endif
+
+		mic_to_adpcm_split (ps,	TL_MIC_ADPCM_UNIT_SIZE,\
+						  (s16 *)(buffer_mic_enc + (ADPCM_PACKET_LEN>>2)*(buffer_mic_pkt_wptr & (TL_MIC_PACKET_BUFFER_NUM - 1))), 1);
 
 		buffer_mic_rptr = buffer_mic_rptr ? 0 : (TL_MIC_BUFFER_SIZE>>2);
+
 		buffer_mic_pkt_wptr++;
-		int pkts = (buffer_mic_pkt_wptr - buffer_mic_pkt_rptr) & (TL_MIC_PACKET_BUFFER_NUM*2-1);
-		if (pkts > TL_MIC_PACKET_BUFFER_NUM) {
-			buffer_mic_pkt_rptr++;
-			log_event (TR_T_adpcm_enc_overflow);
-		}
 
 		log_task_end (TR_T_adpcm);
 	}
 }
+
 
 int		mic_encoder_data_ready (int *pd)
 {
@@ -443,7 +679,7 @@ int	*	mic_encoder_data_buffer ()
 	int *ps = buffer_mic_enc + (ADPCM_PACKET_LEN>>2) *
 			(buffer_mic_pkt_rptr & (TL_MIC_PACKET_BUFFER_NUM - 1));
 
-	buffer_mic_pkt_rptr++;
+//	buffer_mic_pkt_rptr++;   ///this variable can be increased after notify successfully.
 
 	return ps;
 }

@@ -37,7 +37,7 @@ const u8 my_SppC2SUUID[16]		= TELINK_SPP_DATA_CLIENT2SERVER;
 u8 read_by_type_req_uuid[16] = {};
 u8 read_by_type_req_uuidLen;
 
-
+u16 	current_read_req_handle;
 
 void host_att_set_current_readByTypeReq_uuid(u8 *uuid, u8 uuid_len)
 {
@@ -246,57 +246,6 @@ ble_sts_t  host_att_discoveryService (u16 handle, att_db_uuid16_t *p16, int n16,
 
 
 
-
-
-
-
-
-#define KEY_MASK_PRESS		0x10
-#define KEY_MASK_REPEAT		0x20
-#define KEY_MASK_RELEASE	0x30
-u8 release_key_pending;
-u32 release_key_tick;
-
-void    report_to_pc_tool(u8 len,u8 * keycode)
-{
-#if 1  //pc tool verison_1.9 or later
-		static u8 last_len = 0;
-		static u8 last_key = 0;
-		static u32 last_key_tick = 0;
-
-		u8 mask = 0;
-
-		if(!(read_reg8(0x8004)&0xf0)){ //pc tool cleared 0x8004
-			if(!len){  //release
-				write_reg8(0x8004,KEY_MASK_RELEASE);
-				write_reg8(0x8005,0);
-			}
-			else{//press or repeat
-				if(last_len==len && last_key==keycode[0]){//repeat
-					mask = KEY_MASK_REPEAT;
-				}
-				else{ //press
-					mask = KEY_MASK_PRESS;
-				}
-				write_reg8(0x8004,mask | len);
-				write_reg8(0x8005,keycode[0]);
-			}
-		}
-		else{  //pc tool not clear t0x8004, drop the key
-			if(!len){  //release can not drop
-				release_key_pending = 1;
-				release_key_tick = clock_time();
-			}
-		}
-
-		last_len = len;
-		last_key = keycode[0];
-#else //old pc tool
-		write_reg8(0x8004,len);
-		write_reg8(0x8005,keycode[0]);
-#endif
-}
-
 rf_packet_mouse_t	pkt_mouse = {
 		sizeof (rf_packet_mouse_t) - 4,	// dma_len
 
@@ -313,6 +262,9 @@ rf_packet_mouse_t	pkt_mouse = {
 		1,					// number of frame
 };
 
+
+extern void usbmouse_add_frame (rf_packet_mouse_t *packet_mouse);
+
 void	att_mouse (u16 conn, u8 *p)
 {
 	memcpy (pkt_mouse.data, p, 4);
@@ -321,50 +273,34 @@ void	att_mouse (u16 conn, u8 *p)
 }
 
 
-//kb_data_t		kb_dat_debug = {1, 0, 0x04};
-//u8		cr_map_key[16] = {
-//		VK_VOL_UP, 	VK_VOL_DN,	VK_W_MUTE,	0,
-//		VK_ENTER,	VK_UP,		VK_DOWN,	VK_LEFT,
-//		VK_RIGHT,	VK_HOME,	0,			VK_NEXT_TRK,
-//		VK_PREV_TRK,VK_STOP,	0,			0
-//};
 
+extern void usbkb_hid_report(kb_data_t *data);
+extern void report_to_KeySimTool(u8 len,u8 * keycode);
+extern void usbkb_report_consumer_key(u16 consumer_key);
 
-extern 	void usbkb_hid_report(kb_data_t *data);
+extern void report_media_key_to_KeySimTool(u16);
+
 void	att_keyboard_media (u16 conn, u8 *p)
 {
-#if 0
-	if (p->l2capLen >=2)
-	{
-		//send_packet_usb (p + 6, p[5]);
-
-		u16 bitmap = p->dat[0] + p->dat[1] * 256;
-		kb_dat_debug.cnt = 0;
-		kb_dat_debug.keycode[0] = 0;
-		for (int i=0; i<16; i++)
-		{
-			if (bitmap & BIT(i))
-			{
-				kb_dat_debug.cnt = 1;
-				kb_dat_debug.keycode[0] = cr_map_key[i];// cr_map_key[i];
-				break;
-			}
-		}
+	u16 media_key = p[0] | p[1]<<8;
 
 
-		if(read_reg8(0) == 0x5a){ //report to pc_tool  mode
-			report_to_pc_tool(kb_dat_debug.cnt,kb_dat_debug.keycode);
-		}
-		else{
-			usbkb_hid_report((kb_data_t *) &kb_dat_debug);
-		}
+#if (UI_UPPER_COMPUTER_ENABLE)
+	if(read_reg8(0) == 0x5a){ //report to KeySimTool  mode
+		report_media_key_to_KeySimTool(media_key);
 	}
+	else{
+		usbkb_report_consumer_key(media_key);
+	}
+#else
+	usbkb_report_consumer_key(media_key);
 #endif
+
 }
 
 //////////////// keyboard ///////////////////////////////////////////////////
 int Adbg_att_kb_cnt = 0;
-kb_data_t		kb_dat_report = {1, 0, 0,0,0,0,0,0};
+kb_data_t		kb_dat_report = {1, 0, {0,0,0,0,0,0} };
 int keyboard_not_release = 0;
 extern int 	dongle_unpair_enable;
 void	att_keyboard (u16 conn, u8 *p)
@@ -393,8 +329,22 @@ void	att_keyboard (u16 conn, u8 *p)
 		keyboard_not_release = 0;
 	}
 
+
+#if (UI_UPPER_COMPUTER_ENABLE)
+	if(read_reg8(0) == 0x5a){ //report to KeySimTool  mode
+		report_to_KeySimTool(kb_dat_report.cnt, kb_dat_report.keycode);
+	}
+	else{
+		usbkb_hid_report((kb_data_t *) &kb_dat_report);
+	}
+#else
 	usbkb_hid_report((kb_data_t *) &kb_dat_report);
+#endif
+
 }
+
+
+
 
 void att_keyboard_release(void)
 {
@@ -481,6 +431,17 @@ void host_att_data_clear(void)
 	}
 }
 
+
+
+void app_setCurrentReadReq_attHandle(u16 handle)
+{
+	current_read_req_handle = handle;
+}
+
+void app_getCurrentReadReq_attHandle(void)
+{
+	return current_read_req_handle;
+}
 
 
 #endif

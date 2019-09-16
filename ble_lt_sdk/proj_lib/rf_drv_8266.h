@@ -1,5 +1,13 @@
+#include "../proj/config/user_config.h"
+#include "../proj/mcu/config.h"		// must include this
+
+#if(__TL_LIB_8266__ || (MCU_CORE_TYPE && MCU_CORE_TYPE == MCU_CORE_8266))
+
 #ifndef _RF_DRV_H_
 #define _RF_DRV_H_
+
+#include "../proj/common/bit.h"
+#include "../proj/common/utility.h"
 
 ////////////External Crystal Type///////////////////
 enum{
@@ -73,8 +81,13 @@ static inline void adc_clk_poweron(void)
 	sar_adc_pwdn_en = 0;
 }
 
-#define PHY_POWER_DOWN                  analog_write(0x06, sar_adc_pwdn_en ? 0xff : 0xfe)
-#define PHY_POWER_UP					analog_write(0x06, sar_adc_pwdn_en ? 0x01 : 0x00)
+#if(CLOCK_SYS_CLOCK_HZ == 16000000 || CLOCK_SYS_CLOCK_HZ == 24000000)
+	#define PHY_POWER_DOWN                  analog_write(0x06, sar_adc_pwdn_en ? 0xff : 0xfe)
+	#define PHY_POWER_UP					analog_write(0x06, sar_adc_pwdn_en ? 0x01 : 0x00)
+#else
+	#define PHY_POWER_DOWN
+	#define PHY_POWER_UP
+#endif
 
 void SetRxMode (signed char chn, unsigned short set);
 void SetTxMode (signed char chn, unsigned short set);
@@ -83,6 +96,16 @@ void TxPkt (void* addr);
 void rf_set_ble_channel (signed char chn);
 void rf_start_stx2rx  (void* addr, u32 tick);
 void rf_start_btx (void* addr, u32 tick);
+
+static inline unsigned char is_rf_receiving_pkt(void)
+{
+	unsigned char tmp_val = 0;
+	tmp_val = (read_reg8(0x443)&0x0f);
+	if( (tmp_val== 10) || (tmp_val == 11) || (tmp_val == 12)){
+		return 1;
+	}
+	return 0;
+}
 
 
 static inline void rf_set_tx_pipe_long_packet (u8 pipe)
@@ -151,6 +174,7 @@ static inline u32 rf_get_access_code1 (void)
 {
 	return read_reg8 (0x800414) | (read_reg32(0x800410) & 0xffffff00);
 }
+
 
 static inline u32 light_proc_conflict_ac_32(u32 ac)
 {
@@ -340,8 +364,8 @@ void 	rf_update_tp_value (u8 tp0, u8 tp1);
 		#define		RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x40)
 	#endif
 #elif		RF_FAST_MODE_1M
-#define		RF_PACKET_LENGTH_OK(p)		(p[0] == (p[13]&0x3f)+17)
-#define		RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x40)
+#define		RF_PACKET_LENGTH_OK(p)		( *((unsigned int*)p) == p[13]+17)    			//dma_len must 4 byte aligned
+#define		RF_PACKET_CRC_OK(p)			((p[*((unsigned int*)p) + 3] & 0x51) == 0x40)
 #else
 #define		RF_PACKET_LENGTH_OK(p)		(p[0] == p[12]+13)
 #define		RF_PACKET_CRC_OK(p)			((p[p[0]+3] & 0x51) == 0x10)
@@ -451,4 +475,6 @@ static inline void rf_set_16M_Crystal_2m_mode(void)
 	analog_write(0x9e, 0x82);
 }
 
-#endif
+#endif  ///end of (#ifndef _RF_DRV_H_)
+
+#endif  ///end of ((__TL_LIB_8266__ || (MCU_CORE_TYPE && MCU_CORE_TYPE == MCU_CORE_8266)))

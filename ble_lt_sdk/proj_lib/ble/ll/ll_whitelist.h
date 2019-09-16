@@ -83,8 +83,8 @@ typedef struct {
 } ll_ResolvingListTbl_t;
 
 
-
-
+typedef u8 * (*ll_wl_handler_t)(u8 , u8 *);
+extern ll_wl_handler_t			ll_whiteList_handler;
 
 /**************************************** User Interface  **********************************************/
 
@@ -165,11 +165,9 @@ u8 * ll_searchAddrInResolvingListTbl(u8 *addr);  //addr must be RPA
 
 u8 * ll_searchAddr_in_WhiteList_and_ResolvingList(u8 type, u8 *addr);
 
+bool smp_resolvPrivateAddr(u8 *key, u8 *addr);
 
 
-
-ll_whiteListTbl_t	ll_whiteList_tbl;
-ll_ResolvingListTbl_t	ll_resolvingList_tbl;
 
 
 

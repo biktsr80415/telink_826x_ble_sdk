@@ -1,5 +1,5 @@
 /*
- * ble_phy.h
+ * phy_test.h
  *
  *  Created on: 2017-8-17
  *      Author: Administrator
@@ -9,11 +9,21 @@
 #define BLE_PHY_H_
 
 
+#ifndef			PHYTEST_MODE_DISABLE
 #define			PHYTEST_MODE_DISABLE					0
-#define 		PHYTEST_MODE_THROUGH_2_WIRE_UART		1   //Direct Test Mode through a 2-wire UART interface
-#define 		PHYTEST_MODE_OVER_HCI_WITH_USB			2   //Direct Test Mode over HCI(UART hardware interface)
-#define 		PHYTEST_MODE_OVER_HCI_WITH_UART			3   //Direct Test Mode over HCI(USB  hardware interface)
+#endif
 
+#ifndef			PHYTEST_MODE_THROUGH_2_WIRE_UART
+#define 		PHYTEST_MODE_THROUGH_2_WIRE_UART		1   //Direct Test Mode through a 2-wire UART interface
+#endif
+
+#ifndef			PHYTEST_MODE_OVER_HCI_WITH_USB
+#define 		PHYTEST_MODE_OVER_HCI_WITH_USB			2   //Direct Test Mode over HCI(UART hardware interface)
+#endif
+
+#ifndef			PHYTEST_MODE_OVER_HCI_WITH_UART
+#define 		PHYTEST_MODE_OVER_HCI_WITH_UART			3   //Direct Test Mode over HCI(USB  hardware interface)
+#endif
 
 
 
@@ -23,7 +33,7 @@
 
 
 
-#define			PHY_CMD_RESET							0
+#define			PHY_CMD_SETUP							0
 #define			PHY_CMD_RX								1
 #define			PHY_CMD_TX								2
 #define			PHY_CMD_END								3
@@ -32,6 +42,7 @@
 #define 		PKT_TYPE_PRBS9 							0
 #define 		PKT_TYPE_0X0F 							1
 #define 		PKT_TYPE_0X55 							2
+#define			PKT_TYPE_0XFF							3
 
 enum{
 	PHY_EVENT_STATUS	 = 0,
@@ -87,7 +98,7 @@ ble_sts_t blc_phy_setPhyTestEnd(u8 *pkt_num);
 
 ble_sts_t blc_phy_reset(void);
 
-
+unsigned int Get_Pkt_Interval(unsigned int payload_len, unsigned char mode);
 
 
 

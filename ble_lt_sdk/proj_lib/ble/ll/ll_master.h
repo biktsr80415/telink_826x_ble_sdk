@@ -61,11 +61,19 @@ typedef struct {
 	u8		peer_adr_type;
 	u8		peer_adr[6];
 
+#if FIX_HW_CRC24_EN
+	u32		revert_conn_crc_init;
+#endif
+
 	u32		conn_access_code;
-	u8		conn_sn;
+
+	u16		nesn;//record local nesn
+	u16     sn;  //record local sn
+
 	u8		conn_snnesn;
 	u8		conn_chn;
 	u8		conn_update;
+	u8      conn_dma_tx_rptr;
 
 //	u16		connHandle;
 	u8 		smp_busy;
@@ -145,6 +153,15 @@ ble_sts_t blm_ll_createConnectionCancel ();
 #define			BLM_TX_FIFO_SIZE			40
 
 typedef struct {
+	u8		save_flg;
+	u8		sn_nesn;
+	u8 	    dma_tx_rptr;
+	u8 		rsvd;
+}bb_msts_t;
+_attribute_aligned_(4) bb_msts_t blm_bb;
+
+
+typedef struct {
 	u32		tx_fifo[BLM_TX_FIFO_NUM][BLM_TX_FIFO_SIZE>>2];
 	u8		tx_wptr;
 	u8		tx_rptr;
@@ -153,9 +170,11 @@ typedef struct {
 	u8		chn_tbl[40];
 
 	u8 		newRx;
-	u8 		ll_remoteFeature; //not only one for BLE master, use connHandle to identify
+	u8 		rsvd33; //not only one for BLE master, use connHandle to identify
 	u8		remoteFeatureReq;
 	u8 		adv_filterPolicy;
+
+	u32		ll_remoteFeature; //not only one for BLE master, use connHandle to identify
 
 	u8		macAddress_public[6];
 	u8		macAddress_random[6];   //host may set this
@@ -163,6 +182,10 @@ typedef struct {
 	u8		rsvd;
 	u8		peer_adr_type;
 	u8		peer_adr[6];
+
+#if FIX_HW_CRC24_EN
+	u32		revert_conn_crc_init;
+#endif
 
 	u32		conn_access_code;
 	u8		conn_sn;
@@ -194,6 +217,8 @@ typedef struct {
 	u8		conn_chn_map_next[5];
 	u8		connParaUpReq_pending;
 
+	u32		conn_software_timeout;
+
 	u32		conn_Req_noAck_timeout;
 	u8		conn_Req_waitAck_enable;
 	u8		conn_terminate_reason;
@@ -220,7 +245,7 @@ typedef struct {
 
 
 
-
+extern _attribute_aligned_(4) st_ll_conn_master_t blm[];
 
 /******************************* User Interface  ************************************/
 void blc_ll_initMasterRoleSingleConn_module(void);
@@ -231,6 +256,11 @@ bool blm_ll_isRfStateMachineBusy(void);
 u8   blm_ll_getTxFifoNumber (u16 connHandle);
 bool blm_ll_isTxFifoAvailableForApp(u16 connHandle);
 
+void blm_ll_setChmUpdatePeriod(u32 t_ms);
+u32  blm_ll_getConnChmUpdatePeriod(void);
+void blm_ll_chmUpdateStartProc(u8 en);
+u8   blm_ll_getChmUpdateStartEnSts(void);
+void blm_ll_setChmUsedAllAfterUpdateXtimes(u16 x_times);
 
 
 #endif   //end of LL_MASTER_SINGLE_CONNECTION
@@ -256,7 +286,7 @@ rf_packet_l2cap_t * blm_l2cap_packet_pack (u16 conn, u8 * raw_pkt);
 
 
 st_ll_conn_master_t * blm_ll_getConnection (u16 h);
-
+void ble_master_init (u8 *addr);
 bool blm_ll_deviceIsConnState (u8 addr_type, u8* mac_addr);
 
 //------------- ATT client function -------------------------------
@@ -268,10 +298,13 @@ u16 blm_att_findHandleOfUuid128 (att_db_uuid128_t *p, const u8 * uuid);
 u16 blm_att_discoveryHandleOfUUID (u8 *l2cap_data, u8 *uuid128);
 
 //------------	master function -----------------------------------
-u8 blm_fifo_num (u16 h);
+u8 		blm_fifo_num (u16 h);
+u8 		blm_ll_getTxFifoNumber (u16 connHandle);
+bool 	blm_ll_isTxFifoAvailableForApp(u16 connHandle);
+u8 		blm_push_acl_data (int h, u8*p);
+bool 	blm_push_fifo (int connHandle, u8 *dat);
 
-
-bool 	  blm_push_fifo (int connHandle, u8 *dat);
+void 	irq_ble_master_handler(void);
 
 void 	blm_main_loop (void);
 

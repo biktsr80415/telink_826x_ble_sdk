@@ -1,5 +1,26 @@
+/********************************************************************************************************
+ * @file     ble_common.h 
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 BLE Group
+ * @date     Sep. 18, 2015
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *           
+ *			 The information contained herein is confidential and proprietary property of Telink 
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in. 
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this 
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
+ *           
+ *******************************************************************************************************/
 #pragma once
-
+#include "blt_config.h"
 
 /*********************************************************************
  * CONSTANTS
@@ -25,34 +46,207 @@
 #define IS_CONNECTION_HANDLE_VALID(handle)  ( handle != BLE_INVALID_CONNECTION_HANDLE )
 
 
+#define VENDOR_ID                       0x0211
+#define VENDOR_ID_HI_B                  U16_HI(VENDOR_ID)
+#define VENDOR_ID_LO_B                  U16_LO(VENDOR_ID)
+
+
+#define	BLUETOOTH_VER_4_0				6
+#define	BLUETOOTH_VER_4_1				7
+#define	BLUETOOTH_VER_4_2				8
+#define BLUETOOTH_VER_5_0               9
+
+#define	BLUETOOTH_VER					BLUETOOTH_VER_4_2
+
+#if(BLUETOOTH_VER == BLUETOOTH_VER_4_2)
+	#define	BLUETOOTH_VER_SUBVER			0x22BB
+#elif(BLUETOOTH_VER == BLUETOOTH_VER_5_0)
+	#define	BLUETOOTH_VER_SUBVER			0x1C1C
+#else
+	#define	BLUETOOTH_VER_SUBVER			0x4103
+#endif
 
 /**
  *  @brief  Definition for Link Layer Feature Support
  */
 #define LL_FEATURE_SIZE                                      8
-#define LL_FEATURE_MASK_LL_ENCRYPTION                        0x01   //core_4.0
-#define LL_FEATURE_MASK_CONNECTION_PARA_REQUEST_PROCEDURE  	 0x02
-#define LL_FEATURE_MASK_EXTENDED_REJECT_INDICATION           0x04
-#define LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE    0x08
-#define LL_FEATURE_MASK_LE_PING                              0x10   //core_4.1
-#define LL_FEATURE_MASK_LE_DATA_PACKET_EXTENSION             0x20
-#define LL_FEATURE_MASK_LL_PRIVACY                           0x40
-#define LL_FEATURE_MASK_EXTENDED_SCANNER_FILTER_POLICIES     0x80   //core_4.2
+#define LL_FEATURE_MASK_LL_ENCRYPTION                        (0x00000001)   //core_4.0
+#define LL_FEATURE_MASK_CONNECTION_PARA_REQUEST_PROCEDURE  	 (0x00000002)	//core_4.1
+#define LL_FEATURE_MASK_EXTENDED_REJECT_INDICATION           (0x00000004)	//core_4.1
+#define LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE    (0x00000008)	//core_4.1
+#define LL_FEATURE_MASK_LE_PING                              (0x00000010)   //core_4.1
+#define LL_FEATURE_MASK_LE_DATA_LENGTH_EXTENSION             (0x00000020)	//core_4.2
+#define LL_FEATURE_MASK_LL_PRIVACY                           (0x00000040)	//core_4.2
+#define LL_FEATURE_MASK_EXTENDED_SCANNER_FILTER_POLICIES     (0x00000080)   //core_4.2
+#define LL_FEATURE_MASK_LE_2M_PHY         					 (0x00000100)	//core_5.0,   only 8269 32k Sram can support 2M PHY
 
 
-#if (BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE)
+/**
+ *@Brief: Define Link layer feature.
+ *        0: not support; 1: support.
+ */
+#if (BLUETOOTH_VER == BLUETOOTH_VER_4_0)
+	#define LL_FEATURE_ENABLE_LE_ENCRYPTION 						1
+	#define LL_CMD_MAX 												LL_REJECT_IND
 
-	#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
-									   	   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
-									   	   LL_FEATURE_MASK_LE_PING							  |   \
-									   	   LL_FEATURE_MASK_LE_DATA_PACKET_EXTENSION	)
+	#elif (BLUETOOTH_VER == BLUETOOTH_VER_4_1)
+	#define LL_FEATURE_ENABLE_LE_ENCRYPTION 						1
+	#define LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION 			1
+	#define LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE 	1
+	#define LL_FEATURE_ENABLE_LE_PING 								1
+
+	#define LL_CMD_MAX 												LL_PING_RSP
+
+#elif (BLUETOOTH_VER == BLUETOOTH_VER_4_2)
+
+	#define LL_FEATURE_ENABLE_LE_ENCRYPTION 						1
+	#define LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION	 		1
+	#define LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE 	1
+	#define LL_FEATURE_ENABLE_LE_PING 								1
+	#define LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION 				BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE
+
+	#define	LL_FEATURE_ENABLE_LE_2M_PHY								LL_FEATURE_SUPPORT_LE_2M_PHY ///just 2M of 5.0,other 5.0 feature not support
+
+
+	#define LL_CMD_MAX 												LL_LENGTH_RSP
+
+#elif (BLUETOOTH_VER == BLUETOOTH_VER_5_0)
+
+	#define LL_FEATURE_ENABLE_LE_ENCRYPTION 						1
+	#define LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION 			1
+	#define LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE 	1
+	#define LL_FEATURE_ENABLE_LE_PING 								1
+	#define LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION 				BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE
+
+	#define LL_FEATURE_ENABLE_LE_2M_PHY 							LL_FEATURE_SUPPORT_LE_2M_PHY
+
+	#define LL_CMD_MAX 												LL_MIN_USED_CHN_IND
 #else
 
-	#define LL_FEATURE_MASK_DEFAULT		(  LL_FEATURE_MASK_LL_ENCRYPTION                      |   \
-									   	   LL_FEATURE_MASK_SLAVE_INITIATED_FEATURES_EXCHANGE  |   \
-									   	   LL_FEATURE_MASK_LE_PING					)
 #endif
 
+
+
+
+
+
+#ifndef		 LL_FEATURE_ENABLE_LE_ENCRYPTION
+#define		 LL_FEATURE_ENABLE_LE_ENCRYPTION							0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_CONNECTION_PARA_REQUEST_PROCEDURE
+#define		 LL_FEATURE_ENABLE_CONNECTION_PARA_REQUEST_PROCEDURE		0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION
+#define		 LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION				0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE
+#define		 LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE		0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_LE_PING
+#define		 LL_FEATURE_ENABLE_LE_PING									0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION
+#define		 LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION					0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_LL_PRIVACY
+#define		 LL_FEATURE_ENABLE_LL_PRIVACY								0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_EXTENDED_SCANNER_FILTER_POLICIES
+#define		 LL_FEATURE_ENABLE_EXTENDED_SCANNER_FILTER_POLICIES			0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_LE_2M_PHY
+#define		 LL_FEATURE_ENABLE_LE_2M_PHY								0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_TX
+#define		 LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_TX				0
+#endif
+
+#ifndef		 LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_RX
+#define		 LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_RX				0
+#endif
+
+#ifndef LL_FEATURE_ENABLE_LE_PERIODIC_ADVERTISING
+#define LL_FEATURE_ENABLE_LE_PERIODIC_ADVERTISING 				0
+#endif
+
+
+#ifndef LL_FEATURE_ENABLE_LE_POWER_CLASS_1
+#define LL_FEATURE_ENABLE_LE_POWER_CLASS_1 						0
+#endif
+
+#ifndef LL_FEATURE_ENABLE_MIN_USED_OF_USED_CHANNELS
+#define LL_FEATURE_ENABLE_MIN_USED_OF_USED_CHANNELS 			0
+#endif
+
+
+
+//BIT<0:31>
+#if 1
+
+// feature below is conFiged by application layer
+// LL_FEATURE_ENABLE_LE_2M_PHY
+// LL_FEATURE_ENABLE_LE_CODED_PHY
+// LL_FEATURE_ENABLE_LE_EXTENDED_ADVERTISING
+// LL_FEATURE_ENABLE_CHANNEL_SELECTION_ALGORITHM2
+
+#define LL_FEATURE_MASK_BASE0											(	LL_FEATURE_ENABLE_LE_ENCRYPTION 					<<0		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_CONNECTION_PARA_REQUEST_PROCEDURE <<1		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION 	   	<<2		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE <<3		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_PING 						   	<<4		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION 		   	<<5		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LL_PRIVACY 					   	<<6		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_EXTENDED_SCANNER_FILTER_POLICIES  <<7		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_TX 	   	<<9		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_RX  	   	<<10	|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_PERIODIC_ADVERTISING 		   	<<13	|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_POWER_CLASS_1 				   	<<15	|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_MIN_USED_OF_USED_CHANNELS 		<<16 	)
+#else
+#define LL_FEATURE_MASK_0												(	LL_FEATURE_ENABLE_LE_ENCRYPTION 					<<0		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_CONNECTION_PARA_REQUEST_PROCEDURE <<1		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_EXTENDED_REJECT_INDICATION 	   	<<2		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_SLAVE_INITIATED_FEATURES_EXCHANGE <<3		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_PING 						   	<<4		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_DATA_LENGTH_EXTENSION 		   	<<5		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LL_PRIVACY 					   	<<6		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_EXTENDED_SCANNER_FILTER_POLICIES  <<7		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_2M_PHY 						<<8		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_TX 	   	<<9		|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_STABLE_MODULATION_INDEX_RX  	   	<<10	|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_CODED_PHY 					   	<<11	|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_EXTENDED_ADVERTISING  		   	<<12	|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_PERIODIC_ADVERTISING 		   	<<13	|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_CHANNEL_SELECTION_ALGORITHM2 	   	<<14	|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_LE_POWER_CLASS_1 				   	<<15	|  \
+		   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	   	LL_FEATURE_ENABLE_MIN_USED_OF_USED_CHANNELS 		<<16 	)
+
+#endif
+
+
+extern u32 LL_FEATURE_MASK_0;
+
+//BIT<32:63>
+#define LL_FEATURE_MASK_1												0
+
+
+#define LL_FEATURE_BYTE_0												U32_BYTE0(LL_FEATURE_MASK_0)
+#define LL_FEATURE_BYTE_1												U32_BYTE1(LL_FEATURE_MASK_0)
+#define LL_FEATURE_BYTE_2												U32_BYTE2(LL_FEATURE_MASK_0)
+#define LL_FEATURE_BYTE_3												U32_BYTE3(LL_FEATURE_MASK_0)
+#define LL_FEATURE_BYTE_4												U32_BYTE0(LL_FEATURE_MASK_1)
+#define LL_FEATURE_BYTE_5												U32_BYTE1(LL_FEATURE_MASK_1)
+#define LL_FEATURE_BYTE_6												U32_BYTE2(LL_FEATURE_MASK_1)
+#define LL_FEATURE_BYTE_7												U32_BYTE3(LL_FEATURE_MASK_1)
 
 typedef enum {
 	SCAN_TYPE_PASSIVE = 0x00,
@@ -213,6 +407,10 @@ typedef enum {
 	LL_ERR_WHITE_LIST_NV_DISABLED,
 	LL_ERR_CURRENT_DEVICE_ALREADY_IN_CONNECTION_STATE,
 
+	LL_ERR_CONNECTION_NOT_ESTABLISH, //
+	LL_ERR_TX_FIFO_NOT_ENOUGH,
+	LL_ERR_ENCRYPTION_BUSY,
+
     
     
     L2CAP_ERR_START = 0x60,
@@ -256,6 +454,7 @@ typedef enum {
 	ATT_ERR_SERVICE_DISCOVERY_TIEMOUT,
     ATT_ERR_NOTIFY_INDICATION_NOT_PERMITTED,
     ATT_ERR_DATA_PENDING_DUE_TO_SERVICE_DISCOVERY_BUSY,
+	ATT_ERR_DATA_LENGTH_EXCEED_MTU_SIZE,
 
 
 
@@ -375,7 +574,8 @@ typedef enum{
 
 #define			SMP_OP_ENC_END						0xFF
 
-
+#define SMP_TRANSPORT_SPECIFIC_KEY_START    0xEF
+#define SMP_TRANSPORT_SPECIFIC_KEY_END      0
 
 // Advertise channel PDU Type
 typedef enum advChannelPDUType_e {
@@ -747,7 +947,7 @@ typedef struct{
 	u8  opcode;
 	u8 handle;
 	u8 handle1;
-	u8 offset;
+	u8 offset0;
 	u8 offset1;
 }rf_packet_att_readBlob_t;
 

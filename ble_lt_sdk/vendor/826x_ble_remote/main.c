@@ -6,7 +6,8 @@
 #include "../../proj_lib/rf_drv.h"
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/ll/ll.h"
-#include "../../proj_lib/ble/ble_phy.h"
+#include "../../proj_lib/ble/phy/phy_test.h"
+#include "../../proj/drivers/uart.h"
 
 
 #if (REMOTE_IR_ENABLE)
@@ -14,11 +15,15 @@
 #endif
 
 
-#if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8266_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
+#if (__PROJECT_8261_BLE_REMOTE__ || __PROJECT_8267_BLE_REMOTE__ || __PROJECT_8269_BLE_REMOTE__)
 
 extern void user_init();
 extern void main_loop (void);
 extern void deep_wakeup_proc(void);
+
+
+
+
 
 _attribute_ram_code_ void irq_handler(void)
 {
@@ -40,9 +45,9 @@ _attribute_ram_code_ void irq_handler(void)
 
 
 	u32 src = reg_irq_src;
-	if(src & FLD_IRQ_TMR2_EN){
+	if(src & FLD_IRQ_TMR1_EN){
 		ir_repeat_handle();
-		reg_tmr_sta = FLD_TMR_STA_TMR2;
+		reg_tmr_sta = FLD_TMR_STA_TMR1;
 	}
 #endif
 
@@ -51,40 +56,17 @@ _attribute_ram_code_ void irq_handler(void)
 
 	irq_blt_sdk_handler ();
 
-
-
-
-
-#if (BLE_PHYTEST_MODE == PHYTEST_MODE_THROUGH_2_WIRE_UART || BLE_PHYTEST_MODE == PHYTEST_MODE_OVER_HCI_WITH_UART )
-	extern my_fifo_t hci_rx_fifo;
-
-	unsigned char irqS = reg_dma_rx_rdy0;
-    if(irqS & FLD_DMA_UART_RX)	//rx
-    {
-    	reg_dma_rx_rdy0 = FLD_DMA_UART_RX;
-    	u8* w = hci_rx_fifo.p + (hci_rx_fifo.wptr & (hci_rx_fifo.num-1)) * hci_rx_fifo.size;
-    	if(w[0]!=0)
-    	{
-    		my_fifo_next(&hci_rx_fifo);
-    		u8* p = hci_rx_fifo.p + (hci_rx_fifo.wptr & (hci_rx_fifo.num-1)) * hci_rx_fifo.size;
-    		reg_dma0_addr = (u16)((u32)p);
-    	}
-    }
-
-    if(irqS & FLD_DMA_UART_TX)	//tx
-    {
-    	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
-		#if (MCU_CORE_TYPE == MCU_CORE_8266)
-				uart_clr_tx_busy_flag();
-		#endif
-    }
+#if (BLE_PHYTEST_MODE != PHYTEST_MODE_DISABLE)
+	extern void irq_phyTest_handler(void);
+	irq_phyTest_handler();
 #endif
+
 
 }
 
 int main (void) {
 
-	blc_pm_select_internal_32k_crystal();
+	blc_pm_select_internal_32k_crystal(); //blc_pm_select_external_32k_crystal
 
 	cpu_wakeup_init(CRYSTAL_TYPE);
 
@@ -94,6 +76,9 @@ int main (void) {
 	gpio_init();
 
 	deep_wakeup_proc();
+
+	///NOTE:This function must be placed before the following function rf_drv_init().
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
 	rf_drv_init(CRYSTAL_TYPE);
 

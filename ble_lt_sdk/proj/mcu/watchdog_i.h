@@ -22,6 +22,8 @@ static inline void wd_stop(void){
 }
 
 static inline void wd_clear(void){
+#if(MODULE_WATCHDOG_ENABLE)
 	reg_tmr_sta = FLD_TMR_STA_WD;
+#endif
 }
 

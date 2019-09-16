@@ -1,20 +1,38 @@
-/*
- * blt_soft_timer.h
+/********************************************************************************************************
+ * @file     blt_soft_timer.h
  *
- *  Created on: 2016-10-28
- *      Author: Administrator
- */
+ * @brief    for TLSR chips
+ *
+ * @author	 BLE Group
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *
+ *			 The information contained herein is confidential and proprietary property of Telink
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai)
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in.
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided.
+ *
+ *******************************************************************************************************/
 
 #ifndef BLT_SOFT_TIMER_H_
 #define BLT_SOFT_TIMER_H_
 
 
 //user define
+#ifndef 	BLT_SOFTWARE_TIMER_ENABLE
 #define		BLT_SOFTWARE_TIMER_ENABLE				0   //enable or disable
+#endif
 
 
+#ifndef     MAX_TIMER_NUM
 #define 	MAX_TIMER_NUM							4   //timer max number
-
+#endif
 
 #define		MAINLOOP_ENTRY							0
 #define 	CALLBACK_ENTRY							1
@@ -28,10 +46,9 @@
 #define		TIME_COMPARE_BIG(t1,t2)   ( (u32)((t1) - (t2)) < BIT(30)  )
 
 
-#define		BLT_TIMER_SAFE_MARGIN_PRE	  (CLOCK_SYS_CLOCK_1US<<8)  //256 us
-#define		BLT_TIMER_SAFE_MARGIN_POST	  (CLOCK_SYS_CLOCK_1S<<2)   // 4S
+#define		BLT_TIMER_SAFE_MARGIN_PRE	  (CLOCK_SYS_CLOCK_1US<<7)  //128 us
+#define		BLT_TIMER_SAFE_MARGIN_POST	  (CLOCK_SYS_CLOCK_1S<<3)   // 8S
 static int inline blt_is_timer_expired(u32 t, u32 now) {
-	//return ((u32)(now - t) < BLT_TIMER_SAFE_MARGIN_POST);
 	return ((u32)(now + BLT_TIMER_SAFE_MARGIN_PRE - t) < BLT_TIMER_SAFE_MARGIN_POST);
 }
 
@@ -50,7 +67,7 @@ typedef struct blt_time_event_t {
 } blt_time_event_t;
 
 
-// timer table managemnt
+// timer table management
 typedef struct blt_soft_timer_t {
 	blt_time_event_t	timer[MAX_TIMER_NUM];  //timer0 - timer3
 	u8					currentNum;  //total valid timer num

@@ -3,6 +3,12 @@
 
 #include "l2cap.h"
 
+#define XIAOMI_CERTIFY_ENABLE 		0
+#if XIAOMI_CERTIFY_ENABLE
+#define ATT_PERMISSIONS_READ_AUTHOR			 0x11
+#define ATT_PERMISSIONS_WRITE_AUTHOR		 0x22
+#define ATT_PERMISSIONS_RDWD_AUTHOR			 0x33
+#endif
 
 #define ATT_MTU_SIZE                        23  //L2CAP_MTU_SIZE //!< Minimum ATT MTU size
 #define ATT_MAX_ATTR_HANDLE                 0xFFFF
@@ -415,6 +421,19 @@ typedef int (*att_mtuSizeExchange_callback_t)(u16, u16);
 typedef int (*att_handleValueConfirm_callback_t)(void);
 typedef int (*att_readwrite_callback_t)(void* p);
 
+#if XIAOMI_CERTIFY_ENABLE
+typedef struct attribute
+{
+  u16  attNum;
+  u8   *p_perm;
+  u8   uuidLen;
+  u32  attrLen;    //4 bytes aligned
+  u8* uuid;
+  u8* pAttrValue;
+  att_readwrite_callback_t w;
+  att_readwrite_callback_t r;
+} attribute_t;
+#else
 typedef struct attribute
 {
   u16  attNum;
@@ -426,11 +445,17 @@ typedef struct attribute
   att_readwrite_callback_t w;
   att_readwrite_callback_t r;
 } attribute_t;
+#endif
 
 
-
-
-
+//TELINK MTU no longer than 256, so 1 byte is enough.
+typedef struct{
+    u16 init_MTU;
+    u16 effective_MTU;
+    u8  Data_pending_time; //10ms unit
+    u8  Data_permission_check;
+} att_para_t;
+extern _attribute_aligned_(4) att_para_t bltAtt;
 
 extern u8	blt_indicate_handle;
 
@@ -479,9 +504,24 @@ ble_sts_t 	bls_att_setDeviceName(u8* pName,u8 len);  //only module/mesh/hci use
 int 		att_register_idle_func (void *p);
 int 		l2cap_att_client_handler (u16 conn, u8 *p);
 
+static inline u16  blc_att_getEffectiveMtuSize(u16 connHandle)
+{
+	return bltAtt.effective_MTU;
+}
+
+static inline void  blt_att_setEffectiveMtuSize(u16 connHandle, u8 effective_mtu)
+{
+	bltAtt.effective_MTU = effective_mtu;
+}
+
+static inline void  blt_att_resetEffectiveMtuSize() //u16 connHandle
+{
+	bltAtt.effective_MTU = ATT_MTU_SIZE;
+}
 
 
-
+typedef int (*att_big_handle_write_callback_t)(rf_packet_att_data_t *);
+void blc_att_registerBigHandleWriteCb (att_big_handle_write_callback_t cb);
 
 
 /************************* Stack Interface, user can not use!!! ***************************/

@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "clock.h"
 
 
 // we use clock insteady of timer, to differentiate OS timers utility

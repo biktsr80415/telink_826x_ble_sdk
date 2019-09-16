@@ -22,13 +22,13 @@ typedef struct {
 
 }st_ll_init_t;
 
-//st_ll_init_t  blti;
+
 
 extern u32 blm_timeout_connectDevice;
 
 
 
-extern rf_packet_ll_init_t	pkt_init;
+extern _attribute_aligned_(4) rf_packet_ll_init_t	pkt_init;
 
 
 

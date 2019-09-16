@@ -214,6 +214,10 @@ extern "C" {
 #define FLAG_BUTTON_DPI			0x20
 #endif
 
+#ifndef	FLAG_BUTTON_MODE
+#define FLAG_BUTTON_MODE		0x40
+#endif
+
 #ifndef	FLAG_BUTTON_LMRFB
 #define FLAG_BUTTON_LMRFB		0x0f
 #endif

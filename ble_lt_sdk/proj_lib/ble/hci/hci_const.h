@@ -21,7 +21,7 @@
 
 
 /****Events****/
-#define HCI_CMD_DISCONNECTION_COMPLETE                               0x05
+#define HCI_EVT_DISCONNECTION_COMPLETE                               0x05
 
 #define HCI_EVT_REMOTE_NAME_REQ_COMPLETE                             0x07
 #define HCI_EVT_ENCRYPTION_CHANGE                                    0x08
@@ -48,6 +48,7 @@
 #define HCI_SUB_EVT_LE_GENERATE_DHKEY_COMPLETE				         0x09
 #define HCI_SUB_EVT_LE_ENHANCED_CONNECTION_COMPLETE                  0x0A
 #define HCI_SUB_EVT_LE_DIRECT_ADVERTISE_REPORT		                 0x0B   //core_4.2
+#define HCI_SUB_EVT_LE_PHY_UPDATE_COMPLETE		                     0x0C   //core_5.0
 
 #define HCI_SUB_EVT_LE_CONNECTION_ESTABLISH					         0x20   //telink private
 
@@ -85,6 +86,7 @@
 #define HCI_LE_EVT_MASK_GENERATE_DHKEY_COMPLETE                      0x00000100
 #define HCI_LE_EVT_MASK_ENHANCED_CONNECTION_COMPLETE                 0x00000200
 #define HCI_LE_EVT_MASK_DIRECT_ADVERTISING_REPORT                    0x00000400
+#define HCI_LE_EVT_MASK_PHY_UPDATE_COMPLETE                          0x00000800 // core5.0
 
 #define HCI_LE_EVT_MASK_CONNECTION_ESTABLISH                         0x80000000  //telink private
 
@@ -220,6 +222,11 @@
 #define HCI_CMD_LE_SET_RESOLVABLE_PRIVATE_ADDRESS_TIMEOUT            0x2E
 #define HCI_CMD_LE_READ_MAX_DATA_LENGTH                              0x2F
 //core_4.2 above
+//core_5.0 begin
+#define HCI_CMD_LE_READ_PHY                       					 0x30//LE Read PHY Command - [5] 7.8.47
+#define HCI_CMD_LE_SET_DEFAULT_PHY              					 0x31//LE Set Default PHY Command - [5] 7.8.48
+#define HCI_CMD_LE_SET_PHY                      					 0x32//LE Set PHY Command - [5] 7.8.49
+
 #define HCI_CMD_LINK_POLICY_OPCODE_OGF								 0x08 //0x02<<2 = 0x08
 #define HCI_CMD_TEST_OPCODE_OGF										 0x18 //0x06<<2 = 0x18
 

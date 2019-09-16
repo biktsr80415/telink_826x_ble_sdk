@@ -13,32 +13,14 @@ extern my_fifo_t hci_rx_fifo;
 extern void user_init();
 extern void main_loop (void);
 
+
 _attribute_ram_code_ void irq_handler(void)
 {
 
 	irq_blt_sdk_handler ();
 
-#if (HCI_ACCESS==HCI_USE_UART || FEATURE_TEST_MODE == TEST_BLE_PHY)
-	unsigned char irqS = reg_dma_rx_rdy0;
-    if(irqS & FLD_DMA_UART_RX)	//rx
-    {
-    	reg_dma_rx_rdy0 = FLD_DMA_UART_RX;
-    	u8* w = hci_rx_fifo.p + (hci_rx_fifo.wptr & (hci_rx_fifo.num-1)) * hci_rx_fifo.size;
-    	if(w[0]!=0)
-    	{
-    		my_fifo_next(&hci_rx_fifo);
-    		u8* p = hci_rx_fifo.p + (hci_rx_fifo.wptr & (hci_rx_fifo.num-1)) * hci_rx_fifo.size;
-    		reg_dma0_addr = (u16)((u32)p);
-    	}
-    }
-
-    if(irqS & FLD_DMA_UART_TX)	//tx
-    {
-    	reg_dma_rx_rdy0 = FLD_DMA_UART_TX;
-		#if (MCU_CORE_TYPE == MCU_CORE_8266)
-				uart_clr_tx_busy_flag();
-		#endif
-    }
+#if (FEATURE_TEST_MODE == TEST_BLE_PHY)
+	app_phytest_irq_porc();
 #endif
 }
 
@@ -51,6 +33,9 @@ int main (void) {
 	clock_init();
 
 	gpio_init();
+
+	///NOTE:This function must be placed before the following function rf_drv_init().
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
 	rf_drv_init(CRYSTAL_TYPE);
 

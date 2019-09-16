@@ -6,6 +6,7 @@
  */
 #include "../../proj/mcu/analog.h"
 #include "../rf_drv.h"
+#include "../../proj/tl_common.h"
 
 #define  MAX_DEV_NAME_LEN 				18
 
@@ -34,9 +35,6 @@
 	#define		CUST_TP_INFO_ADDR				0x1E040
 	#endif
 
-	#ifndef		CUST_32KPAD_CAP_INFO_ADDR
-	#define		CUST_32KPAD_CAP_INFO_ADDR		0x1E080
-	#endif
 #else  //8266 8267 8269
 	#ifndef		CFG_ADR_MAC
 	#define		CFG_ADR_MAC						0x76000
@@ -49,17 +47,10 @@
 	#ifndef		CUST_TP_INFO_ADDR
 	#define		CUST_TP_INFO_ADDR				0x77040
 	#endif
-
-	#ifndef		CUST_32KPAD_CAP_INFO_ADDR
-	#define		CUST_32KPAD_CAP_INFO_ADDR		0x77080
-	#endif
 #endif
 
 
-//master
-#ifndef		CFG_ADR_PEER
-#define		CFG_ADR_PEER					0x78000
-#endif
+
 
 
 
@@ -95,59 +86,65 @@ static inline void blc_app_loadCustomizedParameters(void)
 	 }
 
 
-	 // customize TP0/TP1
+	 // customize TP0/TP1 for 1M
 	 if( ((*(unsigned char*) (CUST_TP_INFO_ADDR)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+1)) != 0xff) ){
 		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
 	 }
 
+	 ///2M mode just for 8269
+	#if (__TL_LIB_8269 || MCU_CORE_TYPE == MCU_CORE_8269)
+		// customize TP0/TP1 for 2M
+		if( ((*(unsigned char*) (CUST_TP_INFO_ADDR+2)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+3)) != 0xff) ){
+		 rf_update_2m_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR+2), *(unsigned char*) (CUST_TP_INFO_ADDR+3));
+		}
+	#endif
 
-	 if(blt_miscParam.pad32k_en){
-		  //customize 32k RC cap, if not customized, default ana_32 is 0x80
-		 if( (*(unsigned char*) CUST_32KPAD_CAP_INFO_ADDR) != 0xff ){
-			 //ana_81<4:0> is cap value(0x00 - 0x1f)
-			 analog_write(0x03, *(unsigned char*) CUST_32KPAD_CAP_INFO_ADDR );
-		 }
-	 }
 }
 
 
 
+#define	NANOSIC_LIBRARY_ENABLE							0   //must remove this at last
 
 
-
-
-
-
-
-
-/////////////////// Code Zise & Feature ////////////////////////////
-
-#if ( __TL_LIB_8261__ || (MCU_CORE_TYPE == MCU_CORE_8261) )
-	#define BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE		1
-	#define BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE		0
-#endif
-
-
-#ifndef BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE
-#define BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE			0
+#if(NANOSIC_LIBRARY_ENABLE)
+	#define	BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE	0
+	#define FIX_HW_CRC24_EN                             1
 #endif
 
 
 
+#define	OMNI_LIBRARY_ENABLE							    0   //must remove this at last
 
-//for 8261 128k flash
-#if (BLE_STACK_SIMPLIFY_4_SMALL_FLASH_ENABLE)
-	#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
+
+#if(OMNI_LIBRARY_ENABLE)
+	#define	BLS_PROC_MASTER_UPDATE_REQ_IN_IRQ_ENABLE		0
+	#define	BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN		1
+	#define	LE_AUTHENTICATED_PAYLOAD_TIMEOUT_SUPPORT_EN		1
 #endif
 
 
 
 
-#ifndef BLE_P256_PUBLIC_KEY_ENABLE
-#define BLE_P256_PUBLIC_KEY_ENABLE								0
+
+
+#if(__TL_LIB_8266__ || MCU_CORE_TYPE == MCU_CORE_8266)
+	#define LL_FEATURE_SUPPORT_LE_2M_PHY					0
+	#define LL_SN_NESN_MANAGE_BY_SOFTWARE					0
 #endif
 
 
+
+
+
+
+
+
+
+
+
+#ifndef SECURE_CONNECTION_ENABLE
+#define SECURE_CONNECTION_ENABLE        				1
+#endif
 
 
 
@@ -158,7 +155,14 @@ static inline void blc_app_loadCustomizedParameters(void)
 #endif
 
 
+#ifndef LL_FEATURE_SUPPORT_LE_2M_PHY
+#define LL_FEATURE_SUPPORT_LE_2M_PHY					1
+#endif
 
+
+#ifndef	LL_SN_NESN_MANAGE_BY_SOFTWARE
+#define LL_SN_NESN_MANAGE_BY_SOFTWARE					1
+#endif
 
 
 //default ll_master_multi connection
@@ -170,11 +174,9 @@ static inline void blc_app_loadCustomizedParameters(void)
 #define  LL_MASTER_MULTI_CONNECTION						0
 #endif
 
-//#if (LL_MASTER_SINGLE_CONNECTION )
-//	#define  LL_MASTER_MULTI_CONNECTION					0
-//#else
-//	#define  LL_MASTER_MULTI_CONNECTION					1
-//#endif
+#if (LL_MASTER_SINGLE_CONNECTION)
+	#define	LL_CHNMAP_ADAPTIVE_FREQ_HOPPING_EN				0
+#endif
 
 
 
@@ -187,9 +189,8 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 #if (BLE_MODULE_LIB_ENABLE || BLE_MODULE_APPLICATION_ENABLE)  //for ble module
-	#define		BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE		1
-	#define		BLS_SEND_TLK_MODULE_EVENT_ENABLE				1
-	#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
+	#define		BLS_DMA_DATA_LOSS_DETECT_AND_SOLVE_ENABLE	1
+	#define		BLS_SEND_TLK_MODULE_EVENT_ENABLE			1
 #endif
 
 
@@ -206,7 +207,7 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 #ifndef		BLS_ADV_INTERVAL_CHECK_ENABLE
-#define		BLS_ADV_INTERVAL_CHECK_ENABLE					1
+#define		BLS_ADV_INTERVAL_CHECK_ENABLE					0
 #endif
 
 #if LIB_TELINK_MESH_SCAN_MODE_ENABLE
@@ -218,24 +219,18 @@ static inline void blc_app_loadCustomizedParameters(void)
 #define		BLS_TELINK_MESH_SCAN_MODE_ENABLE				0
 #endif
 
-#if(BLS_TELINK_MESH_SCAN_MODE_ENABLE)
-	#define		BLS_BT_STD_SCAN_MODE_ENABLE					0
-#else
-	#ifndef		BLS_BT_STD_SCAN_MODE_ENABLE
-	#define		BLS_BT_STD_SCAN_MODE_ENABLE					1
-	#endif
-#endif
 
 
 
 
-#ifndef BLE_LL_ADV_IN_MAINLOOP_ENABLE
-#define BLE_LL_ADV_IN_MAINLOOP_ENABLE					1
-#endif
 
-
-
+#ifndef	BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN
 #define	BLS_BLE_RF_IRQ_TIMING_EXTREMELY_SHORT_EN		0
+#endif
+
+
+
+
 
 
 
@@ -245,9 +240,11 @@ static inline void blc_app_loadCustomizedParameters(void)
 #endif
 
 
-#ifndef BLS_PROC_LONG_SUSPEND_ENABLE
-#define BLS_PROC_LONG_SUSPEND_ENABLE					0
+#ifndef LE_AUTHENTICATED_PAYLOAD_TIMEOUT_SUPPORT_EN
+#define LE_AUTHENTICATED_PAYLOAD_TIMEOUT_SUPPORT_EN		0
 #endif
+
+
 
 /////////////////////HCI UART variables///////////////////////////////////////
 #define UART_DATA_LEN    64      // data max 252
@@ -256,6 +253,28 @@ typedef struct{
     unsigned char data[UART_DATA_LEN];
 }uart_data_t;
 
+
+#define ATT_RSP_BIG_MTU_PROCESS_EN          1
+
+
+///all fix code need be control by macro. Here is those macro.
+/*
+ * 在BLE模式下收包时，CRC校验error指示位存在错判的可能，原因在于少判断了CRC校验结果
+ * 24-bit中的高8位。当低16-bit没有错且高8-bit有错时，出现误判，概率小于1/(2^16).
+ * if enable soft crc24, must open the macro "LL_SN_NESN_MANAGE_BY_SOFTWARE" in ll_slave.c
+ */
+#ifndef FIX_HW_CRC24_EN
+#define	FIX_HW_CRC24_EN						1
+#endif
+
+#ifndef DLE_LEN_GE100
+#define DLE_LEN_GE100                       1 //data length greater or equal 100 bytes. for windows size.
+#endif
+
+
+
+
+#define PA_IN_STACK_ENABLE					0
 
 
 
@@ -331,6 +350,30 @@ typedef struct{
 
 #ifndef	DBG_CHN5_LOW
 #define DBG_CHN5_LOW
+#endif
+
+#ifndef	DBG_CHN6_TOGGLE
+#define DBG_CHN6_TOGGLE
+#endif
+
+#ifndef	DBG_CHN6_HIGH
+#define DBG_CHN6_HIGH
+#endif
+
+#ifndef	DBG_CHN6_LOW
+#define DBG_CHN6_LOW
+#endif
+
+#ifndef	DBG_CHN7_TOGGLE
+#define DBG_CHN7_TOGGLE
+#endif
+
+#ifndef	DBG_CHN7_HIGH
+#define DBG_CHN7_HIGH
+#endif
+
+#ifndef	DBG_CHN7_LOW
+#define DBG_CHN7_LOW
 #endif
 
 

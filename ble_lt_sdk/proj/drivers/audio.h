@@ -62,6 +62,9 @@ enum{
 	AUD_ADC_DONE_FALLING = 2,
 };
 
+#define MANUAL_VOLUMN_SETTINGS			0x20
+#define AUDIO_HPF_SHIFT                 0x09
+
 /************************************************************
 *	@param		m:		audio input mode, '1' diff; '0' single end
 *				b:		battery check mode bit[7], battery input channel bit[5:0]
@@ -74,6 +77,18 @@ enum{
 #define AUDIOSE_SYSCLK24M_96KADC_16KSDM(m,b)			Audio_Init(m,b,AMIC,38,6,R6)
 
 #define AUDIOSE_SYSCLK16M_48KADC_16KSDM(m,b)			Audio_Init(m,b,AMIC,35,12,R3)
+
+
+#define MIC_FIFO_WPTR_EN()  	do{\
+									BM_SET(reg_dfifo_ana_in,FLD_DFIFO_AUD_INPUT_MONO);\
+									BM_CLR(reg_dfifo_ana_in,FLD_DFIFO_WPTR_CLR);\
+								}while(0);
+
+#define MIC_FIFO_WPTR_DIS()		do{\
+									BM_CLR(reg_dfifo_ana_in,FLD_DFIFO_AUD_INPUT_MONO);\
+									BM_SET(reg_dfifo_ana_in,FLD_DFIFO_WPTR_CLR);\
+								}while(0);
+
 
 
 #define DMIC_CFG_GPIO_PA0_PA1()    do{\

@@ -148,8 +148,6 @@ int app_hci_cmd_from_usb (void)
 
 void user_init()
 {
-	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
-
 	REG_ADDR8(0x74) = 0x53;
 	REG_ADDR16(0x7e) = 0x08d1;
 	REG_ADDR8(0x74) = 0x00;
