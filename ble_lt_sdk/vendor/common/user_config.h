@@ -19,6 +19,8 @@
 	#include "../826x_hid_sample/app_config.h"
 #elif (__PROJECT_8266_OTA_BOOT__ || __PROJECT_8261_OTA_BOOT__)
 	#include "../826x_ota_boot/app_config.h"
+#elif (__PROJECT_8261_DRIVER_TEST__||__PROJECT_8266_DRIVER_TEST__||__PROJECT_8267_DRIVER_TEST__||__PROJECT_8269_DRIVER_TEST__)
+	#include  "../826x_driver_test/app_config.h"
 #else
 	#include "../common/default_config.h"
 #endif
