@@ -309,7 +309,7 @@ typedef enum
 
 /////////////////// PRINT DEBUG INFO ///////////////////////
 /* 826x module's pin simulate as a uart tx, Just for debugging */
-#define PRINT_DEBUG_INFO                    1//open/close myprintf
+#define PRINT_DEBUG_INFO                    0//open/close myprintf
 #if PRINT_DEBUG_INFO
 //defination debug printf pin
 #define PRINT_BAUD_RATE             		1000000 //1M baud rate,should Not bigger than 1M, when system clock is 16M.

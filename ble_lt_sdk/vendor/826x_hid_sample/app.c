@@ -9,7 +9,7 @@
 
 #if (__PROJECT_8266_HID_SAMPLE__ || __PROJECT_8267_HID_SAMPLE__)
 
-#define     RC_DEEP_SLEEP_EN					0
+#define     RC_DEEP_SLEEP_EN					1
 #define 	ADV_IDLE_ENTER_DEEP_TIME			60  //60 s
 #define 	CONN_IDLE_ENTER_DEEP_TIME			60  //60 s
 
@@ -260,8 +260,11 @@ void blt_pm_proc(void)
 
 		bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
 
+#if (RC_BTN_ENABLE)
 		user_task_flg = key_not_release;
-
+#else
+		user_task_flg = 0;
+#endif
 		if(user_task_flg){
 			bls_pm_setManualLatency(0);
 		}
@@ -325,16 +328,16 @@ void user_init()
 
 
 ////////////////// BLE stack initialization ////////////////////////////////////
-	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
+	u8  tbl_mac [] = {0x11, 0x22, 0x33, 0x33, 0x44, 0xc7};
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
-	if (*pmac != 0xffffffff)
-	{
-		memcpy (tbl_mac, pmac, 6);
-	}
-	else{
-		tbl_mac[0] = (u8)rand();
-		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
-	}
+//	if (*pmac != 0xffffffff)
+//	{
+//		memcpy (tbl_mac, pmac, 6);
+//	}
+//	else{
+//		tbl_mac[0] = (u8)rand();
+//		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
+//	}
 
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU(tbl_mac);   //mandatory

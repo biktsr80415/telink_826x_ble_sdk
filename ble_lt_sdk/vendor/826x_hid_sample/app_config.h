@@ -27,6 +27,7 @@ extern "C" {
 
 
 //----------------------- GPIO for UI --------------------------------
+#if (RC_BTN_ENABLE)
 #if __PROJECT_8266_HID_SAMPLE__  //8266 hid sample
 	//---------------  Button ----------------------------------
 	#define PD4_INPUT_ENABLE		1
@@ -46,7 +47,7 @@ extern "C" {
 	#define PULL_WAKEUP_SRC_PD2		PM_PIN_PULLUP_10K	//btn
 
 #endif
-
+#endif
 
 /////////////////// Clock  /////////////////////////////////
 #define CLOCK_SYS_TYPE  		CLOCK_TYPE_PLL	//  one of the following:  CLOCK_TYPE_PLL, CLOCK_TYPE_OSC, CLOCK_TYPE_PAD, CLOCK_TYPE_ADC
