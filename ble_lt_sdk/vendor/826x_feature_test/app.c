@@ -55,10 +55,6 @@ void user_init()
 
 	feature_sdle_test_init();
 
-#elif(FEATURE_TEST_MODE == TEST_MDATA_LENGTH_EXTENSION)
-
-	feature_mdle_test_init();
-
 #elif (FEATURE_TEST_MODE == TEST_2M_PHY_CONNECTION)
 
 	feature_2m_phy_conn_init();
@@ -104,8 +100,6 @@ void main_loop (void)
 
 #if (FEATURE_TEST_MODE == TEST_SDATA_LENGTH_EXTENSION)
 	feature_sdle_test_mainloop();
-#elif (FEATURE_TEST_MODE == TEST_MDATA_LENGTH_EXTENSION)
-	feature_mdle_test_mainloop();
 #elif (FEATURE_TEST_MODE == TEST_2M_PHY_CONNECTION)
 	feature_2m_phy_conn_mainloop();
 #endif

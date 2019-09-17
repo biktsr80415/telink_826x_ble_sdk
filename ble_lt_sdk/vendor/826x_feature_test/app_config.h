@@ -20,7 +20,6 @@ extern "C" {
 
 
 #define TEST_SDATA_LENGTH_EXTENSION                     6
-#define TEST_MDATA_LENGTH_EXTENSION                     7
 
 //power test
 #define TEST_POWER_ADV									10
@@ -49,8 +48,7 @@ extern "C" {
 #if (   FEATURE_TEST_MODE == TEST_SCANNING_ONLY || FEATURE_TEST_MODE == TEST_SCANNING_IN_ADV_AND_CONN_SLAVE_ROLE \
 	 || FEATURE_TEST_MODE == TEST_ADVERTISING_SCANNING_IN_SLAVE_ROLE || FEATURE_TEST_MODE==TEST_BLE_PHY \
 	 || FEATURE_TEST_MODE == TEST_ADVERTISING_SCANNING_IN_CONN_SLAVE_ROLE \
-	 || FEATURE_TEST_MODE == TEST_SDATA_LENGTH_EXTENSION \
-	 || FEATURE_TEST_MODE == TEST_MDATA_LENGTH_EXTENSION)
+	 || FEATURE_TEST_MODE == TEST_SDATA_LENGTH_EXTENSION)
 	#define BLE_PM_ENABLE								0
 #else
 	#define BLE_PM_ENABLE								1
@@ -73,40 +71,6 @@ extern "C" {
 	#define MCU_CORE_TYPE                            MCU_CORE_8266
 #elif (FEATURE_TEST_MODE == TEST_USER_BLT_SOFT_TIMER)
 	#define BLT_SOFTWARE_TIMER_ENABLE      1
-#elif (FEATURE_TEST_MODE == TEST_MDATA_LENGTH_EXTENSION) ///now just support 8266 dongle.
-
-	#define MCU_CORE_TYPE                  MCU_CORE_8266
-
-	#define BLE_HOST_SMP_ENABLE             0
-	#define UI_BUTTON_ENABLE                1
-	#define UI_LED_ENABLE                   1
-	#define LL_MASTER_SINGLE_CONNECTION     1
-
-
-  	  //8266 kma master dongle
-	#define PD4_INPUT_ENABLE		1
-	#define PD5_INPUT_ENABLE		1
-	#define	SW1_GPIO				GPIO_PD5
-	#define	SW2_GPIO				GPIO_PD4
-	#define PULL_WAKEUP_SRC_PD4		PM_PIN_PULLUP_10K	//btn
-	#define PULL_WAKEUP_SRC_PD5		PM_PIN_PULLUP_10K	//btn
-
-	#define	 GPIO_LED_GREEN			GPIO_PC0
-	#define	 GPIO_LED_RED			GPIO_PC4
-	#define	 GPIO_LED_BLUE			GPIO_PC2
-	#define	 GPIO_LED_WHITE			GPIO_PA1
-
-	#define LED_ON_LEVAL 		1 		//gpio output high voltage to turn on led
-
-	#define  PC0_INPUT_ENABLE		0
-	#define	 PC0_OUTPUT_ENABLE		1
-	#define  PC4_INPUT_ENABLE		0
-	#define	 PC4_OUTPUT_ENABLE		1
-	#define  PC2_INPUT_ENABLE		0
-	#define  PC2_OUTPUT_ENABLE		1
-	#define  PA1_INPUT_ENABLE		0
-	#define	 PA1_OUTPUT_ENABLE		1
-
 #endif
 
 
