@@ -36,18 +36,12 @@ extern "C" {
 #define TEST_USER_BLT_SOFT_TIMER						30
 #define TEST_WHITELIST									31
  //phy test
-#define TEST_BLE_PHY									32
-
-#define	TEST_EMI										40
-
+#define TEST_BLE_PHY									40
 //phy test
-#define TEST_2M_PHY_CONNECTION                          41
-
-#define INTERNAL_TEST									50
+#define TEST_2M_PHY_CONNECTION                          50
 
 
-
-#define FEATURE_TEST_MODE								INTERNAL_TEST
+#define FEATURE_TEST_MODE								TEST_BLE_PHY
 
 
 
@@ -112,110 +106,6 @@ extern "C" {
 	#define  PC2_OUTPUT_ENABLE		1
 	#define  PA1_INPUT_ENABLE		0
 	#define	 PA1_OUTPUT_ENABLE		1
-#elif (FEATURE_TEST_MODE == INTERNAL_TEST)
-
-#define RC_BTN_ENABLE 					1
-#define BLE_REMOTE_SECURITY_ENABLE 		1
-
-//////////////////////////// KEYSCAN/MIC  GPIO //////////////////////////////////
-#define	MATRIX_ROW_PULL					PM_PIN_PULLDOWN_100K
-#define	MATRIX_COL_PULL					PM_PIN_PULLUP_10K
-
-#define	KB_LINE_HIGH_VALID				0   //dirve pin output 0 when keyscan, scanpin read 0 is valid
-#define DEEPBACK_FAST_KEYSCAN_ENABLE	0   //proc fast scan when deepsleep back trigged by key press, in case key loss
-#define KEYSCAN_IRQ_TRIGGER_MODE		1
-#define LONG_PRESS_KEY_POWER_OPTIMIZE	1   //lower power when pressing key without release
-
-//stuck key
-#define STUCK_KEY_PROCESS_ENABLE		0
-#define STUCK_KEY_ENTERDEEP_TIME		60  //in s
-
-//repeat key
-#define KB_REPEAT_KEY_ENABLE			0
-#define	KB_REPEAT_KEY_INTERVAL_MS		200
-#define KB_REPEAT_KEY_NUM				1
-#define KB_MAP_REPEAT					{VK_1, }
-
-
-#define			CR_VOL_UP				0xf0  ////
-#define			CR_VOL_DN				0xf1
-#define			CR_VOL_MUTE				0xf2
-#define			CR_CHN_UP				0xf3
-#define			CR_CHN_DN				0xf4  ////
-#define			CR_POWER				0xf5
-#define			CR_SEARCH				0xf6
-#define			CR_RECORD				0xf7
-#define			CR_PLAY					0xf8  ////
-#define			CR_PAUSE				0xf9
-#define			CR_STOP					0xfa
-#define			CR_FAST_BACKWARD		0xfb
-#define			CR_FAST_FORWARD			0xfc  ////
-#define			CR_HOME					0xfd
-#define			CR_BACK					0xfe
-#define			CR_MENU					0xff
-
-#define			T_VK_CH_UP		0xd0
-#define			T_VK_CH_DN		0xd1
-//special key
-#define		 	VOICE					0xc0
-#define 		KEY_MODE_SWITCH			0xc1
-#define		 	PHY_TEST				0xc2
-
-#define		KB_MAP_NORMAL	{\
-			VK_F,	CR_POWER,		VK_A,	VK_G,	CR_HOME,	 \
-			VOICE,		VK_E,		VK_B,	CR_VOL_UP,	CR_VOL_DN,	 \
-			VK_2,		VK_RIGHT,		VK_C,	VK_3,		VK_1,	 \
-			VK_5,		VK_ENTER,		VK_D,	KEY_MODE_SWITCH,		VK_4,	 \
-			VK_8,		VK_DOWN,		VK_UP,	VK_9,		VK_7,	 \
-			VK_0,	CR_BACK,		VK_LEFT,	CR_VOL_MUTE,		CR_MENU,	}
-
-
-#define  KB_DRIVE_PINS  {GPIO_PE0, GPIO_PD5, GPIO_PD7, GPIO_PE1, GPIO_PA1}
-#define  KB_SCAN_PINS   {GPIO_PC7, GPIO_PA2, GPIO_PB1, GPIO_PA6, GPIO_PA5, GPIO_PD6}
-
-#define	PE0_FUNC				AS_GPIO
-#define	PD5_FUNC				AS_GPIO
-#define	PD7_FUNC				AS_GPIO
-#define	PE1_FUNC				AS_GPIO
-#define	PA1_FUNC				AS_GPIO
-//drive pin need 100K pulldown
-#define	PULL_WAKEUP_SRC_PE0		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PD5		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PD7		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PE1		MATRIX_ROW_PULL
-#define	PULL_WAKEUP_SRC_PA1		MATRIX_ROW_PULL
-//drive pin open input to read gpio wakeup level
-#define PE0_INPUT_ENABLE		1
-#define PD5_INPUT_ENABLE		1
-#define PD7_INPUT_ENABLE		1
-#define PE1_INPUT_ENABLE		1
-#define PA1_INPUT_ENABLE		1
-
-
-#define	PC7_FUNC				AS_GPIO
-#define	PA2_FUNC				AS_GPIO
-#define	PB1_FUNC				AS_GPIO
-#define	PA6_FUNC				AS_GPIO
-#define	PA5_FUNC				AS_GPIO
-#define	PD6_FUNC				AS_GPIO
-//scan  pin need 10K pullup
-#define	PULL_WAKEUP_SRC_PC7		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PA2		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PB1		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PA6		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PA5		MATRIX_COL_PULL
-#define	PULL_WAKEUP_SRC_PD6		MATRIX_COL_PULL
-//scan pin open input to read gpio level
-#define PC7_INPUT_ENABLE		1
-#define PA2_INPUT_ENABLE		1
-#define PB1_INPUT_ENABLE		1
-#define PA6_INPUT_ENABLE		1
-#define PA5_INPUT_ENABLE		1
-#define PD6_INPUT_ENABLE		1
-
-#define		KB_MAP_NUM		KB_MAP_NORMAL
-#define		KB_MAP_FN		KB_MAP_NORMAL
-
 
 #endif
 
@@ -354,23 +244,6 @@ typedef enum
 	OTA_CMD_OUT_DESC_H,						//UUID: 2901, 	VALUE: otaName
 
 
-
-	#if FEATURE_TEST_MODE == INTERNAL_TEST
-		//// SPP ////
-		/**********************************************************************************************/
-		SPP_PS_H, 							 //UUID: 2800, 	VALUE: telink spp service uuid
-
-		//server to client
-		SPP_SERVER_TO_CLIENT_CD_H,		     //UUID: 2803, 	VALUE:  			Prop: read | Notify
-		SPP_SERVER_TO_CLIENT_DP_H,			 //UUID: telink spp s2c uuid,  VALUE: SppDataServer2ClientData
-		SPP_SERVER_TO_CLIENT_CCB_H,			 //UUID: 2902, 	VALUE: SppDataServer2ClientDataCCC
-		SPP_SERVER_TO_CLIENT_DESC_H,		 //UUID: 2901, 	VALUE: TelinkSPPS2CDescriptor
-
-		//client to server
-		SPP_CLIENT_TO_SERVER_CD_H,		     //UUID: 2803, 	VALUE:  			Prop: read | write_without_rsp
-		SPP_CLIENT_TO_SERVER_DP_H,			 //UUID: telink spp c2s uuid,  VALUE: SppDataClient2ServerData
-		SPP_CLIENT_TO_SERVER_DESC_H,		 //UUID: 2901, 	VALUE: TelinkSPPC2SDescriptor
-	#endif
    #endif
 
 	ATT_END_H,

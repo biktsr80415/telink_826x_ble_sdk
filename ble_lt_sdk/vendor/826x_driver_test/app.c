@@ -87,6 +87,9 @@ void main_loop (void)
 
 #elif (DRIVER_TEST_MODE == TEST_ADC)
 	app_adc_test_start();
+
+#elif (DRIVER_TEST_MODE == TEST_EMI)
+	emi_test();
 #else
 
 #endif

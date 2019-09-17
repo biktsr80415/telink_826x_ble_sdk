@@ -461,36 +461,6 @@ static const u8 my_OtaCharVal[19] = {
 	TELINK_SPP_DATA_OTA,
 };
 
-#if FEATURE_TEST_MODE == INTERNAL_TEST
-	////////////////////// SPP ////////////////////////////////////
-	static const u8 TelinkSppServiceUUID[16]	      	    = TELINK_SPP_UUID_SERVICE;
-	static const u8 TelinkSppDataServer2ClientUUID[16]      = TELINK_SPP_DATA_SERVER2CLIENT;
-	static const u8 TelinkSppDataClient2ServerUUID[16]      = TELINK_SPP_DATA_CLIENT2SERVER;
-
-	// Spp data from Server to Client characteristic variables
-	static u8 SppDataServer2ClientDataCCC[2]  				= {0};
-	//this array will not used for sending data(directly calling HandleValueNotify API), so cut array length from 20 to 1, saving some SRAM
-	static u8 SppDataServer2ClientData[1] 					= {0};  //SppDataServer2ClientData[20]
-	// Spp data from Client to Server characteristic variables
-	//this array will not used for receiving data(data processed by Attribute Write CallBack function), so cut array length from 20 to 1, saving some SRAM
-	static u8 SppDataClient2ServerData[1] 					= {0};  //SppDataClient2ServerData[20]
-
-	//SPP data descriptor
-	static const u8 TelinkSPPS2CDescriptor[] 		 		= "Telink SPP: Module->Phone";
-	static const u8 TelinkSPPC2SDescriptor[]        		= "Telink SPP: Phone->Module";
-
-	//// Telink spp  attribute values
-	static const u8 TelinkSppDataServer2ClientCharVal[19] = {
-		CHAR_PROP_READ | CHAR_PROP_NOTIFY,
-		U16_LO(SPP_SERVER_TO_CLIENT_DP_H), U16_HI(SPP_SERVER_TO_CLIENT_DP_H),
-		TELINK_SPP_DATA_SERVER2CLIENT
-	};
-	static const u8 TelinkSppDataClient2ServerCharVal[19] = {
-		CHAR_PROP_READ | CHAR_PROP_WRITE_WITHOUT_RSP,
-		U16_LO(SPP_CLIENT_TO_SERVER_DP_H), U16_HI(SPP_CLIENT_TO_SERVER_DP_H),
-		TELINK_SPP_DATA_CLIENT2SERVER
-	};
-#endif
 
 // TM : to modify
 static const attribute_t my_Attributes[] =
@@ -587,20 +557,6 @@ static const attribute_t my_Attributes[] =
 	{0,ATT_PERMISSIONS_RDWR,16,sizeof(my_OtaData),(u8*)(&my_OtaUUID),	(&my_OtaData), &otaWrite, &otaRead},			//value
 	{0,ATT_PERMISSIONS_READ, 2,sizeof (my_OtaName),(u8*)(&userdesc_UUID), (u8*)(my_OtaName), 0},
 
-	#if FEATURE_TEST_MODE == INTERNAL_TEST
-		////////////////////////////////////// SPP /////////////////////////////////////////////////////
-		// 003a - 0041 SPP
-		{8,ATT_PERMISSIONS_READ,2,16,(u8*)(&my_primaryServiceUUID), 	(u8*)(&TelinkSppServiceUUID), 0},
-		// server to client TX
-		{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSppDataServer2ClientCharVal),(u8*)(&my_characterUUID), 		(u8*)(TelinkSppDataServer2ClientCharVal), 0},				//prop
-		{0,ATT_PERMISSIONS_READ,16,sizeof(SppDataServer2ClientData),(u8*)(&TelinkSppDataServer2ClientUUID), (u8*)(SppDataServer2ClientData), 0},	//value
-		{0,ATT_PERMISSIONS_RDWR,2,2,(u8*)&clientCharacterCfgUUID,(u8*)(&SppDataServer2ClientDataCCC)},
-		{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPS2CDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPS2CDescriptor)},
-		// client to server RX
-		{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSppDataClient2ServerCharVal),(u8*)(&my_characterUUID), 		(u8*)(TelinkSppDataClient2ServerCharVal), 0},				//prop
-		{0,ATT_PERMISSIONS_RDWR,16,sizeof(SppDataClient2ServerData),(u8*)(&TelinkSppDataClient2ServerUUID), (u8*)(SppDataClient2ServerData), 0},	//value //&myC2SWrite
-		{0,ATT_PERMISSIONS_READ,2,sizeof(TelinkSPPC2SDescriptor),(u8*)&userdesc_UUID,(u8*)(&TelinkSPPC2SDescriptor)},
-	#endif
 };
 #endif
 

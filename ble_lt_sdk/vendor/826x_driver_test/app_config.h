@@ -43,7 +43,7 @@ extern "C" {
 
 #define TEST_PWM										60
 
-
+#define	TEST_EMI										70
 
 #define DRIVER_TEST_MODE								TEST_IIC
 

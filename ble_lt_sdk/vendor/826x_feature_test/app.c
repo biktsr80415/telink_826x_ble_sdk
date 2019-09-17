@@ -62,17 +62,10 @@ void user_init()
 #elif (FEATURE_TEST_MODE == TEST_2M_PHY_CONNECTION)
 
 	feature_2m_phy_conn_init();
-#elif FEATURE_TEST_MODE == INTERNAL_TEST
-	test_2m_md_init();
 
 #endif
 
 
-#if(FEATURE_TEST_MODE == TEST_EMI)
-	emi_test();
-#elif FEATURE_TEST_MODE == INTERNAL_TEST
-
-#else
 #if (BLE_PM_ENABLE)
 	blc_ll_initPowerManagement_module();
 	bls_pm_setSuspendMask (SUSPEND_ADV | SUSPEND_CONN);
@@ -85,7 +78,6 @@ void user_init()
 
 	//bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_ENTER, &func_suspend_enter);
 	//bls_app_registerEventCallback (BLT_EV_FLAG_SUSPEND_EXIT, &func_suspend_exit);
-#endif
 #endif
 
 }
@@ -108,13 +100,9 @@ void main_loop (void)
 	blt_soft_timer_process(MAINLOOP_ENTRY);
 #endif
 
-#if(FEATURE_TEST_MODE != TEST_EMI)
 	blt_sdk_main_loop();
-#endif
 
-#if (FEATURE_TEST_MODE == INTERNAL_TEST)
-	test_2m_md_main_loop();
-#elif (FEATURE_TEST_MODE == TEST_SDATA_LENGTH_EXTENSION)
+#if (FEATURE_TEST_MODE == TEST_SDATA_LENGTH_EXTENSION)
 	feature_sdle_test_mainloop();
 #elif (FEATURE_TEST_MODE == TEST_MDATA_LENGTH_EXTENSION)
 	feature_mdle_test_mainloop();
