@@ -58,7 +58,9 @@ void user_init()
 #elif (FEATURE_TEST_MODE == TEST_2M_PHY_CONNECTION)
 
 	feature_2m_phy_conn_init();
+#else  ///all link layer test.
 
+	feature_linklayer_state_test_init();
 #endif
 
 
