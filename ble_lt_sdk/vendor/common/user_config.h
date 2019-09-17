@@ -17,6 +17,8 @@
 	#include "../826x_feature_test/app_config.h"
 #elif (__PROJECT_8266_HID_SAMPLE__ || __PROJECT_8267_HID_SAMPLE__)
 	#include "../826x_hid_sample/app_config.h"
+#elif (__PROJECT_8266_OTA_BOOT__ || __PROJECT_8261_OTA_BOOT__)
+	#include "../826x_ota_boot/app_config.h"
 #else
 	#include "../common/default_config.h"
 #endif
