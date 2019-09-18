@@ -34,12 +34,12 @@ extern "C" {
 
 /////////////////// DEBUG  /////////////////////////////////
 //826x module's pin simulate as a uart tx, Just for debugging
-#define PRINT_DEBUG_INFO               		1	//open/close myprintf
+#define PRINT_DEBUG_INFO               		0	//open/close myprintf
 
 
 //////////////// SMP SETTING  //////////////////////////////
-#define SMP_DO_NOT_SUPPORT 			   	    1
-#define SMP_JUST_WORK       				0
+#define SMP_DO_NOT_SUPPORT 			   	    0
+#define SMP_JUST_WORK       				1
 #define SMP_PASSKEY_ENTRY   				0
 #define SMP_NUMERIC_COMPARISON   			0
 

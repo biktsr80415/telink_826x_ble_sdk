@@ -124,6 +124,7 @@ void show_ota_result(int result)
 void	task_connect (void)
 {
 	//bls_l2cap_requestConnParamUpdate (12, 32, 0, 400);
+	bls_l2cap_requestConnParamUpdate (8, 8, 99, 400);
 #if 0
 	//update connParam
 	if(bls_ll_getConnectionInterval() > MAX_INTERVAL_VAL)//
@@ -141,10 +142,9 @@ void	task_connect (void)
 #if 0
 	gpio_write(RED_LED, ON);
 #else
-	gpio_write(GREEN_LED,ON);
+	//gpio_write(GREEN_LED,ON);
 #endif
 }
-
 
 #if SMP_BUTTON_ENABLE
 u32 ctrl_btn[] = BTN_PINS;
@@ -320,6 +320,11 @@ void app_power_management ()
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
 	module_uart_working = UART_TX_BUSY || UART_RX_BUSY;
 
+	if(ui_ota_is_working){
+		bls_pm_setSuspendMask(SUSPEND_DISABLE);
+		bls_pm_setManualLatency(0);
+		return;
+	}
 	//When module's UART data is sent, the GPIO_WAKEUP_MCU is lowered or suspended (depending on how the user is designed)
 	if(module_uart_data_flg && !module_uart_working){
 		module_uart_data_flg = 0;
@@ -394,7 +399,7 @@ void user_init()
 
 	//smp initialization
 #if ( SMP_DO_NOT_SUPPORT )
-	bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
+	//bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
 #else //if (SMP_JUST_WORK || SMP_PASSKEY_ENTRY || SMP_NUMERIC_COMPARISON)
 	//Just work encryption: TK default is 0, that is, pin code defaults to 0, without setting
 	//Passkey entry encryption: generate random numbers pinCode, or set the default pinCode, processed in the event_handler function
