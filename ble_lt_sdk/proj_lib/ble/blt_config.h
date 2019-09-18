@@ -92,7 +92,7 @@ static inline void blc_app_loadCustomizedParameters(void)
 	 }
 
 	 ///2M mode just for 8269
-	#if (__TL_LIB_8269 || MCU_CORE_TYPE == MCU_CORE_8269)
+	#if (__TL_LIB_8269__ || MCU_CORE_TYPE == MCU_CORE_8269 || __TL_LIB_8267__ ||  MCU_CORE_TYPE == MCU_CORE_8267)
 		// customize TP0/TP1 for 2M
 		if( ((*(unsigned char*) (CUST_TP_INFO_ADDR+2)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+3)) != 0xff) ){
 		 rf_update_2m_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR+2), *(unsigned char*) (CUST_TP_INFO_ADDR+3));
