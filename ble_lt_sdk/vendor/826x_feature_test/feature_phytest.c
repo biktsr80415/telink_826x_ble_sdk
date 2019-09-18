@@ -15,6 +15,8 @@
 MYFIFO_INIT(hci_rx_fifo, 72, 2);
 MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
+MYFIFO_INIT(blt_rxfifo, 64, 8);
+MYFIFO_INIT(blt_txfifo, 40, 16);
 #if (BLE_PHYTEST_MODE == PHYTEST_MODE_THROUGH_2_WIRE_UART )
 	unsigned char uart_no_dma_rec_data[6] = {0x02,0, 0,0,0,0};
 #elif(BLE_PHYTEST_MODE == PHYTEST_MODE_OVER_HCI_WITH_UART)
