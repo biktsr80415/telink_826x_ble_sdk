@@ -53,7 +53,7 @@ void battery_power_check(u16 alarm_vol_mv)
 
 	if(!adc_hw_initialized){
 
-		adc_hw_initialized = 0;
+		adc_hw_initialized = 1;
 
 		#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 			adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
