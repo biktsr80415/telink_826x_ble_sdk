@@ -53,12 +53,12 @@ void battery_power_check(u16 alarm_vol_mv)
 
 	if(!adc_hw_initialized){
 
-		adc_hw_initialized = 0;
+		adc_hw_initialized = 1;
 
 		#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 			adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
 		#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-			adc_Init(ADC_CLK_4M, ADC_CHN_D4, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
+			adc_Init(ADC_CLK_4M, ADC_CHN_C4, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
 		#endif
 	}
 
@@ -80,6 +80,7 @@ void battery_power_check(u16 alarm_vol_mv)
 	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
 		tem_batteryVol = 3*((1300*average_data)>>14);
 	#endif
+
 
 	if(tem_batteryVol < alarm_vol_mv){  //when battery voltage is lower than 2.0v, chip will enter deep sleep mode
 
