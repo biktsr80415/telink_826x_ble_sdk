@@ -21,7 +21,7 @@ extern "C" {
 #define BLE_REMOTE_SECURITY_ENABLE      1
 #define BLE_PM_ENABLE					1
 #define RC_BTN_ENABLE               	1
-
+#define BATT_CHECK_ENABLE               0
 
 
 

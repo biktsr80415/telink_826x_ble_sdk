@@ -3,6 +3,7 @@
 #include "../../proj_lib/pm.h"
 #include "../../proj_lib/ble/ll/ll.h"
 #include "../../proj/drivers/keyboard.h"
+#include "../../proj/drivers/battery.h"
 #include "../../proj_lib/ble/trace.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
@@ -40,6 +41,12 @@ const u8	tbl_scanRsp [] = {
 
 int ui_mtu_size_exchange_req 	= 0;
 u32 interval_update_tick 		= 0;
+
+#if (BATT_CHECK_ENABLE)
+u32 lowBattDet_tick = 0;
+int lowBattDet_enable = 1;
+int	lowBatt_alarmFlag = 0;
+#endif
 
 int device_in_connection_state;
 
@@ -326,6 +333,22 @@ void user_init()
 		}
 	#endif
 
+	/*****************************************************************************************
+	 Note: battery check must do before any flash write/erase operation, cause flash write/erase
+		   under a low or unstable power supply will lead to error flash operation
+
+		   Some module initialization may involve flash write/erase, include: OTA initialization,
+				SMP initialization, ..
+				So these initialization must be done after  battery check
+	*****************************************************************************************/
+	#if (BATT_CHECK_ENABLE)  //battery check must do before OTA relative operation
+		if(analog_read(DEEP_ANA_REG2) == BATTERY_VOL_LOW){
+			battery_power_check(VBAT_ALARM_THRES_MV + 200);//2.2V
+		}
+		else{
+			battery_power_check(VBAT_ALARM_THRES_MV);//2.0 V
+		}
+	#endif
 
 ////////////////// BLE stack initialization ////////////////////////////////////
 	u8  tbl_mac [] = {0x11, 0x22, 0x33, 0x33, 0x44, 0xc7};
@@ -446,6 +469,13 @@ void main_loop (void)
 	/* UI entry --------------------------------------------------------------*/
 	#if(RC_BTN_ENABLE)
 		proc_button();
+	#endif
+
+	#if (BATT_CHECK_ENABLE)
+		if(lowBattDet_enable && clock_time_exceed(lowBattDet_tick, 500*1000)){
+			lowBattDet_tick = clock_time();
+			battery_power_check(VBAT_ALARM_THRES_MV);
+		}
 	#endif
 
 	blt_pm_proc();
