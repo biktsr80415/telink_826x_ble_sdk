@@ -773,7 +773,7 @@
 							</tool>
 							<tool command="tc32-elf-ld --gc-sections" id="com.telink.tc32eclipse.tool.linker.TC32Win.app.release.435816686" name="TC32 C Linker" superClass="com.telink.tc32eclipse.tool.linker.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.linker.option.libs.717385084" name="Libraries (-l)" superClass="com.telink.tc32eclipse.linker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="lt_8267_mod"/>
+									<listOptionValue builtIn="false" value="lt_8261_mod"/>
 								</option>
 								<option id="com.telink.tc32eclipse.linker.option.libpath.1979100872" name="Libraries Path (-L)" superClass="com.telink.tc32eclipse.linker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj_lib}&quot;"/>
@@ -847,7 +847,7 @@
 							</tool>
 							<tool command="tc32-elf-ld --gc-sections" id="com.telink.tc32eclipse.tool.linker.TC32Win.app.release.698285895" name="TC32 C Linker" superClass="com.telink.tc32eclipse.tool.linker.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.linker.option.libs.2040063584" name="Libraries (-l)" superClass="com.telink.tc32eclipse.linker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="lt_8267"/>
+									<listOptionValue builtIn="false" value="lt_8261"/>
 								</option>
 								<option id="com.telink.tc32eclipse.linker.option.libpath.1364437030" name="Libraries Path (-L)" superClass="com.telink.tc32eclipse.linker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj_lib}&quot;"/>
@@ -1391,7 +1391,7 @@
 							</tool>
 							<tool command="tc32-elf-ld --gc-sections" id="com.telink.tc32eclipse.tool.linker.TC32Win.app.release.598657640" name="TC32 C Linker" superClass="com.telink.tc32eclipse.tool.linker.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.linker.option.libs.2082023996" name="Libraries (-l)" superClass="com.telink.tc32eclipse.linker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="lt_8267"/>
+									<listOptionValue builtIn="false" value="lt_8261"/>
 								</option>
 								<option id="com.telink.tc32eclipse.linker.option.libpath.1891050361" name="Libraries Path (-L)" superClass="com.telink.tc32eclipse.linker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj_lib}&quot;"/>
@@ -1909,7 +1909,7 @@
 							</tool>
 							<tool command="tc32-elf-ld --gc-sections" id="com.telink.tc32eclipse.tool.linker.TC32Win.app.release.1566915265" name="TC32 C Linker" superClass="com.telink.tc32eclipse.tool.linker.TC32Win.app.release">
 								<option id="com.telink.tc32eclipse.linker.option.libs.69654136" name="Libraries (-l)" superClass="com.telink.tc32eclipse.linker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="lt_8267"/>
+									<listOptionValue builtIn="false" value="lt_8261"/>
 								</option>
 								<option id="com.telink.tc32eclipse.linker.option.libpath.29382588" name="Libraries Path (-L)" superClass="com.telink.tc32eclipse.linker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/proj_lib}&quot;"/>
