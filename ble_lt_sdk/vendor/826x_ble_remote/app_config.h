@@ -56,10 +56,12 @@ extern "C" {
 
 
 	#if (BLE_DMIC_ENABLE)
-		#define GPIO_DMIC_BIAS                  GPIO_PA3
+		#define GPIO_DMIC_BIAS                  GPIO_PA3////note:if change, the following is changed,too.
+		#define PA3_FUNC                        AS_GPIO
 		#define DMIC_CLOCK_PIN_RATE             1 //need to be set based on DMIC spec. 1---1.024M;2---2.048M;4---4.096M
 	#else
-		#define GPIO_AMIC_BIAS					GPIO_PC6
+		#define GPIO_AMIC_BIAS					GPIO_PC6////note:if change, the following is changed,too.
+		#define PC6_FUNC                        AS_GPIO
 	#endif
 
 #endif

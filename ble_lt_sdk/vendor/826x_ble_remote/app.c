@@ -217,7 +217,7 @@ static u16 vk_consumer_map[16] = {
 		ui_mic_enable = en;
 
 		//DMIC Bias output
-		gpio_set_output_en (GPIO_DMIC_BIAS, en);
+//		gpio_set_output_en (GPIO_DMIC_BIAS, en);
 		gpio_write (GPIO_DMIC_BIAS, en);
 
 		device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
@@ -238,7 +238,7 @@ static u16 vk_consumer_map[16] = {
 		ui_mic_enable = en;
 
 		//AMIC Bias output
-		gpio_set_output_en (GPIO_AMIC_BIAS, en);
+//		gpio_set_output_en (GPIO_AMIC_BIAS, en);
 		gpio_write (GPIO_AMIC_BIAS, en);
 
 		device_led_setup(led_cfg[en ? LED_AUDIO_ON : LED_AUDIO_OFF]);
@@ -727,8 +727,8 @@ void blt_pm_proc(void)
 }
 
 
-
-_attribute_ram_code_ void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
+//_attribute_ram_code_
+void  ble_remote_set_sleep_wakeup (u8 e, u8 *p, int n)
 {
 	if( blc_ll_getCurrentState() == BLS_LINK_STATE_CONN && ((u32)(bls_pm_getSystemWakeupTick() - clock_time())) > 80 * CLOCK_SYS_CLOCK_1MS){  //suspend time > 30ms.add gpio wakeup
 		bls_pm_setWakeupSource(PM_WAKEUP_CORE);  //gpio CORE wakeup suspend
@@ -765,7 +765,6 @@ void user_init()
 			/////////////// DMIC: PA0-data, PA1-clk, PA3-power ctl
 			////config DMIC VDD pin
 			gpio_set_func(GPIO_DMIC_BIAS, AS_GPIO);
-			gpio_set_input_en(GPIO_DMIC_BIAS, 1);
 			gpio_set_output_en(GPIO_DMIC_BIAS, 1);
 			gpio_write(GPIO_DMIC_BIAS, 0);
 
@@ -775,6 +774,10 @@ void user_init()
 				audio_dmic_init(DMIC_CLOCK_PIN_RATE, R64, CLOCK_SYS_TYPE); ///default is 16000
 			#endif
 		#else  //Amic config
+			///config AMIC VDD pin (BIAS pin)
+			gpio_set_func(GPIO_AMIC_BIAS, AS_GPIO);
+			gpio_set_output_en(GPIO_AMIC_BIAS, 1);
+			gpio_write(GPIO_AMIC_BIAS, 0);
 			//////////////// AMIC: PC3 - bias; PC4/PC5 - input
 			#if TL_MIC_32K_FIR_16K
 				#if (CLOCK_SYS_CLOCK_HZ == 16000000)
