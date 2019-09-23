@@ -85,7 +85,7 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 	else{
 
 	}
-#if (BLE_REMOTE_PM_ENABLE)
+#if (BLE_PM_ENABLE)
 	 //user has push terminate pkt to ble TX buffer before deepsleep
 	if(sendTerminate_before_enterDeep == 1){
 		sendTerminate_before_enterDeep = 2;
