@@ -91,7 +91,7 @@ static inline void blc_app_loadCustomizedParameters(void)
 		 rf_update_tp_value(*(unsigned char*) (CUST_TP_INFO_ADDR), *(unsigned char*) (CUST_TP_INFO_ADDR+1));
 	 }
 
-	 ///2M mode just for 8269
+	 ///2M mode just for 8269. 8267 for BQB 2M
 	#if (__TL_LIB_8269__ || MCU_CORE_TYPE == MCU_CORE_8269 || __TL_LIB_8267__ ||  MCU_CORE_TYPE == MCU_CORE_8267)
 		// customize TP0/TP1 for 2M
 		if( ((*(unsigned char*) (CUST_TP_INFO_ADDR+2)) != 0xff) && ((*(unsigned char*) (CUST_TP_INFO_ADDR+3)) != 0xff) ){
@@ -134,6 +134,14 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 
+#if(__TL_LIB_8261__ || MCU_CORE_TYPE == MCU_CORE_8261)
+	#define SECURE_CONNECTION_ENABLE        				0
+	#define BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE			0
+	#define LL_FEATURE_SUPPORT_LE_2M_PHY					0
+#endif
+
+
+
 
 
 
@@ -153,6 +161,12 @@ static inline void blc_app_loadCustomizedParameters(void)
 #ifndef BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE
 #define BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE			1
 #endif
+
+#if(BLE_CORE42_DATA_LENGTH_EXTENSION_ENABLE)
+#define DLE_LEN_GE100                                   1 //data length greater or equal 100 bytes. for windows size.
+#endif
+
+
 
 
 #ifndef LL_FEATURE_SUPPORT_LE_2M_PHY
@@ -265,10 +279,6 @@ typedef struct{
  */
 #ifndef FIX_HW_CRC24_EN
 #define	FIX_HW_CRC24_EN						1
-#endif
-
-#ifndef DLE_LEN_GE100
-#define DLE_LEN_GE100                       1 //data length greater or equal 100 bytes. for windows size.
 #endif
 
 

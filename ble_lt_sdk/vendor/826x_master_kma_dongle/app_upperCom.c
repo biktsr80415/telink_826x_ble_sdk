@@ -235,6 +235,7 @@ void app_upper_com_proc(void)
 					#if (KMA_DONGLE_OTA_ENABLE)  //ota cmd trigger
 					host_button_trigger_ota_start(1, 0);  //start OTA
 					#endif
+
 					break;
 
 				case CONTROL_REBOOT:  //reboot dongle

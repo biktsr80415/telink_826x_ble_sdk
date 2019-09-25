@@ -64,6 +64,7 @@ enum{
  	OTA_DATA_UNCOMPLETE,  //lost last one or more OTA PDU
  	OTA_TIMEOUT, 		  //
  	OTA_FW_CHECK_ERR,
+	OTA_FW_NOT_TELINK,
 };
 
 void bls_ota_procTimeout(void);

@@ -178,7 +178,11 @@ void cpu_stall_wakeup_by_timer0(u32 tick_stall);
 void cpu_stall_wakeup_by_timer1(u32 tick_stall);
 void cpu_stall_wakeup_by_timer2(u32 tick_stall);
 
-#define PM_8267_EXT32_PWM_WAKE_ENABLE  1
+#if (__TL_LIB_8261__ || MCU_CORE_TYPE == MCU_CORE_8261 )
+	#define PM_8267_EXT32_PWM_WAKE_ENABLE  0
+#else
+	#define PM_8267_EXT32_PWM_WAKE_ENABLE  1
+#endif
 
 
 #endif

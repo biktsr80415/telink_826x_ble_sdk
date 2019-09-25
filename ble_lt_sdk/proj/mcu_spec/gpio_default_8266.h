@@ -170,10 +170,10 @@
 #define PB4_INPUT_ENABLE	0
 #endif
 #ifndef PB5_INPUT_ENABLE
-#define PB5_INPUT_ENABLE	1	//USB
+#define PB5_INPUT_ENABLE	0 //USB:1
 #endif
 #ifndef PB6_INPUT_ENABLE
-#define PB6_INPUT_ENABLE	1	//USB
+#define PB6_INPUT_ENABLE	0 //USB:1
 #endif
 #ifndef PB7_INPUT_ENABLE
 #define PB7_INPUT_ENABLE	0
@@ -266,10 +266,10 @@
 #define PB4_FUNC	AS_GPIO
 #endif
 #ifndef PB5_FUNC
-#define PB5_FUNC	AS_USB
+#define PB5_FUNC	AS_GPIO //AS_USB
 #endif
 #ifndef PB6_FUNC
-#define PB6_FUNC	AS_USB
+#define PB6_FUNC	AS_GPIO //AS_USB
 #endif
 #ifndef PB7_FUNC
 #define PB7_FUNC	AS_GPIO

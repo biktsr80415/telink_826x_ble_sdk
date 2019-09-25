@@ -28,7 +28,21 @@ extern "C" {
 	#define CHIP_TYPE				CHIP_TYPE_8269
 #endif
 
+#if (__PROJECT_8266_MASTER_KMA_DONGLE__)
 
+	#define PB5_FUNC	AS_USB
+	#define PB6_FUNC	AS_USB
+	#define PB5_INPUT_ENABLE	1	//USB
+	#define PB6_INPUT_ENABLE	1	//USB
+
+#else ///8261/8267/8269 USB pin
+
+	#define PE2_FUNC	AS_USB
+	#define PE3_FUNC	AS_USB
+
+	#define PE2_INPUT_ENABLE	1
+	#define PE3_INPUT_ENABLE	1
+#endif
 
 
 #if(__PROJECT_8261_MASTER_KMA_DONGLE__)

@@ -85,7 +85,7 @@ void 	ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 	else{
 
 	}
-#if (BLE_REMOTE_PM_ENABLE)
+#if (BLE_PM_ENABLE)
 	 //user has push terminate pkt to ble TX buffer before deepsleep
 	if(sendTerminate_before_enterDeep == 1){
 		sendTerminate_before_enterDeep = 2;
@@ -351,16 +351,16 @@ void user_init()
 	#endif
 
 ////////////////// BLE stack initialization ////////////////////////////////////
-	u8  tbl_mac [] = {0x11, 0x22, 0x33, 0x33, 0x44, 0xc7};
+	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
-//	if (*pmac != 0xffffffff)
-//	{
-//		memcpy (tbl_mac, pmac, 6);
-//	}
-//	else{
-//		tbl_mac[0] = (u8)rand();
-//		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
-//	}
+	if (*pmac != 0xffffffff)
+	{
+		memcpy (tbl_mac, pmac, 6);
+	}
+	else{
+		tbl_mac[0] = (u8)rand();
+		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
+	}
 
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU(tbl_mac);   //mandatory

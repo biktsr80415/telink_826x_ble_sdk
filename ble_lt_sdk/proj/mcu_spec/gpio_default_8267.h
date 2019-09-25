@@ -599,10 +599,10 @@
 #define PE1_INPUT_ENABLE	0
 #endif
 #ifndef PE2_INPUT_ENABLE
-#define PE2_INPUT_ENABLE	1   //USB
+#define PE2_INPUT_ENABLE	0   //USB
 #endif
 #ifndef PE3_INPUT_ENABLE
-#define PE3_INPUT_ENABLE	1	//USB
+#define PE3_INPUT_ENABLE	0	//USB
 #endif
 #ifndef PE4_INPUT_ENABLE
 #define PE4_INPUT_ENABLE	1   //MSPI
@@ -695,10 +695,10 @@
 #define PE1_FUNC	AS_GPIO
 #endif
 #ifndef PE2_FUNC
-#define PE2_FUNC	AS_USB
+#define PE2_FUNC	AS_GPIO
 #endif
 #ifndef PE3_FUNC
-#define PE3_FUNC	AS_USB
+#define PE3_FUNC	AS_GPIO
 #endif
 #ifndef PE4_FUNC
 #define PE4_FUNC	AS_MSPI

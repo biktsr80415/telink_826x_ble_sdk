@@ -112,7 +112,7 @@ int event_handler(u32 h, u8 *para, int n)
 				break;
 			case BLT_EV_FLAG_ADV_DURATION_TIMEOUT:
 			{
-				//app_switch_to_indirect_adv();
+//				app_switch_to_indirect_adv();
 			}
 
 				break;
