@@ -30,7 +30,7 @@ extern "C" {
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
-#define BATT_CHECK_ENABLE       			1   //enable or disable battery voltage detection
+#define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
 #define SIG_PROC_ENABLE 					0   //To known if the Master accepted or rejected Connection_Parameters_Update or not!
 
 /////////////////// DEBUG  /////////////////////////////////
