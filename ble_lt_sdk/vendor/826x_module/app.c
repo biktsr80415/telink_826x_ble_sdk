@@ -142,113 +142,9 @@ void	task_connect (void)
 #if 0
 	gpio_write(RED_LED, ON);
 #else
-	//gpio_write(GREEN_LED,ON);
+	gpio_write(GREEN_LED,ON);
 #endif
 }
-
-#if SMP_BUTTON_ENABLE
-u32 ctrl_btn[] = BTN_PINS;
-u8 btn_map[MAX_BTN_SIZE] = BTN_MAP;
-
-typedef	struct{
-	u8 	cnt;				//count button num
-	u8 	btn_press;
-	u8 	keycode[MAX_BTN_SIZE];			//6 btn
-}vc_data_t;
-vc_data_t vc_event;
-
-typedef struct{
-	u8  btn_history[4];		//vc history btn save
-	u8  btn_filter_last;
-	u8	btn_not_release;
-	u8 	btn_new;					//new btn  flag
-}btn_status_t;
-btn_status_t 	btn_status;
-
-u8 mybtn_debounce_filter(u8 *btn_v);
-u8 myvc_detect_button(int read_key);
-extern u8  confirm_f_uart_btn;
-void proc_button (void){
-	if(blc_smp_getGenMethod() == NUMERIC_COMPARISON && !confirm_f_uart_btn &&\
-	   blc_get_pc_start_tick() && !clock_time_exceed(blc_get_pc_start_tick(), blc_get_pc_timeout_duration())){
-		static u32 button_det_tick;
-		if(clock_time_exceed(button_det_tick, 5000))
-		{
-			button_det_tick = clock_time();
-		}
-		else{
-			return;
-		}
-
-		extern void blc_smp_setNCTimeoutTick (u32 t);
-
-		int det_key = myvc_detect_button(1);
-
-		if (det_key){
-
-			u8 key = vc_event.keycode[0];
-
-			if(vc_event.cnt == 2)  //two key press
-			{
-
-			}
-			else if(vc_event.cnt == 1) //one key press
-			{
-		        if(key == 1){
-					printf("Slave confirmed: 'YES'(pairing).\n");
-					confirm_f_uart_btn = 1;
-					blc_smp_setNCconfirmValue(NC_CONFIRM_YES);
-		        }
-		        else if(key == 2){
-		        	printf("Slave confirmed: 'NO'(cancel).\n");
-					confirm_f_uart_btn = 1;
-					blc_smp_setNCconfirmValue(NC_CONFIRM_NO);
-		        }
-			}
-			else if(vc_event.cnt == 0){
-				//printf("Key Released!\n");
-			}
-		}
-	}
-}
-
-u8 mybtn_debounce_filter(u8 *btn_v)
-{
-	u8 change = 0;
-	for(int i=3; i>0; i--){
-		btn_status.btn_history[i] = btn_status.btn_history[i-1];
-	}
-	btn_status.btn_history[0] = *btn_v;
-	if(  btn_status.btn_history[0] == btn_status.btn_history[1] && btn_status.btn_history[1] == btn_status.btn_history[2] && \
-		btn_status.btn_history[0] != btn_status.btn_filter_last ){
-		change = 1;
-		btn_status.btn_filter_last = btn_status.btn_history[0];
-	}
-	return change;
-}
-
-u8 myvc_detect_button(int read_key)
-{
-	u8 btn_changed, i;
-	memset(&vc_event,0,sizeof(vc_data_t));			//clear vc_event
-	//vc_event.btn_press = 0;
-	for(i=0; i<MAX_BTN_SIZE; i++){
-		if(BTN_VALID_LEVEL != !gpio_read(ctrl_btn[i])){
-			vc_event.btn_press |= BIT(i);
-		}
-	}
-	btn_changed = mybtn_debounce_filter(&vc_event.btn_press);
-	if(btn_changed && read_key){
-		for(i=0; i<MAX_BTN_SIZE; i++){
-			if(vc_event.btn_press & BIT(i)){
-				vc_event.keycode[vc_event.cnt++] = btn_map[i];
-			}
-		}
-		return 1;
-	}
-	return 0;
-}
-#endif
 
 
 void led_init(void)
@@ -307,14 +203,6 @@ void app_power_management ()
 {
 #if __PROJECT_8266_MODULE__
 	uart_ErrorCLR();
-#endif
-
-#if (SECURE_CONNECTION_ENABLE && SMP_NUMERIC_COMPARISON && SMP_UART_ENABLE)//use uart confirm 'YES/NO'(NC)
-	extern u8  pm_ctrl_flg;
-	if(pm_ctrl_flg){
-		bls_pm_setSuspendMask(SUSPEND_DISABLE);
-		return;
-	}
 #endif
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
@@ -393,43 +281,25 @@ void user_init()
 	extern void my_att_init ();
 	my_att_init (); //gatt initialization
 	blc_l2cap_register_handler (blc_l2cap_packet_receive);  	//l2cap initialization
-#if SIG_PROC_ENABLE
-	blc_l2cap_reg_att_sig_hander(att_sig_proc_handler);         //register sig process handler
-#endif
 
-	//smp initialization
-#if ( SMP_DO_NOT_SUPPORT )
-	//bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
-#else //if (SMP_JUST_WORK || SMP_PASSKEY_ENTRY || SMP_NUMERIC_COMPARISON)
-	//Just work encryption: TK default is 0, that is, pin code defaults to 0, without setting
-	//Passkey entry encryption: generate random numbers pinCode, or set the default pinCode, processed in the event_handler function
-
+ 	//// smp initialization ////
+#if (BLE_MODULE_SECURITY_ENABLE)
+	blc_smp_param_setBondingDeviceMaxNumber(4);  	//default is SMP_BONDING_DEVICE_MAX_NUM, can not bigger that this value
+													//and this func must call before bls_smp_enableParing
 	bls_smp_enableParing (SMP_PARING_CONN_TRRIGER );
 
-	#if SECURE_CONNECTION_ENABLE
-		blc_smp_enableScFlag (1);//support smp4.2
-		#if (SMP_NUMERIC_COMPARISON)//if 0:SC_JUST_WORK; if 1:SC_NC.
-		    blc_smp_enableAuthMITM (1, DEFAULT_PINCODE);
-			blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_YESNO);
-        #elif (SMP_JUST_WORK)
-			//do nothing.
-		#endif
-    #endif
-
-	#if SMP_PASSKEY_ENTRY//if blc_smp_enableScFlag (1) && enable BLE_P256_PUBLIC_KEY_ENABLE: SC_PASSKEY ENTRY
-		blc_smp_enableAuthMITM (1, DEFAULT_PINCODE);
-		//blc_smp_setIoCapability (IO_CAPABLITY_DISPLAY_ONLY);   //Responder displays PK, initiator inputs PK
-		blc_smp_setIoCapability (IO_CAPABLITY_KEYBOARD_ONLY);   //Initiator displays PK, responder inputs PK
-    #endif
-
-	//HID_service_on_android7p0_init();
+	//blc_smp_enableScFlag(1);
+	//blc_smp_setEcdhDebugMode(1);//debug
+#else
+	bls_smp_enableParing (SMP_PARING_DISABLE_TRRIGER );
 #endif
+
+	//HID_service_on_android7p0_init();  //hid device on android 7.0/7.1
 
 	///////////////////// USER application initialization ///////////////////
 
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
-
 
 
 
@@ -447,9 +317,7 @@ void user_init()
 	}  //debug: adv setting err
 
 
-    printf("\n\rAdv parameters setting success!\n\r");
 	bls_ll_setAdvEnable(1);  //adv enable
-	printf("Enable ble adv!\n\r");
 	rf_set_power_level_index (RF_POWER_8dBm);
 
 	bls_pm_setSuspendMask (SUSPEND_DISABLE);//(SUSPEND_ADV | SUSPEND_CONN)
@@ -512,11 +380,10 @@ void user_init()
 	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
 		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
 	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-		adc_Init(ADC_CLK_4M, ADC_CHN_D2, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
+		adc_Init(ADC_CLK_4M, ADC_CHN_C4, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
 	#endif
 #endif
 }
-
 
 /////////////////////////////////////////////////////////////////////
 // main loop flow
@@ -530,10 +397,6 @@ void main_loop ()
 	blt_sdk_main_loop();
 
 	////////////////////////////////////// UI entry /////////////////////////////////
-#if SMP_BUTTON_ENABLE
-	proc_button();
-#endif
-
 #if (BATT_CHECK_ENABLE)
 	if(tick_loop%300 == 0)
 	{

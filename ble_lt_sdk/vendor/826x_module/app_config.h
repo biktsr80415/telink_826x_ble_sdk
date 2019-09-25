@@ -25,11 +25,12 @@ extern "C" {
 
 
 /////////////////// MODULE /////////////////////////////////
+#define BLE_MODULE_SECURITY_ENABLE          1
 #define BLE_MODULE_PM_ENABLE				1
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
-#define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
+#define BATT_CHECK_ENABLE       			1   //enable or disable battery voltage detection
 #define SIG_PROC_ENABLE 					0   //To known if the Master accepted or rejected Connection_Parameters_Update or not!
 
 /////////////////// DEBUG  /////////////////////////////////
@@ -37,28 +38,6 @@ extern "C" {
 #define PRINT_DEBUG_INFO               		0	//open/close myprintf
 
 
-//////////////// SMP SETTING  //////////////////////////////
-#define SMP_DO_NOT_SUPPORT 			   	    0
-#define SMP_JUST_WORK       				1
-#define SMP_PASSKEY_ENTRY   				0
-#define SMP_NUMERIC_COMPARISON   			0
-
-#if (SMP_NUMERIC_COMPARISON)
-    //NC confirm method select
-	#define SMP_BUTTON_ENABLE               1
-    #define SMP_UART_ENABLE                 0
-#elif (SMP_PASSKEY_ENTRY)
-	#define SMP_UART_ENABLE                 1
-#endif
-
-#if SMP_PASSKEY_ENTRY
-#define PINCODE_RANDOM_ENABLE               1//if 0: use default: 123456
-#endif
-#define DEFAULT_PINCODE                     123456
-
-#if (!SMP_DO_NOT_SUPPORT)
-#define PRINT_DEBUG_INFO                    1
-#endif
 
 
 
@@ -171,7 +150,7 @@ extern "C" {
 
 ///////////// avoid ADC module current leakage (when module on suspend status) //////////////////////////////
 #define ADC_MODULE_CLOSED               BM_CLR(reg_adc_mod, FLD_ADC_CLK_EN)  // adc clk disable
-#define ADC_MODULE_ENABLE               BM_SET(reg_adc_mod, FLD_ADC_CLK_EN) // adc clk open
+#define ADC_MODULE_ENABLE               BM_SET(reg_adc_mod, FLD_ADC_CLK_EN)  // adc clk open
 
 
 
