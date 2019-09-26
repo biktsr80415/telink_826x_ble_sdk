@@ -30,7 +30,7 @@ extern "C" {
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
-#define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
+#define BATT_CHECK_ENABLE       			1   //enable or disable battery voltage detection
 #define SIG_PROC_ENABLE 					0   //To known if the Master accepted or rejected Connection_Parameters_Update or not!
 
 /////////////////// DEBUG  /////////////////////////////////
@@ -118,22 +118,22 @@ extern "C" {
 #define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PB1, 1); gpio_write(GPIO_PB1, 0);}while(0)
 #define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PB1, 0); gpio_write(GPIO_PB1, 0);}while(0)
 #else//__PROJECT_8266_MODULE__
-#define GPIO_WAKEUP_MODULE					GPIO_PC5   //mcu wakeup module //G3 for 8266 EVK board(C1T53A20_V2.0)
-#define	PC5_FUNC							AS_GPIO
-#define PC5_INPUT_ENABLE					1
-#define	PC5_OUTPUT_ENABLE					0
-#define	PC5_DATA_OUT						0
-#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLUP_10K);
-#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PC5, PM_PIN_PULLDOWN_100K);
+#define GPIO_WAKEUP_MODULE					GPIO_PC4   //mcu wakeup module //G3 for 8266 EVK board(C1T53A20_V2.0)
+#define	PC4_FUNC							AS_GPIO
+#define PC4_INPUT_ENABLE					1
+#define	PC4_OUTPUT_ENABLE					0
+#define	PC4_DATA_OUT						0
+#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PC4, PM_PIN_PULLUP_10K);
+#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PC4, PM_PIN_PULLDOWN_100K);
 
-#define GPIO_WAKEUP_MCU						GPIO_PC3   //module wakeup mcu //G2 for 8266 EVK board(C1T53A20_V2.0)
-#define	PC3_FUNC							AS_GPIO
-#define PC3_INPUT_ENABLE					1
-#define	PC3_OUTPUT_ENABLE					1
-#define	PC3_DATA_OUT						0
-#define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 1);}while(0)
-#define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PC3, 1); gpio_write(GPIO_PC3, 0);}while(0)
-#define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PC3, 0); gpio_write(GPIO_PC3, 0);}while(0)
+#define GPIO_WAKEUP_MCU						GPIO_PC2   //module wakeup mcu //G2 for 8266 EVK board(C1T53A20_V2.0)
+#define	PC2_FUNC							AS_GPIO
+#define PC2_INPUT_ENABLE					1
+#define	PC2_OUTPUT_ENABLE					1
+#define	PC2_DATA_OUT						0
+#define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_PC2, 1); gpio_write(GPIO_PC2, 1);}while(0)
+#define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PC2, 1); gpio_write(GPIO_PC2, 0);}while(0)
+#define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PC2, 0); gpio_write(GPIO_PC2, 0);}while(0)
 #endif
 
 
@@ -210,15 +210,6 @@ extern "C" {
 
 #else//__PROJECT_8266_MODULE__
 
-#if 0
-//debug chn  P2 : C4
-#define PC4_FUNC							AS_GPIO
-#define	PC4_OUTPUT_ENABLE					1
-#define	PC4_DATA_OUT						0
-#define DBG_CHN0_LOW		( *(unsigned char *)0x800593 &= (~0x10) )
-#define DBG_CHN0_HIGH		( *(unsigned char *)0x800593 |= 0x10 )
-#define DBG_CHN0_TOGGLE		( *(unsigned char *)0x800593 ^= 0x10 )
-#endif
 
 #endif
 

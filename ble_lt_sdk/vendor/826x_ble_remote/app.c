@@ -84,7 +84,7 @@ u32		advertise_begin_tick;
 u8		ui_mic_enable = 0;
 u8 		key_voice_press = 0;
 
-int 	lowBattDet_enable = 0;
+int 	lowBattDet_enable = 1;
 int		lowBatt_alarmFlag = 0;
 
 
@@ -393,6 +393,13 @@ void	task_connect (u8 e, u8 *p, int n)
 //This function process ...
 void deep_wakeup_proc(void)
 {
+
+#if(REMOTE_IR_ENABLE)
+	if(KEY_MODE_IR == analog_read(DEEP_ANA_REG1)){
+		return ;
+	}
+#endif
+
 #if(DEEPBACK_FAST_KEYSCAN_ENABLE)
 	//if deepsleep wakeup is wakeup by GPIO(key press), we must quickly scan this
 	//press, hold this data to the cache, when connection established OK, send to master

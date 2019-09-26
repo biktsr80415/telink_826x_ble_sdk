@@ -35,12 +35,12 @@ extern "C" {
 #define TEST_USER_BLT_SOFT_TIMER						30
 #define TEST_WHITELIST									31
  //phy test
-#define TEST_BLE_PHY									40
+#define TEST_BLE_PHY									32
 //phy test
-#define TEST_2M_PHY_CONNECTION                          50
+#define TEST_2M_PHY_CONNECTION                          41
 
 
-#define FEATURE_TEST_MODE								TEST_BLE_PHY
+#define FEATURE_TEST_MODE								TEST_SDATA_LENGTH_EXTENSION
 
 
 

@@ -12,6 +12,7 @@
 #include "../../proj/drivers/uart.h"
 #include "../common/blt_soft_timer.h"
 #include "../../proj/drivers/uart.h"
+#include "../../proj_lib/ble/ble_common.h"
 
 
 #if (FEATURE_TEST_MODE == TEST_SDATA_LENGTH_EXTENSION)
@@ -213,7 +214,7 @@ void feature_sdle_test_init(void){
 
 	u8 status = bls_ll_setAdvParam( ADV_INTERVAL_30MS, ADV_INTERVAL_30MS, \
 									 ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, \
-									 0,  NULL,  BLT_ENABLE_ADV_37, ADV_FP_NONE);
+									 0,  NULL,  BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
 	if(status != BLE_SUCCESS){  //adv setting err
 		write_reg8(0x8000, 0x11);  //debug
 		while(1);

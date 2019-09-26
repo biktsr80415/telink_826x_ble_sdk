@@ -17,6 +17,7 @@ MYFIFO_INIT(hci_tx_fifo, 72, 8);
 
 MYFIFO_INIT(blt_rxfifo, 64, 8);
 MYFIFO_INIT(blt_txfifo, 40, 16);
+
 #if (BLE_PHYTEST_MODE == PHYTEST_MODE_THROUGH_2_WIRE_UART )
 	unsigned char uart_no_dma_rec_data[6] = {0x02,0, 0,0,0,0};
 #elif(BLE_PHYTEST_MODE == PHYTEST_MODE_OVER_HCI_WITH_UART)
@@ -66,7 +67,7 @@ void app_phytest_irq_porc(void){
 
 
 #if (BLE_PHYTEST_MODE == PHYTEST_MODE_OVER_HCI_WITH_UART)
-	int rx_from_uart_cb (void)
+_attribute_ram_code_	int rx_from_uart_cb (void)
 	{
 		if(my_fifo_get(&hci_rx_fifo) == 0)
 		{
@@ -90,7 +91,7 @@ void app_phytest_irq_porc(void){
 	}
 
 
-	int tx_to_uart_cb (void)
+_attribute_ram_code_	int tx_to_uart_cb (void)
 	{
 		uart_data_t T_txdata_buf;
 		static u32 uart_tx_tick = 0;

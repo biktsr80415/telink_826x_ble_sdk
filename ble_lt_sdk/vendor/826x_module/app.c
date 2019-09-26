@@ -11,6 +11,7 @@
 #include "../../proj/drivers/battery.h"
 #include "../../proj_lib/ble/blt_config.h"
 #include "../../proj_lib/ble/ble_smp.h"
+#include "../../proj_lib/ble/ble_common.h"
 
 
 #if (HCI_ACCESS==HCI_USE_UART)
@@ -142,7 +143,7 @@ void	task_connect (void)
 #if 0
 	gpio_write(RED_LED, ON);
 #else
-	gpio_write(GREEN_LED,ON);
+//	gpio_write(GREEN_LED,ON);
 #endif
 }
 
@@ -253,21 +254,49 @@ void user_init()
 
 	led_init();
 
+	/***********************************************************************************
+	 * These section must be before battery_power_check.
+	 * Because when low battery,chip will entry deep.if placed after battery_power_check,
+	 * it is possible that can not wake up chip.
+	 * mcu can wake up module from suspend or deepsleep by pulling up GPIO_WAKEUP_MODULE
+	 *  *******************************************************************************/
+	#if (BLE_MODULE_PM_ENABLE)
+		gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
+		cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
 
+		GPIO_WAKEUP_MODULE_LOW;
+		bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
+	#endif
+	/*****************************************************************************************
+	 Note: battery check must do before any flash write/erase operation, cause flash write/erase
+		   under a low or unstable power supply will lead to error flash operation
+
+		   Some module initialization may involve flash write/erase, include: OTA initialization,
+				SMP initialization, ..
+				So these initialization must be done after  battery check
+	*****************************************************************************************/
+	#if (BATT_CHECK_ENABLE)  //battery check must do before OTA relative operation
+		if(analog_read(DEEP_ANA_REG2) == BATTERY_VOL_LOW){
+			battery_power_check(VBAT_ALARM_THRES_MV + 200);//2.2V
+		}
+		else{
+			battery_power_check(VBAT_ALARM_THRES_MV);//2.0 V
+		}
+	#endif
+
+	/////////////////////////////////////////////////////////////
 	u8  tbl_mac [] = {0xe1, 0xe1, 0xe2, 0xe3, 0xe4, 0xc7};
 	u32 *pmac = (u32 *) CFG_ADR_MAC;
 	if (*pmac != 0xffffffff)
 	{
-	    memcpy (tbl_mac, pmac, 6);
+		memcpy (tbl_mac, pmac, 6);
 	}
-    else
-    {
-        //TODO : should write mac to flash after pair OK
-        tbl_mac[0] = (u8)rand();
-        flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
-    }
-
-
+	else
+	{
+		//TODO : should write mac to flash after pair OK
+		tbl_mac[0] = (u8)rand();
+		flash_write_page (CFG_ADR_MAC, 6, tbl_mac);
+	}
 ///////////// BLE stack Initialization ////////////////
 	////// Controller Initialization  //////////
 	blc_ll_initBasicMCU(tbl_mac);   //mandatory
@@ -297,7 +326,6 @@ void user_init()
 	//HID_service_on_android7p0_init();  //hid device on android 7.0/7.1
 
 	///////////////////// USER application initialization ///////////////////
-
 	bls_ll_setAdvData( (u8 *)tbl_advData, sizeof(tbl_advData) );
 	bls_ll_setScanRspData( (u8 *)tbl_scanRsp, sizeof(tbl_scanRsp));
 
@@ -333,20 +361,20 @@ void user_init()
 	#else	//uart
 		//one gpio should be configured to act as the wakeup pin if in power saving mode; pending
 		//todo:uart init here
-#if __PROJECT_8266_MODULE__
-		gpio_set_func(GPIO_UTX, AS_UART);
-		gpio_set_func(GPIO_URX, AS_UART);
-		gpio_set_input_en(GPIO_UTX, 1);
-		gpio_set_input_en(GPIO_URX, 1);
-		gpio_write (GPIO_UTX, 1);			//pull-high RX to avoid mis-trig by floating signal
-		gpio_write (GPIO_URX, 1);			//pull-high RX to avoid mis-trig by floating signal
-#else
-		gpio_set_input_en(GPIO_PB2, 1);
-		gpio_set_input_en(GPIO_PB3, 1);
-		gpio_setup_up_down_resistor(GPIO_PB2, PM_PIN_PULLUP_1M);
-		gpio_setup_up_down_resistor(GPIO_PB3, PM_PIN_PULLUP_1M);
-		uart_io_init(UART_GPIO_8267_PB2_PB3);
-#endif
+		#if __PROJECT_8266_MODULE__
+				gpio_set_func(GPIO_UTX, AS_UART);
+				gpio_set_func(GPIO_URX, AS_UART);
+				gpio_set_input_en(GPIO_UTX, 1);
+				gpio_set_input_en(GPIO_URX, 1);
+				gpio_write (GPIO_UTX, 1);			//pull-high RX to avoid mis-trig by floating signal
+				gpio_write (GPIO_URX, 1);			//pull-high RX to avoid mis-trig by floating signal
+		#else
+				gpio_set_input_en(GPIO_PB2, 1);
+				gpio_set_input_en(GPIO_PB3, 1);
+				gpio_setup_up_down_resistor(GPIO_PB2, PM_PIN_PULLUP_1M);
+				gpio_setup_up_down_resistor(GPIO_PB3, PM_PIN_PULLUP_1M);
+				uart_io_init(UART_GPIO_8267_PB2_PB3);
+		#endif
 		reg_dma_rx_rdy0 = FLD_DMA_UART_RX | FLD_DMA_UART_TX; //clear uart rx/tx status
 		CLK16M_UART115200;
 		uart_BuffInit(hci_rx_fifo_b, hci_rx_fifo.size, hci_tx_fifo_b);
@@ -364,30 +392,13 @@ void user_init()
 	bls_ota_registerStartCmdCb(entry_ota_mode);
 	bls_ota_registerResultIndicateCb(show_ota_result);
 
-
-
-#if (BLE_MODULE_PM_ENABLE)
-	//mcu can wake up module from suspend or deepsleep by pulling up GPIO_WAKEUP_MODULE
-	gpio_set_wakeup		(GPIO_WAKEUP_MODULE, 1, 1);  // core(gpio) high wakeup suspend
-	cpu_set_gpio_wakeup (GPIO_WAKEUP_MODULE, 1, 1);  // pad high wakeup deepsleep
-
-	GPIO_WAKEUP_MODULE_LOW;
-
-	bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
-#endif
-
-#if (BATT_CHECK_ENABLE)
-	#if((MCU_CORE_TYPE == MCU_CORE_8261)||(MCU_CORE_TYPE == MCU_CORE_8267)||(MCU_CORE_TYPE == MCU_CORE_8269))
-		adc_BatteryCheckInit(ADC_CLK_4M, 1, Battery_Chn_VCC, 0, SINGLEEND, RV_1P428, RES14, S_3);
-	#elif(MCU_CORE_TYPE == MCU_CORE_8266)
-		adc_Init(ADC_CLK_4M, ADC_CHN_C4, SINGLEEND, ADC_REF_VOL_1V3, ADC_SAMPLING_RES_14BIT, ADC_SAMPLING_CYCLE_6);
-	#endif
-#endif
 }
 
 /////////////////////////////////////////////////////////////////////
 // main loop flow
 /////////////////////////////////////////////////////////////////////
+u32 lowBattDet_tick = 0;
+
 void main_loop ()
 {
 	static u32 tick_loop;
@@ -398,10 +409,9 @@ void main_loop ()
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 #if (BATT_CHECK_ENABLE)
-	if(tick_loop%300 == 0)
-	{
-		ADC_MODULE_ENABLE;
-		battery_power_check();
+	if(clock_time_exceed(lowBattDet_tick, 500*1000)){
+		lowBattDet_tick = clock_time();
+		battery_power_check(VBAT_ALARM_THRES_MV);
 	}
 #endif
 	//  add spp UI task
