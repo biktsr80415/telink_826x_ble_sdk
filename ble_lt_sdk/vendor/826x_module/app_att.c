@@ -156,7 +156,7 @@ int module_onReceiveData(rf_packet_att_write_t *p)
 		u32 header;
 		header = 0x07a0;		//data received event
 		header |= (3 << 16) | (1<<24);
-		spp_test_read (&p->value, len);
+//		spp_test_read (&p->value, len);
 		extern int hci_send_data (u32 h, u8 *para, int n);
 		hci_send_data(header, &p->opcode, len + 3);		//HCI_FLAG_EVENT_TLK_MODULE
 	}

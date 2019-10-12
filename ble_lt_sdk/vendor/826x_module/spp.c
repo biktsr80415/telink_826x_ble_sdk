@@ -5,9 +5,10 @@
 #include "../../proj_lib/ble/blt_config.h"
 #include "spp.h"
 #include "../../proj_lib/ble/ble_smp.h"
+#include "../../proj/drivers/uart.h"
 
 extern int	module_uart_data_flg;
-extern u32 module_wakeup_module_tick;
+extern u32  module_wakeup_module_tick;
 
 extern my_fifo_t hci_rx_fifo;
 extern my_fifo_t hci_tx_fifo;
@@ -38,11 +39,8 @@ int event_handler(u32 h, u8 *para, int n)
 				header |= HCI_FLAG_EVENT_TLK_MODULE;
 				hci_send_data(header, NULL, 0);		//HCI_FLAG_EVENT_TLK_MODULE
 				printf("\n\r************** Terminate event occured! **************\n\r");
-#if 0
-				gpio_write(RED_LED, OFF);
-#else
+
 				gpio_write(GREEN_LED,OFF);
-#endif
 			}
 				break;
 			case BLT_EV_FLAG_PAIRING_BEGIN:
@@ -129,6 +127,7 @@ int event_handler(u32 h, u8 *para, int n)
 	}
 }
 /////////////////////////////////////blc_register_hci_handler for spp////////////////////////////
+extern int bls_uart_handler (u8 *p, int n);
 int rx_from_uart_cb (void)//UART data send to Master,we will handler the data as CMD or DATA
 {
 	if(my_fifo_get(&hci_rx_fifo) == 0)
@@ -309,6 +308,18 @@ int hci_send_data (u32 h, u8 *para, int n)
 		return -1;
 	}
 
+	/************************************************
+	 * added by QW.
+	 * judge whether the length greater than uart buffer size.
+	 * if yes, return error; if not, continue.
+	 */
+	int nl = n + 4;
+
+	if(nl >= UART_DATA_LEN){ ///
+		return -1;
+	}
+
+
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)
 	if(!module_uart_data_flg){ //UART idle, new data is sent
 		GPIO_WAKEUP_MCU_HIGH;  //Notify MCU that there is data here
@@ -317,7 +328,7 @@ int hci_send_data (u32 h, u8 *para, int n)
 	}
 #endif
 
-	int nl = n + 4;
+
 	if (h & HCI_FLAG_EVENT_TLK_MODULE)
 	{
 		*p++ = nl;
@@ -339,8 +350,10 @@ int tx_to_uart_cb (void)
 	u8 *p = my_fifo_get (&hci_tx_fifo);
 	if (p && !uart_tx_is_busy ())
 	{
-		memcpy(&T_txdata_buf.data, p + 2, p[0]+p[1]*256);
-		T_txdata_buf.len = p[0]+p[1]*256 ;
+		u16 uart_len = p[0]+(p[1]<<8);
+
+		memcpy(&T_txdata_buf.data, p + 2, uart_len);
+		T_txdata_buf.len = uart_len ;
 
 
 #if (BLE_MODULE_INDICATE_DATA_TO_MCU)

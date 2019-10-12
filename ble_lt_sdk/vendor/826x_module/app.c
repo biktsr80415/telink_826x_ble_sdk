@@ -140,27 +140,17 @@ void	task_connect (void)
 	}
 #endif
 	
-#if 0
-	gpio_write(RED_LED, ON);
-#else
+
 //	gpio_write(GREEN_LED,ON);
-#endif
 }
 
 
 void led_init(void)
 {
-#if 0
-	gpio_set_func(RED_LED, AS_GPIO);
-	gpio_set_input_en(RED_LED,0);
-	gpio_set_output_en(RED_LED,1);
-	gpio_write(RED_LED, OFF);
-#else
 	gpio_set_func(GREEN_LED, AS_GPIO);
 	gpio_set_input_en(GREEN_LED,0);
 	gpio_set_output_en(GREEN_LED,1);
 	gpio_write(GREEN_LED,OFF);
-#endif
 }
 
 u32 tick_wakeup;
@@ -267,6 +257,7 @@ void user_init()
 		GPIO_WAKEUP_MODULE_LOW;
 		bls_pm_registerFuncBeforeSuspend( &app_suspend_enter );
 	#endif
+
 	/*****************************************************************************************
 	 Note: battery check must do before any flash write/erase operation, cause flash write/erase
 		   under a low or unstable power supply will lead to error flash operation
@@ -305,6 +296,9 @@ void user_init()
 	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
 	blc_ll_initPowerManagement_module();        //pm module:      	 optional
 
+
+	//ATT initialization
+//	blc_att_setRxMtuSize(160); //If not set RX MTU size, default is: 23 bytes.
 
 	////// Host Initialization  //////////
 	extern void my_att_init ();

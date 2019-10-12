@@ -30,7 +30,7 @@ extern "C" {
 #define TELIK_SPP_SERVICE_ENABLE			1
 #define BLE_MODULE_APPLICATION_ENABLE		1
 #define BLE_MODULE_INDICATE_DATA_TO_MCU		1
-#define BATT_CHECK_ENABLE       			1   //enable or disable battery voltage detection
+#define BATT_CHECK_ENABLE       			0   //enable or disable battery voltage detection
 #define SIG_PROC_ENABLE 					0   //To known if the Master accepted or rejected Connection_Parameters_Update or not!
 
 /////////////////// DEBUG  /////////////////////////////////
@@ -69,10 +69,10 @@ extern "C" {
 #define GREEN_LED    		    			GPIO_PD7
 #define BLUE_LED                			GPIO_PB4
 #else//__PROJECT_8266_MODULE__ //8266 EVK board(C1T53A20_V2.0)
-#define RED_LED                             GPIO_PA5
-#define WHITE_LED     						GPIO_PB0
-#define GREEN_LED    		    			GPIO_PA1
-#define BLUE_LED                			GPIO_PA6
+#define RED_LED                             GPIO_PC4
+#define WHITE_LED     						GPIO_PA1
+#define GREEN_LED    		    			GPIO_PC0
+#define BLUE_LED                			GPIO_PC2
 #endif
 #define ON            						1
 #define OFF           						0
@@ -101,7 +101,7 @@ extern "C" {
 
 //////////////////////////// MODULE PM GPIO	/////////////////////////////////
 #if	(__PROJECT_8261_MODULE__ || __PROJECT_8267_MODULE__ || __PROJECT_8269_MODULE__)
-#define GPIO_WAKEUP_MODULE					GPIO_PB5   //mcu wakeup module //P4N for 8267/8269 EVK board(C1T80A30_V1.0)
+#define GPIO_WAKEUP_MODULE					GPIO_PB5   //P4N;mcu wakeup module //P4N for 8267/8269 EVK board(C1T80A30_V1.1)
 #define	PB5_FUNC							AS_GPIO
 #define PB5_INPUT_ENABLE					1
 #define	PB5_OUTPUT_ENABLE					0
@@ -109,7 +109,7 @@ extern "C" {
 #define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PB5, PM_PIN_PULLUP_10K);
 #define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PB5, PM_PIN_PULLDOWN_100K);
 
-#define GPIO_WAKEUP_MCU						GPIO_PB1   //module wakeup mcu  //P2N for 8267/8269 EVK board(C1T80A30_V1.0)
+#define GPIO_WAKEUP_MCU						GPIO_PB1   //P2N;module wakeup mcu  //P2N for 8267/8269 EVK board(C1T80A30_V1.0)
 #define	PB1_FUNC							AS_GPIO
 #define PB1_INPUT_ENABLE					1
 #define	PB1_OUTPUT_ENABLE					1
@@ -118,22 +118,22 @@ extern "C" {
 #define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PB1, 1); gpio_write(GPIO_PB1, 0);}while(0)
 #define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PB1, 0); gpio_write(GPIO_PB1, 0);}while(0)
 #else//__PROJECT_8266_MODULE__
-#define GPIO_WAKEUP_MODULE					GPIO_PC4   //mcu wakeup module //G3 for 8266 EVK board(C1T53A20_V2.0)
-#define	PC4_FUNC							AS_GPIO
-#define PC4_INPUT_ENABLE					1
-#define	PC4_OUTPUT_ENABLE					0
-#define	PC4_DATA_OUT						0
-#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PC4, PM_PIN_PULLUP_10K);
-#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PC4, PM_PIN_PULLDOWN_100K);
+#define GPIO_WAKEUP_MODULE					GPIO_PE4   //mcu wakeup module //G3 for 8266 EVK board(C1T53A20_V2.0)
+#define	PE4_FUNC							AS_GPIO
+#define PE4_INPUT_ENABLE					1
+#define	PE4_OUTPUT_ENABLE					0
+#define	PE4_DATA_OUT						0
+#define GPIO_WAKEUP_MODULE_HIGH				gpio_setup_up_down_resistor(GPIO_PE4, PM_PIN_PULLUP_10K);
+#define GPIO_WAKEUP_MODULE_LOW				gpio_setup_up_down_resistor(GPIO_PE4, PM_PIN_PULLDOWN_100K);
 
-#define GPIO_WAKEUP_MCU						GPIO_PC2   //module wakeup mcu //G2 for 8266 EVK board(C1T53A20_V2.0)
-#define	PC2_FUNC							AS_GPIO
-#define PC2_INPUT_ENABLE					1
-#define	PC2_OUTPUT_ENABLE					1
-#define	PC2_DATA_OUT						0
-#define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_PC2, 1); gpio_write(GPIO_PC2, 1);}while(0)
-#define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PC2, 1); gpio_write(GPIO_PC2, 0);}while(0)
-#define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PC2, 0); gpio_write(GPIO_PC2, 0);}while(0)
+#define GPIO_WAKEUP_MCU						GPIO_PE5   //module wakeup mcu //G2 for 8266 EVK board(C1T53A20_V2.0)
+#define	PE5_FUNC							AS_GPIO
+#define PE5_INPUT_ENABLE					1
+#define	PE5_OUTPUT_ENABLE					1
+#define	PE5_DATA_OUT						0
+#define GPIO_WAKEUP_MCU_HIGH				do{gpio_set_output_en(GPIO_PE5, 1); gpio_write(GPIO_PE5, 1);}while(0)
+#define GPIO_WAKEUP_MCU_LOW					do{gpio_set_output_en(GPIO_PE5, 1); gpio_write(GPIO_PE5, 0);}while(0)
+#define GPIO_WAKEUP_MCU_FLOAT				do{gpio_set_output_en(GPIO_PE5, 0); gpio_write(GPIO_PE5, 0);}while(0)
 #endif
 
 

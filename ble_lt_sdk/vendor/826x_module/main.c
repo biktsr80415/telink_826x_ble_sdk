@@ -8,6 +8,7 @@
 
 extern my_fifo_t hci_rx_fifo;
 extern void user_init();
+extern void main_loop();
 
 _attribute_ram_code_ void irq_handler(void)
 {
