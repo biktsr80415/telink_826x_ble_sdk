@@ -103,7 +103,7 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 
-#define	NANOSIC_LIBRARY_ENABLE							0   //must remove this at last
+#define	TELINK2C0_LIBRARY_ENABLE							0
 
 
 #if(NANOSIC_LIBRARY_ENABLE)
@@ -113,7 +113,7 @@ static inline void blc_app_loadCustomizedParameters(void)
 
 
 
-#define	OMNI_LIBRARY_ENABLE							    0   //must remove this at last
+#define	TELINK2C1_LIBRARY_ENABLE						    0
 
 
 #if(OMNI_LIBRARY_ENABLE)

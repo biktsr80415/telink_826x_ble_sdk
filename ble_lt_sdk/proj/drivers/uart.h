@@ -1,12 +1,25 @@
-/**************************************************************************************************
-  Filename:       	uart.h
-  Author:			junjun.xu@telink-semi.com
-  Created Date:	2016/06/05
+/********************************************************************************************************
+ * @file     uart.h
+ *
+ * @brief    for TLSR chips
+ *
+ * @author	 BLE Group
+ * @date     May. 12, 2018
+ *
+ * @par      Copyright (c) Telink Semiconductor (Shanghai) Co., Ltd.
+ *           All rights reserved.
+ *
+ *			 The information contained herein is confidential and proprietary property of Telink
+ * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms
+ *			 of Commercial License Agreement between Telink Semiconductor (Shanghai)
+ *			 Co., Ltd. and the licensee in separate contract or the terms described here-in.
+ *           This heading MUST NOT be removed from this file.
+ *
+ * 			 Licensees are granted free, non-transferable use of the information in this
+ *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided.
+ *
+ *******************************************************************************************************/
 
-  Description:    This file contains the details of enum variables and functions used in the uart.c file
-
-
-**************************************************************************************************/
 #ifndef 	uart_H
 #define 	uart_H
 
