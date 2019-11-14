@@ -378,6 +378,7 @@ static inline void blt_ll_set_ble_access_code_adv(void)
 	write_reg32 (0x800408, bltParam.custom_access_code ? bltParam.custom_access_code : 0xd6be898e);
 }
 
+extern _attribute_aligned_(4) st_ll_conn_master_t	blm[];
 static inline u8  blc_ll_getTxFifoNumber (void)
 {
 	u8 r = irq_disable();

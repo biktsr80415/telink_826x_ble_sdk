@@ -75,7 +75,10 @@ extern 			int				SMP_PARAM_NV_ADDR_START;
 #define SMP_FAST_CONNECT   		1
 
 
-
+/* pairing phase stated define */
+#define PAIRING_IDLE_PHASE                   0x00000000
+#define PAIRING_FEARTURE_EXCHANGE_PHASE_OK   0x00000001
+#define PAIRING_KEY_GENERATE_PHASE_OK        0x00000002
 
 typedef union {
 	struct{

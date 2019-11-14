@@ -126,12 +126,14 @@ unsigned char uart_ErrorCLR(void){
 *
 *		BaudRate = sclk/((uartCLKdiv+1)*(bwpc+1))
 *		SYCLK = 16Mhz
+*		           div         bwpc
 		115200		9			13
-		9600		103			15
+		9600		118			13
 *
 *		SYCLK = 32Mhz
-*		115200		19			13
-		9600		237			13
+*		           div         bwpc
+*		115200		30			8
+		9600		302			10
 */
 
 unsigned char uart_Init(unsigned short uartCLKdiv, unsigned char bwpc, UART_ParityTypeDef Parity,UART_StopBitTypeDef StopBit)

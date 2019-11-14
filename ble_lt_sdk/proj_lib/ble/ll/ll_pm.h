@@ -44,6 +44,7 @@ typedef struct {
 	u8		conn_rcvd_last_pkt;   // correctly received last packet of master(consider if more data take effect)
 
 	u32     current_wakeup_tick;
+	u32     softTimer_imme_rf_sendFlag;
 
 }st_ll_pm_t;
 
@@ -70,6 +71,7 @@ void 		bls_pm_setManualLatency(u16 latency); //manual set latency to save power
 void 		bls_pm_enableAdvMcuStall(u8 en);
 
 void 		bls_pm_setAppWakeupLowPower(u32 wakeup_tick, u8 enable);
+void 		bls_pm_EnAppImmeRfSend(void);
 void 		bls_pm_registerAppWakeupLowPowerCb(pm_appWakeupLowPower_callback_t cb);
 
 /************************* Stack Interface, user can not use!!! ***************************/

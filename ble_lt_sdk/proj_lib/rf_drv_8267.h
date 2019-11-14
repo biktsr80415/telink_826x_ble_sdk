@@ -484,11 +484,19 @@ static inline void rf_ble_tx_on ()
 	write_reg32 (0x800f04, 0x38);
 }
 
+#if (LL_MASTER_SINGLE_CONNECTION || LL_MASTER_MULTI_CONNECTION)
 static inline void rf_ble_tx_done ()
 {
 	write_reg8  (0x800f02, RF_TRX_OFF);	// TX enable
 	write_reg32 (0x800f04, 0x50);
 }
+#else
+static inline void rf_ble_tx_done ()
+{
+	write_reg8  (0x800f02, RF_TRX_OFF);	// TX enable
+	write_reg32 (0x800f04, 0x66); ///adv should be 0x61,but when adv, always reset the value to 0x61.so here just set 0x66.0x66 is connection value.
+}
+#endif
 
 static inline void rf_ble_trx_off ()
 {
