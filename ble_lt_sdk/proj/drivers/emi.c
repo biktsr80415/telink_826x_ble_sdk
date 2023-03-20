@@ -32,7 +32,7 @@ unsigned char depth=1;
 #define STATE1		0x5678
 #define STATE2		0xabcd
 #define STATE3		0xef01
-//unsigned char  nordic_tx_packet[16]  __attribute__ ((aligned (4))) = {0x9,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x34,0x56,0x78,0x12};
+//unsigned char  special_tx_packet[16]  __attribute__ ((aligned (4))) = {0x9,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x34,0x56,0x78,0x12};
 unsigned char  ble_tx_packet [64]  __attribute__ ((aligned (4))) = {39, 0, 0, 0,0, 37,	0, 1, 2, 3, 4, 5, 6, 7};
 
 unsigned char  rx_packet[128] __attribute__ ((aligned (4)));
@@ -768,7 +768,7 @@ void emi_test(void)
 //			{
 //				rf_drv_2m();
 //				write_reg32 (0x800408, 0x29417671);
-//				packet = nordic_tx_packet;
+//				packet = special_tx_packet;
 //			}
 //			if(cmd_now == 0x01)				//EmiCarrierOnly
 //			{
